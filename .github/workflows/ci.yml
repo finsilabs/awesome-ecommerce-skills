@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feat/*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Validate skills
+        run: npm run validate:strict
+
+      - name: Run tests
+        run: npm test
+
+      - name: Regenerate catalog and README
+        run: npm run catalog && npm run readme
+
+      - name: Check for drift
+        if: github.ref == 'refs/heads/main'
+        run: |
+          if [[ -n $(git status --porcelain data/ CATALOG.md README.md) ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data/ CATALOG.md README.md
+            git commit -m "chore: regenerate catalog and README [skip ci]"
+            git push
+          fi
+
+  skill-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tessl Skill Review
+        uses: tesslio/skill-review@v1
+        with:
+          path: skills/

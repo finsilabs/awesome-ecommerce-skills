@@ -1,0 +1,25 @@
+name: Tessl Eval
+
+on:
+  workflow_dispatch:
+    inputs:
+      skill_path:
+        description: 'Path to skill directory (or "all" for full suite)'
+        required: true
+        default: 'all'
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Tessl CLI
+        run: curl -fsSL https://get.tessl.io | sh
+
+      - name: Run evals
+        run: tessl eval run ${{ github.event.inputs.skill_path || 'all' }}
+        env:
+          TESSL_API_KEY: ${{ secrets.TESSL_API_KEY }}
