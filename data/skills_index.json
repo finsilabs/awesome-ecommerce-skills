@@ -1,0 +1,16 @@
+[
+  {
+    "id": "stripe-integration",
+    "path": "skills/payments-checkout/stripe-integration",
+    "category": "payments-checkout",
+    "name": "Stripe Integration",
+    "description": "Stripe payment intents, subscriptions, webhooks, and SCA compliance",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  }
+]

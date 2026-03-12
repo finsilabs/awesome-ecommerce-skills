@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-03-12T19:15:02.283Z",
+  "total": 1,
+  "skills": [
+    {
+      "id": "stripe-integration",
+      "name": "Stripe Integration",
+      "description": "Stripe payment intents, subscriptions, webhooks, and SCA compliance",
+      "category": "payments-checkout",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "stripe",
+        "payments",
+        "checkout",
+        "webhooks",
+        "sca",
+        "pci",
+        "subscriptions"
+      ],
+      "triggers": [
+        "integrate stripe",
+        "add stripe payments",
+        "stripe checkout",
+        "payment processing"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/stripe-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    }
+  ]
+}
