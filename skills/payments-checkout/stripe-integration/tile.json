@@ -1,0 +1,10 @@
+{
+  "name": "finsi/stripe-integration",
+  "version": "0.1.0",
+  "summary": "E-commerce Stripe payment integration skill",
+  "skills": {
+    "stripe-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly creates a Stripe Checkout Session with the required fields (line_items, mode, success_url, cancel_url, metadata) and implements a direct subscription with trial using the correct parameters (payment_behavior: 'default_incomplete', expand: ['latest_invoice.payment_intent']).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "checkout.sessions.create used",
+      "max_score": 8,
+      "description": "Uses stripe.checkout.sessions.create() to create the hosted checkout session"
+    },
+    {
+      "name": "line_items present",
+      "max_score": 8,
+      "description": "Checkout session includes a line_items array with at least one item using the price_pro_monthly price"
+    },
+    {
+      "name": "mode: 'subscription'",
+      "max_score": 10,
+      "description": "Checkout session uses mode: 'subscription' (not 'payment')"
+    },
+    {
+      "name": "success_url set",
+      "max_score": 7,
+      "description": "Checkout session includes a success_url pointing to the Luminary domain (e.g. https://app.luminary.io/success or similar)"
+    },
+    {
+      "name": "cancel_url set",
+      "max_score": 7,
+      "description": "Checkout session includes a cancel_url pointing to the Luminary domain (e.g. https://app.luminary.io/pricing or similar)"
+    },
+    {
+      "name": "Checkout metadata with order_id",
+      "max_score": 8,
+      "description": "Checkout session includes a metadata object (e.g. with order_id or customer reference)"
+    },
+    {
+      "name": "session.url returned",
+      "max_score": 7,
+      "description": "createSubscriptionCheckout() returns session.url (the hosted checkout redirect URL)"
+    },
+    {
+      "name": "subscriptions.create used",
+      "max_score": 8,
+      "description": "Uses stripe.subscriptions.create() in createDirectSubscription() to create the subscription directly"
+    },
+    {
+      "name": "trial_period_days: 14",
+      "max_score": 10,
+      "description": "Direct subscription sets trial_period_days to 14"
+    },
+    {
+      "name": "payment_behavior: 'default_incomplete'",
+      "max_score": 15,
+      "description": "Direct subscription creation uses payment_behavior: 'default_incomplete'"
+    },
+    {
+      "name": "expand latest_invoice.payment_intent",
+      "max_score": 12,
+      "description": "Direct subscription creation uses expand: ['latest_invoice.payment_intent']"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements Stripe webhook signature verification using the raw request body, handles the required event types, makes fulfillment logic idempotent, and documents local development workflow with the Stripe CLI.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Raw body for verification",
+      "max_score": 15,
+      "description": "Passes the raw (unparsed) request body — not a parsed JSON object — as the first argument to stripe.webhooks.constructEvent()"
+    },
+    {
+      "name": "constructEvent used",
+      "max_score": 10,
+      "description": "Uses stripe.webhooks.constructEvent() to verify the incoming webhook event rather than trusting the request body directly"
+    },
+    {
+      "name": "Webhook secret from env",
+      "max_score": 8,
+      "description": "Reads the webhook signing secret from process.env.STRIPE_WEBHOOK_SECRET (not hardcoded)"
+    },
+    {
+      "name": "stripe-signature header",
+      "max_score": 8,
+      "description": "Reads the signature from req.headers['stripe-signature'] and passes it to constructEvent()"
+    },
+    {
+      "name": "payment_intent.succeeded handled",
+      "max_score": 8,
+      "description": "Includes a handler for the 'payment_intent.succeeded' event type"
+    },
+    {
+      "name": "payment_intent.payment_failed handled",
+      "max_score": 7,
+      "description": "Includes a handler for the 'payment_intent.payment_failed' event type"
+    },
+    {
+      "name": "charge.refunded handled",
+      "max_score": 7,
+      "description": "Includes a handler for the 'charge.refunded' event type"
+    },
+    {
+      "name": "Idempotency check",
+      "max_score": 15,
+      "description": "Fulfillment function checks whether the order has already been fulfilled (e.g., checks a status field) before executing fulfillment side-effects, and returns early if already done"
+    },
+    {
+      "name": "Returns 200 on success",
+      "max_score": 7,
+      "description": "Returns a 200 JSON response (e.g., { received: true }) after successfully processing the event"
+    },
+    {
+      "name": "Returns 400 on bad signature",
+      "max_score": 7,
+      "description": "Returns a 400 status code when webhook signature verification fails"
+    },
+    {
+      "name": "stripe listen documented",
+      "max_score": 8,
+      "description": "README or comments document using 'stripe listen --forward-to' for local webhook testing during development"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements the Payment Intents API (not the legacy Charges API), loads Stripe.js from CDN, uses automatic_payment_methods, attaches order metadata, converts dollar amounts to cents, returns the client secret, and confirms payment with the correct return_url.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "stripe npm package",
+      "max_score": 5,
+      "description": "Server-side code uses the 'stripe' npm package (import/require of 'stripe'), not any other payment library"
+    },
+    {
+      "name": "STRIPE_SECRET_KEY from env",
+      "max_score": 5,
+      "description": "Stripe client is initialised with process.env.STRIPE_SECRET_KEY (not a hardcoded key)"
+    },
+    {
+      "name": "Stripe.js loaded from CDN",
+      "max_score": 12,
+      "description": "The HTML file loads Stripe.js via a <script> tag pointing to https://js.stripe.com/v3/ rather than bundling it locally"
+    },
+    {
+      "name": "Payment Intents API used",
+      "max_score": 10,
+      "description": "Uses stripe.paymentIntents.create() — does NOT use the legacy stripe.charges.create()"
+    },
+    {
+      "name": "automatic_payment_methods enabled",
+      "max_score": 12,
+      "description": "Payment Intent is created with automatic_payment_methods: { enabled: true }"
+    },
+    {
+      "name": "order_id in metadata",
+      "max_score": 10,
+      "description": "Payment Intent creation includes a metadata object containing an order_id field populated from the request"
+    },
+    {
+      "name": "Amount converted to cents",
+      "max_score": 10,
+      "description": "Dollar amount from the request is multiplied by 100 (or equivalent conversion) before being passed as the amount to paymentIntents.create()"
+    },
+    {
+      "name": "clientSecret returned",
+      "max_score": 8,
+      "description": "The API endpoint returns the paymentIntent.client_secret value to the client (e.g. res.json({ clientSecret: paymentIntent.client_secret }))"
+    },
+    {
+      "name": "confirmPayment return_url",
+      "max_score": 10,
+      "description": "Client-side code calls stripe.confirmPayment() with a confirmParams.return_url that points to an order confirmation path (e.g. /order/confirmation)"
+    },
+    {
+      "name": "Error handling on client",
+      "max_score": 8,
+      "description": "Client-side code checks for an error in the result of confirmPayment and displays it to the user rather than silently failing"
+    },
+    {
+      "name": "No raw card data",
+      "max_score": 10,
+      "description": "Code does NOT read or transmit raw card numbers directly — uses Stripe Elements for card input"
+    }
+  ]
+}
