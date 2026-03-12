@@ -1,0 +1,18 @@
+{
+  "name": "awesome-ecommerce-skills",
+  "version": "1.0.0",
+  "description": "132 curated e-commerce skills for AI coding assistants and commerce practitioners",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "validate": "node tools/scripts/validate.js",
+    "validate:strict": "node tools/scripts/validate.js --strict",
+    "catalog": "node tools/scripts/generate-catalog.js",
+    "readme": "node tools/scripts/generate-readme.js",
+    "chain": "npm run validate:strict && npm run catalog && npm run readme",
+    "test": "node --test tools/scripts/__tests__/"
+  },
+  "devDependencies": {
+    "yaml": "^2.8.2"
+  }
+}
