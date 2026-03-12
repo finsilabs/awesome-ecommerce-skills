@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 
 function toTitleCase(kebab) {
   return kebab.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');

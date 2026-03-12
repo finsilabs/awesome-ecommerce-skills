@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSkillFile, REQUIRED_FIELDS, VALID_DIFFICULTIES, VALID_SOURCES, VALID_TOOLS, VALID_RISK_LEVELS } from '../../lib/skill-parser.js';
+import { parseSkillFile, VALID_DIFFICULTIES, VALID_SOURCES, VALID_TOOLS, VALID_RISK_LEVELS } from '../../lib/skill-parser.js';
 import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 

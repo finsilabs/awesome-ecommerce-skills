@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateCatalog, generateCatalogMd, generateSkillsIndex } from '../generate-catalog.js';
-import { writeFileSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 const TMP = join(import.meta.dirname, '__tmp_catalog__');
