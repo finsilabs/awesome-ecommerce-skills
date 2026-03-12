@@ -14,7 +14,8 @@
     "tiles:setup": "node tools/scripts/setup-tiles.js",
     "tiles:generate-scenarios": "bash tools/scripts/batch-generate-scenarios.sh",
     "tiles:download-scenarios": "bash tools/scripts/batch-download-scenarios.sh",
-    "tiles:run-evals": "bash tools/scripts/batch-run-evals.sh"
+    "tiles:run-evals": "node tools/scripts/batch-run-evals.js",
+    "tiles:results": "node tools/scripts/collect-eval-results.js"
   },
   "devDependencies": {
     "yaml": "^2.8.2"
