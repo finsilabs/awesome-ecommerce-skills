@@ -1,7 +1,129 @@
 {
-  "generatedAt": "2026-03-12T19:45:20.378Z",
-  "total": 17,
+  "generatedAt": "2026-03-12T20:27:56.655Z",
+  "total": 132,
   "skills": [
+    {
+      "id": "b2b-commerce",
+      "name": "B2b Commerce",
+      "description": "B2B features — company accounts, quote workflows, custom catalogs, net terms",
+      "category": "business-operations",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "b2b",
+        "wholesale",
+        "company-accounts",
+        "quote-workflow",
+        "net-terms",
+        "custom-catalog",
+        "purchase-order",
+        "CPQ"
+      ],
+      "triggers": [
+        "B2B commerce",
+        "wholesale portal",
+        "company accounts",
+        "quote workflow",
+        "net terms",
+        "custom catalog B2B",
+        "business accounts"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/business-operations/b2b-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "demand-forecasting",
+      "name": "Demand Forecasting",
+      "description": "Inventory demand prediction using sales history, seasonality, and trends",
+      "category": "business-operations",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "demand-forecasting",
+        "inventory-planning",
+        "seasonality",
+        "sales-history",
+        "reorder-points",
+        "stockout-prevention"
+      ],
+      "triggers": [
+        "demand forecasting",
+        "inventory forecasting",
+        "predict demand",
+        "reorder points",
+        "stockout prevention",
+        "inventory planning",
+        "sales prediction"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/business-operations/demand-forecasting",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "marketplace-building",
+      "name": "Marketplace Building",
+      "description": "Multi-vendor marketplace architecture — seller onboarding, commissions, payouts",
+      "category": "business-operations",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "marketplace",
+        "multi-vendor",
+        "seller-onboarding",
+        "commissions",
+        "payouts",
+        "Stripe-Connect",
+        "platform"
+      ],
+      "triggers": [
+        "marketplace",
+        "multi-vendor marketplace",
+        "seller onboarding",
+        "marketplace commissions",
+        "seller payouts",
+        "platform marketplace"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/business-operations/marketplace-building",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
     {
       "id": "merchandising-rules",
       "name": "Merchandising Rules",
@@ -35,6 +157,488 @@
         "opencode"
       ],
       "path": "skills/business-operations/merchandising-rules",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "multi-channel-selling",
+      "name": "Multi Channel Selling",
+      "description": "Unified catalog and inventory across DTC, wholesale, marketplace channels",
+      "category": "business-operations",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "multi-channel",
+        "omnichannel",
+        "catalog-sync",
+        "inventory-sync",
+        "marketplace",
+        "wholesale",
+        "DTC"
+      ],
+      "triggers": [
+        "multi-channel selling",
+        "omnichannel inventory",
+        "channel sync",
+        "marketplace integration",
+        "unified catalog",
+        "cross-channel inventory"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/business-operations/multi-channel-selling",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "order-management-system",
+      "name": "Order Management System",
+      "description": "OMS design with distributed fulfillment, split orders, and backorder handling",
+      "category": "business-operations",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "OMS",
+        "order-management",
+        "split-orders",
+        "backorders",
+        "distributed-fulfillment",
+        "fulfillment-routing"
+      ],
+      "triggers": [
+        "order management system",
+        "OMS",
+        "split orders",
+        "backorder handling",
+        "fulfillment routing",
+        "distributed fulfillment",
+        "order routing"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/business-operations/order-management-system",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "returns-refund-policy",
+      "name": "Returns Refund Policy",
+      "description": "Policy engine for return windows, restocking fees, and automated approvals",
+      "category": "business-operations",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "returns-policy",
+        "refund-policy",
+        "restocking-fee",
+        "return-window",
+        "automated-approval",
+        "policy-engine"
+      ],
+      "triggers": [
+        "return policy",
+        "refund policy",
+        "restocking fee",
+        "return window",
+        "automated returns",
+        "return approval rules"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/business-operations/returns-refund-policy",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "vendor-management",
+      "name": "Vendor Management",
+      "description": "Vendor portal, purchase orders, dropship routing, and performance scorecards",
+      "category": "business-operations",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "vendor-management",
+        "purchase-orders",
+        "supplier-portal",
+        "performance-scorecard",
+        "dropshipping",
+        "procurement"
+      ],
+      "triggers": [
+        "vendor management",
+        "supplier portal",
+        "purchase orders",
+        "vendor performance",
+        "supplier scorecard",
+        "procurement system"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/business-operations/vendor-management",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "catalog-import-export",
+      "name": "Catalog Import Export",
+      "description": "Bulk product import/export via CSV, JSON, XML with validation and error handling",
+      "category": "catalog-inventory",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "import",
+        "export",
+        "csv",
+        "json",
+        "xml",
+        "bulk",
+        "validation",
+        "etl",
+        "catalog"
+      ],
+      "triggers": [
+        "import products CSV",
+        "bulk product import",
+        "export catalog",
+        "product feed",
+        "catalog sync",
+        "bulk upload products"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/catalog-import-export",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "digital-products",
+      "name": "Digital Products",
+      "description": "Manage downloadable goods — license keys, download limits, expiration, delivery",
+      "category": "catalog-inventory",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "digital-products",
+        "downloads",
+        "license-keys",
+        "drm",
+        "delivery",
+        "software",
+        "ebooks"
+      ],
+      "triggers": [
+        "digital product download",
+        "license key delivery",
+        "downloadable product",
+        "software license",
+        "ebook store",
+        "digital goods"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/digital-products",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "inventory-tracking",
+      "name": "Inventory Tracking",
+      "description": "Real-time stock tracking across warehouses with reservation and backorder logic",
+      "category": "catalog-inventory",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "inventory",
+        "stock",
+        "warehouse",
+        "reservation",
+        "backorder",
+        "real-time",
+        "oversell-protection"
+      ],
+      "triggers": [
+        "inventory tracking",
+        "stock management",
+        "real-time inventory",
+        "oversell prevention",
+        "inventory reservation",
+        "backorder handling"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/inventory-tracking",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "low-stock-alerts",
+      "name": "Low Stock Alerts",
+      "description": "Automated reorder point monitoring with supplier notifications and demand forecasting",
+      "category": "catalog-inventory",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "low-stock",
+        "alerts",
+        "reorder",
+        "notifications",
+        "demand-forecasting",
+        "replenishment",
+        "procurement"
+      ],
+      "triggers": [
+        "low stock alert",
+        "reorder point",
+        "out of stock notification",
+        "inventory replenishment",
+        "stock level alert",
+        "demand forecasting"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/low-stock-alerts",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "multi-warehouse",
+      "name": "Multi Warehouse",
+      "description": "Multi-location inventory with allocation rules, transfer orders, and split fulfillment",
+      "category": "catalog-inventory",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "warehouse",
+        "multi-location",
+        "fulfillment",
+        "allocation",
+        "transfer",
+        "split-shipment",
+        "3pl"
+      ],
+      "triggers": [
+        "multi warehouse",
+        "multi location inventory",
+        "warehouse allocation",
+        "transfer order",
+        "split fulfillment",
+        "distributed inventory"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/multi-warehouse",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "product-bundles-kits",
+      "name": "Product Bundles Kits",
+      "description": "Bundle/kit management with dynamic pricing, inventory deduction, and display logic",
+      "category": "catalog-inventory",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "bundles",
+        "kits",
+        "product-sets",
+        "dynamic-pricing",
+        "upsell",
+        "inventory",
+        "cross-sell"
+      ],
+      "triggers": [
+        "product bundle",
+        "product kit",
+        "bundle pricing",
+        "buy together",
+        "kit builder",
+        "bundle discount",
+        "frequently bought together"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/product-bundles-kits",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "product-categorization",
+      "name": "Product Categorization",
+      "description": "Hierarchical taxonomy design with breadcrumbs, auto-categorization, and SEO",
+      "category": "catalog-inventory",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "categories",
+        "taxonomy",
+        "breadcrumbs",
+        "seo",
+        "hierarchy",
+        "auto-categorization",
+        "navigation"
+      ],
+      "triggers": [
+        "product categories",
+        "category hierarchy",
+        "product taxonomy",
+        "breadcrumb navigation",
+        "auto-categorize products",
+        "category SEO"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/product-categorization",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "product-content-enrichment",
+      "name": "Product Content Enrichment",
+      "description": "AI-assisted product descriptions, attribute extraction, and image tagging",
+      "category": "catalog-inventory",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "ai",
+        "product-descriptions",
+        "content",
+        "attributes",
+        "image-tagging",
+        "llm",
+        "enrichment",
+        "pim"
+      ],
+      "triggers": [
+        "AI product descriptions",
+        "generate product content",
+        "attribute extraction",
+        "image tagging",
+        "product enrichment",
+        "bulk product descriptions"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/product-content-enrichment",
       "platforms": [
         "platform-agnostic"
       ],
@@ -79,6 +683,46 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "variant-matrix",
+      "name": "Variant Matrix",
+      "description": "Generate and manage variant combinations (size x color x material) with SKU strategies",
+      "category": "catalog-inventory",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "variants",
+        "sku",
+        "matrix",
+        "combinations",
+        "options",
+        "catalog",
+        "product-data"
+      ],
+      "triggers": [
+        "product variants",
+        "size color variants",
+        "variant combinations",
+        "SKU generation",
+        "option matrix",
+        "variant matrix"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/variant-matrix",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "customer-accounts",
       "name": "Customer Accounts",
       "description": "Registration, profile management, address book, and order history",
@@ -115,6 +759,468 @@
         "platform-agnostic"
       ],
       "difficulty": "beginner"
+    },
+    {
+      "id": "customer-lifetime-value",
+      "name": "Customer Lifetime Value",
+      "description": "CLV calculation models, prediction, and retention strategy automation",
+      "category": "customer-crm",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "clv",
+        "ltv",
+        "customer-lifetime-value",
+        "retention",
+        "prediction",
+        "churn",
+        "rfm",
+        "machine-learning"
+      ],
+      "triggers": [
+        "customer lifetime value",
+        "CLV calculation",
+        "LTV",
+        "predict CLV",
+        "customer retention strategy",
+        "clv model",
+        "churn prediction"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/customer-crm/customer-lifetime-value",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "customer-segmentation",
+      "name": "Customer Segmentation",
+      "description": "RFM analysis, behavioral segments, and cohort-based targeting",
+      "category": "customer-crm",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "segmentation",
+        "rfm",
+        "cohort",
+        "behavioral",
+        "targeting",
+        "crm",
+        "customer-analytics",
+        "lifecycle"
+      ],
+      "triggers": [
+        "customer segmentation",
+        "RFM analysis",
+        "rfm scoring",
+        "behavioral segments",
+        "cohort analysis",
+        "customer targeting",
+        "segment customers"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/customer-crm/customer-segmentation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "customer-support-integration",
+      "name": "Customer Support Integration",
+      "description": "Helpdesk integration (Zendesk, Intercom) with order context injection",
+      "category": "customer-crm",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "zendesk",
+        "intercom",
+        "helpdesk",
+        "customer-support",
+        "order-context",
+        "ticket",
+        "crm-integration",
+        "support-automation"
+      ],
+      "triggers": [
+        "zendesk integration",
+        "intercom integration",
+        "helpdesk integration",
+        "order context in support",
+        "customer support integration",
+        "inject order data into zendesk",
+        "support ticket automation"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/customer-crm/customer-support-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "live-chat-commerce",
+      "name": "Live Chat Commerce",
+      "description": "Real-time chat with product sharing, cart assistance, and agent tools",
+      "category": "customer-crm",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "live-chat",
+        "websocket",
+        "customer-support",
+        "product-sharing",
+        "cart-assistance",
+        "agent-tools",
+        "real-time",
+        "commerce-chat"
+      ],
+      "triggers": [
+        "live chat",
+        "live chat commerce",
+        "chat product recommendations",
+        "agent product sharing",
+        "chat support integration",
+        "real-time chat ecommerce"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/customer-crm/live-chat-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "personalization-engine",
+      "name": "Personalization Engine",
+      "description": "Product recommendations using collaborative filtering and browsing history",
+      "category": "customer-crm",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "personalization",
+        "recommendations",
+        "collaborative-filtering",
+        "browsing-history",
+        "machine-learning",
+        "product-recommendations",
+        "similar-products"
+      ],
+      "triggers": [
+        "product recommendations",
+        "personalization engine",
+        "collaborative filtering",
+        "recommendation algorithm",
+        "frequently bought together",
+        "similar products",
+        "you might also like"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/customer-crm/personalization-engine",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "product-reviews-ratings",
+      "name": "Product Reviews Ratings",
+      "description": "Review collection, moderation, aggregate scoring, and display widgets",
+      "category": "customer-crm",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "reviews",
+        "ratings",
+        "ugc",
+        "moderation",
+        "schema-org",
+        "social-proof",
+        "star-rating",
+        "review-widget"
+      ],
+      "triggers": [
+        "product reviews",
+        "star ratings",
+        "review system",
+        "review moderation",
+        "review widget",
+        "aggregate ratings",
+        "customer reviews"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/customer-crm/product-reviews-ratings",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "referral-program",
+      "name": "Referral Program",
+      "description": "Refer-a-friend flows with unique links, reward tiers, and fraud prevention",
+      "category": "customer-crm",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "referral",
+        "refer-a-friend",
+        "viral",
+        "word-of-mouth",
+        "reward",
+        "fraud-prevention",
+        "acquisition",
+        "unique-links"
+      ],
+      "triggers": [
+        "referral program",
+        "refer a friend",
+        "referral tracking",
+        "word of mouth program",
+        "referral rewards",
+        "referral fraud prevention",
+        "referral link"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/customer-crm/referral-program",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "user-generated-content",
+      "name": "User Generated Content",
+      "description": "Customer photos, Q&A sections, and social proof widgets",
+      "category": "customer-crm",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "ugc",
+        "user-generated-content",
+        "customer-photos",
+        "qa",
+        "social-proof",
+        "reviews",
+        "moderation",
+        "instagram-ugc"
+      ],
+      "triggers": [
+        "user generated content",
+        "UGC",
+        "customer photos",
+        "product Q&A",
+        "social proof widgets",
+        "customer photo gallery",
+        "ugc moderation"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/customer-crm/user-generated-content",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "ab-testing-ecommerce",
+      "name": "Ab Testing Ecommerce",
+      "description": "Experimentation platform for product pages, checkout, and pricing tests",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "ab-testing",
+        "experimentation",
+        "statistical-significance",
+        "feature-flags",
+        "checkout",
+        "pricing",
+        "conversion",
+        "hypothesis-testing"
+      ],
+      "triggers": [
+        "A/B testing",
+        "ab test",
+        "experimentation platform",
+        "split testing",
+        "feature flags",
+        "statistical significance",
+        "conversion test",
+        "pricing test"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/data-analytics/ab-testing-ecommerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "attribution-modeling",
+      "name": "Attribution Modeling",
+      "description": "Multi-touch attribution for marketing spend optimization",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "attribution",
+        "multi-touch",
+        "marketing-analytics",
+        "utm",
+        "last-click",
+        "first-click",
+        "data-driven",
+        "channel-analysis"
+      ],
+      "triggers": [
+        "attribution modeling",
+        "multi-touch attribution",
+        "marketing attribution",
+        "channel attribution",
+        "first touch vs last touch",
+        "data-driven attribution",
+        "marketing spend optimization",
+        "UTM attribution"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/data-analytics/attribution-modeling",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "customer-analytics",
+      "name": "Customer Analytics",
+      "description": "RFM scoring, purchase frequency, churn prediction, and segment analysis",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "customer-analytics",
+        "rfm",
+        "churn-prediction",
+        "purchase-frequency",
+        "cohort",
+        "retention",
+        "customer-data",
+        "segmentation"
+      ],
+      "triggers": [
+        "customer analytics",
+        "rfm scoring",
+        "churn prediction",
+        "purchase frequency analysis",
+        "customer retention analytics",
+        "customer behavior analysis",
+        "customer data analysis"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/data-analytics/customer-analytics",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
     },
     {
       "id": "ecommerce-data-warehouse",
@@ -156,6 +1262,371 @@
       "difficulty": "advanced"
     },
     {
+      "id": "product-analytics",
+      "name": "Product Analytics",
+      "description": "Product performance metrics, sell-through rates, and dead stock identification",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "product-analytics",
+        "sell-through",
+        "dead-stock",
+        "inventory",
+        "performance",
+        "pdp",
+        "merchandising",
+        "catalog"
+      ],
+      "triggers": [
+        "product analytics",
+        "product performance",
+        "sell-through rate",
+        "dead stock",
+        "inventory analytics",
+        "product metrics",
+        "merchandising analytics"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/data-analytics/product-analytics",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "sales-reporting-dashboard",
+      "name": "Sales Reporting Dashboard",
+      "description": "Revenue, AOV, conversion dashboards with drill-down and cohort analysis",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "analytics",
+        "dashboard",
+        "revenue",
+        "aov",
+        "conversion",
+        "cohort",
+        "reporting",
+        "sql",
+        "data-visualization"
+      ],
+      "triggers": [
+        "sales dashboard",
+        "revenue reporting",
+        "sales reporting",
+        "AOV dashboard",
+        "conversion dashboard",
+        "cohort analysis dashboard",
+        "ecommerce analytics dashboard"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/data-analytics/sales-reporting-dashboard",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "dropshipping-integration",
+      "name": "Dropshipping Integration",
+      "description": "Supplier order routing, inventory sync, and margin calculation for dropship",
+      "category": "fulfillment-shipping",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "dropshipping",
+        "supplier-integration",
+        "order-routing",
+        "inventory-sync",
+        "margin-calculation",
+        "dropship"
+      ],
+      "triggers": [
+        "dropshipping",
+        "dropship integration",
+        "supplier order routing",
+        "dropship inventory sync",
+        "dropship margin",
+        "supplier API"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/dropshipping-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "free-shipping-thresholds",
+      "name": "Free Shipping Thresholds",
+      "description": "Dynamic free shipping rules with progress indicators and upsell nudges",
+      "category": "fulfillment-shipping",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "free-shipping",
+        "threshold",
+        "upsell",
+        "progress-indicator",
+        "cart",
+        "shipping-rules"
+      ],
+      "triggers": [
+        "free shipping",
+        "free shipping threshold",
+        "shipping progress bar",
+        "add more for free shipping",
+        "free shipping upsell"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/free-shipping-thresholds",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "international-shipping",
+      "name": "International Shipping",
+      "description": "Cross-border commerce: customs forms, duties estimation, restricted items",
+      "category": "fulfillment-shipping",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "international-shipping",
+        "customs",
+        "duties",
+        "taxes",
+        "restricted-items",
+        "cross-border",
+        "HS-codes",
+        "DDP",
+        "DDU"
+      ],
+      "triggers": [
+        "international shipping",
+        "customs forms",
+        "duties and taxes",
+        "cross-border shipping",
+        "HS codes",
+        "restricted items",
+        "DDP DDU",
+        "import duties"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/international-shipping",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "order-fulfillment-workflow",
+      "name": "Order Fulfillment Workflow",
+      "description": "Pick-pack-ship workflows with barcode scanning and packing slip generation",
+      "category": "fulfillment-shipping",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "fulfillment",
+        "pick-pack-ship",
+        "warehouse",
+        "barcode-scanning",
+        "packing-slip",
+        "wms"
+      ],
+      "triggers": [
+        "order fulfillment",
+        "pick pack ship",
+        "warehouse workflow",
+        "packing slip",
+        "barcode scanning fulfillment",
+        "warehouse management"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/order-fulfillment-workflow",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "returns-management",
+      "name": "Returns Management",
+      "description": "RMA flow with return labels, refund/exchange logic, and restocking",
+      "category": "fulfillment-shipping",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "returns",
+        "rma",
+        "refunds",
+        "exchanges",
+        "return-labels",
+        "restocking",
+        "reverse-logistics"
+      ],
+      "triggers": [
+        "returns management",
+        "RMA",
+        "return merchandise authorization",
+        "return label",
+        "refund processing",
+        "exchange workflow"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/returns-management",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "same-day-delivery",
+      "name": "Same Day Delivery",
+      "description": "Local delivery zone management, time-slot booking, and driver dispatch",
+      "category": "fulfillment-shipping",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "same-day-delivery",
+        "local-delivery",
+        "time-slots",
+        "driver-dispatch",
+        "delivery-zones",
+        "last-mile"
+      ],
+      "triggers": [
+        "same day delivery",
+        "local delivery",
+        "time slot booking",
+        "driver dispatch",
+        "delivery zone",
+        "last mile delivery"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/same-day-delivery",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "shipment-tracking",
+      "name": "Shipment Tracking",
+      "description": "Track shipments across carriers with webhook-driven status updates",
+      "category": "fulfillment-shipping",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shipment-tracking",
+        "carrier-webhooks",
+        "tracking-updates",
+        "UPS",
+        "FedEx",
+        "USPS",
+        "EasyPost",
+        "Shippo"
+      ],
+      "triggers": [
+        "shipment tracking",
+        "track package",
+        "carrier tracking",
+        "tracking updates",
+        "shipping status",
+        "delivery status webhook"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/shipment-tracking",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "shipping-rate-calculator",
       "name": "Shipping Rate Calculator",
       "description": "Real-time rate calculation with carrier APIs (UPS, FedEx, USPS, DHL)",
@@ -189,6 +1660,172 @@
         "opencode"
       ],
       "path": "skills/fulfillment-shipping/shipping-rate-calculator",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "commerce-api-gateway",
+      "name": "Commerce Api Gateway",
+      "description": "API gateway patterns for aggregating multiple commerce microservices",
+      "category": "headless-modern",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "api-gateway",
+        "graphql-federation",
+        "bff",
+        "microservices",
+        "kong",
+        "apollo-router",
+        "rate-limiting",
+        "authentication"
+      ],
+      "triggers": [
+        "api gateway commerce",
+        "graphql federation",
+        "bff pattern",
+        "aggregate commerce apis",
+        "commerce api gateway",
+        "api orchestration"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/headless-modern/commerce-api-gateway",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "commerce-js-integration",
+      "name": "Commerce Js Integration",
+      "description": "Commerce.js (Chec) SDK integration for lightweight headless stores",
+      "category": "headless-modern",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "commercejs",
+        "chec",
+        "headless",
+        "sdk",
+        "cart",
+        "checkout",
+        "products",
+        "javascript"
+      ],
+      "triggers": [
+        "commerce.js",
+        "chec platform",
+        "commercejs sdk",
+        "lightweight headless store",
+        "commercejs integration"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/headless-modern/commerce-js-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "composable-commerce",
+      "name": "Composable Commerce",
+      "description": "MACH architecture — microservices, API-first, cloud-native, headless patterns",
+      "category": "headless-modern",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "mach",
+        "composable",
+        "microservices",
+        "api-first",
+        "headless",
+        "cloud-native",
+        "architecture",
+        "commercetools",
+        "contentful"
+      ],
+      "triggers": [
+        "composable commerce",
+        "mach architecture",
+        "microservices ecommerce",
+        "api-first commerce",
+        "headless architecture",
+        "decouple commerce platform"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/headless-modern/composable-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "jamstack-storefront",
+      "name": "Jamstack Storefront",
+      "description": "Static-generated storefronts with Next.js/Astro + commerce API backends",
+      "category": "headless-modern",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "jamstack",
+        "next.js",
+        "astro",
+        "static-generation",
+        "ssg",
+        "isr",
+        "headless",
+        "commerce",
+        "vercel",
+        "netlify"
+      ],
+      "triggers": [
+        "jamstack storefront",
+        "static ecommerce",
+        "next.js commerce",
+        "astro storefront",
+        "ssg commerce",
+        "static site ecommerce"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/headless-modern/jamstack-storefront",
       "platforms": [
         "platform-agnostic"
       ],
@@ -233,6 +1870,170 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "pwa-storefront",
+      "name": "Pwa Storefront",
+      "description": "Progressive web app storefronts with offline catalog, service workers",
+      "category": "headless-modern",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "pwa",
+        "service-worker",
+        "workbox",
+        "offline",
+        "web-app-manifest",
+        "push-notifications",
+        "cache-api",
+        "installable"
+      ],
+      "triggers": [
+        "pwa storefront",
+        "progressive web app ecommerce",
+        "offline catalog",
+        "service worker commerce",
+        "installable storefront",
+        "add to home screen"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/headless-modern/pwa-storefront",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "saleor-development",
+      "name": "Saleor Development",
+      "description": "Saleor GraphQL API, app development, and dashboard customization",
+      "category": "headless-modern",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "saleor",
+        "graphql",
+        "headless",
+        "django",
+        "storefront",
+        "webhooks",
+        "apps",
+        "dashboard"
+      ],
+      "triggers": [
+        "saleor integration",
+        "saleor graphql api",
+        "saleor storefront",
+        "saleor app development",
+        "saleor dashboard customization"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/headless-modern/saleor-development",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "shopify-hydrogen",
+      "name": "Shopify Hydrogen",
+      "description": "Hydrogen + Remix storefront with Oxygen deployment and Storefront API",
+      "category": "headless-modern",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shopify",
+        "hydrogen",
+        "remix",
+        "oxygen",
+        "storefront-api",
+        "headless",
+        "react",
+        "vite"
+      ],
+      "triggers": [
+        "shopify hydrogen",
+        "hydrogen storefront",
+        "oxygen deployment",
+        "shopify headless",
+        "remix shopify",
+        "storefront api"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/headless-modern/shopify-hydrogen",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "database-optimization-commerce",
+      "name": "Database Optimization Commerce",
+      "description": "Product query optimization, search indexing, and read-replica strategies",
+      "category": "infrastructure-performance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "database",
+        "postgresql",
+        "indexing",
+        "query-optimization",
+        "read-replica",
+        "elasticsearch",
+        "pgvector",
+        "explain-analyze"
+      ],
+      "triggers": [
+        "database optimization",
+        "product query slow",
+        "database performance ecommerce",
+        "postgresql indexing",
+        "read replica",
+        "query optimization commerce",
+        "slow catalog queries"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/infrastructure-performance/database-optimization-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
       "id": "ecommerce-caching",
       "name": "Ecommerce Caching",
       "description": "Multi-layer caching — CDN, application, database, and cart-aware cache invalidation",
@@ -269,6 +2070,299 @@
         "platform-agnostic"
       ],
       "difficulty": "advanced"
+    },
+    {
+      "id": "edge-commerce",
+      "name": "Edge Commerce",
+      "description": "Edge computing for commerce — geo-routing, edge-side personalization, KV stores",
+      "category": "infrastructure-performance",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "edge",
+        "cloudflare-workers",
+        "vercel-edge",
+        "geo-routing",
+        "personalization",
+        "kv-store",
+        "edge-middleware",
+        "latency"
+      ],
+      "triggers": [
+        "edge commerce",
+        "edge computing ecommerce",
+        "cloudflare workers commerce",
+        "geo-routing",
+        "edge personalization",
+        "vercel edge functions",
+        "edge caching"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/infrastructure-performance/edge-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "flash-sale-scaling",
+      "name": "Flash Sale Scaling",
+      "description": "Auto-scaling, queue-based ordering, and circuit breakers for traffic spikes",
+      "category": "infrastructure-performance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "scaling",
+        "auto-scaling",
+        "queue",
+        "circuit-breaker",
+        "flash-sale",
+        "redis",
+        "sqs",
+        "kubernetes",
+        "traffic-spike"
+      ],
+      "triggers": [
+        "flash sale scaling",
+        "traffic spike handling",
+        "auto scaling ecommerce",
+        "queue based ordering",
+        "circuit breaker commerce",
+        "high traffic sale",
+        "black friday scaling"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/infrastructure-performance/flash-sale-scaling",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "image-optimization-cdn",
+      "name": "Image Optimization Cdn",
+      "description": "Product image pipeline — resize, compress, WebP/AVIF, lazy load, CDN delivery",
+      "category": "infrastructure-performance",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "images",
+        "cdn",
+        "webp",
+        "avif",
+        "lazy-loading",
+        "sharp",
+        "cloudinary",
+        "image-optimization",
+        "lcp",
+        "core-web-vitals"
+      ],
+      "triggers": [
+        "image optimization",
+        "product images cdn",
+        "webp avif conversion",
+        "lazy loading images",
+        "image pipeline",
+        "cdn images",
+        "product image performance"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/infrastructure-performance/image-optimization-cdn",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "load-testing-commerce",
+      "name": "Load Testing Commerce",
+      "description": "Load testing checkout and catalog with realistic shopping behavior simulation",
+      "category": "infrastructure-performance",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "load-testing",
+        "artillery",
+        "k6",
+        "performance-testing",
+        "checkout-testing",
+        "stress-testing",
+        "capacity-planning"
+      ],
+      "triggers": [
+        "load testing ecommerce",
+        "load test checkout",
+        "performance testing commerce",
+        "k6 ecommerce",
+        "artillery load test",
+        "stress test checkout",
+        "capacity planning"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/infrastructure-performance/load-testing-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "monitoring-alerting-commerce",
+      "name": "Monitoring Alerting Commerce",
+      "description": "Commerce-specific dashboards — checkout success rate, cart errors, payment failures",
+      "category": "infrastructure-performance",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "monitoring",
+        "alerting",
+        "datadog",
+        "grafana",
+        "prometheus",
+        "checkout-funnel",
+        "payment-monitoring",
+        "slo",
+        "error-tracking"
+      ],
+      "triggers": [
+        "ecommerce monitoring",
+        "commerce alerting",
+        "checkout monitoring",
+        "payment failure alerts",
+        "cart error tracking",
+        "commerce dashboards",
+        "slo ecommerce"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/infrastructure-performance/monitoring-alerting-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "analytics-integration",
+      "name": "Analytics Integration",
+      "description": "GA4, Meta Pixel, server-side tagging, and data layer implementation",
+      "category": "integrations-apis",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "analytics",
+        "ga4",
+        "meta-pixel",
+        "gtm",
+        "data-layer",
+        "server-side-tagging"
+      ],
+      "triggers": [
+        "add analytics",
+        "implement GA4",
+        "set up tracking"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/integrations-apis/analytics-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "email-service-integration",
+      "name": "Email Service Integration",
+      "description": "Transactional email setup (SendGrid, SES, Postmark) with template management",
+      "category": "integrations-apis",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "email",
+        "sendgrid",
+        "ses",
+        "postmark",
+        "transactional-email",
+        "templates",
+        "deliverability",
+        "spf",
+        "dkim",
+        "dmarc"
+      ],
+      "triggers": [
+        "transactional email",
+        "sendgrid integration",
+        "ses email",
+        "postmark email",
+        "email templates",
+        "order confirmation email",
+        "email deliverability"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/integrations-apis/email-service-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
     },
     {
       "id": "erp-integration",
@@ -311,6 +2405,332 @@
       "difficulty": "advanced"
     },
     {
+      "id": "marketplace-connectors",
+      "name": "Marketplace Connectors",
+      "description": "List products on Amazon, eBay, Walmart with inventory sync and order import",
+      "category": "integrations-apis",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "marketplace",
+        "amazon",
+        "ebay",
+        "walmart",
+        "sp-api",
+        "inventory-sync",
+        "order-import",
+        "multichannel",
+        "listing"
+      ],
+      "triggers": [
+        "amazon integration",
+        "ebay integration",
+        "walmart marketplace",
+        "marketplace connector",
+        "multichannel commerce",
+        "amazon sp-api",
+        "marketplace listing sync"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/integrations-apis/marketplace-connectors",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "pos-integration",
+      "name": "Pos Integration",
+      "description": "Point-of-sale integration with online inventory and unified order management",
+      "category": "integrations-apis",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "pos",
+        "point-of-sale",
+        "omnichannel",
+        "inventory-sync",
+        "square",
+        "shopify-pos"
+      ],
+      "triggers": [
+        "integrate POS",
+        "connect point of sale",
+        "unified inventory"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/integrations-apis/pos-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "product-information-management",
+      "name": "Product Information Management",
+      "description": "PIM integration (Akeneo, Salsify) for centralized product data",
+      "category": "integrations-apis",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "pim",
+        "akeneo",
+        "salsify",
+        "product-data",
+        "syndication",
+        "catalog",
+        "data-enrichment",
+        "attributes"
+      ],
+      "triggers": [
+        "pim integration",
+        "akeneo integration",
+        "salsify integration",
+        "product information management",
+        "product data syndication",
+        "centralized catalog",
+        "product enrichment"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/integrations-apis/product-information-management",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "webhook-architecture",
+      "name": "Webhook Architecture",
+      "description": "Reliable webhook delivery with retries, signatures, dead-letter queues",
+      "category": "integrations-apis",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "webhooks",
+        "reliability",
+        "retry",
+        "dead-letter-queue",
+        "signature-verification",
+        "outbox-pattern",
+        "event-delivery"
+      ],
+      "triggers": [
+        "webhook architecture",
+        "reliable webhooks",
+        "webhook retry",
+        "dead letter queue webhooks",
+        "webhook signature",
+        "outbox pattern",
+        "webhook delivery"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/integrations-apis/webhook-architecture",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "affiliate-program",
+      "name": "Affiliate Program",
+      "description": "Affiliate tracking, commission tiers, payout management, and fraud detection",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "affiliate",
+        "referral",
+        "commission",
+        "tracking",
+        "fraud-detection",
+        "payout",
+        "utm",
+        "partner-program"
+      ],
+      "triggers": [
+        "affiliate program",
+        "affiliate tracking",
+        "commission tiers",
+        "affiliate payout",
+        "partner program",
+        "affiliate fraud detection",
+        "referral tracking"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/affiliate-program",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "cart-abandonment-recovery",
+      "name": "Cart Abandonment Recovery",
+      "description": "Multi-channel abandonment recovery with timing sequences and incentive escalation",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "cart-abandonment",
+        "email",
+        "sms",
+        "push-notifications",
+        "recovery",
+        "incentive",
+        "retargeting",
+        "conversion"
+      ],
+      "triggers": [
+        "cart abandonment",
+        "abandoned cart recovery",
+        "recover abandoned carts",
+        "cart recovery emails",
+        "abandonment sequence"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/cart-abandonment-recovery",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "content-commerce",
+      "name": "Content Commerce",
+      "description": "Blog-to-commerce integration, shoppable content, and editorial merchandising",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "content-commerce",
+        "shoppable-content",
+        "blog",
+        "editorial",
+        "seo",
+        "product-embedding",
+        "cms",
+        "headless"
+      ],
+      "triggers": [
+        "content commerce",
+        "shoppable blog",
+        "shoppable content",
+        "editorial merchandising",
+        "blog to commerce",
+        "product embedding in blog"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/content-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "conversion-rate-optimization",
+      "name": "Conversion Rate Optimization",
+      "description": "CRO audit frameworks, heatmap analysis, and checkout funnel optimization",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "cro",
+        "conversion-rate",
+        "heatmap",
+        "funnel",
+        "checkout-optimization",
+        "a-b-testing",
+        "ux",
+        "analytics"
+      ],
+      "triggers": [
+        "conversion rate optimization",
+        "CRO audit",
+        "improve checkout conversion",
+        "heatmap analysis",
+        "funnel optimization",
+        "reduce checkout abandonment"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/conversion-rate-optimization",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "ecommerce-seo",
       "name": "Ecommerce Seo",
       "description": "Product page SEO, structured data (JSON-LD), canonical URLs, and sitemap generation",
@@ -343,6 +2763,580 @@
         "opencode"
       ],
       "path": "skills/marketing-growth/ecommerce-seo",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "email-marketing-automation",
+      "name": "Email Marketing Automation",
+      "description": "Triggered email flows — welcome, post-purchase, win-back, browse abandonment",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "email",
+        "automation",
+        "klaviyo",
+        "sendgrid",
+        "welcome-series",
+        "post-purchase",
+        "win-back",
+        "browse-abandonment",
+        "lifecycle"
+      ],
+      "triggers": [
+        "email automation",
+        "triggered emails",
+        "welcome email flow",
+        "post-purchase email",
+        "win-back campaign",
+        "browse abandonment email",
+        "email marketing flows"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/email-marketing-automation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "exit-intent-popups",
+      "name": "Exit Intent Popups",
+      "description": "Exit-intent detection with offer targeting, frequency capping, and A/B testing",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "exit-intent",
+        "popup",
+        "conversion",
+        "offer",
+        "frequency-capping",
+        "a-b-testing",
+        "email-capture",
+        "coupon"
+      ],
+      "triggers": [
+        "exit intent popup",
+        "exit intent",
+        "exit intent detection",
+        "popup with offer",
+        "email capture popup",
+        "frequency capping popup",
+        "abandon intent detection"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/exit-intent-popups",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "google-shopping-feed",
+      "name": "Google Shopping Feed",
+      "description": "Product feed generation for Google Merchant Center with optimization rules",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "google-shopping",
+        "merchant-center",
+        "product-feed",
+        "pla",
+        "google-ads",
+        "rss",
+        "content-api",
+        "feed-optimization"
+      ],
+      "triggers": [
+        "google shopping",
+        "google merchant center",
+        "product feed",
+        "shopping ads",
+        "google PLA",
+        "google shopping feed"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/google-shopping-feed",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "influencer-tracking",
+      "name": "Influencer Tracking",
+      "description": "Influencer campaign attribution, UTM management, and ROI measurement",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "influencer",
+        "attribution",
+        "utm",
+        "roi",
+        "campaign-tracking",
+        "creator",
+        "ugc",
+        "instagram",
+        "tiktok"
+      ],
+      "triggers": [
+        "influencer tracking",
+        "influencer attribution",
+        "influencer ROI",
+        "UTM management",
+        "creator campaign tracking",
+        "influencer marketing analytics"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/influencer-tracking",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "push-notifications",
+      "name": "Push Notifications",
+      "description": "Web push for price drops, back-in-stock, and cart reminders",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "push-notifications",
+        "web-push",
+        "pwa",
+        "vapid",
+        "service-worker",
+        "back-in-stock",
+        "price-drop",
+        "cart-reminder"
+      ],
+      "triggers": [
+        "web push notifications",
+        "push notifications",
+        "browser push",
+        "back in stock notification",
+        "price drop alert",
+        "push notification setup"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/push-notifications",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "sms-marketing",
+      "name": "Sms Marketing",
+      "description": "SMS campaigns with opt-in, segmentation, and compliance (TCPA/GDPR)",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "sms",
+        "twilio",
+        "tcpa",
+        "gdpr",
+        "compliance",
+        "opt-in",
+        "segmentation",
+        "mobile-marketing",
+        "text-marketing"
+      ],
+      "triggers": [
+        "sms marketing",
+        "text message marketing",
+        "sms campaigns",
+        "TCPA compliance",
+        "sms opt-in",
+        "twilio sms",
+        "SMS segmentation"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/sms-marketing",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "social-commerce",
+      "name": "Social Commerce",
+      "description": "Shoppable posts, Instagram/TikTok catalog sync, and social checkout",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "social-commerce",
+        "instagram",
+        "tiktok",
+        "facebook",
+        "catalog",
+        "shoppable-posts",
+        "meta",
+        "product-tagging"
+      ],
+      "triggers": [
+        "social commerce",
+        "instagram shopping",
+        "tiktok shop",
+        "shoppable posts",
+        "social checkout",
+        "facebook catalog",
+        "instagram product tagging"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/social-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "buy-now-pay-later",
+      "name": "Buy Now Pay Later",
+      "description": "Integrate BNPL providers (Klarna, Afterpay, Affirm) with eligibility checks",
+      "category": "payments-checkout",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "bnpl",
+        "klarna",
+        "afterpay",
+        "affirm",
+        "buy-now-pay-later",
+        "installments",
+        "financing"
+      ],
+      "triggers": [
+        "buy now pay later",
+        "BNPL",
+        "Klarna integration",
+        "Afterpay integration",
+        "Affirm integration",
+        "pay in installments",
+        "split payment"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/buy-now-pay-later",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cart-logic",
+      "name": "Cart Logic",
+      "description": "Shopping cart state management — add/remove/update, persistence, merge strategies",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "cart",
+        "state-management",
+        "persistence",
+        "session",
+        "merge",
+        "add-to-cart",
+        "line-items"
+      ],
+      "triggers": [
+        "shopping cart",
+        "add to cart",
+        "cart state management",
+        "cart persistence",
+        "merge carts",
+        "cart implementation"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/cart-logic",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "checkout-flow-optimization",
+      "name": "Checkout Flow Optimization",
+      "description": "Multi-step vs single-page checkout design with conversion best practices",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "checkout",
+        "conversion",
+        "ux",
+        "funnel",
+        "single-page-checkout",
+        "multi-step",
+        "abandonment"
+      ],
+      "triggers": [
+        "optimize checkout",
+        "checkout conversion",
+        "reduce cart abandonment",
+        "single page checkout",
+        "checkout UX",
+        "checkout flow"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/checkout-flow-optimization",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "guest-checkout",
+      "name": "Guest Checkout",
+      "description": "Frictionless guest checkout with optional account creation post-purchase",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "guest-checkout",
+        "account-creation",
+        "conversion",
+        "frictionless",
+        "email-capture",
+        "post-purchase"
+      ],
+      "triggers": [
+        "guest checkout",
+        "checkout without account",
+        "guest purchase",
+        "post-purchase account creation",
+        "frictionless checkout"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/guest-checkout",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "multi-currency",
+      "name": "Multi Currency",
+      "description": "Currency detection, conversion, rounding rules, and localized formatting",
+      "category": "payments-checkout",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "multi-currency",
+        "forex",
+        "localization",
+        "exchange-rates",
+        "formatting",
+        "i18n",
+        "checkout"
+      ],
+      "triggers": [
+        "multi currency",
+        "currency conversion",
+        "international pricing",
+        "exchange rate",
+        "currency selector",
+        "localize prices"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/multi-currency",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "order-processing-pipeline",
+      "name": "Order Processing Pipeline",
+      "description": "Order state machine: pending -> confirmed -> processing -> shipped -> delivered",
+      "category": "payments-checkout",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "orders",
+        "state-machine",
+        "fulfillment",
+        "webhooks",
+        "order-management",
+        "pipeline",
+        "transitions"
+      ],
+      "triggers": [
+        "order processing",
+        "order state machine",
+        "order fulfillment",
+        "order status",
+        "order pipeline",
+        "order management"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/order-processing-pipeline",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "paypal-integration",
+      "name": "Paypal Integration",
+      "description": "PayPal checkout, express buttons, PayPal Commerce Platform setup",
+      "category": "payments-checkout",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "paypal",
+        "checkout",
+        "express",
+        "payments",
+        "pcp",
+        "venmo",
+        "pay-later",
+        "sdk"
+      ],
+      "triggers": [
+        "integrate paypal",
+        "add paypal checkout",
+        "paypal express",
+        "paypal buttons",
+        "paypal commerce",
+        "venmo checkout"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/paypal-integration",
       "platforms": [
         "platform-agnostic"
       ],
@@ -387,6 +3381,172 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "subscription-billing",
+      "name": "Subscription Billing",
+      "description": "Recurring payment flows with dunning, plan changes, prorations, and cancellation",
+      "category": "payments-checkout",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "subscriptions",
+        "recurring-billing",
+        "dunning",
+        "prorations",
+        "churn",
+        "cancellation",
+        "stripe-subscriptions"
+      ],
+      "triggers": [
+        "subscription billing",
+        "recurring payments",
+        "subscription management",
+        "dunning",
+        "plan upgrade",
+        "subscription cancellation",
+        "proration"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/subscription-billing",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "tax-calculation",
+      "name": "Tax Calculation",
+      "description": "Tax engine integration (TaxJar, Avalara) with nexus rules and VAT handling",
+      "category": "payments-checkout",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "tax",
+        "vat",
+        "nexus",
+        "taxjar",
+        "avalara",
+        "compliance",
+        "checkout",
+        "international"
+      ],
+      "triggers": [
+        "tax calculation",
+        "sales tax",
+        "VAT",
+        "TaxJar integration",
+        "Avalara integration",
+        "tax nexus",
+        "international tax"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/payments-checkout/tax-calculation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "magento-graphql",
+      "name": "Magento Graphql",
+      "description": "Magento GraphQL API for headless storefronts and PWA Studio",
+      "category": "platform-magento",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "magento",
+        "graphql",
+        "headless",
+        "pwa-studio",
+        "storefront",
+        "cart",
+        "products",
+        "luma"
+      ],
+      "triggers": [
+        "magento graphql",
+        "magento headless",
+        "magento pwa",
+        "magento graphql api",
+        "magento storefront api",
+        "adobe commerce graphql"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-magento/magento-graphql",
+      "platforms": [
+        "magento"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "magento-indexing-caching",
+      "name": "Magento Indexing Caching",
+      "description": "Indexer management, Varnish config, and full-page cache strategies",
+      "category": "platform-magento",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "magento",
+        "indexing",
+        "varnish",
+        "full-page-cache",
+        "fpc",
+        "redis",
+        "cache-management",
+        "performance"
+      ],
+      "triggers": [
+        "magento indexing",
+        "magento varnish",
+        "magento full page cache",
+        "magento cache",
+        "magento slow",
+        "magento reindex",
+        "adobe commerce cache"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-magento/magento-indexing-caching",
+      "platforms": [
+        "magento"
+      ],
+      "difficulty": "advanced"
+    },
+    {
       "id": "magento-module-development",
       "name": "Magento Module Development",
       "description": "Custom Magento 2 modules with dependency injection and service contracts",
@@ -423,6 +3583,89 @@
         "magento"
       ],
       "difficulty": "advanced"
+    },
+    {
+      "id": "magento-multi-store",
+      "name": "Magento Multi Store",
+      "description": "Multi-website, multi-store setup with shared catalogs and scoped config",
+      "category": "platform-magento",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "magento",
+        "multi-store",
+        "multi-website",
+        "store-scope",
+        "catalog",
+        "shared-catalog",
+        "b2b",
+        "scoped-config"
+      ],
+      "triggers": [
+        "magento multi store",
+        "magento multiple websites",
+        "magento store scope",
+        "magento multi website setup",
+        "magento b2b shared catalog",
+        "adobe commerce multi store"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-magento/magento-multi-store",
+      "platforms": [
+        "magento"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "sfcc-business-manager",
+      "name": "Sfcc Business Manager",
+      "description": "Business Manager configuration, import/export, and site preferences",
+      "category": "platform-salesforce-cc",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "salesforce-commerce-cloud",
+        "sfcc",
+        "business-manager",
+        "import-export",
+        "xml",
+        "site-preferences",
+        "promotions",
+        "catalog"
+      ],
+      "triggers": [
+        "sfcc business manager",
+        "salesforce commerce business manager",
+        "sfcc import export",
+        "sfcc catalog import",
+        "sfcc xml import",
+        "sfcc site preferences",
+        "sfcc promotions"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-salesforce-cc/sfcc-business-manager",
+      "platforms": [
+        "salesforce-commerce-cloud"
+      ],
+      "difficulty": "intermediate"
     },
     {
       "id": "sfcc-cartridge-development",
@@ -463,6 +3706,251 @@
       "difficulty": "advanced"
     },
     {
+      "id": "sfcc-ocapi-scapi",
+      "name": "Sfcc Ocapi Scapi",
+      "description": "OCAPI and Shopper APIs for headless Salesforce Commerce",
+      "category": "platform-salesforce-cc",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "salesforce-commerce-cloud",
+        "sfcc",
+        "ocapi",
+        "scapi",
+        "shopper-api",
+        "headless",
+        "b2c",
+        "jwt",
+        "composable-storefront"
+      ],
+      "triggers": [
+        "salesforce commerce api",
+        "sfcc ocapi",
+        "sfcc scapi",
+        "salesforce shopper api",
+        "sfcc headless",
+        "salesforce composable storefront",
+        "sfcc api integration"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-salesforce-cc/sfcc-ocapi-scapi",
+      "platforms": [
+        "salesforce-commerce-cloud"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "shopify-admin-api",
+      "name": "Shopify Admin Api",
+      "description": "Admin API for products, orders, customers with GraphQL and REST",
+      "category": "platform-shopify",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shopify",
+        "admin-api",
+        "graphql",
+        "rest",
+        "products",
+        "orders",
+        "customers",
+        "bulk-operations"
+      ],
+      "triggers": [
+        "shopify admin api",
+        "shopify graphql admin",
+        "shopify rest api",
+        "shopify orders api",
+        "shopify products api",
+        "shopify customers api"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-shopify/shopify-admin-api",
+      "platforms": [
+        "shopify"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "shopify-app-development",
+      "name": "Shopify App Development",
+      "description": "Shopify app scaffold with OAuth, App Bridge, and Polaris UI",
+      "category": "platform-shopify",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shopify",
+        "app",
+        "oauth",
+        "app-bridge",
+        "polaris",
+        "remix",
+        "embedded-app",
+        "cli"
+      ],
+      "triggers": [
+        "create shopify app",
+        "build shopify app",
+        "shopify embedded app",
+        "shopify oauth",
+        "shopify app bridge",
+        "shopify polaris"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-shopify/shopify-app-development",
+      "platforms": [
+        "shopify"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "shopify-checkout-extensions",
+      "name": "Shopify Checkout Extensions",
+      "description": "Checkout UI extensions and Shopify Functions for custom logic",
+      "category": "platform-shopify",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shopify",
+        "checkout-extensions",
+        "shopify-functions",
+        "checkout-ui",
+        "discounts",
+        "custom-logic",
+        "wasm"
+      ],
+      "triggers": [
+        "shopify checkout extension",
+        "shopify checkout ui",
+        "shopify functions",
+        "customize shopify checkout",
+        "shopify checkout customization",
+        "shopify discount function"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-shopify/shopify-checkout-extensions",
+      "platforms": [
+        "shopify"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "shopify-metafields",
+      "name": "Shopify Metafields",
+      "description": "Custom data with metafield definitions, validation, and storefront access",
+      "category": "platform-shopify",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shopify",
+        "metafields",
+        "metaobjects",
+        "custom-data",
+        "liquid",
+        "storefront-api",
+        "definitions"
+      ],
+      "triggers": [
+        "shopify metafields",
+        "shopify custom fields",
+        "shopify metaobjects",
+        "shopify metafield definition",
+        "shopify custom data"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-shopify/shopify-metafields",
+      "platforms": [
+        "shopify"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "shopify-storefront-api",
+      "name": "Shopify Storefront Api",
+      "description": "Storefront API queries for headless builds with buy SDK",
+      "category": "platform-shopify",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shopify",
+        "storefront-api",
+        "headless",
+        "graphql",
+        "buy-sdk",
+        "next-js",
+        "hydrogen",
+        "cart"
+      ],
+      "triggers": [
+        "shopify headless",
+        "shopify storefront api",
+        "shopify graphql storefront",
+        "headless shopify",
+        "shopify buy sdk",
+        "shopify hydrogen"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-shopify/shopify-storefront-api",
+      "platforms": [
+        "shopify"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "shopify-theme-development",
       "name": "Shopify Theme Development",
       "description": "Liquid templating, theme architecture, sections, and theme app extensions",
@@ -499,6 +3987,126 @@
         "shopify"
       ],
       "difficulty": "intermediate"
+    },
+    {
+      "id": "shopify-webhooks",
+      "name": "Shopify Webhooks",
+      "description": "Webhook registration, verification, and reliable event processing",
+      "category": "platform-shopify",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shopify",
+        "webhooks",
+        "hmac",
+        "event-processing",
+        "idempotency",
+        "gdpr",
+        "pub-sub"
+      ],
+      "triggers": [
+        "shopify webhooks",
+        "shopify webhook verification",
+        "shopify webhook handler",
+        "shopify event processing",
+        "shopify gdpr webhooks"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-shopify/shopify-webhooks",
+      "platforms": [
+        "shopify"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "woocommerce-blocks",
+      "name": "Woocommerce Blocks",
+      "description": "Gutenberg block-based checkout and cart customization",
+      "category": "platform-woocommerce",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "woocommerce",
+        "blocks",
+        "gutenberg",
+        "checkout",
+        "cart",
+        "inner-blocks",
+        "slot-fills",
+        "javascript"
+      ],
+      "triggers": [
+        "woocommerce blocks",
+        "woocommerce gutenberg checkout",
+        "woocommerce block checkout",
+        "customize woocommerce cart block",
+        "woocommerce inner blocks"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-woocommerce/woocommerce-blocks",
+      "platforms": [
+        "woocommerce"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "woocommerce-performance",
+      "name": "Woocommerce Performance",
+      "description": "WooCommerce optimization — query tuning, caching, and database cleanup",
+      "category": "platform-woocommerce",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "woocommerce",
+        "performance",
+        "caching",
+        "redis",
+        "query-optimization",
+        "database",
+        "mysql",
+        "object-cache"
+      ],
+      "triggers": [
+        "woocommerce performance",
+        "slow woocommerce",
+        "woocommerce speed",
+        "woocommerce database optimization",
+        "woocommerce caching",
+        "woocommerce redis"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-woocommerce/woocommerce-performance",
+      "platforms": [
+        "woocommerce"
+      ],
+      "difficulty": "advanced"
     },
     {
       "id": "woocommerce-plugin-development",
@@ -539,6 +4147,162 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "woocommerce-rest-api",
+      "name": "Woocommerce Rest Api",
+      "description": "WooCommerce REST API for headless and integration use cases",
+      "category": "platform-woocommerce",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "woocommerce",
+        "rest-api",
+        "headless",
+        "integration",
+        "products",
+        "orders",
+        "authentication",
+        "node"
+      ],
+      "triggers": [
+        "woocommerce rest api",
+        "woocommerce api integration",
+        "woocommerce headless",
+        "woocommerce external api",
+        "woocommerce nodejs"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-woocommerce/woocommerce-rest-api",
+      "platforms": [
+        "woocommerce"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "woocommerce-subscriptions",
+      "name": "Woocommerce Subscriptions",
+      "description": "Recurring payments and subscription product types in WooCommerce",
+      "category": "platform-woocommerce",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "woocommerce",
+        "subscriptions",
+        "recurring-payments",
+        "billing",
+        "renewal",
+        "stripe",
+        "php"
+      ],
+      "triggers": [
+        "woocommerce subscriptions",
+        "woocommerce recurring payments",
+        "woocommerce subscription product",
+        "woocommerce renewal",
+        "woocommerce billing"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-woocommerce/woocommerce-subscriptions",
+      "platforms": [
+        "woocommerce"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "ab-testing-pricing",
+      "name": "Ab Testing Pricing",
+      "description": "Price experimentation frameworks with statistical significance and revenue tracking",
+      "category": "pricing-promotions",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "ab-testing",
+        "price-experiments",
+        "statistical-significance",
+        "revenue-tracking",
+        "conversion-rate",
+        "experimentation"
+      ],
+      "triggers": [
+        "price A/B test",
+        "price experiment",
+        "test pricing",
+        "price testing",
+        "statistical significance pricing",
+        "experiment framework"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/pricing-promotions/ab-testing-pricing",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "coupon-management",
+      "name": "Coupon Management",
+      "description": "Coupon CRUD, validation rules, usage limits, single-use codes, bulk generation",
+      "category": "pricing-promotions",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "coupons",
+        "discounts",
+        "promotions",
+        "validation",
+        "bulk-generation",
+        "promo-codes"
+      ],
+      "triggers": [
+        "add coupon system",
+        "create promo codes",
+        "discount codes",
+        "coupon validation",
+        "bulk generate coupons"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/pricing-promotions/coupon-management",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "discount-engine",
       "name": "Discount Engine",
       "description": "Rule-based discount system — percentage, fixed, BOGO, tiered, conditional",
@@ -571,6 +4335,454 @@
         "opencode"
       ],
       "path": "skills/pricing-promotions/discount-engine",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "dynamic-pricing",
+      "name": "Dynamic Pricing",
+      "description": "Demand-based pricing, competitor monitoring, and algorithmic price optimization",
+      "category": "pricing-promotions",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "dynamic-pricing",
+        "demand-pricing",
+        "price-optimization",
+        "competitor-monitoring",
+        "repricing",
+        "algorithmic-pricing"
+      ],
+      "triggers": [
+        "dynamic pricing",
+        "demand-based pricing",
+        "price optimization",
+        "competitor price monitoring",
+        "repricing engine",
+        "algorithmic pricing"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/pricing-promotions/dynamic-pricing",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "flash-sale-engine",
+      "name": "Flash Sale Engine",
+      "description": "Time-limited sales with countdown timers, stock limits, and queue management",
+      "category": "pricing-promotions",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "flash-sale",
+        "countdown-timer",
+        "queue",
+        "stock-limits",
+        "promotions",
+        "time-limited",
+        "waiting-room"
+      ],
+      "triggers": [
+        "flash sale",
+        "limited time offer",
+        "countdown timer sale",
+        "flash deal",
+        "time-limited discount",
+        "sale queue"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/pricing-promotions/flash-sale-engine",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "gift-cards",
+      "name": "Gift Cards",
+      "description": "Gift card issuance, redemption, balance tracking, and partial-use handling",
+      "category": "pricing-promotions",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "gift-cards",
+        "store-credit",
+        "balance",
+        "redemption",
+        "partial-use",
+        "issuance"
+      ],
+      "triggers": [
+        "gift card",
+        "store credit",
+        "gift certificate",
+        "gift card balance",
+        "redeem gift card"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/pricing-promotions/gift-cards",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "loyalty-points-system",
+      "name": "Loyalty Points System",
+      "description": "Points earning, redemption rules, tier progression, and expiration policies",
+      "category": "pricing-promotions",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "loyalty",
+        "points",
+        "rewards",
+        "tiers",
+        "redemption",
+        "expiration",
+        "customer-retention"
+      ],
+      "triggers": [
+        "loyalty program",
+        "points system",
+        "rewards program",
+        "earn points",
+        "redeem points",
+        "customer loyalty",
+        "tier system"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/pricing-promotions/loyalty-points-system",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "price-rules-engine",
+      "name": "Price Rules Engine",
+      "description": "Stackable pricing rules with priority, exclusions, and customer segment targeting",
+      "category": "pricing-promotions",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "price-rules",
+        "promotions",
+        "stacking",
+        "priority",
+        "exclusions",
+        "customer-segments",
+        "rule-engine"
+      ],
+      "triggers": [
+        "price rules",
+        "promotion rules",
+        "stackable discounts",
+        "pricing rule engine",
+        "promotional pricing logic",
+        "customer segment pricing"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/pricing-promotions/price-rules-engine",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "volume-pricing",
+      "name": "Volume Pricing",
+      "description": "Quantity-based price breaks, tiered pricing tables, and B2B price lists",
+      "category": "pricing-promotions",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "volume-pricing",
+        "quantity-breaks",
+        "tiered-pricing",
+        "b2b",
+        "price-lists",
+        "bulk-discount"
+      ],
+      "triggers": [
+        "volume pricing",
+        "quantity discounts",
+        "bulk pricing",
+        "tiered pricing",
+        "price breaks",
+        "B2B price list"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/pricing-promotions/volume-pricing",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "account-security",
+      "name": "Account Security",
+      "description": "Brute-force protection, MFA, session management for customer accounts",
+      "category": "security-compliance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "account-security",
+        "mfa",
+        "totp",
+        "brute-force",
+        "session-management",
+        "password-security",
+        "oauth",
+        "credential-stuffing"
+      ],
+      "triggers": [
+        "account security",
+        "customer account security",
+        "brute force protection",
+        "mfa ecommerce",
+        "totp",
+        "session management",
+        "credential stuffing",
+        "login security"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/security-compliance/account-security",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "bot-protection",
+      "name": "Bot Protection",
+      "description": "Anti-scraping, anti-scalping, and CAPTCHA strategies for commerce",
+      "category": "security-compliance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "bot-protection",
+        "captcha",
+        "scraping",
+        "scalping",
+        "rate-limiting",
+        "cloudflare",
+        "turnstile",
+        "honeypot"
+      ],
+      "triggers": [
+        "bot protection",
+        "anti-scraping",
+        "anti-scalping",
+        "captcha commerce",
+        "bot detection",
+        "checkout bots",
+        "inventory scraping"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/security-compliance/bot-protection",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "data-retention-policies",
+      "name": "Data Retention Policies",
+      "description": "Order/customer data lifecycle management and automated purging",
+      "category": "security-compliance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "data-retention",
+        "gdpr",
+        "lifecycle",
+        "purging",
+        "archival",
+        "compliance",
+        "cron-jobs",
+        "data-governance"
+      ],
+      "triggers": [
+        "data retention",
+        "data lifecycle",
+        "automated purging",
+        "order data retention",
+        "customer data lifecycle",
+        "data archival ecommerce"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/security-compliance/data-retention-policies",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "fraud-detection",
+      "name": "Fraud Detection",
+      "description": "Rule-based and ML fraud scoring with 3DS, velocity checks, and manual review",
+      "category": "security-compliance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "fraud",
+        "fraud-detection",
+        "3ds",
+        "velocity-checks",
+        "stripe-radar",
+        "machine-learning",
+        "manual-review",
+        "chargeback"
+      ],
+      "triggers": [
+        "fraud detection",
+        "fraud prevention",
+        "chargeback prevention",
+        "3ds authentication",
+        "velocity checks",
+        "fraud scoring",
+        "payment fraud"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/security-compliance/fraud-detection",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "gdpr-ecommerce",
+      "name": "Gdpr Ecommerce",
+      "description": "GDPR compliance — consent management, data export, right to deletion",
+      "category": "security-compliance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "gdpr",
+        "privacy",
+        "consent",
+        "data-export",
+        "right-to-deletion",
+        "dpa",
+        "cookie-consent",
+        "personal-data"
+      ],
+      "triggers": [
+        "gdpr compliance",
+        "gdpr ecommerce",
+        "data privacy",
+        "right to deletion",
+        "data export gdpr",
+        "consent management",
+        "cookie consent",
+        "personal data ecommerce"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/security-compliance/gdpr-ecommerce",
       "platforms": [
         "platform-agnostic"
       ],
@@ -615,6 +4827,247 @@
       "difficulty": "advanced"
     },
     {
+      "id": "secure-checkout",
+      "name": "Secure Checkout",
+      "description": "TLS, CSP headers, tokenization, and XSS prevention for payment pages",
+      "category": "security-compliance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "security",
+        "tls",
+        "csp",
+        "tokenization",
+        "xss",
+        "pci-dss",
+        "checkout-security",
+        "content-security-policy",
+        "https"
+      ],
+      "triggers": [
+        "secure checkout",
+        "checkout security",
+        "csp headers",
+        "tls checkout",
+        "xss prevention payment",
+        "pci dss checkout",
+        "tokenization"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/security-compliance/secure-checkout",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "accessibility-commerce",
+      "name": "Accessibility Commerce",
+      "description": "WCAG 2.1 AA compliance for e-commerce — screen readers, keyboard nav, ARIA for carts",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "accessibility",
+        "wcag",
+        "aria",
+        "screen-reader",
+        "keyboard-navigation",
+        "a11y",
+        "inclusive-design"
+      ],
+      "triggers": [
+        "accessibility compliance",
+        "WCAG 2.1",
+        "screen reader support",
+        "keyboard navigation",
+        "ARIA labels",
+        "a11y audit",
+        "ADA compliance"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/accessibility-commerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "faceted-navigation",
+      "name": "Faceted Navigation",
+      "description": "Build filterable product listings with multi-select facets and URL-driven state",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "facets",
+        "filters",
+        "navigation",
+        "search",
+        "url-state",
+        "product-listing",
+        "plp"
+      ],
+      "triggers": [
+        "add product filters",
+        "faceted search",
+        "filter by category",
+        "product listing filters",
+        "multi-select facets",
+        "filterable products"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/faceted-navigation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "image-zoom-360",
+      "name": "Image Zoom 360",
+      "description": "Product image zoom, 360-degree views, and video integration",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "images",
+        "zoom",
+        "360-view",
+        "video",
+        "product-gallery",
+        "media",
+        "performance"
+      ],
+      "triggers": [
+        "product image zoom",
+        "360 degree product view",
+        "product gallery",
+        "image magnifier",
+        "product video",
+        "spin view"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/image-zoom-360",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mega-menu-builder",
+      "name": "Mega Menu Builder",
+      "description": "Category navigation with mega menus, featured products, and promotional banners",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "navigation",
+        "mega-menu",
+        "cms",
+        "categories",
+        "banners",
+        "accessibility",
+        "keyboard-nav"
+      ],
+      "triggers": [
+        "build mega menu",
+        "navigation menu",
+        "category menu with images",
+        "featured products in nav",
+        "promotional banner in menu"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/mega-menu-builder",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "product-comparison",
+      "name": "Product Comparison",
+      "description": "Side-by-side feature comparison tables with dynamic attribute selection",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "comparison",
+        "product-table",
+        "attributes",
+        "side-by-side",
+        "specification",
+        "ux"
+      ],
+      "triggers": [
+        "compare products",
+        "product comparison table",
+        "side by side comparison",
+        "feature comparison",
+        "spec comparison"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/product-comparison",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "product-page-design",
       "name": "Product Page Design",
       "description": "High-converting product page layouts with image galleries, variant selectors, and social proof",
@@ -647,6 +5100,242 @@
         "opencode"
       ],
       "path": "skills/storefront-ui/product-page-design",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "quick-view-modal",
+      "name": "Quick View Modal",
+      "description": "Product quick-view overlays with add-to-cart without leaving the listing page",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "quick-view",
+        "modal",
+        "overlay",
+        "product-listing",
+        "add-to-cart",
+        "dialog",
+        "focus-trap"
+      ],
+      "triggers": [
+        "quick view product",
+        "product preview modal",
+        "add to cart from listing",
+        "product overlay",
+        "quick buy"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/quick-view-modal",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "recently-viewed-products",
+      "name": "Recently Viewed Products",
+      "description": "Track and display browsing history with sessionStorage/cookie strategies",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "recently-viewed",
+        "browsing-history",
+        "sessionStorage",
+        "cookies",
+        "personalization",
+        "recommendations"
+      ],
+      "triggers": [
+        "recently viewed products",
+        "browsing history",
+        "continue shopping",
+        "viewed items",
+        "product history widget"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/recently-viewed-products",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "responsive-storefront",
+      "name": "Responsive Storefront",
+      "description": "Mobile-first responsive patterns for commerce (thumb-friendly cart, sticky buy bar)",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "responsive",
+        "mobile-first",
+        "css",
+        "ux",
+        "cart",
+        "buy-button",
+        "touch",
+        "layout"
+      ],
+      "triggers": [
+        "mobile responsive storefront",
+        "thumb-friendly design",
+        "sticky add to cart",
+        "mobile commerce layout",
+        "responsive product page"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/responsive-storefront",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "search-autocomplete",
+      "name": "Search Autocomplete",
+      "description": "Implement typeahead search with fuzzy matching, filters, and merchandising rules",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "search",
+        "autocomplete",
+        "typeahead",
+        "fuzzy-matching",
+        "merchandising",
+        "algolia",
+        "elasticsearch"
+      ],
+      "triggers": [
+        "add search autocomplete",
+        "implement typeahead search",
+        "product search suggestions",
+        "search as you type",
+        "fuzzy search"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/search-autocomplete",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "storefront-theming",
+      "name": "Storefront Theming",
+      "description": "Theme architecture with design tokens, CSS custom properties, and white-labeling",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "theming",
+        "design-tokens",
+        "css-custom-properties",
+        "white-label",
+        "multi-brand",
+        "dark-mode",
+        "tokens"
+      ],
+      "triggers": [
+        "storefront theming",
+        "design tokens",
+        "CSS variables commerce",
+        "white label store",
+        "multi-brand theme",
+        "dark mode ecommerce"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/storefront-theming",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "wishlist-save-for-later",
+      "name": "Wishlist Save For Later",
+      "description": "Persistent wishlists with sharing, back-in-stock alerts, and move-to-cart",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "wishlist",
+        "save-for-later",
+        "back-in-stock",
+        "sharing",
+        "favorites",
+        "alerts",
+        "cart"
+      ],
+      "triggers": [
+        "wishlist",
+        "save for later",
+        "add to wishlist",
+        "back in stock alert",
+        "favorite products",
+        "share wishlist"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/wishlist-save-for-later",
       "platforms": [
         "platform-agnostic"
       ],

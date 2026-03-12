@@ -1,10 +1,220 @@
 [
   {
+    "id": "b2b-commerce",
+    "path": "skills/business-operations/b2b-commerce",
+    "category": "business-operations",
+    "name": "B2b Commerce",
+    "description": "B2B features — company accounts, quote workflows, custom catalogs, net terms",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "demand-forecasting",
+    "path": "skills/business-operations/demand-forecasting",
+    "category": "business-operations",
+    "name": "Demand Forecasting",
+    "description": "Inventory demand prediction using sales history, seasonality, and trends",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "marketplace-building",
+    "path": "skills/business-operations/marketplace-building",
+    "category": "business-operations",
+    "name": "Marketplace Building",
+    "description": "Multi-vendor marketplace architecture — seller onboarding, commissions, payouts",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
     "id": "merchandising-rules",
     "path": "skills/business-operations/merchandising-rules",
     "category": "business-operations",
     "name": "Merchandising Rules",
     "description": "Visual merchandising, product ranking rules, and automated collection curation",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "multi-channel-selling",
+    "path": "skills/business-operations/multi-channel-selling",
+    "category": "business-operations",
+    "name": "Multi Channel Selling",
+    "description": "Unified catalog and inventory across DTC, wholesale, marketplace channels",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "order-management-system",
+    "path": "skills/business-operations/order-management-system",
+    "category": "business-operations",
+    "name": "Order Management System",
+    "description": "OMS design with distributed fulfillment, split orders, and backorder handling",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "returns-refund-policy",
+    "path": "skills/business-operations/returns-refund-policy",
+    "category": "business-operations",
+    "name": "Returns Refund Policy",
+    "description": "Policy engine for return windows, restocking fees, and automated approvals",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "vendor-management",
+    "path": "skills/business-operations/vendor-management",
+    "category": "business-operations",
+    "name": "Vendor Management",
+    "description": "Vendor portal, purchase orders, dropship routing, and performance scorecards",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "catalog-import-export",
+    "path": "skills/catalog-inventory/catalog-import-export",
+    "category": "catalog-inventory",
+    "name": "Catalog Import Export",
+    "description": "Bulk product import/export via CSV, JSON, XML with validation and error handling",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "digital-products",
+    "path": "skills/catalog-inventory/digital-products",
+    "category": "catalog-inventory",
+    "name": "Digital Products",
+    "description": "Manage downloadable goods — license keys, download limits, expiration, delivery",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "inventory-tracking",
+    "path": "skills/catalog-inventory/inventory-tracking",
+    "category": "catalog-inventory",
+    "name": "Inventory Tracking",
+    "description": "Real-time stock tracking across warehouses with reservation and backorder logic",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "low-stock-alerts",
+    "path": "skills/catalog-inventory/low-stock-alerts",
+    "category": "catalog-inventory",
+    "name": "Low Stock Alerts",
+    "description": "Automated reorder point monitoring with supplier notifications and demand forecasting",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "multi-warehouse",
+    "path": "skills/catalog-inventory/multi-warehouse",
+    "category": "catalog-inventory",
+    "name": "Multi Warehouse",
+    "description": "Multi-location inventory with allocation rules, transfer orders, and split fulfillment",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "product-bundles-kits",
+    "path": "skills/catalog-inventory/product-bundles-kits",
+    "category": "catalog-inventory",
+    "name": "Product Bundles Kits",
+    "description": "Bundle/kit management with dynamic pricing, inventory deduction, and display logic",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "product-categorization",
+    "path": "skills/catalog-inventory/product-categorization",
+    "category": "catalog-inventory",
+    "name": "Product Categorization",
+    "description": "Hierarchical taxonomy design with breadcrumbs, auto-categorization, and SEO",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "product-content-enrichment",
+    "path": "skills/catalog-inventory/product-content-enrichment",
+    "category": "catalog-inventory",
+    "name": "Product Content Enrichment",
+    "description": "AI-assisted product descriptions, attribute extraction, and image tagging",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
@@ -28,6 +238,20 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "variant-matrix",
+    "path": "skills/catalog-inventory/variant-matrix",
+    "category": "catalog-inventory",
+    "name": "Variant Matrix",
+    "description": "Generate and manage variant combinations (size x color x material) with SKU strategies",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "customer-accounts",
     "path": "skills/customer-crm/customer-accounts",
     "category": "customer-crm",
@@ -40,6 +264,160 @@
       "platform-agnostic"
     ],
     "difficulty": "beginner"
+  },
+  {
+    "id": "customer-lifetime-value",
+    "path": "skills/customer-crm/customer-lifetime-value",
+    "category": "customer-crm",
+    "name": "Customer Lifetime Value",
+    "description": "CLV calculation models, prediction, and retention strategy automation",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "customer-segmentation",
+    "path": "skills/customer-crm/customer-segmentation",
+    "category": "customer-crm",
+    "name": "Customer Segmentation",
+    "description": "RFM analysis, behavioral segments, and cohort-based targeting",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "customer-support-integration",
+    "path": "skills/customer-crm/customer-support-integration",
+    "category": "customer-crm",
+    "name": "Customer Support Integration",
+    "description": "Helpdesk integration (Zendesk, Intercom) with order context injection",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "live-chat-commerce",
+    "path": "skills/customer-crm/live-chat-commerce",
+    "category": "customer-crm",
+    "name": "Live Chat Commerce",
+    "description": "Real-time chat with product sharing, cart assistance, and agent tools",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "personalization-engine",
+    "path": "skills/customer-crm/personalization-engine",
+    "category": "customer-crm",
+    "name": "Personalization Engine",
+    "description": "Product recommendations using collaborative filtering and browsing history",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "product-reviews-ratings",
+    "path": "skills/customer-crm/product-reviews-ratings",
+    "category": "customer-crm",
+    "name": "Product Reviews Ratings",
+    "description": "Review collection, moderation, aggregate scoring, and display widgets",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "referral-program",
+    "path": "skills/customer-crm/referral-program",
+    "category": "customer-crm",
+    "name": "Referral Program",
+    "description": "Refer-a-friend flows with unique links, reward tiers, and fraud prevention",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "user-generated-content",
+    "path": "skills/customer-crm/user-generated-content",
+    "category": "customer-crm",
+    "name": "User Generated Content",
+    "description": "Customer photos, Q&A sections, and social proof widgets",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "ab-testing-ecommerce",
+    "path": "skills/data-analytics/ab-testing-ecommerce",
+    "category": "data-analytics",
+    "name": "Ab Testing Ecommerce",
+    "description": "Experimentation platform for product pages, checkout, and pricing tests",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "attribution-modeling",
+    "path": "skills/data-analytics/attribution-modeling",
+    "category": "data-analytics",
+    "name": "Attribution Modeling",
+    "description": "Multi-touch attribution for marketing spend optimization",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "customer-analytics",
+    "path": "skills/data-analytics/customer-analytics",
+    "category": "data-analytics",
+    "name": "Customer Analytics",
+    "description": "RFM scoring, purchase frequency, churn prediction, and segment analysis",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
   },
   {
     "id": "ecommerce-data-warehouse",
@@ -56,12 +434,194 @@
     "difficulty": "advanced"
   },
   {
+    "id": "product-analytics",
+    "path": "skills/data-analytics/product-analytics",
+    "category": "data-analytics",
+    "name": "Product Analytics",
+    "description": "Product performance metrics, sell-through rates, and dead stock identification",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "sales-reporting-dashboard",
+    "path": "skills/data-analytics/sales-reporting-dashboard",
+    "category": "data-analytics",
+    "name": "Sales Reporting Dashboard",
+    "description": "Revenue, AOV, conversion dashboards with drill-down and cohort analysis",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "dropshipping-integration",
+    "path": "skills/fulfillment-shipping/dropshipping-integration",
+    "category": "fulfillment-shipping",
+    "name": "Dropshipping Integration",
+    "description": "Supplier order routing, inventory sync, and margin calculation for dropship",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "free-shipping-thresholds",
+    "path": "skills/fulfillment-shipping/free-shipping-thresholds",
+    "category": "fulfillment-shipping",
+    "name": "Free Shipping Thresholds",
+    "description": "Dynamic free shipping rules with progress indicators and upsell nudges",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "international-shipping",
+    "path": "skills/fulfillment-shipping/international-shipping",
+    "category": "fulfillment-shipping",
+    "name": "International Shipping",
+    "description": "Cross-border commerce: customs forms, duties estimation, restricted items",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "order-fulfillment-workflow",
+    "path": "skills/fulfillment-shipping/order-fulfillment-workflow",
+    "category": "fulfillment-shipping",
+    "name": "Order Fulfillment Workflow",
+    "description": "Pick-pack-ship workflows with barcode scanning and packing slip generation",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "returns-management",
+    "path": "skills/fulfillment-shipping/returns-management",
+    "category": "fulfillment-shipping",
+    "name": "Returns Management",
+    "description": "RMA flow with return labels, refund/exchange logic, and restocking",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "same-day-delivery",
+    "path": "skills/fulfillment-shipping/same-day-delivery",
+    "category": "fulfillment-shipping",
+    "name": "Same Day Delivery",
+    "description": "Local delivery zone management, time-slot booking, and driver dispatch",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "shipment-tracking",
+    "path": "skills/fulfillment-shipping/shipment-tracking",
+    "category": "fulfillment-shipping",
+    "name": "Shipment Tracking",
+    "description": "Track shipments across carriers with webhook-driven status updates",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "shipping-rate-calculator",
     "path": "skills/fulfillment-shipping/shipping-rate-calculator",
     "category": "fulfillment-shipping",
     "name": "Shipping Rate Calculator",
     "description": "Real-time rate calculation with carrier APIs (UPS, FedEx, USPS, DHL)",
     "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "commerce-api-gateway",
+    "path": "skills/headless-modern/commerce-api-gateway",
+    "category": "headless-modern",
+    "name": "Commerce Api Gateway",
+    "description": "API gateway patterns for aggregating multiple commerce microservices",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "commerce-js-integration",
+    "path": "skills/headless-modern/commerce-js-integration",
+    "category": "headless-modern",
+    "name": "Commerce Js Integration",
+    "description": "Commerce.js (Chec) SDK integration for lightweight headless stores",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "composable-commerce",
+    "path": "skills/headless-modern/composable-commerce",
+    "category": "headless-modern",
+    "name": "Composable Commerce",
+    "description": "MACH architecture — microservices, API-first, cloud-native, headless patterns",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "jamstack-storefront",
+    "path": "skills/headless-modern/jamstack-storefront",
+    "category": "headless-modern",
+    "name": "Jamstack Storefront",
+    "description": "Static-generated storefronts with Next.js/Astro + commerce API backends",
+    "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
@@ -84,6 +644,62 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "pwa-storefront",
+    "path": "skills/headless-modern/pwa-storefront",
+    "category": "headless-modern",
+    "name": "Pwa Storefront",
+    "description": "Progressive web app storefronts with offline catalog, service workers",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "saleor-development",
+    "path": "skills/headless-modern/saleor-development",
+    "category": "headless-modern",
+    "name": "Saleor Development",
+    "description": "Saleor GraphQL API, app development, and dashboard customization",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "shopify-hydrogen",
+    "path": "skills/headless-modern/shopify-hydrogen",
+    "category": "headless-modern",
+    "name": "Shopify Hydrogen",
+    "description": "Hydrogen + Remix storefront with Oxygen deployment and Storefront API",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "database-optimization-commerce",
+    "path": "skills/infrastructure-performance/database-optimization-commerce",
+    "category": "infrastructure-performance",
+    "name": "Database Optimization Commerce",
+    "description": "Product query optimization, search indexing, and read-replica strategies",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
     "id": "ecommerce-caching",
     "path": "skills/infrastructure-performance/ecommerce-caching",
     "category": "infrastructure-performance",
@@ -96,6 +712,104 @@
       "platform-agnostic"
     ],
     "difficulty": "advanced"
+  },
+  {
+    "id": "edge-commerce",
+    "path": "skills/infrastructure-performance/edge-commerce",
+    "category": "infrastructure-performance",
+    "name": "Edge Commerce",
+    "description": "Edge computing for commerce — geo-routing, edge-side personalization, KV stores",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "flash-sale-scaling",
+    "path": "skills/infrastructure-performance/flash-sale-scaling",
+    "category": "infrastructure-performance",
+    "name": "Flash Sale Scaling",
+    "description": "Auto-scaling, queue-based ordering, and circuit breakers for traffic spikes",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "image-optimization-cdn",
+    "path": "skills/infrastructure-performance/image-optimization-cdn",
+    "category": "infrastructure-performance",
+    "name": "Image Optimization Cdn",
+    "description": "Product image pipeline — resize, compress, WebP/AVIF, lazy load, CDN delivery",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "load-testing-commerce",
+    "path": "skills/infrastructure-performance/load-testing-commerce",
+    "category": "infrastructure-performance",
+    "name": "Load Testing Commerce",
+    "description": "Load testing checkout and catalog with realistic shopping behavior simulation",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "monitoring-alerting-commerce",
+    "path": "skills/infrastructure-performance/monitoring-alerting-commerce",
+    "category": "infrastructure-performance",
+    "name": "Monitoring Alerting Commerce",
+    "description": "Commerce-specific dashboards — checkout success rate, cart errors, payment failures",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "analytics-integration",
+    "path": "skills/integrations-apis/analytics-integration",
+    "category": "integrations-apis",
+    "name": "Analytics Integration",
+    "description": "GA4, Meta Pixel, server-side tagging, and data layer implementation",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "email-service-integration",
+    "path": "skills/integrations-apis/email-service-integration",
+    "category": "integrations-apis",
+    "name": "Email Service Integration",
+    "description": "Transactional email setup (SendGrid, SES, Postmark) with template management",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
   },
   {
     "id": "erp-integration",
@@ -112,12 +826,320 @@
     "difficulty": "advanced"
   },
   {
+    "id": "marketplace-connectors",
+    "path": "skills/integrations-apis/marketplace-connectors",
+    "category": "integrations-apis",
+    "name": "Marketplace Connectors",
+    "description": "List products on Amazon, eBay, Walmart with inventory sync and order import",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "pos-integration",
+    "path": "skills/integrations-apis/pos-integration",
+    "category": "integrations-apis",
+    "name": "Pos Integration",
+    "description": "Point-of-sale integration with online inventory and unified order management",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "product-information-management",
+    "path": "skills/integrations-apis/product-information-management",
+    "category": "integrations-apis",
+    "name": "Product Information Management",
+    "description": "PIM integration (Akeneo, Salsify) for centralized product data",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "webhook-architecture",
+    "path": "skills/integrations-apis/webhook-architecture",
+    "category": "integrations-apis",
+    "name": "Webhook Architecture",
+    "description": "Reliable webhook delivery with retries, signatures, dead-letter queues",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "affiliate-program",
+    "path": "skills/marketing-growth/affiliate-program",
+    "category": "marketing-growth",
+    "name": "Affiliate Program",
+    "description": "Affiliate tracking, commission tiers, payout management, and fraud detection",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "cart-abandonment-recovery",
+    "path": "skills/marketing-growth/cart-abandonment-recovery",
+    "category": "marketing-growth",
+    "name": "Cart Abandonment Recovery",
+    "description": "Multi-channel abandonment recovery with timing sequences and incentive escalation",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "content-commerce",
+    "path": "skills/marketing-growth/content-commerce",
+    "category": "marketing-growth",
+    "name": "Content Commerce",
+    "description": "Blog-to-commerce integration, shoppable content, and editorial merchandising",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "conversion-rate-optimization",
+    "path": "skills/marketing-growth/conversion-rate-optimization",
+    "category": "marketing-growth",
+    "name": "Conversion Rate Optimization",
+    "description": "CRO audit frameworks, heatmap analysis, and checkout funnel optimization",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "ecommerce-seo",
     "path": "skills/marketing-growth/ecommerce-seo",
     "category": "marketing-growth",
     "name": "Ecommerce Seo",
     "description": "Product page SEO, structured data (JSON-LD), canonical URLs, and sitemap generation",
     "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "email-marketing-automation",
+    "path": "skills/marketing-growth/email-marketing-automation",
+    "category": "marketing-growth",
+    "name": "Email Marketing Automation",
+    "description": "Triggered email flows — welcome, post-purchase, win-back, browse abandonment",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "exit-intent-popups",
+    "path": "skills/marketing-growth/exit-intent-popups",
+    "category": "marketing-growth",
+    "name": "Exit Intent Popups",
+    "description": "Exit-intent detection with offer targeting, frequency capping, and A/B testing",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "google-shopping-feed",
+    "path": "skills/marketing-growth/google-shopping-feed",
+    "category": "marketing-growth",
+    "name": "Google Shopping Feed",
+    "description": "Product feed generation for Google Merchant Center with optimization rules",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "influencer-tracking",
+    "path": "skills/marketing-growth/influencer-tracking",
+    "category": "marketing-growth",
+    "name": "Influencer Tracking",
+    "description": "Influencer campaign attribution, UTM management, and ROI measurement",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "push-notifications",
+    "path": "skills/marketing-growth/push-notifications",
+    "category": "marketing-growth",
+    "name": "Push Notifications",
+    "description": "Web push for price drops, back-in-stock, and cart reminders",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "sms-marketing",
+    "path": "skills/marketing-growth/sms-marketing",
+    "category": "marketing-growth",
+    "name": "Sms Marketing",
+    "description": "SMS campaigns with opt-in, segmentation, and compliance (TCPA/GDPR)",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "social-commerce",
+    "path": "skills/marketing-growth/social-commerce",
+    "category": "marketing-growth",
+    "name": "Social Commerce",
+    "description": "Shoppable posts, Instagram/TikTok catalog sync, and social checkout",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "buy-now-pay-later",
+    "path": "skills/payments-checkout/buy-now-pay-later",
+    "category": "payments-checkout",
+    "name": "Buy Now Pay Later",
+    "description": "Integrate BNPL providers (Klarna, Afterpay, Affirm) with eligibility checks",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "cart-logic",
+    "path": "skills/payments-checkout/cart-logic",
+    "category": "payments-checkout",
+    "name": "Cart Logic",
+    "description": "Shopping cart state management — add/remove/update, persistence, merge strategies",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "checkout-flow-optimization",
+    "path": "skills/payments-checkout/checkout-flow-optimization",
+    "category": "payments-checkout",
+    "name": "Checkout Flow Optimization",
+    "description": "Multi-step vs single-page checkout design with conversion best practices",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "guest-checkout",
+    "path": "skills/payments-checkout/guest-checkout",
+    "category": "payments-checkout",
+    "name": "Guest Checkout",
+    "description": "Frictionless guest checkout with optional account creation post-purchase",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "multi-currency",
+    "path": "skills/payments-checkout/multi-currency",
+    "category": "payments-checkout",
+    "name": "Multi Currency",
+    "description": "Currency detection, conversion, rounding rules, and localized formatting",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "order-processing-pipeline",
+    "path": "skills/payments-checkout/order-processing-pipeline",
+    "category": "payments-checkout",
+    "name": "Order Processing Pipeline",
+    "description": "Order state machine: pending -> confirmed -> processing -> shipped -> delivered",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "paypal-integration",
+    "path": "skills/payments-checkout/paypal-integration",
+    "category": "payments-checkout",
+    "name": "Paypal Integration",
+    "description": "PayPal checkout, express buttons, PayPal Commerce Platform setup",
+    "risk": "critical",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
@@ -140,6 +1162,62 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "subscription-billing",
+    "path": "skills/payments-checkout/subscription-billing",
+    "category": "payments-checkout",
+    "name": "Subscription Billing",
+    "description": "Recurring payment flows with dunning, plan changes, prorations, and cancellation",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "tax-calculation",
+    "path": "skills/payments-checkout/tax-calculation",
+    "category": "payments-checkout",
+    "name": "Tax Calculation",
+    "description": "Tax engine integration (TaxJar, Avalara) with nexus rules and VAT handling",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "magento-graphql",
+    "path": "skills/platform-magento/magento-graphql",
+    "category": "platform-magento",
+    "name": "Magento Graphql",
+    "description": "Magento GraphQL API for headless storefronts and PWA Studio",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "magento"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "magento-indexing-caching",
+    "path": "skills/platform-magento/magento-indexing-caching",
+    "category": "platform-magento",
+    "name": "Magento Indexing Caching",
+    "description": "Indexer management, Varnish config, and full-page cache strategies",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "magento"
+    ],
+    "difficulty": "advanced"
+  },
+  {
     "id": "magento-module-development",
     "path": "skills/platform-magento/magento-module-development",
     "category": "platform-magento",
@@ -152,6 +1230,34 @@
       "magento"
     ],
     "difficulty": "advanced"
+  },
+  {
+    "id": "magento-multi-store",
+    "path": "skills/platform-magento/magento-multi-store",
+    "category": "platform-magento",
+    "name": "Magento Multi Store",
+    "description": "Multi-website, multi-store setup with shared catalogs and scoped config",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "magento"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "sfcc-business-manager",
+    "path": "skills/platform-salesforce-cc/sfcc-business-manager",
+    "category": "platform-salesforce-cc",
+    "name": "Sfcc Business Manager",
+    "description": "Business Manager configuration, import/export, and site preferences",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "salesforce-commerce-cloud"
+    ],
+    "difficulty": "intermediate"
   },
   {
     "id": "sfcc-cartridge-development",
@@ -168,6 +1274,90 @@
     "difficulty": "advanced"
   },
   {
+    "id": "sfcc-ocapi-scapi",
+    "path": "skills/platform-salesforce-cc/sfcc-ocapi-scapi",
+    "category": "platform-salesforce-cc",
+    "name": "Sfcc Ocapi Scapi",
+    "description": "OCAPI and Shopper APIs for headless Salesforce Commerce",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "salesforce-commerce-cloud"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "shopify-admin-api",
+    "path": "skills/platform-shopify/shopify-admin-api",
+    "category": "platform-shopify",
+    "name": "Shopify Admin Api",
+    "description": "Admin API for products, orders, customers with GraphQL and REST",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "shopify"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "shopify-app-development",
+    "path": "skills/platform-shopify/shopify-app-development",
+    "category": "platform-shopify",
+    "name": "Shopify App Development",
+    "description": "Shopify app scaffold with OAuth, App Bridge, and Polaris UI",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "shopify"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "shopify-checkout-extensions",
+    "path": "skills/platform-shopify/shopify-checkout-extensions",
+    "category": "platform-shopify",
+    "name": "Shopify Checkout Extensions",
+    "description": "Checkout UI extensions and Shopify Functions for custom logic",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "shopify"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "shopify-metafields",
+    "path": "skills/platform-shopify/shopify-metafields",
+    "category": "platform-shopify",
+    "name": "Shopify Metafields",
+    "description": "Custom data with metafield definitions, validation, and storefront access",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "shopify"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "shopify-storefront-api",
+    "path": "skills/platform-shopify/shopify-storefront-api",
+    "category": "platform-shopify",
+    "name": "Shopify Storefront Api",
+    "description": "Storefront API queries for headless builds with buy SDK",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "shopify"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "shopify-theme-development",
     "path": "skills/platform-shopify/shopify-theme-development",
     "category": "platform-shopify",
@@ -180,6 +1370,48 @@
       "shopify"
     ],
     "difficulty": "intermediate"
+  },
+  {
+    "id": "shopify-webhooks",
+    "path": "skills/platform-shopify/shopify-webhooks",
+    "category": "platform-shopify",
+    "name": "Shopify Webhooks",
+    "description": "Webhook registration, verification, and reliable event processing",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "shopify"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "woocommerce-blocks",
+    "path": "skills/platform-woocommerce/woocommerce-blocks",
+    "category": "platform-woocommerce",
+    "name": "Woocommerce Blocks",
+    "description": "Gutenberg block-based checkout and cart customization",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "woocommerce"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "woocommerce-performance",
+    "path": "skills/platform-woocommerce/woocommerce-performance",
+    "category": "platform-woocommerce",
+    "name": "Woocommerce Performance",
+    "description": "WooCommerce optimization — query tuning, caching, and database cleanup",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "woocommerce"
+    ],
+    "difficulty": "advanced"
   },
   {
     "id": "woocommerce-plugin-development",
@@ -196,11 +1428,221 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "woocommerce-rest-api",
+    "path": "skills/platform-woocommerce/woocommerce-rest-api",
+    "category": "platform-woocommerce",
+    "name": "Woocommerce Rest Api",
+    "description": "WooCommerce REST API for headless and integration use cases",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "woocommerce"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "woocommerce-subscriptions",
+    "path": "skills/platform-woocommerce/woocommerce-subscriptions",
+    "category": "platform-woocommerce",
+    "name": "Woocommerce Subscriptions",
+    "description": "Recurring payments and subscription product types in WooCommerce",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "woocommerce"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "ab-testing-pricing",
+    "path": "skills/pricing-promotions/ab-testing-pricing",
+    "category": "pricing-promotions",
+    "name": "Ab Testing Pricing",
+    "description": "Price experimentation frameworks with statistical significance and revenue tracking",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "coupon-management",
+    "path": "skills/pricing-promotions/coupon-management",
+    "category": "pricing-promotions",
+    "name": "Coupon Management",
+    "description": "Coupon CRUD, validation rules, usage limits, single-use codes, bulk generation",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "discount-engine",
     "path": "skills/pricing-promotions/discount-engine",
     "category": "pricing-promotions",
     "name": "Discount Engine",
     "description": "Rule-based discount system — percentage, fixed, BOGO, tiered, conditional",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "dynamic-pricing",
+    "path": "skills/pricing-promotions/dynamic-pricing",
+    "category": "pricing-promotions",
+    "name": "Dynamic Pricing",
+    "description": "Demand-based pricing, competitor monitoring, and algorithmic price optimization",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "flash-sale-engine",
+    "path": "skills/pricing-promotions/flash-sale-engine",
+    "category": "pricing-promotions",
+    "name": "Flash Sale Engine",
+    "description": "Time-limited sales with countdown timers, stock limits, and queue management",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "gift-cards",
+    "path": "skills/pricing-promotions/gift-cards",
+    "category": "pricing-promotions",
+    "name": "Gift Cards",
+    "description": "Gift card issuance, redemption, balance tracking, and partial-use handling",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "loyalty-points-system",
+    "path": "skills/pricing-promotions/loyalty-points-system",
+    "category": "pricing-promotions",
+    "name": "Loyalty Points System",
+    "description": "Points earning, redemption rules, tier progression, and expiration policies",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "price-rules-engine",
+    "path": "skills/pricing-promotions/price-rules-engine",
+    "category": "pricing-promotions",
+    "name": "Price Rules Engine",
+    "description": "Stackable pricing rules with priority, exclusions, and customer segment targeting",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "volume-pricing",
+    "path": "skills/pricing-promotions/volume-pricing",
+    "category": "pricing-promotions",
+    "name": "Volume Pricing",
+    "description": "Quantity-based price breaks, tiered pricing tables, and B2B price lists",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "account-security",
+    "path": "skills/security-compliance/account-security",
+    "category": "security-compliance",
+    "name": "Account Security",
+    "description": "Brute-force protection, MFA, session management for customer accounts",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "bot-protection",
+    "path": "skills/security-compliance/bot-protection",
+    "category": "security-compliance",
+    "name": "Bot Protection",
+    "description": "Anti-scraping, anti-scalping, and CAPTCHA strategies for commerce",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "data-retention-policies",
+    "path": "skills/security-compliance/data-retention-policies",
+    "category": "security-compliance",
+    "name": "Data Retention Policies",
+    "description": "Order/customer data lifecycle management and automated purging",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "fraud-detection",
+    "path": "skills/security-compliance/fraud-detection",
+    "category": "security-compliance",
+    "name": "Fraud Detection",
+    "description": "Rule-based and ML fraud scoring with 3DS, velocity checks, and manual review",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "gdpr-ecommerce",
+    "path": "skills/security-compliance/gdpr-ecommerce",
+    "category": "security-compliance",
+    "name": "Gdpr Ecommerce",
+    "description": "GDPR compliance — consent management, data export, right to deletion",
     "risk": "critical",
     "source": "curated",
     "date_added": "2026-03-12",
@@ -224,11 +1666,179 @@
     "difficulty": "advanced"
   },
   {
+    "id": "secure-checkout",
+    "path": "skills/security-compliance/secure-checkout",
+    "category": "security-compliance",
+    "name": "Secure Checkout",
+    "description": "TLS, CSP headers, tokenization, and XSS prevention for payment pages",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "accessibility-commerce",
+    "path": "skills/storefront-ui/accessibility-commerce",
+    "category": "storefront-ui",
+    "name": "Accessibility Commerce",
+    "description": "WCAG 2.1 AA compliance for e-commerce — screen readers, keyboard nav, ARIA for carts",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "faceted-navigation",
+    "path": "skills/storefront-ui/faceted-navigation",
+    "category": "storefront-ui",
+    "name": "Faceted Navigation",
+    "description": "Build filterable product listings with multi-select facets and URL-driven state",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "image-zoom-360",
+    "path": "skills/storefront-ui/image-zoom-360",
+    "category": "storefront-ui",
+    "name": "Image Zoom 360",
+    "description": "Product image zoom, 360-degree views, and video integration",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "mega-menu-builder",
+    "path": "skills/storefront-ui/mega-menu-builder",
+    "category": "storefront-ui",
+    "name": "Mega Menu Builder",
+    "description": "Category navigation with mega menus, featured products, and promotional banners",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "product-comparison",
+    "path": "skills/storefront-ui/product-comparison",
+    "category": "storefront-ui",
+    "name": "Product Comparison",
+    "description": "Side-by-side feature comparison tables with dynamic attribute selection",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "product-page-design",
     "path": "skills/storefront-ui/product-page-design",
     "category": "storefront-ui",
     "name": "Product Page Design",
     "description": "High-converting product page layouts with image galleries, variant selectors, and social proof",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "quick-view-modal",
+    "path": "skills/storefront-ui/quick-view-modal",
+    "category": "storefront-ui",
+    "name": "Quick View Modal",
+    "description": "Product quick-view overlays with add-to-cart without leaving the listing page",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "recently-viewed-products",
+    "path": "skills/storefront-ui/recently-viewed-products",
+    "category": "storefront-ui",
+    "name": "Recently Viewed Products",
+    "description": "Track and display browsing history with sessionStorage/cookie strategies",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "responsive-storefront",
+    "path": "skills/storefront-ui/responsive-storefront",
+    "category": "storefront-ui",
+    "name": "Responsive Storefront",
+    "description": "Mobile-first responsive patterns for commerce (thumb-friendly cart, sticky buy bar)",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "search-autocomplete",
+    "path": "skills/storefront-ui/search-autocomplete",
+    "category": "storefront-ui",
+    "name": "Search Autocomplete",
+    "description": "Implement typeahead search with fuzzy matching, filters, and merchandising rules",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "storefront-theming",
+    "path": "skills/storefront-ui/storefront-theming",
+    "category": "storefront-ui",
+    "name": "Storefront Theming",
+    "description": "Theme architecture with design tokens, CSS custom properties, and white-labeling",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "wishlist-save-for-later",
+    "path": "skills/storefront-ui/wishlist-save-for-later",
+    "category": "storefront-ui",
+    "name": "Wishlist Save For Later",
+    "description": "Persistent wishlists with sharing, back-in-stock alerts, and move-to-cart",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
