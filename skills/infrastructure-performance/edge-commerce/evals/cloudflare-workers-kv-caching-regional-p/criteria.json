@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements a Cloudflare Worker for edge inventory caching and regional pricing, including correct KV access patterns, wrangler.toml configuration, cache header conventions, pricing header names, and Analytics Engine telemetry with the correct data point structure.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CF-IPCountry header",
+      "max_score": 8,
+      "description": "Reads country from the `CF-IPCountry` request header (not a geolocation API or IP lookup library)"
+    },
+    {
+      "name": "KV get with json type",
+      "max_score": 8,
+      "description": "KV reads use `.get(key, 'json')` (second argument is `'json'`) for typed deserialization"
+    },
+    {
+      "name": "KV TTL on inventory puts",
+      "max_score": 8,
+      "description": "KV inventory writes use `expirationTtl: 60` (60-second expiry on put calls)"
+    },
+    {
+      "name": "X-Edge-Cache HIT header",
+      "max_score": 7,
+      "description": "Response includes `X-Edge-Cache: HIT` when inventory is served from KV cache"
+    },
+    {
+      "name": "X-Edge-Cache MISS header",
+      "max_score": 5,
+      "description": "Response includes `X-Edge-Cache: MISS` when inventory is fetched from origin"
+    },
+    {
+      "name": "wrangler.toml kv_namespaces",
+      "max_score": 8,
+      "description": "`wrangler.toml` contains at least one `[[kv_namespaces]]` section with a `binding` field"
+    },
+    {
+      "name": "wrangler.toml compatibility_date",
+      "max_score": 8,
+      "description": "`wrangler.toml` sets `compatibility_date = \"2025-01-01\"`"
+    },
+    {
+      "name": "wrangler.toml cron trigger",
+      "max_score": 7,
+      "description": "`wrangler.toml` includes a `[triggers]` section with `crons = [\"*/1 * * * *\"]`"
+    },
+    {
+      "name": "Pricing headers to origin",
+      "max_score": 10,
+      "description": "Regional pricing is forwarded to the origin via request headers named `x-currency`, `x-tax-rate`, and `x-duty-rate`"
+    },
+    {
+      "name": "Stale inventory acknowledgment",
+      "max_score": 10,
+      "description": "Code or comments indicate that edge KV inventory is NOT the authoritative count, and that final validation happens at checkout (not at the edge)"
+    },
+    {
+      "name": "Analytics Engine writeDataPoint blobs",
+      "max_score": 9,
+      "description": "Calls `env.ANALYTICS.writeDataPoint()` with a `blobs` array containing at minimum: request path, country/region, and cache status"
+    },
+    {
+      "name": "Analytics Engine writeDataPoint doubles",
+      "max_score": 12,
+      "description": "The `writeDataPoint` call includes a `doubles` array with at minimum: request duration and response status code"
+    }
+  ]
+}

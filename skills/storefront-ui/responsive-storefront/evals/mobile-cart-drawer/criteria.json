@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the cart drawer as a bottom sheet on mobile and sidebar on desktop, with correct overscroll containment, body scroll locking, safe-area-inset-bottom on checkout button, responsive hero image using the picture element with art direction, and correct font-size for iOS input zoom prevention.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Desktop sidebar layout",
+      "max_score": 8,
+      "description": "On desktop the cart drawer is positioned as a right-side sidebar: `position: fixed; right: 0; top: 0; bottom: 0` with `width: min(400px, 100vw)` and hidden via `transform: translateX(100%)`"
+    },
+    {
+      "name": "Mobile bottom sheet",
+      "max_score": 10,
+      "description": "At max-width: 640px the drawer switches to a bottom sheet: `top: auto; width: 100vw; height: 85vh; transform: translateY(100%)`"
+    },
+    {
+      "name": "Bottom sheet border radius",
+      "max_score": 6,
+      "description": "The mobile bottom sheet has `border-radius: 16px 16px 0 0` (rounded top corners, flat bottom)"
+    },
+    {
+      "name": "overscroll-behavior contain",
+      "max_score": 10,
+      "description": "The cart drawer container applies `overscroll-behavior: contain` to prevent body scroll from leaking when scrolling inside the drawer"
+    },
+    {
+      "name": "Body scroll lock — overflow hidden",
+      "max_score": 8,
+      "description": "When the drawer opens, `overflow: hidden` is applied to the body element to prevent background scrolling"
+    },
+    {
+      "name": "Body scroll lock — touch-action",
+      "max_score": 8,
+      "description": "When the drawer opens, `touch-action: none` is applied to the body (or document.documentElement) to prevent touch scroll on mobile"
+    },
+    {
+      "name": "Checkout button sticky bottom",
+      "max_score": 8,
+      "description": "The checkout button uses `position: sticky; bottom: 0` so it stays at the bottom of the drawer as the item list scrolls"
+    },
+    {
+      "name": "Checkout safe area inset",
+      "max_score": 8,
+      "description": "The checkout button's padding-bottom includes `env(safe-area-inset-bottom)` (e.g., via calc()) to avoid being hidden behind the iPhone home indicator"
+    },
+    {
+      "name": "Picture element art direction",
+      "max_score": 8,
+      "description": "The HeroBanner uses a `<picture>` element with at least two `<source>` tags to serve different image crops for mobile and desktop viewports"
+    },
+    {
+      "name": "Hero image loading attributes",
+      "max_score": 6,
+      "description": "The hero `<img>` tag includes `loading=\"eager\"` and `fetchpriority=\"high\"` (NOT loading=\"lazy\")"
+    },
+    {
+      "name": "WebP format in hero",
+      "max_score": 6,
+      "description": "The hero image sources reference .webp format files (in srcset or src attributes)"
+    },
+    {
+      "name": "Body font size 16px",
+      "max_score": 6,
+      "description": "CSS sets body font-size to at least 16px (to prevent iOS auto-zoom when input fields are focused)"
+    },
+    {
+      "name": "No hover-only CTA states",
+      "max_score": 8,
+      "description": "Interactive button states use :focus-visible and/or :active rather than (or in addition to) :hover for primary CTAs"
+    }
+  ]
+}

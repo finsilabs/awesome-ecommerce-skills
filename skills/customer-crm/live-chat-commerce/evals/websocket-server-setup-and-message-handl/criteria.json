@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent correctly implements a WebSocket server using the 'ws' package with noServer mode, the right client/conversation data structures, discriminated union message types, isSelf broadcasting, safety guards, and resilience features like heartbeats, rate limiting, and monotonic sequence numbers.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ws package used",
+      "max_score": 8,
+      "description": "Imports WebSocketServer and/or WebSocket from the 'ws' package (not a different WebSocket library like socket.io or uWebSockets)"
+    },
+    {
+      "name": "noServer mode",
+      "max_score": 8,
+      "description": "Creates WebSocketServer with { noServer: true } option"
+    },
+    {
+      "name": "clients Map structure",
+      "max_score": 7,
+      "description": "Uses a Map<string, ...> keyed by socketId to track connected clients (not an array or object literal)"
+    },
+    {
+      "name": "conversations Map structure",
+      "max_score": 7,
+      "description": "Uses a separate Map<string, string[]> or similar mapping conversationId to arrays of socketIds"
+    },
+    {
+      "name": "ChatClient type field",
+      "max_score": 6,
+      "description": "Each client entry includes a 'type' property with value 'customer' or 'agent' (a union type or equivalent)"
+    },
+    {
+      "name": "Discriminated union messages",
+      "max_score": 8,
+      "description": "Defines message types as a discriminated union with at least: text, product_card, cart_action, discount_apply (or equivalent type literals)"
+    },
+    {
+      "name": "History on connect",
+      "max_score": 7,
+      "description": "Sends conversation history to newly connected client on connection (fetching up to 50 prior messages)"
+    },
+    {
+      "name": "readyState check before send",
+      "max_score": 6,
+      "description": "Checks ws.readyState === WebSocket.OPEN (or equivalent) before sending to any recipient during broadcast"
+    },
+    {
+      "name": "isSelf flag in broadcast",
+      "max_score": 8,
+      "description": "Includes an 'isSelf' boolean field in the message payload sent to recipients, set to true only when the recipient is the sender"
+    },
+    {
+      "name": "cart_action server-side handling",
+      "max_score": 7,
+      "description": "Detects cart_action messages with action 'add_to_cart' and processes them server-side (not just forwarding)"
+    },
+    {
+      "name": "Rate limiting",
+      "max_score": 8,
+      "description": "Implements per-client rate limiting that enforces a maximum of 20 messages per minute (or similar message flood prevention with a numeric limit)"
+    },
+    {
+      "name": "Ping heartbeat",
+      "max_score": 8,
+      "description": "Sends a ping frame (or equivalent keepalive) periodically to connected clients — interval is 30 seconds or less"
+    },
+    {
+      "name": "Sequence number",
+      "max_score": 8,
+      "description": "Attaches a monotonically increasing sequence number to each outgoing message (e.g. a seq or sequence field)"
+    },
+    {
+      "name": "Persist messages to DB",
+      "max_score": 4,
+      "description": "Calls a database persistence function (e.g. db.chatMessages.create or equivalent stub) before broadcasting each message"
+    }
+  ]
+}

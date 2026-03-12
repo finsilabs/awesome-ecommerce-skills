@@ -1,0 +1,51 @@
+{
+  "context": "Tests whether the agent correctly implements reservation release with idempotency protection, uses atomic database transactions for multi-step writes, and builds a background job that uses the correct TTL value and staleness field when expiring abandoned cart reservations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Idempotency check before release",
+      "max_score": 15,
+      "description": "releaseReservation (or equivalent) queries the transaction log for an existing 'release' record with matching referenceId and variantId before performing the release — and skips execution if one is found"
+    },
+    {
+      "name": "Warn on duplicate release",
+      "max_score": 8,
+      "description": "When a duplicate release is detected the code issues a warning (console.warn or equivalent log) rather than throwing an error"
+    },
+    {
+      "name": "Atomic release transaction",
+      "max_score": 15,
+      "description": "The release operation updates reserved inventory AND writes the transaction log entry inside a single database transaction (db.$transaction or equivalent) — not two sequential independent writes"
+    },
+    {
+      "name": "Release log type and quantity",
+      "max_score": 10,
+      "description": "The transaction log entry written during release has type='release' and quantity is a POSITIVE number (representing the units returned to available stock)"
+    },
+    {
+      "name": "TTL of 30 minutes",
+      "max_score": 10,
+      "description": "The cart expiry job uses a reservation TTL of exactly 30 minutes (RESERVATION_TTL_MINUTES = 30 or equivalent constant)"
+    },
+    {
+      "name": "Staleness based on updatedAt",
+      "max_score": 15,
+      "description": "The background job determines cart staleness by comparing cart.updatedAt (NOT cart.createdAt) to the cutoff timestamp"
+    },
+    {
+      "name": "reservedAt cleared after expiry",
+      "max_score": 10,
+      "description": "After releasing all items for an expired cart, the cart record is updated to set reservedAt to null"
+    },
+    {
+      "name": "Job runs every 5-10 minutes",
+      "max_score": 7,
+      "description": "The background job is scheduled or documented to run on an interval between 5 and 10 minutes (e.g. cron expression, setInterval, or inline comment/config value reflecting this cadence)"
+    },
+    {
+      "name": "Only active carts processed",
+      "max_score": 10,
+      "description": "The expiry job filters carts by status='active' and reservedAt IS NOT NULL — ignoring already-released or checked-out carts"
+    }
+  ]
+}

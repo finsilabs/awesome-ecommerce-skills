@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements affiliate code generation using crypto randomBytes, configures attribution cookies with the right security flags, logs all required click fields, and applies last-click attribution.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Crypto-based code generation",
+      "max_score": 8,
+      "description": "The generateAffiliateCode function uses Node's built-in crypto module (randomBytes or equivalent) rather than Math.random() or a UUID library"
+    },
+    {
+      "name": "6-byte code length",
+      "max_score": 8,
+      "description": "Generates exactly 6 bytes (resulting in a 12-character hex string), not a shorter or longer value"
+    },
+    {
+      "name": "Uppercase hex output",
+      "max_score": 8,
+      "description": "The generated code is converted to uppercase (e.g. via .toUpperCase()), producing uppercase hex characters"
+    },
+    {
+      "name": "Cookie httpOnly flag",
+      "max_score": 10,
+      "description": "The affiliate attribution cookie is set with httpOnly: true"
+    },
+    {
+      "name": "Cookie secure flag",
+      "max_score": 10,
+      "description": "The affiliate attribution cookie is set with secure: true"
+    },
+    {
+      "name": "Cookie sameSite lax",
+      "max_score": 10,
+      "description": "The affiliate attribution cookie is set with sameSite: 'lax' (not 'strict' or 'none')"
+    },
+    {
+      "name": "Cookie duration in milliseconds",
+      "max_score": 8,
+      "description": "Cookie maxAge is derived from the affiliate's configurable cookieDurationDays field (multiplied by 86400 * 1000 or equivalent to convert to ms), not a hardcoded value"
+    },
+    {
+      "name": "Last-click attribution",
+      "max_score": 10,
+      "description": "The cookie is set on every click, overwriting any previously set affiliate cookie (last-click wins model — not skipped if a cookie already exists)"
+    },
+    {
+      "name": "Click IP logged",
+      "max_score": 8,
+      "description": "The click record stored in the database includes the visitor's IP address"
+    },
+    {
+      "name": "Click user-agent logged",
+      "max_score": 8,
+      "description": "The click record stored in the database includes the visitor's user-agent string"
+    },
+    {
+      "name": "Click referrer logged",
+      "max_score": 8,
+      "description": "The click record stored in the database includes the HTTP referrer/referer header"
+    },
+    {
+      "name": "Click timestamp logged",
+      "max_score": 4,
+      "description": "The click record stored in the database includes a timestamp (clickedAt or equivalent)"
+    }
+  ]
+}

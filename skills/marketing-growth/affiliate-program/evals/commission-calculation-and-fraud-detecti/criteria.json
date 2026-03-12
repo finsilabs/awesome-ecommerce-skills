@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements category-specific tiered commission rates correctly, excludes non-commissionable revenue from the commission base, runs fraud checks before attribution, sets the correct initial conversion status, and implements the right fraud signals with their assigned scores.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Per-line-item commission",
+      "max_score": 8,
+      "description": "Commission is calculated per line item (iterating over individual order items), not applied as a single rate to the entire order total"
+    },
+    {
+      "name": "Subtotal-only commission base",
+      "max_score": 10,
+      "description": "Commission is calculated on subtotal/line item prices only — shipping and tax amounts are NOT included in the commission base"
+    },
+    {
+      "name": "Default category rates",
+      "max_score": 8,
+      "description": "Default category rates are bronze: 8% (0.08), silver: 12% (0.12), gold: 15% (0.15) — or functionally equivalent values"
+    },
+    {
+      "name": "Electronics category rates",
+      "max_score": 8,
+      "description": "Electronics category uses lower rates than default: bronze: 4% (0.04), silver: 6% (0.06), gold: 8% (0.08) — or functionally lower values"
+    },
+    {
+      "name": "Digital category rates",
+      "max_score": 8,
+      "description": "Digital/software category uses higher rates than default: bronze: 20% (0.20), silver: 25% (0.25), gold: 30% (0.30) — or functionally higher values"
+    },
+    {
+      "name": "Fraud check before attribution",
+      "max_score": 8,
+      "description": "isFraudulent() (or equivalent fraud check) is called BEFORE creating the conversion record, and normal attribution is skipped for fraudulent orders"
+    },
+    {
+      "name": "Fraudulent conversion flagged",
+      "max_score": 8,
+      "description": "A fraudulent order creates a conversion record with status 'flagged' (not 'pending' or 'approved'), and triggers an alert to the fraud team"
+    },
+    {
+      "name": "Initial status pending",
+      "max_score": 8,
+      "description": "Non-fraudulent conversions are recorded with status 'pending', not 'approved'"
+    },
+    {
+      "name": "approvedAt null initially",
+      "max_score": 4,
+      "description": "New conversion records have approvedAt set to null"
+    },
+    {
+      "name": "Self-referral signal",
+      "max_score": 8,
+      "description": "Fraud check includes self-referral detection by comparing the order customer's email to the affiliate's email; assigns score 100"
+    },
+    {
+      "name": "IP velocity signal",
+      "max_score": 8,
+      "description": "Fraud check includes IP velocity: detects more than 5 orders from the same IP within 24 hours; assigns score 70"
+    },
+    {
+      "name": "Fraud score threshold",
+      "max_score": 8,
+      "description": "Conversion is flagged as fraudulent when the total accumulated fraud score reaches or exceeds 100"
+    },
+    {
+      "name": "Tier upgrade triggered",
+      "max_score": 6,
+      "description": "checkAndUpgradeTier (or equivalent) is called after recording each new conversion"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements dark mode using the correct data-theme attribute pattern, respects media query fallback with the proper :root:not() guard, uses only semantic CSS custom properties in component styles, and correctly handles theme persistence and synchronous initialization.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Semantic vars only in components",
+      "max_score": 12,
+      "description": "Component CSS files reference only semantic CSS variables (e.g., `var(--store-color-brand-primary)`) — no raw hex/rgb colors, no global tier variables like `--store-color-gray-50`"
+    },
+    {
+      "name": "No hard-coded values in CSS",
+      "max_score": 8,
+      "description": "Component CSS does NOT contain any hard-coded color literals (hex, rgb(), hsl()) — color values come entirely from CSS custom properties"
+    },
+    {
+      "name": "Dark token overrides file",
+      "max_score": 8,
+      "description": "A dark mode token file (e.g., tokens/dark.json) exists that overrides semantic color tokens for dark mode surface, text, and border colors"
+    },
+    {
+      "name": "data-theme attribute selector",
+      "max_score": 10,
+      "description": "Generated or hand-authored dark mode CSS applies overrides under the `[data-theme=\"dark\"]` attribute selector"
+    },
+    {
+      "name": "Media query with :not guard",
+      "max_score": 12,
+      "description": "Dark mode CSS includes an `@media (prefers-color-scheme: dark)` block whose rule uses `:root:not([data-theme=\"light\"])` (not just `:root`) to respect the explicit light override"
+    },
+    {
+      "name": "Sync head script for FOUC",
+      "max_score": 15,
+      "description": "HTML or template includes an inline `<script>` in `<head>` that reads `localStorage` and sets `data-theme` on `document.documentElement` before the body renders, preventing flash of unstyled content"
+    },
+    {
+      "name": "localStorage persistence",
+      "max_score": 10,
+      "description": "Theme toggle logic saves the chosen theme to `localStorage` (key: `'theme'`) and reads it back on initialization"
+    },
+    {
+      "name": "System default support",
+      "max_score": 10,
+      "description": "Theme toggle supports a 'system' value that removes the `data-theme` attribute from `document.documentElement` (delegating to the media query)"
+    },
+    {
+      "name": "data-theme on documentElement",
+      "max_score": 8,
+      "description": "Theme toggle applies light/dark by calling `document.documentElement.setAttribute('data-theme', ...)` and removes it for system preference"
+    },
+    {
+      "name": "No global tokens in components",
+      "max_score": 7,
+      "description": "Component styles do NOT reference global-tier token names such as `--store-color-gray-*`, `--store-color-blue-*` etc. — only semantic names"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly scopes all product queries to a Saleor channel, implements cursor-based pagination, sets CDN cache headers on catalog routes, uses an appropriate GraphQL client, adds typed queries via codegen, and authenticates Admin API calls with a Bearer token.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Channel parameter required",
+      "max_score": 10,
+      "description": "The products GraphQL query declares $channel as a required variable (e.g., `$channel: String!`) and passes it to the products() call"
+    },
+    {
+      "name": "Channel value supplied",
+      "max_score": 8,
+      "description": "The fetchAllProducts function accepts a channel argument and passes it when executing the query — does NOT hardcode 'default-channel' or omit the channel"
+    },
+    {
+      "name": "Cursor pagination loop",
+      "max_score": 12,
+      "description": "fetchAllProducts uses a loop (do/while or while) that checks pageInfo.hasNextPage and passes pageInfo.endCursor as the `after` variable on subsequent requests"
+    },
+    {
+      "name": "pageInfo fields requested",
+      "max_score": 8,
+      "description": "The products query includes `pageInfo { hasNextPage endCursor }` in the selection set"
+    },
+    {
+      "name": "GraphQL client library used",
+      "max_score": 8,
+      "description": "The client in lib/saleorClient.ts uses one of: urql (createClient), graphql-request (GraphQLClient), or Apollo Client — does NOT use raw fetch() with manual JSON stringification"
+    },
+    {
+      "name": "Authorization Bearer header",
+      "max_score": 8,
+      "description": "The GraphQL client or individual requests include an `Authorization: Bearer <token>` header (reading the token from an environment variable)"
+    },
+    {
+      "name": "Cache-Control header set",
+      "max_score": 12,
+      "description": "pages/api/catalog.ts sets a Cache-Control header with `s-maxage=300` (or a value including `s-maxage`) on the response"
+    },
+    {
+      "name": "TypeScript types for queries",
+      "max_score": 10,
+      "description": "The code includes either a graphql-codegen config file OR explicit TypeScript interfaces/types for the product query response — queries are NOT typed as `any`"
+    },
+    {
+      "name": "Environment variable for API URL",
+      "max_score": 8,
+      "description": "The Saleor API URL is read from an environment variable (NEXT_PUBLIC_SALEOR_API_URL or similar) — not hardcoded as a string literal"
+    },
+    {
+      "name": "urql Content-Type header",
+      "max_score": 8,
+      "description": "If urql is used, the createClient fetchOptions includes `'Content-Type': 'application/json'` in the headers"
+    },
+    {
+      "name": "No offset-based pagination",
+      "max_score": 8,
+      "description": "The pagination implementation does NOT use offset/skip-based pagination — only cursor-based (after + endCursor) is used"
+    }
+  ]
+}

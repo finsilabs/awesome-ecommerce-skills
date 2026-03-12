@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-content-enrichment",
+  "version": "0.1.0",
+  "summary": "AI-assisted product descriptions, attribute extraction, and image tagging",
+  "skills": {
+    "product-content-enrichment": {
+      "path": "SKILL.md"
+    }
+  }
+}

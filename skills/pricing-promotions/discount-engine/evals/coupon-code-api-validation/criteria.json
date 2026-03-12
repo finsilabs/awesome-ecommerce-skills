@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the coupon redemption endpoint with the correct validation sequence, distinct HTTP status codes for each failure mode, server-side discount calculation, atomic usage tracking to prevent race conditions, case-insensitive code lookup, and re-validation of existing cart discounts.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Validation order",
+      "max_score": 10,
+      "description": "The handler checks validations in this order: (1) code existence, (2) expiry, (3) total usage limit, (4) per-customer usage limit, (5) cart condition check — later checks are NOT reached if an earlier one fails"
+    },
+    {
+      "name": "404 for missing code",
+      "max_score": 8,
+      "description": "Returns HTTP 404 when the discount code does not exist or is not active; test (a) asserts a 404 response"
+    },
+    {
+      "name": "410 for expired",
+      "max_score": 8,
+      "description": "Returns HTTP 410 when the discount's endsAt is in the past; test (b) asserts a 410 response for an expired code"
+    },
+    {
+      "name": "410 for usage limit",
+      "max_score": 8,
+      "description": "Returns HTTP 410 (not 403 or 400) when currentUses >= maxUses; test (c) asserts a 410 response"
+    },
+    {
+      "name": "403 for per-customer limit",
+      "max_score": 8,
+      "description": "Returns HTTP 403 when the customer has already used the discount maxUsesPerCustomer times; test (d) asserts a 403 response"
+    },
+    {
+      "name": "422 for unmet conditions",
+      "max_score": 8,
+      "description": "Returns HTTP 422 when the discount exists and is valid but the cart does not meet conditions (e.g., below minimum purchase); test (e) asserts a 422 response"
+    },
+    {
+      "name": "Case-insensitive lookup",
+      "max_score": 6,
+      "description": "The code is normalized (toUpperCase and trim, or equivalent) before querying the database; the handler or api-spec.md notes that codes are case-insensitive"
+    },
+    {
+      "name": "Server-side recalculation",
+      "max_score": 8,
+      "description": "The handler calls the discount evaluation function to compute the discount amount rather than accepting a client-provided amount; the discount total is derived from cart data"
+    },
+    {
+      "name": "Atomic usage increment",
+      "max_score": 10,
+      "description": "Usage count is incremented using a conditional atomic update (e.g., UPDATE ... SET current_uses = current_uses + 1 WHERE current_uses < max_uses or equivalent with a check) rather than a read-then-write pattern; code comments or api-spec.md mention race condition prevention"
+    },
+    {
+      "name": "Discount audit log",
+      "max_score": 8,
+      "description": "On successful application, the handler records a discount usage entry (or equivalent audit log entry) containing at minimum: discount ID, customer ID, and discount amount"
+    },
+    {
+      "name": "Re-validate existing discounts",
+      "max_score": 8,
+      "description": "When processing the new code, the handler re-evaluates or re-validates any discounts already on the cart (not only the newly submitted code), removing or flagging any that are now expired or invalid"
+    },
+    {
+      "name": "api-spec.md documents codes",
+      "max_score": 6,
+      "description": "api-spec.md lists all five possible error HTTP status codes (404, 410 ×2, 403, 422) with their distinct meanings, and documents the validation sequence"
+    },
+    {
+      "name": "Successful response shape",
+      "max_score": 4,
+      "description": "On success, the response includes the computed discount allocation details (at minimum: discountId/code, title, amount) and updated cart information"
+    }
+  ]
+}

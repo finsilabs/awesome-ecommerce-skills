@@ -1,0 +1,10 @@
+{
+  "name": "finsi/woocommerce-blocks",
+  "version": "0.1.0",
+  "summary": "Gutenberg block-based checkout and cart customization",
+  "skills": {
+    "woocommerce-blocks": {
+      "path": "SKILL.md"
+    }
+  }
+}

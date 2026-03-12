@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent builds an ERP inventory sync service that uses delta polling (modifiedSince), correct available quantity calculation, paginated fetching, Redis caching with the right key pattern and TTL, and skips no-op updates.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Delta sync via modifiedSince",
+      "max_score": 10,
+      "description": "Passes a 'modifiedSince' (or equivalent) timestamp parameter to the ERP inventory query so only changed records are fetched, not the full catalog"
+    },
+    {
+      "name": "Last sync timestamp persistence",
+      "max_score": 8,
+      "description": "Stores and retrieves the last sync timestamp (e.g., in Redis or a database) so subsequent runs can use it as the delta cutoff"
+    },
+    {
+      "name": "Paginated ERP fetch",
+      "max_score": 8,
+      "description": "Iterates through paginated results from the ERP (uses a loop/while with page increment or cursor) rather than assuming a single response"
+    },
+    {
+      "name": "Page size 500",
+      "max_score": 8,
+      "description": "Sets the inventory page size to 500 when querying the ERP"
+    },
+    {
+      "name": "Available qty formula",
+      "max_score": 12,
+      "description": "Calculates available quantity as onHandQuantity minus reservedQuantity minus safetyStock (all three terms subtracted)"
+    },
+    {
+      "name": "Qty clamped to zero",
+      "max_score": 10,
+      "description": "Clamps the calculated available quantity to a minimum of 0 (uses Math.max(0, ...) or equivalent)"
+    },
+    {
+      "name": "Skip unchanged qty",
+      "max_score": 8,
+      "description": "Compares the calculated quantity against the current stored quantity and skips the update if they are equal"
+    },
+    {
+      "name": "Redis cache update",
+      "max_score": 8,
+      "description": "Writes the updated inventory quantity to Redis after a database update"
+    },
+    {
+      "name": "Redis key pattern",
+      "max_score": 10,
+      "description": "Uses a Redis key of the form 'inventory:{productId}' (not SKU-based) for the cached value"
+    },
+    {
+      "name": "Redis TTL 3600",
+      "max_score": 10,
+      "description": "Sets a TTL of 3600 seconds (1 hour) on the Redis inventory cache entry"
+    },
+    {
+      "name": "Sync result tracking",
+      "max_score": 8,
+      "description": "Tracks and logs counts of updated, skipped, and errored items in the sync result"
+    }
+  ]
+}

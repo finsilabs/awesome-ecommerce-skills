@@ -1,0 +1,10 @@
+{
+  "name": "finsi/flash-sale-engine",
+  "version": "0.1.0",
+  "summary": "Time-limited sales with countdown timers, stock limits, and queue management",
+  "skills": {
+    "flash-sale-engine": {
+      "path": "SKILL.md"
+    }
+  }
+}

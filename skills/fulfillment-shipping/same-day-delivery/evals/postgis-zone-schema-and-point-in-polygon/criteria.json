@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly models delivery zones using PostGIS polygon geometry with appropriate indexing, creates a correct slot schema with uniqueness constraints, and implements zone lookup using the correct spatial query with the right coordinate argument order.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "PostGIS polygon type",
+      "max_score": 12,
+      "description": "The delivery_zones table stores the zone geometry as GEOGRAPHY(POLYGON, 4326) or GEOMETRY(POLYGON, 4326), not as a bounding box (e.g. min_lat/max_lat/min_lng/max_lng columns) or a radius/circle approximation"
+    },
+    {
+      "name": "GIST index on polygon",
+      "max_score": 8,
+      "description": "A GIST index is created on the polygon/geometry column of the zones table (e.g. USING GIST(polygon))"
+    },
+    {
+      "name": "ST_Contains or equivalent spatial query",
+      "max_score": 10,
+      "description": "The zone lookup query uses ST_Contains (or ST_Within) with the polygon column and a constructed point, rather than a bounding-box comparison or radius check"
+    },
+    {
+      "name": "Coordinate order: lng before lat",
+      "max_score": 12,
+      "description": "The ST_MakePoint (or equivalent) call passes longitude as the first argument and latitude as the second — i.e. ST_MakePoint(lng, lat) — matching PostGIS convention"
+    },
+    {
+      "name": "SRID set to 4326",
+      "max_score": 8,
+      "description": "The constructed point is wrapped with ST_SetSRID(..., 4326) or the geometry column is declared with SRID 4326"
+    },
+    {
+      "name": "Unique slot index",
+      "max_score": 10,
+      "description": "A UNIQUE constraint or UNIQUE INDEX covers (zone_id, slot_date, window_start) on the delivery_slots table to prevent duplicate slot generation"
+    },
+    {
+      "name": "Status CHECK constraint",
+      "max_score": 8,
+      "description": "The delivery_assignments table includes a CHECK constraint on the status column that contains at least: 'pending', 'assigned', 'en_route', 'delivered', 'failed'"
+    },
+    {
+      "name": "Zone re-validation at checkout",
+      "max_score": 10,
+      "description": "The checkout or order-placement code re-calls the zone lookup function (or equivalent) to confirm the address is still within a valid zone, rather than trusting a zone_id passed from the client or stored only at address entry"
+    },
+    {
+      "name": "Available-slot filter criteria",
+      "max_score": 12,
+      "description": "The query or filter for listing available slots checks all three conditions: is_active = true, cutoff_time > now (current time), and booked < capacity"
+    },
+    {
+      "name": "No bounding-box fallback",
+      "max_score": 10,
+      "description": "The implementation does NOT use latitude/longitude min/max range comparisons or a radius (ST_DWithin / distance check) as the primary zone containment test"
+    }
+  ]
+}

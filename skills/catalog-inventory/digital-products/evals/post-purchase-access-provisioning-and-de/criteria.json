@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly wires post-purchase digital access provisioning to the payment webhook (not client-side), provisions access idempotently, snapshots entitlement fields at purchase time, and sends a dedicated delivery email separate from order confirmation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Webhook trigger",
+      "max_score": 12,
+      "description": "provisionDigitalAccess is called inside a handler for 'payment_intent.succeeded' (or equivalent confirmed-payment event), NOT only triggered by a checkout-complete client redirect or order-creation event"
+    },
+    {
+      "name": "Upsert for idempotency",
+      "max_score": 12,
+      "description": "Uses an upsert (or insert-on-conflict-do-nothing) operation when creating the orderDigitalAccess record, rather than a plain create/insert that would fail or duplicate on re-delivery"
+    },
+    {
+      "name": "Empty update on conflict",
+      "max_score": 10,
+      "description": "The upsert's update clause is empty (no fields updated on conflict) — existing access records are never overwritten by a duplicate webhook"
+    },
+    {
+      "name": "maxDownloads copied at purchase",
+      "max_score": 10,
+      "description": "The orderDigitalAccess record is created with maxDownloads set to dp.downloadLimit (copied from the product at purchase time, not looked up dynamically later)"
+    },
+    {
+      "name": "expiresAt calculated at purchase",
+      "max_score": 10,
+      "description": "The orderDigitalAccess record is created with expiresAt calculated at provisioning time (Date.now() + accessDurationDays * ms), not deferred to download time"
+    },
+    {
+      "name": "Separate delivery email",
+      "max_score": 10,
+      "description": "Sends a digital delivery email using a template other than the standard order confirmation (e.g., 'digital-delivery' or similar dedicated template name)"
+    },
+    {
+      "name": "Delivery email template name",
+      "max_score": 8,
+      "description": "The email is sent with template: 'digital-delivery' (exact template identifier)"
+    },
+    {
+      "name": "Download links in email",
+      "max_score": 8,
+      "description": "The delivery email data includes download URLs or paths for file-type products (not just order ID)"
+    },
+    {
+      "name": "License key in email",
+      "max_score": 8,
+      "description": "For license_key type products, the delivery email data includes the license key itself"
+    },
+    {
+      "name": "Only digital items processed",
+      "max_score": 12,
+      "description": "Provisioning logic filters order items to only those with an associated digitalProduct — physical items are skipped"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-information-management",
+  "version": "0.1.0",
+  "summary": "PIM integration (Akeneo, Salsify) for centralized product data",
+  "skills": {
+    "product-information-management": {
+      "path": "SKILL.md"
+    }
+  }
+}

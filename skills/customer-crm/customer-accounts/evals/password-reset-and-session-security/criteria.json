@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the password reset flow with correct token generation (randomBytes + SHA-256 hash stored), 1-hour expiry, email enumeration prevention, and full session/token invalidation after a successful reset.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Email enumeration prevention",
+      "max_score": 12,
+      "description": "The forgot-password endpoint returns a success-like message even when no account exists for the given email — does NOT reveal whether an account exists (e.g., always returns 'If an account exists, a reset link has been sent' or equivalent)"
+    },
+    {
+      "name": "crypto.randomBytes token",
+      "max_score": 10,
+      "description": "Uses Node.js built-in 'crypto' module's randomBytes(32) to generate the password reset token (not Math.random, uuid, or other methods)"
+    },
+    {
+      "name": "Token as hex string",
+      "max_score": 7,
+      "description": "The raw reset token is converted to a hex string with .toString('hex')"
+    },
+    {
+      "name": "SHA-256 hash stored",
+      "max_score": 12,
+      "description": "Only the SHA-256 hash of the token (crypto.createHash('sha256')...) is stored in the database — the raw token is NOT persisted"
+    },
+    {
+      "name": "1-hour token expiry",
+      "max_score": 8,
+      "description": "The reset token expiry is set to 1 hour from creation (Date.now() + 60 * 60 * 1000 or equivalent 3600 second offset)"
+    },
+    {
+      "name": "Expired token check",
+      "max_score": 8,
+      "description": "The reset-password endpoint validates that the token has not expired before allowing a password change"
+    },
+    {
+      "name": "Invalidate reset token after use",
+      "max_score": 10,
+      "description": "After a successful password reset, the used password reset record/token is deleted or invalidated so it cannot be reused"
+    },
+    {
+      "name": "Invalidate all sessions",
+      "max_score": 12,
+      "description": "After a successful password reset, all existing sessions for that customer are invalidated/deleted (not just the current one)"
+    },
+    {
+      "name": "bcrypt for new password",
+      "max_score": 10,
+      "description": "The new password is hashed with bcrypt at cost factor 12 before being stored"
+    },
+    {
+      "name": "Hash lookup (not raw)",
+      "max_score": 11,
+      "description": "When verifying the reset token, the submitted token is hashed first and then compared against the stored hash — does NOT compare the raw token directly against stored values"
+    }
+  ]
+}

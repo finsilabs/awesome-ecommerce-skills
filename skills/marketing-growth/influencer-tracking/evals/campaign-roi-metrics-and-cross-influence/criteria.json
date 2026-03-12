@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent calculates campaign ROI metrics using the correct formulas (ROAS, CPS, EMV at $0.01/impression, RPM), treats gifted campaign budgets as real spend, uses EMV as a secondary metric in narrative, and handles edge cases like zero-budget or zero-order campaigns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ROAS formula",
+      "max_score": 10,
+      "description": "roas is calculated as total attributed revenue divided by campaign budget (revenue / budget), not as a percentage or inverted"
+    },
+    {
+      "name": "CPS formula",
+      "max_score": 10,
+      "description": "cps is calculated as campaign budget divided by number of attributed orders (budget / ordersCount)"
+    },
+    {
+      "name": "EMV formula",
+      "max_score": 12,
+      "description": "emv is calculated as impressions multiplied by 0.01 (the $0.01-per-impression industry rate), not a different rate"
+    },
+    {
+      "name": "Gifted budget included",
+      "max_score": 12,
+      "description": "Campaigns with feeStructure 'gifted' (camp-003, camp-005) use their budget value as real spend in ROAS and CPS calculations, NOT treated as zero-cost"
+    },
+    {
+      "name": "RPM calculated",
+      "max_score": 12,
+      "description": "rpm (revenue per 1,000 followers) is present in campaign-report.json and computed as (revenue / followerCount) * 1000"
+    },
+    {
+      "name": "Null on zero-division",
+      "max_score": 8,
+      "description": "roas and cps are null (not NaN, Infinity, or 0) when budget or ordersCount is zero"
+    },
+    {
+      "name": "EMV as secondary metric",
+      "max_score": 10,
+      "description": "summary.md explicitly uses EMV as a secondary consideration when discussing campaigns with low direct conversion (not just mentioned — referenced in the narrative interpretation)"
+    },
+    {
+      "name": "Both attribution types summed",
+      "max_score": 8,
+      "description": "attributedRevenue (or equivalent total) in campaign-report.json sums orders from both 'promo_code' and 'utm_first_touch' attributionType values"
+    },
+    {
+      "name": "AOV calculated",
+      "max_score": 8,
+      "description": "aov (average order value) is present and calculated as revenue / ordersCount"
+    },
+    {
+      "name": "Revenue in dollars",
+      "max_score": 10,
+      "description": "Revenue figures in campaign-report.json are in dollars (not cents) — subtotalCents values are divided by 100"
+    }
+  ]
+}

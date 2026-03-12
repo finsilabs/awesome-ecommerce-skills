@@ -1,0 +1,10 @@
+{
+  "name": "finsi/same-day-delivery",
+  "version": "0.1.0",
+  "summary": "Local delivery zone management, time-slot booking, and driver dispatch",
+  "skills": {
+    "same-day-delivery": {
+      "path": "SKILL.md"
+    }
+  }
+}

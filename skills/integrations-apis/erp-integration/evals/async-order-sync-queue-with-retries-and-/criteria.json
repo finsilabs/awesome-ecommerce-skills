@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements async ERP order sync correctly using BullMQ with exponential backoff retries, idempotent job enqueuing, a dead letter queue for exhausted retries, and proper ops alerting — without making synchronous ERP calls during checkout.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "BullMQ queue usage",
+      "max_score": 10,
+      "description": "Uses BullMQ (imports Queue and/or Worker from 'bullmq') for the order sync queue rather than a simple in-process retry loop or alternative queue library"
+    },
+    {
+      "name": "Async enqueue on order placed",
+      "max_score": 10,
+      "description": "Enqueues the sync job asynchronously when an order is placed, rather than calling the ERP adapter directly inline during the order placement flow"
+    },
+    {
+      "name": "Idempotent job ID",
+      "max_score": 10,
+      "description": "Sets a deterministic jobId derived from the orderId (e.g., 'order-sync-{orderId}') when adding jobs to the queue"
+    },
+    {
+      "name": "Retry attempts count",
+      "max_score": 8,
+      "description": "Configures queue job attempts to 5 (maxRetries: 5 or attempts: 5)"
+    },
+    {
+      "name": "Exponential backoff type",
+      "max_score": 8,
+      "description": "Configures backoff type as 'exponential' (not 'fixed' or 'linear')"
+    },
+    {
+      "name": "Backoff initial delay",
+      "max_score": 6,
+      "description": "Sets initial backoff delay to 5000ms (5 seconds)"
+    },
+    {
+      "name": "Worker concurrency",
+      "max_score": 6,
+      "description": "Sets worker concurrency to 5 (processes 5 orders in parallel)"
+    },
+    {
+      "name": "Dead letter queue",
+      "max_score": 10,
+      "description": "Creates a separate dead letter queue (e.g., 'order-sync-dlq') and moves jobs there after all retries are exhausted"
+    },
+    {
+      "name": "Ops alert on DLQ",
+      "max_score": 8,
+      "description": "Sends an alert to an ops channel (Slack, PagerDuty, email, etc.) when a job is moved to the DLQ"
+    },
+    {
+      "name": "DLQ manual retry endpoint",
+      "max_score": 8,
+      "description": "Provides an admin/API endpoint that re-enqueues a DLQ job to the main queue and removes it from the DLQ"
+    },
+    {
+      "name": "ERP record ID stored on order",
+      "max_score": 8,
+      "description": "Saves the ERP-assigned order ID back onto the local order record (or sync log) after a successful sync"
+    },
+    {
+      "name": "Sync log idempotency check",
+      "max_score": 8,
+      "description": "Checks the sync log or database before processing: skips the sync if the order is already marked as 'synced'"
+    }
+  ]
+}

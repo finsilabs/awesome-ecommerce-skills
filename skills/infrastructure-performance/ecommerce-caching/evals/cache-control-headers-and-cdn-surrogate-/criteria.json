@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly applies cache-control headers with appropriate TTLs per page type, includes stale-while-revalidate, never caches cart/checkout/account pages, sets Surrogate-Key headers for targeted CDN purging, adds X-Cache debug headers via Varnish, strips marketing query parameters, removes cookies for cacheable pages in Varnish, and avoids Vary: Cookie.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Product page s-maxage",
+      "max_score": 7,
+      "description": "Product pages have s-maxage=300 (5 minutes) in their Cache-Control header"
+    },
+    {
+      "name": "Product page max-age",
+      "max_score": 7,
+      "description": "Product pages have max-age=60 (1 minute) in their Cache-Control header"
+    },
+    {
+      "name": "Collection page s-maxage",
+      "max_score": 7,
+      "description": "Collection pages have s-maxage=600 (10 minutes) in their Cache-Control header"
+    },
+    {
+      "name": "Static assets 1-year TTL",
+      "max_score": 7,
+      "description": "Static assets (CSS/JS/images) use max-age=31536000 and the 'immutable' directive"
+    },
+    {
+      "name": "stale-while-revalidate on product pages",
+      "max_score": 8,
+      "description": "Product pages include stale-while-revalidate in their Cache-Control header"
+    },
+    {
+      "name": "Cart/checkout never cached",
+      "max_score": 8,
+      "description": "Cart, checkout, and account paths use Cache-Control: private, no-store (or equivalent) and are NOT given any public caching directive"
+    },
+    {
+      "name": "Surrogate-Control no-store for cart",
+      "max_score": 7,
+      "description": "Cart/checkout/account responses include a Surrogate-Control: no-store header"
+    },
+    {
+      "name": "Surrogate-Key for products",
+      "max_score": 8,
+      "description": "Product page responses include a Surrogate-Key header containing 'product' and 'product-{slug}' (or equivalent per-product key)"
+    },
+    {
+      "name": "Surrogate-Key for collections",
+      "max_score": 8,
+      "description": "Collection page responses include a Surrogate-Key header containing 'collection' and 'collection-{slug}'"
+    },
+    {
+      "name": "X-Cache HIT/MISS header",
+      "max_score": 7,
+      "description": "Varnish VCL sets an X-Cache response header to 'HIT' when obj.hits > 0 and 'MISS' otherwise"
+    },
+    {
+      "name": "Strip tracking params",
+      "max_score": 8,
+      "description": "Marketing/tracking query parameters (utm_, fbclid, gclid, mc_, or similar) are stripped from URLs before caching (in Varnish VCL or middleware)"
+    },
+    {
+      "name": "Unset Cookie for cacheable pages",
+      "max_score": 8,
+      "description": "Varnish VCL removes/unsets request cookies for product, collection, and home pages before hashing (to prevent Vary: Cookie from disabling caching)"
+    },
+    {
+      "name": "Varnish grace period",
+      "max_score": 10,
+      "description": "Varnish VCL sets beresp.grace to at least double the TTL for product and/or collection pages"
+    }
+  ]
+}

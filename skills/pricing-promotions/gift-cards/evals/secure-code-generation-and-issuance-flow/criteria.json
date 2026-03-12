@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent generates gift card codes in the correct XXXX-XXXX-XXXX-XXXX format using a safe character set (no ambiguous characters), uses cryptographically secure randomness, wraps issuance in a database transaction, sends a properly-structured email after issuance, and stores monetary values in integer cents.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Code format: 4×4 groups",
+      "max_score": 15,
+      "description": "Generated codes follow the pattern XXXX-XXXX-XXXX-XXXX — exactly 4 alphanumeric groups of 4 characters separated by hyphens (16 chars + 3 hyphens = 19 total characters)"
+    },
+    {
+      "name": "No ambiguous characters",
+      "max_score": 15,
+      "description": "The character set used for code generation does NOT include the characters '0' (zero), 'O' (letter O), '1' (one), or 'I' (letter I)"
+    },
+    {
+      "name": "Cryptographic randomness",
+      "max_score": 10,
+      "description": "Uses Node.js crypto.randomBytes() (or equivalent cryptographically secure source) for generating random bytes — NOT Math.random()"
+    },
+    {
+      "name": "Atomic issuance transaction",
+      "max_score": 10,
+      "description": "The gift card row and the initial transaction row are inserted inside a single database transaction (so both succeed or both fail together)"
+    },
+    {
+      "name": "Initial 'issue' transaction",
+      "max_score": 10,
+      "description": "An 'issue' type transaction row is inserted into the transactions ledger table when the card is created, with amount equal to the card's initial value"
+    },
+    {
+      "name": "Amounts in integer cents",
+      "max_score": 10,
+      "description": "Monetary values are stored and passed as integers representing cents (e.g. 5000 for $50.00), not as decimal numbers"
+    },
+    {
+      "name": "Email sent after issuance",
+      "max_score": 5,
+      "description": "An email is sent to the card recipient (issued_to address) after the card is successfully created"
+    },
+    {
+      "name": "Email includes code",
+      "max_score": 5,
+      "description": "The email payload includes the gift card code field"
+    },
+    {
+      "name": "Email includes formatted value",
+      "max_score": 5,
+      "description": "The email payload includes a human-readable formatted monetary value (e.g. '$50.00'), not just the raw cents integer"
+    },
+    {
+      "name": "Email includes expiresAt",
+      "max_score": 10,
+      "description": "The email payload includes an expiry date field, with a fallback string value of 'Never' when the card has no expiry"
+    },
+    {
+      "name": "Email includes shopUrl",
+      "max_score": 5,
+      "description": "The email payload includes a shop URL field for the recipient to use the card"
+    }
+  ]
+}

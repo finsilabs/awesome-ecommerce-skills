@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements bundle cart logic: storing bundles as individual line items with a group record, pro-rating discounts across components, and validating availability before adding to cart.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "separate line items",
+      "max_score": 10,
+      "description": "Each bundle component is added as an individual cart line item, NOT as a single composite/bundle item"
+    },
+    {
+      "name": "bundle group record",
+      "max_score": 10,
+      "description": "A separate bundle group record (e.g. cart_bundle_groups or equivalent) is created to associate the line items, storing bundlePrice and bundleSavings (or equivalent)"
+    },
+    {
+      "name": "group id on line items",
+      "max_score": 10,
+      "description": "Each component line item is tagged with a bundleGroupId (or equivalent foreign key) linking it to the bundle group record"
+    },
+    {
+      "name": "pro-rated discount",
+      "max_score": 10,
+      "description": "Each component's unit price is discounted proportionally based on its share of the total component sum (not applying equal discount to all items)"
+    },
+    {
+      "name": "pro-rate formula",
+      "max_score": 8,
+      "description": "Pro-rating uses the formula: discountShare = savings * (itemSubtotal / componentSum), where itemSubtotal = unitPrice * quantity"
+    },
+    {
+      "name": "availability check before add",
+      "max_score": 10,
+      "description": "Bundle availability is checked (all components have sufficient stock) before the cart items are created"
+    },
+    {
+      "name": "available = onHand minus reserved",
+      "max_score": 8,
+      "description": "Available stock is computed as onHand minus reserved (not just onHand alone)"
+    },
+    {
+      "name": "unavailable component detail",
+      "max_score": 8,
+      "description": "When a component is unavailable, the response or error identifies which specific component (by variantId or product name) is out of stock"
+    },
+    {
+      "name": "standard variant_id and quantity",
+      "max_score": 8,
+      "description": "Each cart line item has a standard variant_id and quantity field; bundle_group_id is not used for fulfillment logic"
+    },
+    {
+      "name": "server-side pricing recalc",
+      "max_score": 10,
+      "description": "Bundle price is recalculated server-side during add-to-cart, NOT using a client-provided price value"
+    },
+    {
+      "name": "demo output",
+      "max_score": 8,
+      "description": "A runnable demo or test script exists that exercises both a successful add-to-cart and an unavailable-stock scenario"
+    }
+  ]
+}

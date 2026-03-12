@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the ShippingRule interface with correct types and conditions, uses 'store'/'free' and 'store'/'flat' identifiers for store-generated rates, implements zone-based rate table with specific domestic/canada/international zones and weight buckets, and stores all monetary values in cents.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ShippingRule type union",
+      "max_score": 8,
+      "description": "ShippingRule interface type field accepts exactly 'flat_rate' | 'free_shipping' | 'tiered_rate'"
+    },
+    {
+      "name": "Conditions in cents",
+      "max_score": 8,
+      "description": "ShippingRule conditions.minOrderTotal is in cents (e.g., free shipping threshold stored as integer cents, not dollars)"
+    },
+    {
+      "name": "Carrier 'store' for custom rates",
+      "max_score": 10,
+      "description": "Free shipping and flat-rate entries added by applyShippingRules use carrier: 'store'"
+    },
+    {
+      "name": "Service 'free' for free shipping",
+      "max_score": 8,
+      "description": "Free shipping entries use service: 'free'"
+    },
+    {
+      "name": "Service 'flat' for flat rate",
+      "max_score": 8,
+      "description": "Flat rate entries use service: 'flat'"
+    },
+    {
+      "name": "Three zones defined",
+      "max_score": 10,
+      "description": "Zone rate table includes exactly three zones: 'domestic' (US), 'canada' (CA), and 'international' for all other countries"
+    },
+    {
+      "name": "Four weight buckets",
+      "max_score": 10,
+      "description": "Zone rate table uses four weight buckets: '0-1lb', '1-5lb', '5-10lb', '10-20lb'"
+    },
+    {
+      "name": "Zone rates in cents",
+      "max_score": 10,
+      "description": "All rate values in the zone rate table are stored as integers in cents (e.g. 599, 899, not 5.99, 8.99)"
+    },
+    {
+      "name": "Combined rates sorted",
+      "max_score": 8,
+      "description": "applyShippingRules returns the combined list of carrier and store rates sorted by rate ascending"
+    },
+    {
+      "name": "Country condition check",
+      "max_score": 10,
+      "description": "applyShippingRules checks rule.conditions.countries (if set) against destination.country before applying the rule"
+    },
+    {
+      "name": "Weight condition check",
+      "max_score": 10,
+      "description": "applyShippingRules checks rule.conditions.maxOrderWeight (if set) against totalWeight before applying the rule"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/gift-cards",
+  "version": "0.1.0",
+  "summary": "Gift card issuance, redemption, balance tracking, and partial-use handling",
+  "skills": {
+    "gift-cards": {
+      "path": "SKILL.md"
+    }
+  }
+}

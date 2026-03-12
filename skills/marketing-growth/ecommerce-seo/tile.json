@@ -1,0 +1,10 @@
+{
+  "name": "finsi/ecommerce-seo",
+  "version": "0.1.0",
+  "summary": "Product page SEO, structured data (JSON-LD), canonical URLs, and sitemap generation",
+  "skills": {
+    "ecommerce-seo": {
+      "path": "SKILL.md"
+    }
+  }
+}

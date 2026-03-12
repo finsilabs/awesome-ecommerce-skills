@@ -1,0 +1,10 @@
+{
+  "name": "finsi/sales-reporting-dashboard",
+  "version": "0.1.0",
+  "summary": "Revenue, AOV, conversion dashboards with drill-down and cohort analysis",
+  "skills": {
+    "sales-reporting-dashboard": {
+      "path": "SKILL.md"
+    }
+  }
+}

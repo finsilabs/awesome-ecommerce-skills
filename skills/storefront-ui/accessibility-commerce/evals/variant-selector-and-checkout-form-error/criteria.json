@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses fieldset/legend with hidden radio inputs for variant selectors, marks unavailable variants as disabled with sr-only text, and implements accessible form error patterns (aria-describedby, aria-invalid, role=alert) along with WCAG AA compliant color values.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Fieldset wrapper",
+      "max_score": 8,
+      "description": "Color and/or size variant selector uses a <fieldset> element as the outer wrapper"
+    },
+    {
+      "name": "Legend present",
+      "max_score": 8,
+      "description": "The fieldset contains a <legend> element labelling the group (e.g. 'Color:' or 'Size:')"
+    },
+    {
+      "name": "Radio inputs",
+      "max_score": 9,
+      "description": "Each swatch or size option is implemented as <input type=\"radio\"> — NOT as div, span, or button with click handlers"
+    },
+    {
+      "name": "Visual radio hidden",
+      "max_score": 7,
+      "description": "The radio inputs are visually hidden (sr-only class or equivalent) while remaining in the DOM and accessible"
+    },
+    {
+      "name": "Swatch visual aria-hidden",
+      "max_score": 7,
+      "description": "The purely decorative swatch colour patch (the visual circle/square) has aria-hidden=\"true\""
+    },
+    {
+      "name": "Unavailable variant disabled",
+      "max_score": 8,
+      "description": "Out-of-stock or unavailable variant options have the disabled attribute on the radio input"
+    },
+    {
+      "name": "Out-of-stock sr-only text",
+      "max_score": 8,
+      "description": "Unavailable options include sr-only text communicating 'out of stock' (or equivalent) to screen reader users"
+    },
+    {
+      "name": "aria-invalid on error",
+      "max_score": 8,
+      "description": "Form inputs in error state have aria-invalid=\"true\""
+    },
+    {
+      "name": "aria-describedby for error",
+      "max_score": 8,
+      "description": "Form inputs in error state have aria-describedby pointing to the id of the error message element"
+    },
+    {
+      "name": "role=alert on error message",
+      "max_score": 9,
+      "description": "The inline error message element has role=\"alert\" so it is announced immediately"
+    },
+    {
+      "name": "WCAG AA color contrast",
+      "max_score": 10,
+      "description": "The CSS defines price, sale price, or out-of-stock badge with specific color values that meet WCAG AA (e.g. dark text on white, or verified colour pairs) rather than generic grey or placeholder values"
+    },
+    {
+      "name": "Semantic button/input elements",
+      "max_score": 10,
+      "description": "No interactive action triggers (add to cart, submit) are implemented as non-semantic div or span elements — all use <button> or <input type=\"submit\">"
+    }
+  ]
+}

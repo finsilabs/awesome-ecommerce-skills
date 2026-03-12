@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements a GDPR-compliant cookie consent system integrated with Google Analytics 4, including proper default consent modes, consent state modeling, versioning, dual persistence, and correct gtag consent update calls.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Necessary always true",
+      "max_score": 8,
+      "description": "ConsentState type/interface includes a `necessary` field that is always set to `true` and cannot be toggled by the user"
+    },
+    {
+      "name": "Version field present",
+      "max_score": 8,
+      "description": "ConsentState includes a `version` string field and the saved consent object includes the current version value"
+    },
+    {
+      "name": "Re-prompt on version mismatch",
+      "max_score": 8,
+      "description": "When loading stored consent, the code compares the stored version against a current version constant and treats the stored consent as null/absent if they differ"
+    },
+    {
+      "name": "GA4 default consent denied",
+      "max_score": 10,
+      "description": "gtag('consent', 'default', ...) is called with analytics_storage, ad_storage, ad_user_data, and ad_personalization all set to 'denied'"
+    },
+    {
+      "name": "GA4 wait_for_update set",
+      "max_score": 8,
+      "description": "The gtag consent default call includes wait_for_update: 500"
+    },
+    {
+      "name": "gtag consent update on analytics",
+      "max_score": 8,
+      "description": "When analytics consent is granted, gtag('consent', 'update', {analytics_storage: 'granted'}) is called"
+    },
+    {
+      "name": "gtag consent update on marketing",
+      "max_score": 8,
+      "description": "When marketing consent is granted, a gtag consent update sets both ad_storage and ad_user_data to 'granted'"
+    },
+    {
+      "name": "Server-side consent persistence",
+      "max_score": 10,
+      "description": "After saving consent, a POST request is made to a server-side endpoint (e.g. /api/consent) to persist consent for logged-in users"
+    },
+    {
+      "name": "All checkboxes default unchecked",
+      "max_score": 10,
+      "description": "The consent banner component initializes analytics, marketing, and personalization choices all to false (NOT pre-checked/pre-ticked)"
+    },
+    {
+      "name": "Reject all option",
+      "max_score": 8,
+      "description": "The cookie banner includes a 'Reject all' button (or equivalent) that saves all non-necessary consent as false"
+    },
+    {
+      "name": "Client-side only rendering",
+      "max_score": 7,
+      "description": "The consent banner checks for browser environment (e.g. typeof window !== 'undefined') before accessing localStorage or window globals, preventing SSR errors"
+    },
+    {
+      "name": "Timestamp on consent save",
+      "max_score": 7,
+      "description": "Saved consent includes a timestamp field (e.g. Date.now() or new Date().toISOString()) for the audit trail"
+    }
+  ]
+}

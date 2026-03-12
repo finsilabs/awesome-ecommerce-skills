@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent creates one fulfillment record per location with 'pending' status, reserves inventory after each fulfillment is created, and builds a SplitShipmentNotice component with the correct accessibility attribute, null return for single-location orders, and per-shipment item enumeration.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "one fulfillment per location",
+      "max_score": 10,
+      "description": "createFulfillments creates exactly one fulfillment record for each location in allocationResult.fulfillments (not one record for the whole order)"
+    },
+    {
+      "name": "pending initial status",
+      "max_score": 8,
+      "description": "Each fulfillment record is created with status 'pending'"
+    },
+    {
+      "name": "inventory reserved after creation",
+      "max_score": 10,
+      "description": "After creating fulfillment records, reserveInventory (or equivalent) is called for each item at its assigned location"
+    },
+    {
+      "name": "reserve includes referenceId",
+      "max_score": 7,
+      "description": "The reserveInventory call passes the fulfillment id as a referenceId (or equivalent reference field)"
+    },
+    {
+      "name": "role alert attribute",
+      "max_score": 10,
+      "description": "SplitShipmentNotice renders a container element with role='alert'"
+    },
+    {
+      "name": "null for single shipment",
+      "max_score": 9,
+      "description": "SplitShipmentNotice returns null (renders nothing) when fulfillments.length is 1 or less"
+    },
+    {
+      "name": "shipment count in message",
+      "max_score": 8,
+      "description": "The notice text includes the total number of shipments (e.g. 'will arrive in N separate shipments')"
+    },
+    {
+      "name": "per-shipment item list",
+      "max_score": 9,
+      "description": "The notice lists each shipment with its associated item names (one entry per fulfillment location)"
+    },
+    {
+      "name": "location key on items",
+      "max_score": 7,
+      "description": "The fulfillment list in SplitShipmentNotice uses locationId (or equivalent location identifier) as the React list key"
+    },
+    {
+      "name": "parallel fulfillment creation",
+      "max_score": 8,
+      "description": "createFulfillments creates all fulfillment records concurrently (Promise.all or equivalent) rather than sequentially"
+    },
+    {
+      "name": "fulfillment module path",
+      "max_score": 7,
+      "description": "The createFulfillments function is in lib/fulfillments.js"
+    },
+    {
+      "name": "split notice file path",
+      "max_score": 7,
+      "description": "The notification component is in SplitShipmentNotice.jsx"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly bootstraps a Saleor App using the official app-sdk, declares the manifest with all required fields, uses subscription-based webhook payload queries, and handles incoming webhooks securely via the SaleorAsyncWebhook wrapper.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "app-sdk dependency",
+      "max_score": 8,
+      "description": "package.json includes @saleor/app-sdk as a dependency (any version)"
+    },
+    {
+      "name": "createManifestHandler import",
+      "max_score": 8,
+      "description": "pages/api/manifest.ts imports createManifestHandler from @saleor/app-sdk/handlers/next"
+    },
+    {
+      "name": "tokenTargetUrl field",
+      "max_score": 10,
+      "description": "The manifest object includes a tokenTargetUrl property pointing to the /api/register path (e.g., `${process.env.APP_URL}/api/register` or equivalent)"
+    },
+    {
+      "name": "Webhook subscription query",
+      "max_score": 10,
+      "description": "The webhook entry in the manifest uses a GraphQL subscription query (starts with 'subscription {' or uses a subscription document) as the payload definition, not a plain fragment or empty string"
+    },
+    {
+      "name": "ORDER_CREATED async event",
+      "max_score": 8,
+      "description": "The webhook in the manifest declares asyncEvents: [\"ORDER_CREATED\"] (or equivalent enum value)"
+    },
+    {
+      "name": "SaleorAsyncWebhook usage",
+      "max_score": 12,
+      "description": "pages/api/webhooks/order-created.ts instantiates SaleorAsyncWebhook (imported from @saleor/app-sdk/handlers/next) rather than manually parsing the request body or implementing custom HMAC verification"
+    },
+    {
+      "name": "bodyParser disabled",
+      "max_score": 12,
+      "description": "pages/api/webhooks/order-created.ts exports `export const config = { api: { bodyParser: false } }` (exact pattern required for signature verification)"
+    },
+    {
+      "name": "APL referenced",
+      "max_score": 8,
+      "description": "The SaleorAsyncWebhook constructor receives an `apl` property referencing the app's APL instance (not hardcoded or omitted)"
+    },
+    {
+      "name": "Manifest permissions",
+      "max_score": 8,
+      "description": "The manifest declares a permissions array containing at least one relevant permission (e.g., MANAGE_ORDERS)"
+    },
+    {
+      "name": "createHandler used",
+      "max_score": 8,
+      "description": "The webhook handler uses orderCreatedWebhook.createHandler(...) (or equivalent SaleorAsyncWebhook method) to export the handler, rather than exporting a plain async function"
+    },
+    {
+      "name": "Order fields in payload",
+      "max_score": 8,
+      "description": "The subscription query in the webhook definition requests at least id and number fields from the order"
+    }
+  ]
+}

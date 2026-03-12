@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements a marketing SMS send function with all required compliance checks: opt-in verification, quiet hours enforcement with timezone lookup, STOP instruction in message body, rate limiting, and message length validation. Also covers package choices and logging.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses twilio package",
+      "max_score": 8,
+      "description": "The implementation imports and uses the 'twilio' npm package (not an alternative SMS provider SDK or raw HTTP calls)"
+    },
+    {
+      "name": "Opt-in check before send",
+      "max_score": 12,
+      "description": "The send function queries for active marketing consent before sending, and suppresses/skips the send if no active consent is found"
+    },
+    {
+      "name": "Quiet hours check",
+      "max_score": 10,
+      "description": "The send function checks whether the current time is within quiet hours for the recipient and does NOT send during quiet hours (before 8am or after 9pm local time)"
+    },
+    {
+      "name": "Quiet hours queuing",
+      "max_score": 8,
+      "description": "Messages that fall in quiet hours are queued/deferred for delivery at the next allowed time (9am) rather than simply dropped"
+    },
+    {
+      "name": "Recipient timezone from zip code",
+      "max_score": 8,
+      "description": "Quiet hours are determined using the recipient's local timezone derived from their zip code (uses zipcode-to-timezone or equivalent zip-to-timezone lookup)"
+    },
+    {
+      "name": "Default timezone fallback",
+      "max_score": 6,
+      "description": "When the recipient's zip code is unavailable, the implementation falls back to 'America/New_York' as the default timezone"
+    },
+    {
+      "name": "STOP instruction in body",
+      "max_score": 10,
+      "description": "Every outgoing marketing SMS message body includes a 'Reply STOP to unsubscribe' instruction (or equivalent STOP opt-out text)"
+    },
+    {
+      "name": "Message length check",
+      "max_score": 8,
+      "description": "The implementation validates or enforces that message content stays within 160 characters, OR includes a comment/documentation warning about the 160-character limit"
+    },
+    {
+      "name": "Rate limiting delay",
+      "max_score": 8,
+      "description": "The bulk send loop includes a delay between messages (approximately 100ms) to stay within carrier/Twilio rate limits"
+    },
+    {
+      "name": "SMS log written",
+      "max_score": 8,
+      "description": "After a successful send, the implementation writes a log record containing at minimum the twilioSid (message SID) and sent timestamp"
+    },
+    {
+      "name": "10DLC / short code mentioned",
+      "max_score": 6,
+      "description": "The implementation or its documentation mentions 10DLC registration requirement OR the use of short codes for high-volume sending (>1,000 messages/day)"
+    },
+    {
+      "name": "date-fns-tz for timezone conversion",
+      "max_score": 8,
+      "description": "The timezone conversion for quiet hours uses date-fns-tz (utcToZonedTime or equivalent) rather than manual UTC offset arithmetic"
+    }
+  ]
+}

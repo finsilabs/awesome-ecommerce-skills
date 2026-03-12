@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a customer photo upload presign endpoint correctly, including accepted content types, S3 key structure, presigned URL expiry, and creation of a pending database record.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Presigned URL approach",
+      "max_score": 12,
+      "description": "Uses server-side presigned S3 URLs (e.g. getSignedUrl with PutObjectCommand) rather than routing the file through the API server"
+    },
+    {
+      "name": "Content type validation",
+      "max_score": 10,
+      "description": "Rejects content types other than 'image/jpeg', 'image/png', and 'image/webp' with an error response"
+    },
+    {
+      "name": "S3 key pending path",
+      "max_score": 10,
+      "description": "Constructs the S3 object key using the pattern ugc/pending/{productId}/{customerId}/{timestamp}-{fileName} (all four segments present)"
+    },
+    {
+      "name": "Presigned URL expiry 300s",
+      "max_score": 8,
+      "description": "Sets the presigned URL expiresIn to exactly 300 seconds"
+    },
+    {
+      "name": "Metadata on S3 object",
+      "max_score": 8,
+      "description": "Includes Metadata with productId and customerId in the PutObjectCommand"
+    },
+    {
+      "name": "Pending record created",
+      "max_score": 12,
+      "description": "Creates a database record for the UGC photo with status 'pending_upload' at the time of presign generation (not after upload)"
+    },
+    {
+      "name": "Client-side 10MB limit",
+      "max_score": 8,
+      "description": "Enforces or documents a 10 MB maximum file size on the client side (e.g. validation check, comment, or configuration)"
+    },
+    {
+      "name": "Correct AWS SDK imports",
+      "max_score": 8,
+      "description": "Uses @aws-sdk/client-s3 and @aws-sdk/s3-request-presigner (not a deprecated or alternative S3 library)"
+    },
+    {
+      "name": "Response includes uploadUrl and key",
+      "max_score": 8,
+      "description": "The presign endpoint response JSON includes both the presigned URL (uploadUrl or equivalent) and the S3 key"
+    },
+    {
+      "name": "S3 bucket from env var",
+      "max_score": 8,
+      "description": "Uses process.env.S3_BUCKET (or equivalent environment variable) rather than hardcoding the bucket name"
+    },
+    {
+      "name": "AWS region from env var",
+      "max_score": 8,
+      "description": "Initialises the S3Client with region from process.env.AWS_REGION (or equivalent) rather than a hardcoded string"
+    }
+  ]
+}

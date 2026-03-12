@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements seller onboarding using Stripe Connect Express accounts, generates the proper onboarding link type, and checks the right conditions before activating a seller.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Express account type",
+      "max_score": 12,
+      "description": "stripe.accounts.create is called with type: 'express' (not 'standard' or 'custom')"
+    },
+    {
+      "name": "Transfers capability requested",
+      "max_score": 10,
+      "description": "The accounts.create call includes capabilities: { transfers: { requested: true } }"
+    },
+    {
+      "name": "Payout schedule propagated",
+      "max_score": 8,
+      "description": "The accounts.create call includes settings.payouts.schedule.interval set from the seller's payout_schedule field"
+    },
+    {
+      "name": "account_onboarding link type",
+      "max_score": 12,
+      "description": "stripe.accountLinks.create is called with type: 'account_onboarding' (not 'account_update' or another type)"
+    },
+    {
+      "name": "refresh_url included",
+      "max_score": 6,
+      "description": "The accountLinks.create call includes a refresh_url parameter"
+    },
+    {
+      "name": "return_url included",
+      "max_score": 6,
+      "description": "The accountLinks.create call includes a return_url parameter"
+    },
+    {
+      "name": "Reuses existing account",
+      "max_score": 8,
+      "description": "If stripe_account_id is already set on the seller, the code skips account creation and reuses the existing ID"
+    },
+    {
+      "name": "Saves stripe_account_id",
+      "max_score": 8,
+      "description": "After creating a new Stripe account, stripe_account_id is persisted back to the seller record in the database"
+    },
+    {
+      "name": "Both conditions checked for activation",
+      "max_score": 14,
+      "description": "The webhook handler checks BOTH charges_enabled AND payouts_enabled before setting seller status to 'active' — not just one of the two"
+    },
+    {
+      "name": "Activation email sent",
+      "max_score": 8,
+      "description": "An email is sent to the seller after their status is set to 'active' (e.g. using a 'seller-account-approved' or equivalent template)"
+    },
+    {
+      "name": "No double activation",
+      "max_score": 8,
+      "description": "The webhook handler does NOT update the seller's status if they are already 'active' (guards against repeated webhook delivery)"
+    }
+  ]
+}

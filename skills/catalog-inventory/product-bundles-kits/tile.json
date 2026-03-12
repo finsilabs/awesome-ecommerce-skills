@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-bundles-kits",
+  "version": "0.1.0",
+  "summary": "Bundle/kit management with dynamic pricing, inventory deduction, and display logic",
+  "skills": {
+    "product-bundles-kits": {
+      "path": "SKILL.md"
+    }
+  }
+}

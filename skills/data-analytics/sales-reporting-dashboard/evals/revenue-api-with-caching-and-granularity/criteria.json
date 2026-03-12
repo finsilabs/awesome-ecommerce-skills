@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent builds a revenue analytics API endpoint following the skill's specific SQL patterns, caching strategy, granularity validation, and financial metric separation. Covers DATE_TRUNC usage, cancelled order filtering, NULLIF for division safety, Redis caching TTL, granularity validation, GMV/net revenue separation, and period-over-period comparison.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "DATE_TRUNC aggregation",
+      "max_score": 10,
+      "description": "SQL query uses DATE_TRUNC (not DATE() or EXTRACT) for time period aggregation"
+    },
+    {
+      "name": "Cancelled order filter",
+      "max_score": 10,
+      "description": "SQL query includes a filter that excludes cancelled orders (e.g. WHERE status NOT IN ('cancelled') or equivalent)"
+    },
+    {
+      "name": "NULLIF for AOV",
+      "max_score": 8,
+      "description": "AOV calculation uses NULLIF around the order count denominator to prevent division by zero (e.g. NULLIF(COUNT(...), 0))"
+    },
+    {
+      "name": "Cents to decimal conversion",
+      "max_score": 8,
+      "description": "Monetary values from cents columns are divided by 100.0 (not 100) in SQL or TypeScript before being returned"
+    },
+    {
+      "name": "Redis caching",
+      "max_score": 10,
+      "description": "Handler checks a Redis cache before querying the database and stores the result back in Redis after querying"
+    },
+    {
+      "name": "Cache TTL range",
+      "max_score": 8,
+      "description": "Redis TTL is set between 300 and 900 seconds (5–15 minutes) when storing the cached result"
+    },
+    {
+      "name": "Granularity validation",
+      "max_score": 8,
+      "description": "Handler validates the granularity parameter and returns a 400 error response when an unsupported value is provided"
+    },
+    {
+      "name": "Valid granularity values",
+      "max_score": 8,
+      "description": "The set of accepted granularity values includes all four of: 'hour', 'day', 'week', 'month'"
+    },
+    {
+      "name": "GMV and net revenue separated",
+      "max_score": 10,
+      "description": "The response includes both a gross revenue (or GMV) field AND a separate net revenue field (gross minus discounts, at minimum)"
+    },
+    {
+      "name": "Period-over-period comparison",
+      "max_score": 10,
+      "description": "The handler or design doc computes and returns metrics for both the requested period and a prior period of the same length"
+    },
+    {
+      "name": "Concurrent period queries",
+      "max_score": 10,
+      "description": "When fetching current and prior period data, Promise.all (or equivalent concurrent fetch) is used rather than sequential awaits"
+    }
+  ]
+}

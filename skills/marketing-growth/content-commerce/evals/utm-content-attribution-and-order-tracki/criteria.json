@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements content-commerce UTM attribution: the right UTM parameter names and values for content-driven product links, order attribution storage with all required fields, priority hierarchy for multi-channel attribution, and a SQL query that filters for content source attribution.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "utm_source = 'content'",
+      "max_score": 9,
+      "description": "The product URL builder sets utm_source to exactly 'content' (not 'blog', 'article', or another value)"
+    },
+    {
+      "name": "utm_medium = 'article'",
+      "max_score": 9,
+      "description": "The product URL builder sets utm_medium to exactly 'article'"
+    },
+    {
+      "name": "utm_campaign = article slug",
+      "max_score": 9,
+      "description": "The utm_campaign parameter is set to the article's slug (not the article ID, title, or a category)"
+    },
+    {
+      "name": "utm_content = product slug",
+      "max_score": 10,
+      "description": "The utm_content parameter is set to the product's slug (not the product ID, name, or 'product')"
+    },
+    {
+      "name": "Order attribution fields",
+      "max_score": 10,
+      "description": "The captureOrderAttribution function stores all four UTM-derived fields: source, medium, campaign, and content (alongside orderId)"
+    },
+    {
+      "name": "Attribution priority hierarchy",
+      "max_score": 10,
+      "description": "The code or comments document that paid search takes priority over email, email over content, and content over organic (paid search > email > content > organic)"
+    },
+    {
+      "name": "SQL WHERE source = 'content'",
+      "max_score": 9,
+      "description": "The SQL report filters on 'source = content' (or 'utm_source = content') to restrict results to content-driven orders"
+    },
+    {
+      "name": "SQL includes revenue aggregation",
+      "max_score": 8,
+      "description": "The SQL query contains a SUM expression for revenue and a COUNT for orders"
+    },
+    {
+      "name": "SQL groups by article slug",
+      "max_score": 8,
+      "description": "The SQL query groups results by the campaign column (article slug) and orders/sorts by revenue"
+    },
+    {
+      "name": "SQL time filter",
+      "max_score": 8,
+      "description": "The SQL query includes a date filter limiting results to approximately the last 90 days"
+    },
+    {
+      "name": "URL uses STORE_URL base",
+      "max_score": 10,
+      "description": "The product URL is constructed with a configurable base URL (environment variable, constant, or parameter) rather than being hardcoded to a specific domain"
+    }
+  ]
+}

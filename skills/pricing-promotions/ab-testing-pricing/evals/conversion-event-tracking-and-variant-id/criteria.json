@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses atomic SQL increment updates for conversion events, correctly separates add_to_cart from purchase tracking, stores revenue in cents, and persists the experiment variant ID in each order record for later reconciliation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Atomic add_to_cart increment",
+      "max_score": 10,
+      "description": "trackExperimentEvent uses a SQL UPDATE with 'add_to_carts = add_to_carts + 1' for the add_to_cart event — not a read-modify-write pattern"
+    },
+    {
+      "name": "Atomic purchase increment",
+      "max_score": 10,
+      "description": "trackExperimentEvent uses a SQL UPDATE with 'purchases = purchases + 1' for the purchase event — not a read-modify-write pattern"
+    },
+    {
+      "name": "Revenue atomic increment",
+      "max_score": 10,
+      "description": "trackExperimentEvent updates revenue using 'revenue = revenue + ?' in the same UPDATE statement as the purchase count"
+    },
+    {
+      "name": "Revenue in cents",
+      "max_score": 8,
+      "description": "The revenueCents parameter or revenue amounts are treated as integer cents throughout — no conversion to/from dollars inside the tracking function"
+    },
+    {
+      "name": "Separate event handling",
+      "max_score": 8,
+      "description": "add_to_cart and purchase are handled as distinct branches (e.g., if/else or switch) — purchase does NOT also update add_to_carts"
+    },
+    {
+      "name": "Variant ID in order",
+      "max_score": 12,
+      "description": "recordOrder or checkoutIntegration persists the variantId into the order record (not just logged or discarded)"
+    },
+    {
+      "name": "Experiment ID in order",
+      "max_score": 8,
+      "description": "recordOrder or checkoutIntegration also persists the experimentId alongside variantId in the order record"
+    },
+    {
+      "name": "Null variant handled",
+      "max_score": 8,
+      "description": "The integration handles the case where variantId is null (session not in any experiment) without error — orders still complete normally"
+    },
+    {
+      "name": "Impression before event",
+      "max_score": 8,
+      "description": "checkoutIntegration shows that the impression is recorded when the price is first shown (via getExperimentPrice), before any add_to_cart or purchase event"
+    },
+    {
+      "name": "Integration notes completeness",
+      "max_score": 10,
+      "description": "INTEGRATION_NOTES.md mentions storing variant ID in orders AND using atomic increments (not read-modify-write) as key requirements"
+    },
+    {
+      "name": "No double counting",
+      "max_score": 8,
+      "description": "The checkout flow does not call trackExperimentEvent for purchase AND also increment add_to_carts again at checkout time — each event type is tracked exactly once"
+    }
+  ]
+}

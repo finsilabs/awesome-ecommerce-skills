@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shopify-storefront-api",
+  "version": "0.1.0",
+  "summary": "Storefront API queries for headless builds with buy SDK",
+  "skills": {
+    "shopify-storefront-api": {
+      "path": "SKILL.md"
+    }
+  }
+}

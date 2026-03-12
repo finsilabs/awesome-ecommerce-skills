@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly persists the guest cart token in an httpOnly cookie (not localStorage), uses correct cookie settings, implements optimistic UI for add-to-cart with proper revert-on-failure, and uses the React useReducer/context pattern for cart state.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "httpOnly cookie (not localStorage)",
+      "max_score": 12,
+      "description": "Guest cart token is stored using an httpOnly cookie, NOT in localStorage or sessionStorage"
+    },
+    {
+      "name": "Cookie named cart_token",
+      "max_score": 6,
+      "description": "The guest cart cookie is named 'cart_token'"
+    },
+    {
+      "name": "Cookie secure flag",
+      "max_score": 8,
+      "description": "Cookie is set with secure: true (or secure: process.env.NODE_ENV === 'production') to ensure HTTPS-only in production"
+    },
+    {
+      "name": "Cookie sameSite lax",
+      "max_score": 6,
+      "description": "Cookie is set with sameSite: 'lax'"
+    },
+    {
+      "name": "Cookie maxAge 30 days",
+      "max_score": 6,
+      "description": "Cookie maxAge is set to 30 days (2592000000 ms or 30 * 24 * 60 * 60 * 1000)"
+    },
+    {
+      "name": "UUID guest token",
+      "max_score": 6,
+      "description": "Guest token is generated as a UUID (using uuid library, crypto.randomUUID, or similar)"
+    },
+    {
+      "name": "Optimistic add dispatch",
+      "max_score": 12,
+      "description": "addItem dispatches an optimistic state update to the cart BEFORE awaiting the API response"
+    },
+    {
+      "name": "Revert on API failure",
+      "max_score": 10,
+      "description": "On API call failure in addItem, the cart state is reverted by re-fetching the current cart from the server"
+    },
+    {
+      "name": "useReducer for cart state",
+      "max_score": 8,
+      "description": "Cart state is managed with useReducer (not useState) with a cartReducer function"
+    },
+    {
+      "name": "CartContext and useCart hook",
+      "max_score": 8,
+      "description": "A CartContext is created and a useCart hook exported that calls useContext(CartContext)"
+    },
+    {
+      "name": "DESIGN_NOTES mentions httpOnly rationale",
+      "max_score": 8,
+      "description": "DESIGN_NOTES.md mentions that httpOnly cookie was chosen over localStorage for security (XSS protection)"
+    },
+    {
+      "name": "DESIGN_NOTES mentions optimistic UI",
+      "max_score": 10,
+      "description": "DESIGN_NOTES.md mentions the optimistic update strategy (update immediately, revert on failure)"
+    }
+  ]
+}

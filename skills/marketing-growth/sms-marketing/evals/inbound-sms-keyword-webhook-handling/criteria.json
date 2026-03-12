@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements an inbound SMS webhook that correctly handles the full set of opt-out and opt-in keywords, routes non-keyword messages to support, and correctly handles transactional SMS with its own separate opt-out check distinct from marketing consent.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Full STOP keyword set",
+      "max_score": 10,
+      "description": "The webhook handles all of: STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, QUIT as opt-out keywords (not just 'STOP' alone)"
+    },
+    {
+      "name": "Deactivate consent on STOP",
+      "max_score": 10,
+      "description": "When a STOP-family keyword is received, the implementation deactivates ALL consent records for that phone number"
+    },
+    {
+      "name": "TwiML response on STOP",
+      "max_score": 8,
+      "description": "The STOP handler responds with a TwiML MessagingResponse (not a plain JSON or text response) confirming unsubscription"
+    },
+    {
+      "name": "HELP keyword handled",
+      "max_score": 8,
+      "description": "The webhook has a dedicated handler for the HELP keyword that responds with store name, messaging disclosure, and STOP instructions"
+    },
+    {
+      "name": "Full re-subscribe keyword set",
+      "max_score": 8,
+      "description": "The webhook handles all of: START, UNSTOP, YES as re-subscribe keywords"
+    },
+    {
+      "name": "Reactivate consent on START",
+      "max_score": 8,
+      "description": "When a START-family keyword is received, the implementation reactivates marketing consent for that phone number"
+    },
+    {
+      "name": "Non-keyword routed to support",
+      "max_score": 8,
+      "description": "Inbound messages that are NOT one of the recognized keywords are routed to a support queue rather than receiving an automated reply"
+    },
+    {
+      "name": "Keyword match is case-insensitive",
+      "max_score": 6,
+      "description": "Keywords are compared case-insensitively (e.g., 'stop', 'Stop', 'STOP' all trigger the opt-out flow)"
+    },
+    {
+      "name": "Transactional opt-out separate",
+      "max_score": 10,
+      "description": "The transactional SMS send function checks a transactional-specific opt-out (NOT marketing consent) — the check uses a 'transactional' type distinct from 'marketing'"
+    },
+    {
+      "name": "Transactional no opt-in required",
+      "max_score": 10,
+      "description": "The transactional SMS send does NOT require an active marketing opt-in — it only checks whether the customer has opted OUT of transactional messages"
+    },
+    {
+      "name": "STOP in transactional message",
+      "max_score": 8,
+      "description": "The transactional SMS message body includes an opt-out instruction (e.g., 'Reply STOP to opt out of order texts')"
+    },
+    {
+      "name": "Phone normalized in transactional",
+      "max_score": 6,
+      "description": "The transactional SMS send normalizes the phone number to E.164 format before passing it to Twilio"
+    }
+  ]
+}

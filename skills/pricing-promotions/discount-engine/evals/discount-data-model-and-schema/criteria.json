@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent follows the skill's data model specification: correct TypeScript interface fields, integer monetary values, the automatic-vs-code-based distinction, case normalization, and the required PostgreSQL schema including indexes and a usage-tracking table.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Discount type union",
+      "max_score": 8,
+      "description": "The Discount type field uses exactly the union 'percentage' | 'fixed_amount' | 'bogo' | 'free_shipping' (all four, no others or extras)"
+    },
+    {
+      "name": "Target union",
+      "max_score": 6,
+      "description": "The Discount target field uses exactly the union 'order' | 'line_item' | 'shipping'"
+    },
+    {
+      "name": "allocationMethod field",
+      "max_score": 6,
+      "description": "The Discount interface includes an allocationMethod field with values 'across' | 'each'"
+    },
+    {
+      "name": "Monetary values in cents",
+      "max_score": 10,
+      "description": "Monetary fields (value for fixed amounts, minPurchaseAmount, maxDiscountAmount, unitPrice, etc.) are typed as integers/numbers in cents, NOT as floats or decimal strings; design-notes.md explicitly mentions storing money as integers/cents"
+    },
+    {
+      "name": "Nullable code for automatic",
+      "max_score": 8,
+      "description": "The code field on Discount is optional (code?) to represent automatic discounts; design-notes.md or comments distinguish automatic (no code) from coupon-code discounts"
+    },
+    {
+      "name": "Stacking flags",
+      "max_score": 8,
+      "description": "The Discount interface includes all three stacking boolean fields: combinesWithProductDiscounts, combinesWithOrderDiscounts, and combinesWithShippingDiscounts"
+    },
+    {
+      "name": "Usage limit fields",
+      "max_score": 6,
+      "description": "The Discount interface includes maxUses, currentUses, and maxUsesPerCustomer fields"
+    },
+    {
+      "name": "Conditions array",
+      "max_score": 8,
+      "description": "The Discount interface includes a conditions field typed as an array, with a DiscountCondition type that includes at minimum 'min_purchase', 'min_quantity', 'customer_tag', and 'first_order' condition types"
+    },
+    {
+      "name": "discounts table schema",
+      "max_score": 8,
+      "description": "schema.sql creates a discounts table with a UUID primary key, a nullable code column, monetary columns stored as INTEGER (not DECIMAL/FLOAT), and a conditions column using JSONB"
+    },
+    {
+      "name": "Case-insensitive code index",
+      "max_score": 8,
+      "description": "schema.sql includes a functional index on UPPER(code) for the discounts table (e.g., CREATE INDEX ... ON discounts(UPPER(code)))"
+    },
+    {
+      "name": "Active discounts index",
+      "max_score": 6,
+      "description": "schema.sql includes a composite index covering is_active, starts_at, and ends_at columns"
+    },
+    {
+      "name": "discount_usages table",
+      "max_score": 8,
+      "description": "schema.sql creates a discount_usages table with at minimum: a foreign key to discounts, a customer_id column, an order_id column, and an amount column in cents"
+    },
+    {
+      "name": "Scope fields present",
+      "max_score": 6,
+      "description": "The Discount interface includes appliesTo ('all' | 'specific_products' | 'specific_collections' | ...) plus entitledProductIds, entitledCollectionIds, and excludedProductIds fields"
+    },
+    {
+      "name": "Schedule fields",
+      "max_score": 4,
+      "description": "The Discount interface includes startsAt (required Date) and endsAt (optional Date) fields"
+    }
+  ]
+}

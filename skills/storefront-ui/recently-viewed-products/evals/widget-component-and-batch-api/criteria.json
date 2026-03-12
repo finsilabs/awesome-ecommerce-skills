@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent builds the RecentlyViewedWidget with correct order-preservation, silent failure handling, excludeId support, batch API validation, published-only filtering, and cart drawer conditional display logic.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Fetch by POST to batch endpoint",
+      "max_score": 10,
+      "description": "RecentlyViewedWidget fetches product data via a POST request (not GET) to the batch products endpoint"
+    },
+    {
+      "name": "Preserve viewed order",
+      "max_score": 12,
+      "description": "After receiving the API response, the widget reconstructs product order to match the stored view order (e.g., uses a Map keyed by ID and maps over the original ids array), rather than rendering in the arbitrary order returned by the API"
+    },
+    {
+      "name": "Widget returns null when empty",
+      "max_score": 8,
+      "description": "RecentlyViewedWidget returns null (renders nothing) when there are no products to show"
+    },
+    {
+      "name": "Widget catches fetch errors silently",
+      "max_score": 8,
+      "description": "The fetch call in RecentlyViewedWidget has a .catch handler or try/catch that suppresses errors without crashing or showing an error UI"
+    },
+    {
+      "name": "excludeId prop used",
+      "max_score": 8,
+      "description": "RecentlyViewedWidget accepts and passes an excludeId prop/parameter to getRecentlyViewedIds so the currently viewed product is excluded"
+    },
+    {
+      "name": "API array validation",
+      "max_score": 9,
+      "description": "The by-ids handler rejects requests where ids is not an array or is empty, returning a 400 status"
+    },
+    {
+      "name": "API max length validation",
+      "max_score": 8,
+      "description": "The by-ids handler rejects requests where ids.length exceeds 20, returning a 400 status"
+    },
+    {
+      "name": "Published-only filter",
+      "max_score": 10,
+      "description": "The by-ids handler queries only published products (e.g., published: true in the where clause), not all products matching the IDs"
+    },
+    {
+      "name": "Skeleton or below-fold placement",
+      "max_score": 8,
+      "description": "RecentlyViewedWidget includes a min-height or placeholder (skeleton) element while products are loading, OR the component is positioned/styled to be below the fold — to prevent layout shift"
+    },
+    {
+      "name": "Cart drawer conditional display",
+      "max_score": 10,
+      "description": "CartDrawer shows the recently viewed widget only when cartItems.length is less than 3 (not always, and not based on a different threshold)"
+    },
+    {
+      "name": "aria-label on widget section",
+      "max_score": 9,
+      "description": "The widget's root element uses an aria-label attribute with a value indicating 'recently viewed' content"
+    }
+  ]
+}

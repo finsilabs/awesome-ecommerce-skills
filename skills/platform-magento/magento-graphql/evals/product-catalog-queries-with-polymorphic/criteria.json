@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses inline fragments for polymorphic Magento product types, includes aggregations for faceted filtering, correctly queries stock_status at the variant level for configurable products, and produces pagination-aware product list queries.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SimpleProduct inline fragment",
+      "max_score": 9,
+      "description": "The product query includes a `... on SimpleProduct` inline fragment to access simple-product-specific fields"
+    },
+    {
+      "name": "ConfigurableProduct inline fragment",
+      "max_score": 9,
+      "description": "The product query includes a `... on ConfigurableProduct` inline fragment for configurable-product-specific fields"
+    },
+    {
+      "name": "Configurable options queried",
+      "max_score": 8,
+      "description": "Inside the `... on ConfigurableProduct` fragment, `configurable_options` is queried (e.g. attribute_code, label, values)"
+    },
+    {
+      "name": "Variant stock at product level",
+      "max_score": 12,
+      "description": "Stock status is queried on `variants.product` (the simple product inside the variant), NOT on the parent configurable product field directly"
+    },
+    {
+      "name": "Aggregations in product list query",
+      "max_score": 10,
+      "description": "The product list query includes an `aggregations` field (with at minimum attribute_code and options sub-fields) to support faceted filtering"
+    },
+    {
+      "name": "Pagination fields",
+      "max_score": 8,
+      "description": "The product list query includes `page_info` with at least `current_page` and `total_pages` (or `total_count`) for pagination"
+    },
+    {
+      "name": "pageSize and currentPage variables",
+      "max_score": 7,
+      "description": "The query accepts `$pageSize` and `$currentPage` as GraphQL variables (not hardcoded inline)"
+    },
+    {
+      "name": "Filter variable used",
+      "max_score": 7,
+      "description": "The query accepts a `$filter` variable of type `ProductAttributeFilterInput` (or equivalent) for category or attribute filtering"
+    },
+    {
+      "name": "Search variable used",
+      "max_score": 7,
+      "description": "The query accepts a `$search` variable to support keyword search on the `products` field"
+    },
+    {
+      "name": "Sort by position",
+      "max_score": 7,
+      "description": "The products query uses `sort: { position: ASC }` or includes a sort parameter"
+    },
+    {
+      "name": "Visibility note or handling",
+      "max_score": 8,
+      "description": "NOTES.md or code comments mention that products set to 'Not Visible Individually' will not appear in catalog queries"
+    },
+    {
+      "name": "Small image / thumbnail",
+      "max_score": 8,
+      "description": "Product query requests `small_image` or `thumbnail` with `url` and `label` for listing images"
+    }
+  ]
+}

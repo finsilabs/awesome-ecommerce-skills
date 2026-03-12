@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements requestAnimationFrame-based route-change focus management, the temporary tabindex=-1 pattern for heading focus, a complete trapFocus implementation cycling Tab/Shift+Tab, proper :focus-visible CSS with forced-colors support, and avoids removing focus outlines without a replacement.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "requestAnimationFrame usage",
+      "max_score": 9,
+      "description": "The route-change focus function wraps the DOM focus call inside requestAnimationFrame (not setTimeout(fn,0) or direct synchronous call)"
+    },
+    {
+      "name": "Targets main h1",
+      "max_score": 9,
+      "description": "The route-change focus utility queries for 'main h1' or '[role=\"main\"] h1' to find the heading to focus"
+    },
+    {
+      "name": "Temporary tabindex -1",
+      "max_score": 9,
+      "description": "The heading is given tabindex=\"-1\" before calling .focus() so a non-focusable element can receive focus"
+    },
+    {
+      "name": "tabindex removed on blur",
+      "max_score": 8,
+      "description": "The tabindex=\"-1\" attribute is removed from the heading after it loses focus (blur listener with { once: true })"
+    },
+    {
+      "name": "Focusable selector in trapFocus",
+      "max_score": 9,
+      "description": "The trapFocus function queries focusable descendants using a selector that includes at minimum: a[href], button:not([disabled]), input:not([disabled]), and [tabindex]:not([tabindex=\"-1\"])"
+    },
+    {
+      "name": "Tab cycling",
+      "max_score": 9,
+      "description": "The trapFocus implementation moves focus from the last focusable element back to the first when Tab is pressed"
+    },
+    {
+      "name": "Shift+Tab cycling",
+      "max_score": 9,
+      "description": "The trapFocus implementation moves focus from the first focusable element to the last when Shift+Tab is pressed"
+    },
+    {
+      "name": "Focus on modal open",
+      "max_score": 8,
+      "description": "When the modal opens, focus is moved to the first focusable element inside the modal (or the modal container itself)"
+    },
+    {
+      "name": "focus-visible style",
+      "max_score": 8,
+      "description": "global.css defines a :focus-visible rule with a visible outline (e.g. 2px or 3px solid, with outline-offset)"
+    },
+    {
+      "name": "Mouse-only suppression",
+      "max_score": 9,
+      "description": "global.css removes the focus ring only for :focus:not(:focus-visible) — NOT via a blanket :focus { outline: none }"
+    },
+    {
+      "name": "Forced-colors support",
+      "max_score": 9,
+      "description": "global.css includes a @media (forced-colors: active) block that sets the :focus-visible outline to use a system color (e.g. ButtonText)"
+    },
+    {
+      "name": "No outline none globally",
+      "max_score": 4,
+      "description": "global.css does NOT contain a rule that sets outline:none on :focus without a paired :focus-visible alternative in the same file"
+    }
+  ]
+}

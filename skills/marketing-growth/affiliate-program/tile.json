@@ -1,0 +1,10 @@
+{
+  "name": "finsi/affiliate-program",
+  "version": "0.1.0",
+  "summary": "Affiliate tracking, commission tiers, payout management, and fraud detection",
+  "skills": {
+    "affiliate-program": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/multi-warehouse",
+  "version": "0.1.0",
+  "summary": "Multi-location inventory with allocation rules, transfer orders, and split fulfillment",
+  "skills": {
+    "multi-warehouse": {
+      "path": "SKILL.md"
+    }
+  }
+}

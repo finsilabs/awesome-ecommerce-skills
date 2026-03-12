@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly handles Zendesk webhooks with HMAC signature verification, syncs CSAT scores back to the CRM with proper flagging for poor experiences, and applies VIP routing rules based on customer segments and lifetime spend thresholds.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "HMAC verification present",
+      "max_score": 12,
+      "description": "The webhook handler includes HMAC signature verification before processing the payload (checks a signature header against a computed HMAC using the signing secret)"
+    },
+    {
+      "name": "HMAC rejects invalid",
+      "max_score": 8,
+      "description": "Returns a non-200 status code (e.g., 401 or 403) when the HMAC signature does not match, before processing the payload"
+    },
+    {
+      "name": "CSAT score field",
+      "max_score": 8,
+      "description": "Updates the customer record with lastCsatScore set to the satisfaction score value from the webhook payload"
+    },
+    {
+      "name": "CSAT timestamp field",
+      "max_score": 7,
+      "description": "Updates the customer record with lastCsatAt set to the current date/time (new Date() or equivalent)"
+    },
+    {
+      "name": "poor_support_experience flag",
+      "max_score": 8,
+      "description": "Creates a customerFlag record with flag value 'poor_support_experience' when satisfaction score is 'bad'"
+    },
+    {
+      "name": "No flag for good CSAT",
+      "max_score": 5,
+      "description": "Does NOT create a poor_support_experience flag entry when satisfaction score is 'good'"
+    },
+    {
+      "name": "VIP segment routing",
+      "max_score": 10,
+      "description": "Assigns 'urgent' priority to tickets where customer segment is 'champions' or 'cannot_lose_them'"
+    },
+    {
+      "name": "VIP group assignment",
+      "max_score": 8,
+      "description": "Assigns the VIP group ID (from environment variable) to tickets for 'champions' or 'cannot_lose_them' customers"
+    },
+    {
+      "name": "High-value spend threshold",
+      "max_score": 8,
+      "description": "Assigns 'high' priority (not 'urgent') for customers with lifetime spend at or above $1000 (100000 cents) who are NOT in a VIP segment"
+    },
+    {
+      "name": "No duplicate customer creation",
+      "max_score": 8,
+      "description": "Looks up customers by email only — does NOT call any create/insert function for a customer record when processing webhook events"
+    },
+    {
+      "name": "Event type filtering",
+      "max_score": 8,
+      "description": "Only processes CSAT logic when the webhook event type is 'ticket.satisfaction_rating.created' (ignores other event types)"
+    },
+    {
+      "name": "Returns 200 promptly",
+      "max_score": 10,
+      "description": "Sends a 200 response after processing (e.g., res.sendStatus(200) or res.status(200).send()), not withholding until all async work completes in a way that would cause timeout"
+    }
+  ]
+}

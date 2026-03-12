@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the smart opt-in timing strategy (gated behind user engagement, not first page load), persists opt-in state with localStorage, sets TTL on the flash sale broadcast, and documents the 2-per-day frequency limit and other best practices.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Permission NOT on page load",
+      "max_score": 10,
+      "description": "client/push-optin.ts does NOT call Notification.requestPermission() immediately on script load or DOMContentLoaded — it is gated behind a user interaction or engagement check"
+    },
+    {
+      "name": "Page view threshold",
+      "max_score": 8,
+      "description": "client/push-optin.ts tracks page view count (e.g., using sessionStorage) and only proceeds after reaching a minimum threshold of 3 or more page views"
+    },
+    {
+      "name": "Add-to-cart trigger",
+      "max_score": 10,
+      "description": "client/push-optin.ts triggers the permission request in response to an add-to-cart event (e.g., listens for 'cart:item:added' or similar cart event)"
+    },
+    {
+      "name": "Dismissed state in localStorage",
+      "max_score": 8,
+      "description": "client/push-optin.ts stores a 'pushDismissed' (or equivalent) flag in localStorage when the user declines the prompt"
+    },
+    {
+      "name": "Subscribed state in localStorage",
+      "max_score": 8,
+      "description": "client/push-optin.ts stores a 'pushSubscribed' (or equivalent) flag in localStorage when the user successfully subscribes"
+    },
+    {
+      "name": "Guard against re-prompting",
+      "max_score": 8,
+      "description": "client/push-optin.ts returns early (no dialog shown) if the user has already subscribed OR already dismissed the prompt — checking both localStorage flags"
+    },
+    {
+      "name": "Flash sale TTL set",
+      "max_score": 10,
+      "description": "server/broadcast-flash-sale.ts passes a TTL option to webpush.sendNotification() calculated from the sale's end time (so expired-sale pushes are not delivered)"
+    },
+    {
+      "name": "410 cleanup in broadcast",
+      "max_score": 8,
+      "description": "server/broadcast-flash-sale.ts collects or identifies subscriptions that return a 410 status and deletes them from the database after the broadcast"
+    },
+    {
+      "name": "Promise.allSettled usage",
+      "max_score": 8,
+      "description": "server/broadcast-flash-sale.ts uses Promise.allSettled() (not Promise.all()) to send notifications in parallel without aborting on individual failures"
+    },
+    {
+      "name": "Daily frequency limit documented",
+      "max_score": 8,
+      "description": "DESIGN.md mentions a limit of no more than 2 push notifications per day per user as a best practice or constraint"
+    },
+    {
+      "name": "Body length constraint documented",
+      "max_score": 6,
+      "description": "DESIGN.md mentions keeping notification body text under 100 characters to avoid truncation on Android"
+    },
+    {
+      "name": "Cart reminder actions",
+      "max_score": 8,
+      "description": "DESIGN.md or broadcast-flash-sale.ts mentions or uses the 'actions' field in notification payloads to provide binary choices to users"
+    }
+  ]
+}

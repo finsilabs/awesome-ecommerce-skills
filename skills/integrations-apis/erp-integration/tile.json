@@ -1,0 +1,10 @@
+{
+  "name": "finsi/erp-integration",
+  "version": "0.1.0",
+  "summary": "ERP sync patterns (SAP, NetSuite, Odoo) for orders, inventory, and customers",
+  "skills": {
+    "erp-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

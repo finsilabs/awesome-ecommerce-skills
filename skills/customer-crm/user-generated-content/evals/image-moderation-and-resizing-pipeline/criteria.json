@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements a correct S3-triggered image processing Lambda that uses AWS Rekognition for moderation, sharp for resizing, and correctly handles verified-purchase auto-approval logic.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Rekognition moderation used",
+      "max_score": 10,
+      "description": "Calls AWS Rekognition detectModerationLabels (via @aws-sdk/client-rekognition) to screen the uploaded image"
+    },
+    {
+      "name": "MinConfidence 75",
+      "max_score": 8,
+      "description": "Passes MinConfidence: 75 (not a different value) to detectModerationLabels"
+    },
+    {
+      "name": "Reject on any flagged label",
+      "max_score": 8,
+      "description": "Rejects the upload (sets status to 'rejected') whenever ModerationLabels contains one or more entries"
+    },
+    {
+      "name": "Rejection reason recorded",
+      "max_score": 6,
+      "description": "Stores the rejectionReason as the joined moderation label names (not just a boolean or generic message)"
+    },
+    {
+      "name": "Sharp for resizing",
+      "max_score": 8,
+      "description": "Uses the sharp library (not jimp, canvas, or another image library) to resize the uploaded image"
+    },
+    {
+      "name": "Three size variants",
+      "max_score": 10,
+      "description": "Produces exactly three size variants: thumbnail (200px wide), medium (600px wide), and full (1200px wide)"
+    },
+    {
+      "name": "WebP output quality 80",
+      "max_score": 8,
+      "description": "Converts each resized variant to WebP format with quality 80 (not another format or different quality value)"
+    },
+    {
+      "name": "Approved S3 key path",
+      "max_score": 8,
+      "description": "Stores resized variants under the path ugc/approved/{productId}/{ugcId}/{suffix}.webp"
+    },
+    {
+      "name": "Verified purchase auto-approve",
+      "max_score": 10,
+      "description": "Sets status to 'approved' automatically for verified purchasers (customers who ordered the same product)"
+    },
+    {
+      "name": "Pending review for non-verified",
+      "max_score": 10,
+      "description": "Sets status to 'pending_review' (not 'approved' or 'rejected') for uploads from customers without a verified purchase"
+    },
+    {
+      "name": "S3 ObjectCreated trigger",
+      "max_score": 8,
+      "description": "The processing function is triggered by (or explicitly handles) an S3 ObjectCreated event, not a direct API call or polling loop"
+    },
+    {
+      "name": "EXIF data stripped",
+      "max_score": 6,
+      "description": "Strips or omits EXIF metadata from the output image (e.g. uses sharp's default strip behaviour or explicitly calls .withMetadata(false))"
+    }
+  ]
+}

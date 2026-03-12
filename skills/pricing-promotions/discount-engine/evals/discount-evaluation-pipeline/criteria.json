@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the discount evaluation pipeline correctly: the four-step order (filter → condition check → priority sort → stacking), the priority formula (automatic before code-based, specific scope before general), stacking flag enforcement, correct allocation math for each discount type, the maxDiscountAmount cap, and tiered pricing exclusivity.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Pipeline step order",
+      "max_score": 8,
+      "description": "The evaluateDiscounts function (or equivalent) filters to active/valid/non-expired/non-exhausted discounts BEFORE checking conditions, and sorts by priority BEFORE applying stacking logic"
+    },
+    {
+      "name": "Automatic-first priority",
+      "max_score": 8,
+      "description": "The priority function assigns higher priority to discounts without a code (automatic) over discounts with a code; tests confirm an automatic discount is applied before a coupon-code discount of equal value"
+    },
+    {
+      "name": "Specific-scope priority",
+      "max_score": 6,
+      "description": "The priority function gives higher priority to specific_products scope over specific_collections scope, and both over 'all'; this is reflected in the code or test assertions"
+    },
+    {
+      "name": "Stacking flag enforcement",
+      "max_score": 10,
+      "description": "A second line_item-targeted discount is skipped when combinesWithProductDiscounts is false; the test for competing line-item discounts verifies only one is applied"
+    },
+    {
+      "name": "Percentage allocation",
+      "max_score": 8,
+      "description": "Percentage discounts compute Math.round(lineTotal * value / 100) per eligible item"
+    },
+    {
+      "name": "Fixed-amount order spread",
+      "max_score": 8,
+      "description": "For fixed_amount with target='order', the discount is spread proportionally across eligible items by their lineTotal ratio, capped at eligibleTotal"
+    },
+    {
+      "name": "Fixed-amount per-item cap",
+      "max_score": 6,
+      "description": "For fixed_amount applied per item (not order-level), the per-unit discount is capped at unitPrice (Math.min(discount.value, item.unitPrice) * quantity)"
+    },
+    {
+      "name": "BOGO formula",
+      "max_score": 10,
+      "description": "BOGO discount computes free items as Math.floor(quantity / (buyQty + getQty)) * getQty, and the discount amount is freeItems * unitPrice"
+    },
+    {
+      "name": "maxDiscountAmount cap",
+      "max_score": 8,
+      "description": "After computing totalDiscount for any discount type, the code applies Math.min(totalDiscount, maxDiscountAmount) when maxDiscountAmount is set; a test or the README confirms this cap is active"
+    },
+    {
+      "name": "Tiered no-stacking",
+      "max_score": 10,
+      "description": "In the tiered bulk discount test, when a cart qualifies for multiple tiers (e.g., 10% at qty 3 and 15% at qty 5), only the highest qualifying tier is applied (not both); this is achieved via combinesWithProductDiscounts: false on the tier discounts"
+    },
+    {
+      "name": "Eligibility date filter",
+      "max_score": 8,
+      "description": "The pipeline filters out discounts where isActive is false, startsAt is in the future, or endsAt is in the past"
+    },
+    {
+      "name": "Usage-limit filter",
+      "max_score": 6,
+      "description": "The pipeline filters out discounts where currentUses >= maxUses (when maxUses is set)"
+    },
+    {
+      "name": "Free-shipping type",
+      "max_score": 4,
+      "description": "The free_shipping discount type sets the discount amount equal to the cart's shippingCost"
+    }
+  ]
+}

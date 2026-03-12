@@ -1,0 +1,81 @@
+{
+  "context": "Tests whether the agent builds an accessible comparison table with grouped attributes, identical/different row differentiation, a showOnlyDifferences filter, winner highlighting, and correct CSS for sticky elements and row styling.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ARIA region wrapper",
+      "max_score": 5,
+      "description": "The comparison table wrapper element has role=\"region\" and aria-label=\"Product comparison\" (or equivalent descriptive label)"
+    },
+    {
+      "name": "sr-only caption",
+      "max_score": 5,
+      "description": "The <table> contains a <caption> element with class \"sr-only\" (or visually-hidden equivalent) listing the compared product names"
+    },
+    {
+      "name": "Column scope attributes",
+      "max_score": 7,
+      "description": "Product column <th> elements have scope=\"col\" and the attribute label <th> also uses scope=\"col\" or scope=\"row\" as appropriate"
+    },
+    {
+      "name": "Row group scope",
+      "max_score": 7,
+      "description": "Group header <th> elements (Display, Sensor, etc.) use scope=\"rowgroup\""
+    },
+    {
+      "name": "Attribute row scope",
+      "max_score": 7,
+      "description": "Individual attribute label <th> elements use scope=\"row\""
+    },
+    {
+      "name": "Attribute grouping",
+      "max_score": 8,
+      "description": "Attributes are rendered in named groups (e.g. Display, Sensor) with a group header row separating each category"
+    },
+    {
+      "name": "identical-row class",
+      "max_score": 7,
+      "description": "Rows where all compared products share the same attribute value receive a CSS class indicating they are identical (e.g. \"identical-row\")"
+    },
+    {
+      "name": "different-row class",
+      "max_score": 7,
+      "description": "Rows where compared products have differing attribute values receive a CSS class indicating difference (e.g. \"different-row\")"
+    },
+    {
+      "name": "Identical row muted style",
+      "max_score": 4,
+      "description": "Identical rows are styled with a muted/grey text color (e.g. #94a3b8 or similar) applied to their <td> cells"
+    },
+    {
+      "name": "Different row background",
+      "max_score": 5,
+      "description": "Different-value rows have a distinct background color applied (e.g. #f8fafc or similar light shade)"
+    },
+    {
+      "name": "showOnlyDifferences toggle",
+      "max_score": 8,
+      "description": "When showOnlyDifferences is true, rows where all products share the same value are hidden/not rendered"
+    },
+    {
+      "name": "AttributeValue check/cross",
+      "max_score": 8,
+      "description": "Boolean or Yes/No attribute values are rendered as a checkmark symbol for truthy and a cross symbol for falsy/null, rather than raw true/false text"
+    },
+    {
+      "name": "Winner highlighting",
+      "max_score": 7,
+      "description": "Numeric attribute values are compared and the best value in each row is visually highlighted (bold, color, or class) to indicate the winner"
+    },
+    {
+      "name": "Sticky header row CSS",
+      "max_score": 7,
+      "description": "The CSS makes the thead row sticky at the top of the viewport using position: sticky; top: 0 (with a z-index higher than the sticky column)"
+    },
+    {
+      "name": "Sticky first column CSS",
+      "max_score": 8,
+      "description": "The CSS makes the attribute label column sticky to the left using position: sticky; left: 0 (NOT position: fixed)"
+    }
+  ]
+}

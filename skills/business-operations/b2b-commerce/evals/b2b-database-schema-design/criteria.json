@@ -1,0 +1,81 @@
+{
+  "context": "Tests whether the agent correctly models the B2B data layer: the companies, company_users, and company_catalogs tables with the right column types, constraints, and defaults. Also checks that billing information is stored at the company level rather than on individual users, and that company status and credit fields follow the prescribed schema.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "companies.id is UUID",
+      "max_score": 5,
+      "description": "companies.id column uses UUID type with gen_random_uuid() as default"
+    },
+    {
+      "name": "payment_terms CHECK constraint",
+      "max_score": 10,
+      "description": "companies.payment_terms has a CHECK constraint that includes exactly the values: prepay, net15, net30, net60, net90"
+    },
+    {
+      "name": "payment_terms default net30",
+      "max_score": 5,
+      "description": "companies.payment_terms defaults to 'net30'"
+    },
+    {
+      "name": "credit stored in cents",
+      "max_score": 8,
+      "description": "Both credit_limit and credit_used on companies are INTEGER type (cents), not DECIMAL or FLOAT"
+    },
+    {
+      "name": "credit_limit nullable",
+      "max_score": 5,
+      "description": "companies.credit_limit allows NULL (no NOT NULL constraint), meaning no limit"
+    },
+    {
+      "name": "company status CHECK",
+      "max_score": 8,
+      "description": "companies.status has a CHECK constraint with values: pending, approved, suspended; defaults to 'pending'"
+    },
+    {
+      "name": "billing_address JSONB on company",
+      "max_score": 8,
+      "description": "billing_address is stored as JSONB on the companies table, NOT on a users table"
+    },
+    {
+      "name": "company_users role CHECK",
+      "max_score": 10,
+      "description": "company_users.role has a CHECK constraint with values: admin, buyer, approver, viewer; defaults to 'buyer'"
+    },
+    {
+      "name": "spending_limit per user",
+      "max_score": 8,
+      "description": "company_users has a spending_limit INTEGER column (cents per order) that allows NULL"
+    },
+    {
+      "name": "company_users UNIQUE",
+      "max_score": 5,
+      "description": "company_users has a UNIQUE constraint on (company_id, user_id)"
+    },
+    {
+      "name": "company_catalogs custom_price nullable",
+      "max_score": 8,
+      "description": "company_catalogs.custom_price is INTEGER allowing NULL (meaning use volume pricing when NULL)"
+    },
+    {
+      "name": "company_catalogs is_visible",
+      "max_score": 5,
+      "description": "company_catalogs has is_visible BOOLEAN NOT NULL DEFAULT true column"
+    },
+    {
+      "name": "company_catalogs UNIQUE",
+      "max_score": 5,
+      "description": "company_catalogs has a UNIQUE constraint on (company_id, product_id)"
+    },
+    {
+      "name": "credit_used default zero",
+      "max_score": 5,
+      "description": "companies.credit_used has NOT NULL DEFAULT 0"
+    },
+    {
+      "name": "tax_id column",
+      "max_score": 5,
+      "description": "companies table includes a tax_id column (VARCHAR type) for EIN/VAT numbers"
+    }
+  ]
+}

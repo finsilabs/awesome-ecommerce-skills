@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-categorization",
+  "version": "0.1.0",
+  "summary": "Hierarchical taxonomy design with breadcrumbs, auto-categorization, and SEO",
+  "skills": {
+    "product-categorization": {
+      "path": "SKILL.md"
+    }
+  }
+}

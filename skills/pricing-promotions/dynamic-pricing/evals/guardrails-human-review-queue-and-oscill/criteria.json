@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the price change safety and guardrails layer with the correct single-run cap (20%), human review threshold (10%), oscillation prevention (hysteresis band and minimum time gap), price-lock/promotion check, and alerting for large changes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "20% single-run cap",
+      "max_score": 12,
+      "description": "Price changes exceeding 20% of the previous price are capped at exactly 20% (in the direction of the change), not rejected outright"
+    },
+    {
+      "name": "Cap direction preserved",
+      "max_score": 8,
+      "description": "When capping a change at 20%, the direction (increase vs decrease) is preserved — an upward change is capped upward and a downward change is capped downward"
+    },
+    {
+      "name": "10% threshold for human review",
+      "max_score": 12,
+      "description": "Changes between 10% and 20% of previousPrice are NOT auto-applied but instead queued for human review (e.g. inserted into a review queue with a pending status)"
+    },
+    {
+      "name": "Review queue entry has pending status",
+      "max_score": 5,
+      "description": "Queued entries include a status field with value 'pending_review'"
+    },
+    {
+      "name": "Price-locked products skipped",
+      "max_score": 10,
+      "description": "If the product has isPriceLocked set to true, no price change is applied and the function returns without modifying the price"
+    },
+    {
+      "name": "Active promotion check",
+      "max_score": 8,
+      "description": "If the product has hasActivePromotion set to true (or equivalent active-promotion flag), no algorithmic price change is applied"
+    },
+    {
+      "name": "Hysteresis band: 2% minimum change",
+      "max_score": 10,
+      "description": "Price changes smaller than 2% of the current price are suppressed as a no-op (hysteresis band to prevent micro-oscillations)"
+    },
+    {
+      "name": "Minimum time between changes",
+      "max_score": 10,
+      "description": "If the product was last repriced less than 2 hours ago, the new change is suppressed regardless of magnitude"
+    },
+    {
+      "name": "Alert triggered on large changes",
+      "max_score": 10,
+      "description": "When a change greater than 10% is auto-applied (not queued), an alert is triggered — either logged, returned in the result, or passed to a notification function"
+    },
+    {
+      "name": "Normal changes pass through unchanged",
+      "max_score": 15,
+      "description": "A change within bounds (less than 10% magnitude, more than 2 hours since last change, not price-locked, more than 2% change) is approved and returned as-is"
+    }
+  ]
+}

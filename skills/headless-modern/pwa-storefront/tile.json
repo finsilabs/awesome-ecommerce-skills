@@ -1,0 +1,10 @@
+{
+  "name": "finsi/pwa-storefront",
+  "version": "0.1.0",
+  "summary": "Progressive web app storefronts with offline catalog, service workers",
+  "skills": {
+    "pwa-storefront": {
+      "path": "SKILL.md"
+    }
+  }
+}

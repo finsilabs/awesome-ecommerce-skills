@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent applies the correct Workbox caching strategies for each resource type in a PWA storefront service worker, including specific configuration values, the prohibition on caching checkout/cart pages, and background sync for offline cart operations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "vite-plugin-pwa used",
+      "max_score": 6,
+      "description": "The vite.config.ts uses vite-plugin-pwa (VitePWA import) rather than workbox-webpack-plugin or a manual service worker registration approach"
+    },
+    {
+      "name": "autoUpdate register type",
+      "max_score": 6,
+      "description": "The VitePWA plugin has registerType set to 'autoUpdate'"
+    },
+    {
+      "name": "Precache glob patterns",
+      "max_score": 6,
+      "description": "The Workbox globPatterns includes at least js, css, html, svg, png, webp, and woff2 file types"
+    },
+    {
+      "name": "precacheAndRoute + cleanupOutdatedCaches",
+      "max_score": 8,
+      "description": "The custom service worker (sw.js) calls both precacheAndRoute(self.__WB_MANIFEST) and cleanupOutdatedCaches()"
+    },
+    {
+      "name": "Product images CacheFirst",
+      "max_score": 8,
+      "description": "Product images (CDN hostname or /product-images/ path) use CacheFirst strategy"
+    },
+    {
+      "name": "Image cache expiry limits",
+      "max_score": 8,
+      "description": "Product image caching uses ExpirationPlugin with maxEntries of 200 and maxAgeSeconds of 604800 (7 days / 60*60*24*7)"
+    },
+    {
+      "name": "Products API StaleWhileRevalidate",
+      "max_score": 8,
+      "description": "The /api/products route uses StaleWhileRevalidate strategy"
+    },
+    {
+      "name": "Products cache limits",
+      "max_score": 10,
+      "description": "The products cache uses ExpirationPlugin with maxEntries of 500 and maxAgeSeconds of 86400 (24 hours)"
+    },
+    {
+      "name": "Collections NetworkFirst with timeout",
+      "max_score": 8,
+      "description": "The /api/collections route uses NetworkFirst strategy with networkTimeoutSeconds set to 3"
+    },
+    {
+      "name": "Cart background sync",
+      "max_score": 8,
+      "description": "Non-GET cart operations (/api/cart) use BackgroundSyncPlugin with a queue name and maxRetentionTime of 1440 (24 hours in minutes)"
+    },
+    {
+      "name": "No cart/checkout caching",
+      "max_score": 10,
+      "description": "The /cart and /checkout routes are NOT added to any caching strategy (no CacheFirst, StaleWhileRevalidate, or NetworkFirst for these paths) — or they are explicitly set to NetworkOnly"
+    },
+    {
+      "name": "ExpirationPlugin on all caches",
+      "max_score": 8,
+      "description": "Every runtime cache that is set up includes an ExpirationPlugin with maxEntries defined"
+    },
+    {
+      "name": "Cart uses NetworkFirst",
+      "max_score": 6,
+      "description": "The cart background sync route wraps the BackgroundSyncPlugin inside a NetworkFirst strategy (not CacheFirst or StaleWhileRevalidate)"
+    }
+  ]
+}

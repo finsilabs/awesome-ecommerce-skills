@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly uses Magento 2 plugins over class rewrites, chooses appropriate plugin types (preferring before/after over around), registers the plugin in the correct frontend scope, implements observers with try/catch to avoid blocking critical flows, and documents the design rationale.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Plugin class, not preference",
+      "max_score": 10,
+      "description": "The name modification is implemented as a Plugin class (with before/after/aroundGetName or similar method), NOT as a <preference> rewrite of the Product model"
+    },
+    {
+      "name": "No around plugin for name",
+      "max_score": 10,
+      "description": "The plugin for modifying the product name does NOT use an around method (aroundGetName) — uses afterGetName or beforeGetName instead"
+    },
+    {
+      "name": "Plugin registered in frontend scope",
+      "max_score": 10,
+      "description": "The product name plugin is registered in etc/frontend/di.xml (not in etc/di.xml global scope)"
+    },
+    {
+      "name": "Plugin registered with type and name",
+      "max_score": 8,
+      "description": "etc/frontend/di.xml contains a <type> element with a <plugin> child that has name, type (class), and sortOrder attributes"
+    },
+    {
+      "name": "Observer implements ObserverInterface",
+      "max_score": 8,
+      "description": "The observer class implements Magento\\Framework\\Event\\ObserverInterface and has an execute(Observer $observer): void method"
+    },
+    {
+      "name": "Observer has try/catch",
+      "max_score": 10,
+      "description": "The observer's execute() method wraps its logic in a try/catch block and does NOT re-throw or let exceptions propagate"
+    },
+    {
+      "name": "Observer logs error, not throws",
+      "max_score": 8,
+      "description": "In the catch block of the observer, the exception is logged (e.g., via LoggerInterface) rather than thrown or silently swallowed without any action"
+    },
+    {
+      "name": "Observer registered in events.xml",
+      "max_score": 8,
+      "description": "etc/events.xml (or etc/frontend/events.xml) exists and contains an <event> element with an <observer> child referencing the observer class"
+    },
+    {
+      "name": "declare(strict_types=1) in PHP files",
+      "max_score": 6,
+      "description": "Every PHP file in the module begins with declare(strict_types=1) after <?php"
+    },
+    {
+      "name": "No Object Manager direct usage",
+      "max_score": 6,
+      "description": "No PHP file contains ObjectManager::getInstance() — all dependencies injected via constructor"
+    },
+    {
+      "name": "Design notes: plugin preference",
+      "max_score": 8,
+      "description": "design-notes.md explains that plugins are composable and avoid conflicts compared to preferences/rewrites"
+    },
+    {
+      "name": "Design notes: plugin type choice",
+      "max_score": 8,
+      "description": "design-notes.md identifies the chosen plugin type (before/after) and explicitly states that around plugins are avoided or used sparingly because they can prevent other plugins from running"
+    }
+  ]
+}

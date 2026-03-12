@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements idempotent webhook handlers correctly: early-return guard on payment webhooks, triggeredBy and relevant data passed as metadata, fulfillments table updated with tracking info on shipment, and event history API returning events in ascending order.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Idempotency guard present",
+      "max_score": 15,
+      "description": "The payment webhook handler checks the current order status before transitioning — if status is NOT 'pending', it returns early without calling processOrderTransition"
+    },
+    {
+      "name": "Early return on duplicate",
+      "max_score": 10,
+      "description": "The idempotency check uses status !== 'pending' (or equivalent), NOT a different condition such as checking a processed flag or payment ID"
+    },
+    {
+      "name": "orderId from paymentIntent.metadata",
+      "max_score": 8,
+      "description": "The payment webhook extracts orderId from paymentIntent.metadata.order_id"
+    },
+    {
+      "name": "Payment triggeredBy set",
+      "max_score": 8,
+      "description": "The payment webhook passes triggeredBy: 'stripe_webhook' (or a string identifying Stripe) in the metadata argument to processOrderTransition"
+    },
+    {
+      "name": "Payment metadata includes paymentIntentId and amount",
+      "max_score": 8,
+      "description": "The payment webhook passes at minimum paymentIntentId (or paymentIntent.id) and amount in the data/metadata payload to processOrderTransition"
+    },
+    {
+      "name": "Shipping triggeredBy set",
+      "max_score": 8,
+      "description": "The shipping webhook passes a triggeredBy string identifying the shipping provider (e.g., 'shipping_webhook', 'shipstation') to processOrderTransition"
+    },
+    {
+      "name": "Shipping metadata includes tracking",
+      "max_score": 8,
+      "description": "The shipping webhook passes trackingNumber and carrier in the data/metadata payload to processOrderTransition"
+    },
+    {
+      "name": "fulfillments table updated on shipment",
+      "max_score": 15,
+      "description": "After calling processOrderTransition, the shipping webhook also updates the fulfillments table with trackingNumber, carrier, and shippedAt (current timestamp)"
+    },
+    {
+      "name": "guard before missing orderId",
+      "max_score": 10,
+      "description": "The payment webhook checks that orderId is defined (from paymentIntent.metadata.order_id) and returns early if it is missing"
+    },
+    {
+      "name": "transition to correct states",
+      "max_score": 10,
+      "description": "Payment webhook transitions to 'confirmed'; shipping webhook transitions to 'shipped'"
+    }
+  ]
+}

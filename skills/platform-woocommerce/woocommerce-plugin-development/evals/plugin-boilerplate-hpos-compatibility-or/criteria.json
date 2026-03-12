@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly bootstraps a WooCommerce plugin with the proper header, safety guards, and WooCommerce dependency check, declares HPOS compatibility, uses the correct initialization hook, hooks into the order lifecycle, and accesses order data using HPOS-safe CRUD methods.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Plugin header Requires Plugins",
+      "max_score": 8,
+      "description": "Plugin header comment includes 'Requires Plugins: woocommerce' declaration"
+    },
+    {
+      "name": "ABSPATH guard",
+      "max_score": 7,
+      "description": "PHP file contains 'defined(\"ABSPATH\") || exit' (or equivalent) to prevent direct access"
+    },
+    {
+      "name": "WooCommerce active check",
+      "max_score": 8,
+      "description": "Plugin checks whether WooCommerce is active using in_array with apply_filters('active_plugins', get_option('active_plugins')) before executing plugin logic"
+    },
+    {
+      "name": "HPOS compatibility declaration",
+      "max_score": 13,
+      "description": "Plugin declares HPOS compatibility using FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true) inside a 'before_woocommerce_init' action"
+    },
+    {
+      "name": "woocommerce_loaded init hook",
+      "max_score": 10,
+      "description": "Plugin initializes its main class or includes files using the 'woocommerce_loaded' action (NOT 'plugins_loaded')"
+    },
+    {
+      "name": "Order lifecycle hook used",
+      "max_score": 10,
+      "description": "Plugin hooks into at least one of: woocommerce_order_status_completed, woocommerce_order_status_changed, woocommerce_payment_complete, or woocommerce_checkout_order_created"
+    },
+    {
+      "name": "HPOS-compatible meta write",
+      "max_score": 12,
+      "description": "Plugin writes order metadata using $order->update_meta_data() followed by $order->save(), NOT update_post_meta()"
+    },
+    {
+      "name": "HPOS-compatible meta read",
+      "max_score": 12,
+      "description": "Plugin reads order metadata using $order->get_meta(), NOT get_post_meta()"
+    },
+    {
+      "name": "CRUD method for order data",
+      "max_score": 8,
+      "description": "Order totals or fields are read via WooCommerce CRUD methods such as $order->get_total(), $order->get_status(), or $order->get_items() rather than raw database access"
+    },
+    {
+      "name": "Namespaced meta key",
+      "max_score": 6,
+      "description": "All custom meta keys stored on orders are prefixed with a plugin-specific slug (e.g., '_myplugin_' or '_myprefix_'), not generic names like '_status' or '_value'"
+    },
+    {
+      "name": "Input sanitization",
+      "max_score": 6,
+      "description": "Any user-supplied input (e.g., POST data, request parameters) is sanitized with sanitize_text_field() or equivalent before use"
+    }
+  ]
+}

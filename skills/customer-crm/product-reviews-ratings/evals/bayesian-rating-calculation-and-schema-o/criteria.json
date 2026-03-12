@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements Bayesian-smoothed aggregate rating calculation and generates valid schema.org Product/AggregateRating JSON-LD markup for Google Search star ratings. Covers the ProductRatingSummary model, Bayesian formula specifics, and structured data output.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ProductRatingSummary model",
+      "max_score": 8,
+      "description": "Defines a data structure (type/interface/class) with both averageRating (Bayesian-smoothed) and rawAverageRating (simple mean) as separate fields"
+    },
+    {
+      "name": "Distribution field",
+      "max_score": 7,
+      "description": "ProductRatingSummary includes a distribution field tracking count per star level (1 through 5)"
+    },
+    {
+      "name": "Bayesian formula used",
+      "max_score": 12,
+      "description": "The rating calculation uses the formula (C * globalMean + sum_of_ratings) / (C + n), not a simple arithmetic mean"
+    },
+    {
+      "name": "Confidence weight C=5",
+      "max_score": 10,
+      "description": "The Bayesian confidence weight C is set to 5 (not 1, 10, or another value)"
+    },
+    {
+      "name": "Global mean used",
+      "max_score": 8,
+      "description": "The Bayesian formula incorporates a global average rating across all products, not a hardcoded fallback value"
+    },
+    {
+      "name": "Rounding to 1 decimal",
+      "max_score": 7,
+      "description": "Both averageRating and rawAverageRating are rounded to 1 decimal place (e.g., Math.round(x * 10) / 10 or equivalent)"
+    },
+    {
+      "name": "Schema.org context",
+      "max_score": 8,
+      "description": "JSON-LD output includes '@context': 'https://schema.org' and '@type': 'Product'"
+    },
+    {
+      "name": "AggregateRating type",
+      "max_score": 8,
+      "description": "JSON-LD includes aggregateRating with '@type': 'AggregateRating'"
+    },
+    {
+      "name": "ratingValue format",
+      "max_score": 7,
+      "description": "aggregateRating.ratingValue is formatted to 1 decimal place (e.g., '4.3' not '4.333...' or 4)"
+    },
+    {
+      "name": "bestRating and worstRating",
+      "max_score": 8,
+      "description": "aggregateRating includes bestRating set to '5' and worstRating set to '1'"
+    },
+    {
+      "name": "Conditional AggregateRating",
+      "max_score": 9,
+      "description": "The aggregateRating block is omitted (not included) when reviewCount is 0"
+    },
+    {
+      "name": "reviewCount in schema",
+      "max_score": 8,
+      "description": "aggregateRating.reviewCount reflects the actual number of approved reviews"
+    }
+  ]
+}

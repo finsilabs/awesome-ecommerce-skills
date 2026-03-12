@@ -1,0 +1,10 @@
+{
+  "name": "finsi/wishlist-save-for-later",
+  "version": "0.1.0",
+  "summary": "Persistent wishlists with sharing, back-in-stock alerts, and move-to-cart",
+  "skills": {
+    "wishlist-save-for-later": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the order state machine and event sourcing correctly: specific state values, valid transition rules, atomic DB transactions, event log fields, timestamp milestones, and proper error handling for illegal transitions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "All 8 order states defined",
+      "max_score": 8,
+      "description": "The state machine defines all 8 states: pending, confirmed, processing, shipped, delivered, cancelled, refunded, on_hold (string values)"
+    },
+    {
+      "name": "VALID_TRANSITIONS completeness",
+      "max_score": 8,
+      "description": "A VALID_TRANSITIONS mapping (or equivalent) covers all 8 states as keys; refunded maps to an empty array (no further transitions allowed)"
+    },
+    {
+      "name": "pending transitions correct",
+      "max_score": 8,
+      "description": "pending state allows exactly: confirmed, cancelled, on_hold — and NOT processing, shipped, delivered, or refunded"
+    },
+    {
+      "name": "shipped/delivered transitions correct",
+      "max_score": 8,
+      "description": "shipped allows exactly: delivered, refunded; on_hold allows exactly: processing, cancelled (no other transitions permitted)"
+    },
+    {
+      "name": "canTransition function",
+      "max_score": 8,
+      "description": "A canTransition(fromState, toState) function (or equivalent) is exported and uses the VALID_TRANSITIONS map to return a boolean"
+    },
+    {
+      "name": "InvalidTransitionError thrown",
+      "max_score": 10,
+      "description": "Invalid transitions throw an InvalidTransitionError (a custom or named error class/type), NOT a plain Error or generic exception"
+    },
+    {
+      "name": "canTransition called before update",
+      "max_score": 8,
+      "description": "The transition function calls canTransition() (or equivalent check) before performing any database write, and throws on failure"
+    },
+    {
+      "name": "Atomic transaction wrapping",
+      "max_score": 10,
+      "description": "The status update and the event log insertion are both executed inside a single db.$transaction() (or equivalent transactional block)"
+    },
+    {
+      "name": "Timestamped status field",
+      "max_score": 10,
+      "description": "The orders update sets a dynamic field named `${newStatus}At` (e.g., confirmedAt, shippedAt) to the current date/time"
+    },
+    {
+      "name": "Event log fields",
+      "max_score": 10,
+      "description": "Each event inserted into orderEvents includes: orderId, fromStatus, toStatus, triggeredBy, metadata/data, and createdAt"
+    },
+    {
+      "name": "triggeredBy default",
+      "max_score": 8,
+      "description": "triggeredBy defaults to 'system' when not explicitly provided in the metadata"
+    },
+    {
+      "name": "metadata default",
+      "max_score": 4,
+      "description": "The metadata/data field stored on the event defaults to an empty object {} when not provided"
+    }
+  ]
+}

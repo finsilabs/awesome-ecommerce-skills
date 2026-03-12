@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements the Akeneo OAuth2 client credentials flow with token caching, uses the proper pagination pattern for Akeneo's REST API, implements incremental sync using the updated filter, and builds a resilient per-product error isolation pattern.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Basic Auth encoding",
+      "max_score": 8,
+      "description": "The token request uses Basic Auth with base64-encoded clientId:clientSecret in the Authorization header (Buffer.from(`${clientId}:${clientSecret}`).toString('base64') or equivalent)"
+    },
+    {
+      "name": "grant_type password",
+      "max_score": 8,
+      "description": "The token request body includes grant_type: 'password' along with username and password fields"
+    },
+    {
+      "name": "Token expiry buffer",
+      "max_score": 8,
+      "description": "Token cache check uses a buffer before expiry (e.g., tokenExpiry > Date.now() + 60000 or similar positive offset) rather than checking exact expiry"
+    },
+    {
+      "name": "Token expiry calculation",
+      "max_score": 6,
+      "description": "Token expiry is calculated as Date.now() + expires_in * 1000 (or equivalent ms conversion from seconds)"
+    },
+    {
+      "name": "Pagination via _embedded.items",
+      "max_score": 8,
+      "description": "Paginated getAll uses page._embedded?.items (or _embedded.items) to extract results from each page response"
+    },
+    {
+      "name": "Pagination next link",
+      "max_score": 8,
+      "description": "Paginated getAll follows _links.next.href (stripping the base URL) to advance to the next page"
+    },
+    {
+      "name": "Incremental sync filter",
+      "max_score": 10,
+      "description": "The sync job uses an 'updated' search filter with operator '>' and a stored ISO timestamp (e.g., search={\"updated\":[{\"operator\":\">\",\"value\":\"...\"}]})"
+    },
+    {
+      "name": "with_attribute_options param",
+      "max_score": 6,
+      "description": "Product fetch requests include with_attribute_options=true as a query parameter"
+    },
+    {
+      "name": "Per-product error isolation",
+      "max_score": 10,
+      "description": "Each product's processing is wrapped in a try/catch so that a failure on one product does not stop processing of remaining products"
+    },
+    {
+      "name": "Error logging with identifier",
+      "max_score": 8,
+      "description": "Caught errors are logged with the product's identifier (SKU/identifier field) included in the error message or log entry"
+    },
+    {
+      "name": "akeneoUpdatedAt stored",
+      "max_score": 8,
+      "description": "The upsert/save operation includes the Akeneo product's 'updated' timestamp stored as a separate field (e.g., akeneoUpdatedAt)"
+    },
+    {
+      "name": "File structure",
+      "max_score": 6,
+      "description": "Client is placed in lib/akeneo/client.ts and sync job in jobs/akeneo-sync.ts (or a close equivalent following the same convention)"
+    },
+    {
+      "name": "Sync state persistence",
+      "max_score": 6,
+      "description": "The sync job reads a last-sync timestamp before fetching and updates it after a successful sync run"
+    }
+  ]
+}

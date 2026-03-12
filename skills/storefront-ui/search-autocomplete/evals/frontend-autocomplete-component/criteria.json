@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements the frontend React autocomplete component following skill-specific patterns for debouncing, request cancellation, ARIA accessibility, security, and UX requirements.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Debounce delay range",
+      "max_score": 10,
+      "description": "The debounce delay used is between 200 and 300 ms (inclusive) — NOT less than 200 ms or more than 300 ms"
+    },
+    {
+      "name": "AbortController usage",
+      "max_score": 10,
+      "description": "The hook uses AbortController (creates a new one per request and calls .abort() on the previous one before issuing a new fetch)"
+    },
+    {
+      "name": "minChars threshold of 2",
+      "max_score": 8,
+      "description": "The hook does NOT fire a search request when the query length is less than 2 characters, and clears results in that case"
+    },
+    {
+      "name": "ARIA combobox role",
+      "max_score": 8,
+      "description": "The wrapper element has role=\"combobox\" and the dropdown list has role=\"listbox\""
+    },
+    {
+      "name": "ARIA expanded and controls",
+      "max_score": 8,
+      "description": "The input element has aria-autocomplete=\"list\" and aria-controls pointing to the listbox; the wrapper has aria-expanded reflecting open state"
+    },
+    {
+      "name": "aria-activedescendant tracking",
+      "max_score": 8,
+      "description": "The active keyboard index is stored in component state (not DOM focus), and aria-activedescendant on the input points to the currently active item id"
+    },
+    {
+      "name": "DOMPurify sanitization",
+      "max_score": 12,
+      "description": "DOMPurify is imported and used to sanitize server-supplied highlight HTML before it is passed to dangerouslySetInnerHTML or equivalent"
+    },
+    {
+      "name": "Keyboard navigation keys",
+      "max_score": 10,
+      "description": "ArrowDown/ArrowUp move the active index, Enter navigates to the selected item's URL, and Escape blurs the input and resets the active index"
+    },
+    {
+      "name": "View all results link",
+      "max_score": 8,
+      "description": "The dropdown includes a link or button that navigates the user to the full search results page (e.g., /search?q=...) as an escape hatch"
+    },
+    {
+      "name": "Highlight matched terms",
+      "max_score": 8,
+      "description": "Matched substrings in product names are rendered with <mark> or <em> tags (or equivalent emphasis element) so shoppers can see why a result matched"
+    },
+    {
+      "name": "Preload on focus",
+      "max_score": 10,
+      "description": "The component fetches or displays trending/popular searches when the input receives focus, before the user has typed anything"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/order-fulfillment-workflow",
+  "version": "0.1.0",
+  "summary": "Pick-pack-ship workflows with barcode scanning and packing slip generation",
+  "skills": {
+    "order-fulfillment-workflow": {
+      "path": "SKILL.md"
+    }
+  }
+}

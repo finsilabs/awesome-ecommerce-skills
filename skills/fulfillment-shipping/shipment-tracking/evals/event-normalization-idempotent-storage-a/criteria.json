@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the correct database schema with proper status enum, unique constraints, and indexes; normalizes carrier events through a STATUS_MAPPING; preserves carrier-native codes; uses ON CONFLICT DO NOTHING for idempotency; and updates the order to 'delivered' when a shipment is delivered.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Status enum values",
+      "max_score": 8,
+      "description": "The shipments table status CHECK constraint (or equivalent) includes exactly these values: 'pre_transit', 'in_transit', 'out_for_delivery', 'delivered', 'exception', 'returned'"
+    },
+    {
+      "name": "Unique shipment index",
+      "max_score": 8,
+      "description": "schema.sql includes a UNIQUE index or constraint on (carrier, tracking_number) on the shipments table"
+    },
+    {
+      "name": "Tracking events index",
+      "max_score": 6,
+      "description": "schema.sql includes an index on tracking_events(shipment_id, occurred_at) — with occurred_at DESC or equivalent — for efficient event retrieval"
+    },
+    {
+      "name": "STATUS_MAPPING present",
+      "max_score": 8,
+      "description": "tracking-processor.ts exports or defines a STATUS_MAPPING object that maps carrier codes (e.g. 'failure', 'return_to_sender') to normalized status strings"
+    },
+    {
+      "name": "failure maps to exception",
+      "max_score": 7,
+      "description": "STATUS_MAPPING maps 'failure' to 'exception' (not 'failed' or other value)"
+    },
+    {
+      "name": "return_to_sender maps to returned",
+      "max_score": 7,
+      "description": "STATUS_MAPPING maps 'return_to_sender' to 'returned'"
+    },
+    {
+      "name": "carrierCode stored",
+      "max_score": 8,
+      "description": "normalizeEasyPostEvent or the event insertion preserves the carrier's native status code (e.g. as carrierCode or carrier_code field) alongside the normalized status"
+    },
+    {
+      "name": "ON CONFLICT DO NOTHING",
+      "max_score": 12,
+      "description": "The INSERT for tracking_events uses ON CONFLICT DO NOTHING (or equivalent upsert that skips duplicates) to handle repeated event delivery idempotently"
+    },
+    {
+      "name": "Unique conflict target",
+      "max_score": 8,
+      "description": "The ON CONFLICT clause targets (shipment_id, carrier_code, occurred_at) or equivalent unique combination to detect duplicates"
+    },
+    {
+      "name": "Order delivered update",
+      "max_score": 12,
+      "description": "processTrackerEvent updates the orders table (status to 'delivered' and sets a delivered_at/delivered timestamp) when the latest event status is 'delivered'"
+    },
+    {
+      "name": "actual_delivery set",
+      "max_score": 8,
+      "description": "processTrackerEvent sets actual_delivery on the shipments record to the event's occurredAt when status is 'delivered'"
+    },
+    {
+      "name": "latest event by timestamp",
+      "max_score": 8,
+      "description": "processTrackerEvent determines the current status by sorting/selecting the event with the latest occurred_at (not just the first element or arbitrary order)"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent designs correct PostgreSQL indexes for a product catalog, including partial indexes, composite indexes with INCLUDE, GIN indexes for full-text search and JSONB attributes, keyset pagination, and safe CONCURRENTLY creation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CONCURRENTLY on all indexes",
+      "max_score": 12,
+      "description": "Every CREATE INDEX statement uses the CONCURRENTLY keyword — no index is created without it"
+    },
+    {
+      "name": "Partial index for active products",
+      "max_score": 8,
+      "description": "At least one index on products includes a WHERE clause limiting to status = 'active'"
+    },
+    {
+      "name": "Composite index with INCLUDE",
+      "max_score": 10,
+      "description": "At least one composite index on products uses the INCLUDE clause to add non-key columns (e.g. name, slug, or thumbnail_url) for index-only scans"
+    },
+    {
+      "name": "Equality columns before range columns",
+      "max_score": 8,
+      "description": "In composite multi-column indexes, equality-filtered columns (status, brand_id) appear before range-filtered columns (price, created_at) in the column list"
+    },
+    {
+      "name": "GIN full-text search index",
+      "max_score": 10,
+      "description": "A GIN index is created using to_tsvector('english', ...) on product name and/or description for full-text search"
+    },
+    {
+      "name": "GIN JSONB attributes index",
+      "max_score": 10,
+      "description": "A GIN index is created on the attributes JSONB column (USING gin(attributes)) to support @> containment queries"
+    },
+    {
+      "name": "JSONB range expression index",
+      "max_score": 8,
+      "description": "An expression index is created for numeric range queries on a specific JSONB key (e.g. (attributes->>'weight_kg')::float or similar cast)"
+    },
+    {
+      "name": "Foreign key indexed",
+      "max_score": 8,
+      "description": "An explicit index is created on product_categories.category_id (or brand_id on products), acknowledging that PostgreSQL does not auto-index foreign keys"
+    },
+    {
+      "name": "Keyset pagination example",
+      "max_score": 12,
+      "description": "The example pagination query uses a (created_at, id) cursor condition (e.g. AND (created_at, id) < ($cursor_ts, $cursor_id)) rather than OFFSET"
+    },
+    {
+      "name": "Compound sort index for pagination",
+      "max_score": 7,
+      "description": "An index exists on (created_at DESC, id DESC) or equivalent compound sort to support the keyset pagination query efficiently"
+    },
+    {
+      "name": "product_categories composite index",
+      "max_score": 7,
+      "description": "An index is created on product_categories(category_id, product_id) to support category filtering joins"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements performance baseline comparison tooling following the skill's guidance on metric extraction (p95/p99), regression threshold (>20% P95 increase triggers exit code 1), custom Trend metrics, search thresholds, and latency histogram analysis.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Reads p(95) metric",
+      "max_score": 9,
+      "description": "The compare-results.ts script reads the p(95) value from http_req_duration.values['p(95)'] (or equivalent path) for both baseline files"
+    },
+    {
+      "name": "Reads p(99) metric",
+      "max_score": 8,
+      "description": "The compare-results.ts script reads the p(99) value from http_req_duration.values['p(99)'] (or equivalent path)"
+    },
+    {
+      "name": "Reads error rate",
+      "max_score": 8,
+      "description": "The compare-results.ts script reads the error rate from http_req_failed.values.rate"
+    },
+    {
+      "name": ">20% P95 triggers exit 1",
+      "max_score": 12,
+      "description": "The compare-results.ts script calls process.exit(1) (or equivalent) when the P95 latency has increased by more than 20% between the two baselines"
+    },
+    {
+      "name": "Outputs comparison table",
+      "max_score": 8,
+      "description": "The script outputs a human-readable comparison (e.g., console.table or formatted output) showing before/after values"
+    },
+    {
+      "name": "Custom Trend metric",
+      "max_score": 10,
+      "description": "The k6/search-performance.js script creates a custom Trend metric (using 'new Trend(...)' from 'k6/metrics') to track search latency"
+    },
+    {
+      "name": "Search p95 threshold",
+      "max_score": 10,
+      "description": "The k6/search-performance.js script defines a threshold for the custom search metric at p(95)<500 (e.g., 'p(95)<500')"
+    },
+    {
+      "name": "Histograms over averages",
+      "max_score": 10,
+      "description": "The analysis-notes.md explicitly explains why P95 or P99 percentiles are used rather than averages for regression detection (addresses that averages can hide tail latency regressions)"
+    },
+    {
+      "name": "Reads RPS/throughput metric",
+      "max_score": 8,
+      "description": "The compare-results.ts script also reads the requests-per-second rate (http_reqs.values.rate or equivalent)"
+    },
+    {
+      "name": "Script handles given input files",
+      "max_score": 17,
+      "description": "The compare-results.ts script can be invoked with the two provided JSON file paths as arguments (or reads them by path) and produces output comparing them"
+    }
+  ]
+}

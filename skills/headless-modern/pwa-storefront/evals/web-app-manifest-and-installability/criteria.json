@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly configures a Web App Manifest for an installable PWA storefront, including the specific field values, icon requirements, iOS HTML meta tags, and installability prerequisites.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "start_url with tracking param",
+      "max_score": 10,
+      "description": "The manifest's start_url is set to '/?source=pwa' (not just '/' or '/?')"
+    },
+    {
+      "name": "display standalone",
+      "max_score": 8,
+      "description": "The manifest's display field is set to 'standalone'"
+    },
+    {
+      "name": "Icon sizes present",
+      "max_score": 8,
+      "description": "The manifest includes icons at all three sizes: 72x72, 192x192, and 512x512"
+    },
+    {
+      "name": "Maskable icon purpose",
+      "max_score": 10,
+      "description": "The 192x192 and 512x512 icons have purpose set to 'any maskable' (not just 'any' or 'maskable' alone)"
+    },
+    {
+      "name": "Screenshots with form_factor",
+      "max_score": 8,
+      "description": "The manifest includes a screenshots array with at least one entry that has form_factor set to 'narrow'"
+    },
+    {
+      "name": "Shopping category",
+      "max_score": 6,
+      "description": "The manifest includes categories field containing 'shopping'"
+    },
+    {
+      "name": "Share target",
+      "max_score": 10,
+      "description": "The manifest includes a share_target with action '/search', method 'GET', and params mapping title to 'q'"
+    },
+    {
+      "name": "Apple meta tags",
+      "max_score": 10,
+      "description": "The HTML includes all three iOS tags: apple-mobile-web-app-capable (yes), apple-mobile-web-app-status-bar-style, and apple-touch-icon link"
+    },
+    {
+      "name": "Theme-color meta",
+      "max_score": 6,
+      "description": "The HTML includes a <meta name='theme-color'> tag"
+    },
+    {
+      "name": "Manifest link tag",
+      "max_score": 6,
+      "description": "The HTML includes <link rel='manifest' href='/manifest.json'>"
+    },
+    {
+      "name": "Installability requirements",
+      "max_score": 10,
+      "description": "The NOTES.md or output mentions at least 3 of these installability requirements: HTTPS, valid manifest with 512x512 maskable icon, registered service worker, start_url responding with 200"
+    },
+    {
+      "name": "No 72x72 maskable",
+      "max_score": 8,
+      "description": "The 72x72 icon does NOT have purpose 'maskable' — only the 192x192 and 512x512 do"
+    }
+  ]
+}

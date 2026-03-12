@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements first-touch UTM attribution correctly using sessionStorage vs. localStorage, handles the promo-code-first attribution priority, stores the correct attributionType, and captures both first-touch and last-touch data in the order record.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "sessionStorage for first-touch",
+      "max_score": 12,
+      "description": "client-attribution.js stores the first-touch UTM data in sessionStorage (not localStorage or a cookie)"
+    },
+    {
+      "name": "First-touch not overwritten",
+      "max_score": 12,
+      "description": "client-attribution.js checks whether first_touch_utm already exists in sessionStorage before writing; does NOT overwrite an existing first-touch"
+    },
+    {
+      "name": "localStorage for last-touch",
+      "max_score": 8,
+      "description": "client-attribution.js always updates last-touch UTM in localStorage on every page load with a UTM parameter present"
+    },
+    {
+      "name": "landed_at in first-touch",
+      "max_score": 8,
+      "description": "The first-touch record stored in sessionStorage includes a landed_at timestamp (ISO string)"
+    },
+    {
+      "name": "landing_page in first-touch",
+      "max_score": 8,
+      "description": "The first-touch record stored in sessionStorage includes landing_page (the URL pathname)"
+    },
+    {
+      "name": "Promo code attribution first",
+      "max_score": 12,
+      "description": "server-attribution.ts checks for a promo code and looks up its campaignId BEFORE checking UTM data"
+    },
+    {
+      "name": "UTM fallback condition",
+      "max_score": 10,
+      "description": "server-attribution.ts only falls back to UTM when no campaignId was found via promo code AND the first-touch utm_medium is exactly 'influencer'"
+    },
+    {
+      "name": "attributionType field",
+      "max_score": 10,
+      "description": "The attribution record includes an attributionType field set to 'promo_code' when attributed via promo code, and 'utm_first_touch' when attributed via UTM"
+    },
+    {
+      "name": "Both UTM touches stored",
+      "max_score": 10,
+      "description": "The attribution record in server-attribution.ts stores both firstTouchUtm and lastTouchUtm fields"
+    },
+    {
+      "name": "Attribution notes",
+      "max_score": 10,
+      "description": "ATTRIBUTION_NOTES.md explains that promo code attribution takes precedence over UTM and the reason why (device-agnostic / handles return visits)"
+    }
+  ]
+}

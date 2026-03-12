@@ -1,0 +1,10 @@
+{
+  "name": "finsi/cart-logic",
+  "version": "0.1.0",
+  "summary": "Shopping cart state management — add/remove/update, persistence, merge strategies",
+  "skills": {
+    "cart-logic": {
+      "path": "SKILL.md"
+    }
+  }
+}

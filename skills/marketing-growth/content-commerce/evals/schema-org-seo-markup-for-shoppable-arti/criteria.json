@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent generates correct schema.org JSON-LD structured data for a buying-guide article that features shoppable products. Evaluates use of the @graph pattern, correct Article and ItemList types, and correct field values including numeric prices and schema.org availability URIs.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "@context value",
+      "max_score": 5,
+      "description": "The output JSON-LD includes '@context': 'https://schema.org' at the top level"
+    },
+    {
+      "name": "@graph structure",
+      "max_score": 10,
+      "description": "The top-level object uses a '@graph' array rather than a single '@type' at the root"
+    },
+    {
+      "name": "Article type present",
+      "max_score": 8,
+      "description": "The @graph array contains an entry with '@type': 'Article'"
+    },
+    {
+      "name": "Article required fields",
+      "max_score": 8,
+      "description": "The Article entry includes 'headline', 'datePublished', and 'dateModified' fields"
+    },
+    {
+      "name": "Article author as Organization",
+      "max_score": 9,
+      "description": "The Article's 'author' field is an object with '@type': 'Organization' (not 'Person')"
+    },
+    {
+      "name": "ItemList type present",
+      "max_score": 8,
+      "description": "The @graph array contains an entry with '@type': 'ItemList'"
+    },
+    {
+      "name": "ListItem entries with position",
+      "max_score": 9,
+      "description": "The ItemList's 'itemListElement' contains entries with '@type': 'ListItem' and a 'position' field that is 1-indexed (starts at 1)"
+    },
+    {
+      "name": "Product type in ListItem",
+      "max_score": 9,
+      "description": "Each ListItem's 'item' field has '@type': 'Product' with 'name', 'image', and 'url' fields"
+    },
+    {
+      "name": "Offer type present",
+      "max_score": 8,
+      "description": "Each Product's 'offers' field has '@type': 'Offer'"
+    },
+    {
+      "name": "Price is numeric string (not currency-formatted)",
+      "max_score": 10,
+      "description": "The offers 'price' value is a plain numeric string like '249.99' — it does NOT contain a '$', '£', currency code, or other currency symbol"
+    },
+    {
+      "name": "Availability uses schema.org URI",
+      "max_score": 10,
+      "description": "The 'availability' field uses 'https://schema.org/InStock' or 'https://schema.org/OutOfStock' (the full URI, not a short form like 'InStock' alone)"
+    },
+    {
+      "name": "Output file produced",
+      "max_score": 6,
+      "description": "A schema_output.json file exists and contains valid JSON with a '@graph' array"
+    }
+  ]
+}

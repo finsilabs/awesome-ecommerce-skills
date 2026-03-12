@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements a product_relationships table with the correct relationship types, a collections table with a sort_order CHECK and is_auto/rules JSONB column, multi-tenant-scoped SKU uniqueness, and a price history tracking mechanism.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "product_relationships table",
+      "max_score": 7,
+      "description": "Schema includes a product_relationships (or similarly named) table linking source and target products with a relationship type column"
+    },
+    {
+      "name": "Relationship type CHECK constraint",
+      "max_score": 9,
+      "description": "The relationship type column has a CHECK constraint that includes ALL of: 'cross_sell', 'upsell', 'related', 'bundle_item', 'accessory'"
+    },
+    {
+      "name": "Unique relationship constraint",
+      "max_score": 7,
+      "description": "product_relationships has a UNIQUE constraint on (source_product, target_product, relationship) to prevent duplicate relationship entries"
+    },
+    {
+      "name": "Collections sort_order CHECK",
+      "max_score": 8,
+      "description": "Collections table has a sort_order column with a CHECK constraint listing at least 'manual', 'best_selling', 'price_asc', 'price_desc', 'newest', and 'title_asc'"
+    },
+    {
+      "name": "is_auto flag with JSONB rules",
+      "max_score": 9,
+      "description": "Collections table has a boolean column (is_auto or equivalent) to distinguish automated from manual collections, AND a JSONB column (rules or equivalent) to store automation criteria"
+    },
+    {
+      "name": "Tenant-scoped SKU uniqueness",
+      "max_score": 10,
+      "description": "product_variants (or equivalent) has a UNIQUE constraint on (tenant_id, sku) rather than a global UNIQUE constraint on sku alone"
+    },
+    {
+      "name": "Price history table",
+      "max_score": 10,
+      "description": "Schema includes a price_history (or similar) table or PostgreSQL temporal table that records price changes with timestamps"
+    },
+    {
+      "name": "Price history links to variant/product",
+      "max_score": 8,
+      "description": "The price history table has a foreign key linking to the relevant product or variant, and records both old and new prices (or at least the price value at a point in time)"
+    },
+    {
+      "name": "Relationship cascade behavior",
+      "max_score": 6,
+      "description": "Foreign keys in product_relationships from source/target to products use ON DELETE CASCADE so relationship rows are cleaned up when products are deleted"
+    },
+    {
+      "name": "collection_products junction table",
+      "max_score": 8,
+      "description": "Schema includes a junction table linking collections to products with a position column for manual ordering"
+    },
+    {
+      "name": "Relationship types in design-notes",
+      "max_score": 6,
+      "description": "design-notes.md names at least 3 of the supported relationship types (cross_sell, upsell, related, bundle_item, accessory) to show understanding of the supported values"
+    },
+    {
+      "name": "Multi-tenant SKU explanation",
+      "max_score": 6,
+      "description": "design-notes.md explicitly explains that SKU uniqueness is scoped per vendor/tenant rather than globally across the platform"
+    },
+    {
+      "name": "Variant count guidance",
+      "max_score": 6,
+      "description": "design-notes.md or schema comments mention a cap or recommendation on the maximum number of variants per product (referencing a specific number like 100)"
+    }
+  ]
+}

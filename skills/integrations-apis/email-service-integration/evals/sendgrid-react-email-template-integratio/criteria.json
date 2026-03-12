@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct SendGrid package and configuration, builds React Email templates with the correct component library, generates both HTML and plain-text output, and applies the correct tracking settings for transactional emails.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct SendGrid package",
+      "max_score": 8,
+      "description": "Uses @sendgrid/mail (not @sendgrid/client or other variants) as the npm dependency for sending emails"
+    },
+    {
+      "name": "API key configuration",
+      "max_score": 8,
+      "description": "Calls sgMail.setApiKey() with the API key sourced from an environment variable (e.g. process.env.SENDGRID_API_KEY)"
+    },
+    {
+      "name": "Click tracking disabled",
+      "max_score": 10,
+      "description": "Sets clickTracking.enable to false (and/or enableText to false) in trackingSettings when sending transactional email via SendGrid"
+    },
+    {
+      "name": "Open tracking enabled",
+      "max_score": 8,
+      "description": "Sets openTracking.enable to true in trackingSettings when sending via SendGrid"
+    },
+    {
+      "name": "React Email component library",
+      "max_score": 10,
+      "description": "Imports template components from @react-email/components (e.g. Body, Container, Heading, Html, Text, Preview, or similar)"
+    },
+    {
+      "name": "React Email render package",
+      "max_score": 8,
+      "description": "Uses the render() function from @react-email/render to convert React components to HTML"
+    },
+    {
+      "name": "HTML version generated",
+      "max_score": 8,
+      "description": "Calls render() without the plainText option to produce the HTML body of the email"
+    },
+    {
+      "name": "Plain-text version generated",
+      "max_score": 10,
+      "description": "Calls render() with {plainText: true} (or equivalent) to produce a text/plain body and passes it to the send function"
+    },
+    {
+      "name": "Inline styles used",
+      "max_score": 8,
+      "description": "Email template uses inline style objects on components rather than external CSS classes or a <style> block for layout and visual styling"
+    },
+    {
+      "name": "Idempotent send guard",
+      "max_score": 10,
+      "description": "Implements a check before sending (e.g. hashing order ID + template name and comparing to a stored record) to prevent duplicate emails from being sent for the same event"
+    },
+    {
+      "name": "Preview component included",
+      "max_score": 6,
+      "description": "Email template includes a <Preview> component from @react-email/components to set the preview text shown in email client inboxes"
+    },
+    {
+      "name": "TypeScript interface for email data",
+      "max_score": 6,
+      "description": "Defines a typed interface (or type) for the email's template data/props rather than using untyped objects"
+    }
+  ]
+}

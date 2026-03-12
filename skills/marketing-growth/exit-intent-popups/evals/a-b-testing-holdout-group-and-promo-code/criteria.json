@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements holdout-group A/B testing with deterministic session-based variant assignment, tracks control group exit events, uses unique one-time promo codes, enforces single-variable testing, and produces a correct holdout comparison SQL query.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Control variant is null",
+      "max_score": 10,
+      "description": "The variants map/object has a 'control' key whose value is null (no popup for the holdout group)"
+    },
+    {
+      "name": "Deterministic session assignment",
+      "max_score": 10,
+      "description": "Variant assignment uses the last 2 characters of a session ID parsed as hex: parseInt(sessionId.slice(-2), 16) % numVariants"
+    },
+    {
+      "name": "Control group event tracking",
+      "max_score": 10,
+      "description": "Even for the control (no popup) group, exit intent is tracked — an event is recorded with shown: false or equivalent"
+    },
+    {
+      "name": "Unique one-time promo codes",
+      "max_score": 10,
+      "description": "Promo codes are generated individually per email submission (not a shared static code like WELCOME10)"
+    },
+    {
+      "name": "Promo code source field",
+      "max_score": 8,
+      "description": "Generated promo codes include a source field using exit_popup_${popupId} pattern"
+    },
+    {
+      "name": "Promo code expiry",
+      "max_score": 8,
+      "description": "Generated promo codes have an expiry (expiresInDays or equivalent) set to 7 days"
+    },
+    {
+      "name": "Single variable enforcement",
+      "max_score": 8,
+      "description": "Experiment variants only differ on offer type — the experiment-design.md or code comments explain that only one variable (offer type) is rotated at a time"
+    },
+    {
+      "name": "SQL groups by variant",
+      "max_score": 8,
+      "description": "The analytics SQL query groups results by variant and computes conversion rate per variant"
+    },
+    {
+      "name": "SQL holdout comparison",
+      "max_score": 8,
+      "description": "The SQL query queries from exit_intent_events (or equivalent table) and includes sessions from the control group"
+    },
+    {
+      "name": "Email capture stores source",
+      "max_score": 10,
+      "description": "The email capture handler stores source='exit_popup' (or similar) alongside the subscriber record"
+    },
+    {
+      "name": "Cleanup after popup shown",
+      "max_score": 10,
+      "description": "The exit intent cleanup function is called after the popup is displayed (to prevent re-triggering)"
+    }
+  ]
+}

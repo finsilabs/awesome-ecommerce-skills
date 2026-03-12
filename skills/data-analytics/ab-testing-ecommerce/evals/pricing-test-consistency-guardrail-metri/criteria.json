@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses server-side assignment for pricing (not random per request), enforces a maximum of 3-4 concurrent experiments per page, and implements guardrail checks on return rate and cart abandonment with automatic pausing.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Server-side pricing assignment",
+      "max_score": 12,
+      "description": "getProductPrice calls assignVariant (or equivalent deterministic assignment) using the userId and experiment ID — NOT random per request or per session"
+    },
+    {
+      "name": "Pricing consistency per user",
+      "max_score": 10,
+      "description": "The same userId always receives the same price for an active pricing experiment (deterministic assignment, not re-randomized per request)"
+    },
+    {
+      "name": "Fallback to base price",
+      "max_score": 6,
+      "description": "getProductPrice returns the base product price when no active pricing experiment exists for the product"
+    },
+    {
+      "name": "Concurrent experiment limit",
+      "max_score": 12,
+      "description": "validateExperimentCount (or equivalent) enforces a maximum of 3 or 4 simultaneous experiments per page/surface — not 2, not 5 or more"
+    },
+    {
+      "name": "Guardrail: return rate",
+      "max_score": 10,
+      "description": "checkExperimentGuardrails monitors return rate and pauses the experiment if the variant's return rate exceeds the control by more than a defined threshold"
+    },
+    {
+      "name": "Guardrail: cart abandonment",
+      "max_score": 10,
+      "description": "checkExperimentGuardrails monitors cart abandonment rate as a guardrail metric"
+    },
+    {
+      "name": "Experiment paused with reason",
+      "max_score": 8,
+      "description": "When a guardrail is breached, the experiment status is set to 'paused' and a pauseReason code is stored (e.g. 'guardrail_return_rate')"
+    },
+    {
+      "name": "Alert on guardrail breach",
+      "max_score": 8,
+      "description": "A notification or alert is triggered when a guardrail is breached (e.g. alertExperimentTeam or equivalent)"
+    },
+    {
+      "name": "design-decisions mentions server-side for pricing",
+      "max_score": 8,
+      "description": "design-decisions.md explains why server-side assignment is used for pricing (consistency, legal reasons, price flickering prevention)"
+    },
+    {
+      "name": "design-decisions mentions concurrent limit rationale",
+      "max_score": 8,
+      "description": "design-decisions.md mentions interaction effects between simultaneous experiments as the reason for limiting concurrent experiments"
+    },
+    {
+      "name": "Bonferroni or multiple testing",
+      "max_score": 8,
+      "description": "design-decisions.md or code mentions Bonferroni correction or adjusting significance threshold when multiple experiments run concurrently"
+    }
+  ]
+}

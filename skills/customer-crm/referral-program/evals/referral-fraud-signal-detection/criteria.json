@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the referral fraud detection function with the correct set of signals, correct blocking decisions for each signal, proper corporate email domain logic, IP cluster threshold, and timing-based signals.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Same shipping address blocks",
+      "max_score": 15,
+      "description": "A 'same_shipping_address' (or equivalent) signal is returned with block: true when both referrer and referee share the same shipping address"
+    },
+    {
+      "name": "Same address uses hash comparison",
+      "max_score": 8,
+      "description": "The shipping address comparison uses a hash field (not string comparison of raw address fields) to detect duplicates"
+    },
+    {
+      "name": "Corporate email domain signal",
+      "max_score": 10,
+      "description": "A 'same_corporate_email_domain' (or equivalent) signal is returned when referrer and referee share the same non-consumer email domain"
+    },
+    {
+      "name": "Corporate email is non-blocking",
+      "max_score": 8,
+      "description": "The same-email-domain signal has block: false (does NOT block automatically)"
+    },
+    {
+      "name": "Consumer domains excluded",
+      "max_score": 8,
+      "description": "The email domain check excludes at least gmail.com, yahoo.com, hotmail.com, and outlook.com from triggering the corporate domain signal"
+    },
+    {
+      "name": "IP cluster signal",
+      "max_score": 10,
+      "description": "A signal is returned when the referrer has more than 3 referrals from the same IP range within the past 30 days"
+    },
+    {
+      "name": "IP cluster is non-blocking",
+      "max_score": 7,
+      "description": "The IP cluster signal has block: false"
+    },
+    {
+      "name": "Immediate signup signal",
+      "max_score": 10,
+      "description": "A signal is returned when the referee account was created within 5 minutes of the most recent referral click"
+    },
+    {
+      "name": "Immediate signup is non-blocking",
+      "max_score": 7,
+      "description": "The immediate-signup signal has block: false"
+    },
+    {
+      "name": "FraudSignal interface",
+      "max_score": 7,
+      "description": "The return type or interface for each signal includes both a 'signal' string field and a 'block' boolean field"
+    },
+    {
+      "name": "30-day IP lookback window",
+      "max_score": 10,
+      "description": "The IP cluster check uses a 30-day lookback window (not a different duration)"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements the multi-priority currency detection chain, persists currency preferences with the right cookie settings, handles Stripe amount calculation for zero-decimal currencies, uses Stripe presentment currency, and follows the recommended approach for database storage of prices.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cookie checked first",
+      "max_score": 8,
+      "description": "Currency detection checks for a 'preferred_currency' cookie as the highest-priority signal before any other source"
+    },
+    {
+      "name": "Accept-Language second",
+      "max_score": 7,
+      "description": "Currency detection falls through to the Accept-Language header as the second-priority source when no cookie is set"
+    },
+    {
+      "name": "CF/CDN header third",
+      "max_score": 7,
+      "description": "Currency detection falls through to cf-ipcountry or x-country header as the third-priority source"
+    },
+    {
+      "name": "Default to base currency",
+      "max_score": 6,
+      "description": "Currency detection defaults to the base currency (USD) when no other signal is available"
+    },
+    {
+      "name": "Cookie name correct",
+      "max_score": 8,
+      "description": "The preference cookie is set with the name 'preferred_currency' (not a different name)"
+    },
+    {
+      "name": "Cookie maxAge one year",
+      "max_score": 7,
+      "description": "The preference cookie is set with maxAge of 365 days (31536000000 ms or equivalent)"
+    },
+    {
+      "name": "Cookie httpOnly true",
+      "max_score": 6,
+      "description": "The preference cookie is set with httpOnly: true"
+    },
+    {
+      "name": "Cookie sameSite lax",
+      "max_score": 6,
+      "description": "The preference cookie is set with sameSite: 'lax'"
+    },
+    {
+      "name": "Stripe amount multiply by 100",
+      "max_score": 8,
+      "description": "createPaymentIntent multiplies the display price by 100 (and uses Math.round) for standard currencies in the Stripe amount field"
+    },
+    {
+      "name": "JPY not multiplied",
+      "max_score": 11,
+      "description": "createPaymentIntent does NOT multiply by 100 for JPY (zero-decimal currency) — passes the whole number amount to Stripe"
+    },
+    {
+      "name": "Currency lowercased for Stripe",
+      "max_score": 9,
+      "description": "The currency field passed to Stripe is lowercased (e.g. 'eur', 'jpy') not uppercase"
+    },
+    {
+      "name": "Base price in metadata",
+      "max_score": 10,
+      "description": "The Stripe paymentIntents.create parameters include metadata with the base_currency_amount (USD price) for reconciliation"
+    },
+    {
+      "name": "Store base currency in DB",
+      "max_score": 7,
+      "description": "IMPLEMENTATION_NOTES.md or code comments state that prices are stored in the base currency (USD) in the database, not in the display currency"
+    }
+  ]
+}

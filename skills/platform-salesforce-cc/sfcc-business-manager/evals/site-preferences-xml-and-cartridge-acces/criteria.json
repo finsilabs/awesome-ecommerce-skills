@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent produces a correctly structured SFCC system-objecttype-extensions.xml for custom site preferences, uses the right namespace and type-extension structure, includes appropriate attribute types, organizes them in a group, and demonstrates the correct cartridge access pattern.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct metadata namespace",
+      "max_score": 10,
+      "description": "The <metadata> root element uses xmlns=\"http://www.demandware.com/xml/impex/metadata/2006-10-31\""
+    },
+    {
+      "name": "SitePreferences type-extension",
+      "max_score": 10,
+      "description": "The file contains a <type-extension type-id=\"SitePreferences\"> element"
+    },
+    {
+      "name": "String attribute type",
+      "max_score": 8,
+      "description": "At least one attribute definition uses <type>string</type> for a text-based preference (e.g. API endpoint or key)"
+    },
+    {
+      "name": "Boolean attribute type",
+      "max_score": 8,
+      "description": "At least one attribute definition uses <type>boolean</type> for the enabled/disabled flag"
+    },
+    {
+      "name": "Attribute group defined",
+      "max_score": 10,
+      "description": "File includes a <group-definitions> block with at least one <attribute-group> that references the defined attributes"
+    },
+    {
+      "name": "display-name x-default",
+      "max_score": 8,
+      "description": "All <display-name> elements within the XML include xml:lang=\"x-default\""
+    },
+    {
+      "name": "Cartridge uses dw/system/Site",
+      "max_score": 10,
+      "description": "cartridge-snippet.js requires 'dw/system/Site' (or equivalent import)"
+    },
+    {
+      "name": "Cartridge getCustomPreferenceValue",
+      "max_score": 12,
+      "description": "cartridge-snippet.js calls Site.getCurrent().getCustomPreferenceValue() to read at least one preference value"
+    },
+    {
+      "name": "XML over manual approach noted",
+      "max_score": 12,
+      "description": "setup-notes.md explains that preferences should be set via XML import rather than manually in Business Manager (for consistency or version control reasons)"
+    },
+    {
+      "name": "XML declaration present",
+      "max_score": 6,
+      "description": "system-objecttype-extensions.xml starts with <?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+    },
+    {
+      "name": "Five attributes defined",
+      "max_score": 6,
+      "description": "The XML defines exactly 5 custom attribute definitions covering: API endpoint, API key, embed code prefix, enabled flag, and timeout"
+    }
+  ]
+}

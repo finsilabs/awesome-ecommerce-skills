@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent loads the PayPal SDK correctly (CDN vs npm), uses a singleton loader pattern for SPAs, configures the SDK script with required query parameters, applies the correct button style options, and handles the cancel callback without showing an error.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CDN script tag (not npm)",
+      "max_score": 12,
+      "description": "The PayPal SDK is loaded via a <script> tag pointing to https://www.paypal.com/sdk/js, NOT via an npm install or import from a node_modules package (no 'npm install @paypal' or 'import ... from @paypal/...' or 'require(\"@paypal\")')"
+    },
+    {
+      "name": "client-id in SDK URL",
+      "max_score": 8,
+      "description": "The SDK script URL includes a client-id query parameter (e.g. ?client-id=...)"
+    },
+    {
+      "name": "intent=capture in SDK URL",
+      "max_score": 8,
+      "description": "The SDK script URL includes intent=capture as a query parameter"
+    },
+    {
+      "name": "components param in SDK URL",
+      "max_score": 8,
+      "description": "The SDK script URL includes a components query parameter (e.g. components=buttons or components=buttons,funding-eligibility)"
+    },
+    {
+      "name": "Singleton loader pattern",
+      "max_score": 14,
+      "description": "The dynamic SDK loader uses a module-level variable (e.g. sdkPromise or similar) to cache the loading promise, so the script is only appended to the DOM once even if called multiple times"
+    },
+    {
+      "name": "Button layout vertical",
+      "max_score": 8,
+      "description": "The PayPal Buttons style includes layout: 'vertical'"
+    },
+    {
+      "name": "Button color gold",
+      "max_score": 8,
+      "description": "The PayPal Buttons style includes color: 'gold'"
+    },
+    {
+      "name": "Button shape rect",
+      "max_score": 8,
+      "description": "The PayPal Buttons style includes shape: 'rect'"
+    },
+    {
+      "name": "Button label paypal",
+      "max_score": 8,
+      "description": "The PayPal Buttons style includes label: 'paypal'"
+    },
+    {
+      "name": "onCancel no error shown",
+      "max_score": 10,
+      "description": "The onCancel callback does NOT call the error handler or display an error message to the user — it either does nothing, logs silently, or simply leaves the user on the checkout page"
+    },
+    {
+      "name": "Buttons cleanup on unmount",
+      "max_score": 8,
+      "description": "The React component closes or destroys the PayPal buttons instance when the component unmounts (e.g. calls buttons.close() in the useEffect cleanup function)"
+    }
+  ]
+}

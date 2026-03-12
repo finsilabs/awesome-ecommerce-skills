@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent uses the correct WooCommerce SlotFill pattern (registerPlugin with scope and ExperimentalOrderMeta), reads cart data via the correct store and hook, and imports from the right WordPress packages. Covers SlotFill injection, CART_STORE_KEY usage, and scope requirement.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "registerPlugin usage",
+      "max_score": 10,
+      "description": "frontend.js calls registerPlugin() imported from @wordpress/plugins (not a custom event listener or direct DOM manipulation)"
+    },
+    {
+      "name": "scope: woocommerce-checkout",
+      "max_score": 12,
+      "description": "registerPlugin call includes scope: \"woocommerce-checkout\" as a property (the exact string)"
+    },
+    {
+      "name": "ExperimentalOrderMeta slot",
+      "max_score": 10,
+      "description": "The plugin render function wraps content in ExperimentalOrderMeta (or another named WooCommerce SlotFill component from @woocommerce/blocks-checkout), not a plain React Fragment or arbitrary div"
+    },
+    {
+      "name": "ExperimentalOrderMeta import source",
+      "max_score": 8,
+      "description": "ExperimentalOrderMeta (or the chosen SlotFill component) is imported from @woocommerce/blocks-checkout"
+    },
+    {
+      "name": "useSelect for cart data",
+      "max_score": 10,
+      "description": "Cart total is read using useSelect() from @wordpress/data, not via fetch/REST API call or window.wc globals"
+    },
+    {
+      "name": "CART_STORE_KEY usage",
+      "max_score": 10,
+      "description": "useSelect passes CART_STORE_KEY imported from @woocommerce/block-data as the store key (not a hard-coded string like 'wc/store/cart')"
+    },
+    {
+      "name": "@woocommerce/block-data import",
+      "max_score": 8,
+      "description": "CART_STORE_KEY is imported from @woocommerce/block-data package"
+    },
+    {
+      "name": "@wordpress/element imports",
+      "max_score": 8,
+      "description": "Any React hooks or JSX helpers used (e.g. useState, useEffect) are imported from @wordpress/element, not from 'react'"
+    },
+    {
+      "name": "@woocommerce/block-data script dependency",
+      "max_score": 12,
+      "description": "plugin-loader.php includes 'wc-blocks-data-store' or '@woocommerce/block-data' equivalent as a script dependency in wp_register_script or wp_enqueue_script"
+    },
+    {
+      "name": "Banner conditional rendering",
+      "max_score": 12,
+      "description": "Banner component returns null or nothing when the cart total meets or exceeds the free shipping threshold (does not show when threshold already reached)"
+    }
+  ]
+}

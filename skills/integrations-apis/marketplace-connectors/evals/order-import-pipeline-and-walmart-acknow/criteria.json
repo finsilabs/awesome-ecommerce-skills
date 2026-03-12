@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements Amazon order fetching with the right filters, internal order mapping with correct field names, idempotent import logic using external order IDs, Walmart order acknowledgment with required headers and 4-hour SLA awareness, and a monitor that alerts at 2 hours.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Amazon order status filter",
+      "max_score": 8,
+      "description": "Amazon order fetch filters by OrderStatuses=Unshipped,PartiallyShipped (not all statuses)"
+    },
+    {
+      "name": "Amazon MFN channel filter",
+      "max_score": 7,
+      "description": "Amazon order fetch filters by FulfillmentChannels=MFN (Merchant Fulfilled Network)"
+    },
+    {
+      "name": "Internal order channel field",
+      "max_score": 6,
+      "description": "Mapped Amazon orders include channel: 'amazon' in the internal order representation"
+    },
+    {
+      "name": "Internal order externalId field",
+      "max_score": 7,
+      "description": "Mapped Amazon orders use externalId set to the AmazonOrderId value"
+    },
+    {
+      "name": "Deduplication by externalId",
+      "max_score": 9,
+      "description": "Polling logic checks if an order with the same external ID already exists before importing it"
+    },
+    {
+      "name": "Queue jobId deduplication",
+      "max_score": 8,
+      "description": "Orders are enqueued with a jobId derived from the marketplace order ID to prevent duplicate queue entries"
+    },
+    {
+      "name": "Poll interval 5 minutes",
+      "max_score": 7,
+      "description": "Polling is designed to run every 5 minutes (comment, cron expression, or interval value of 5 * 60 * 1000 or similar)"
+    },
+    {
+      "name": "Last-polled timestamp tracking",
+      "max_score": 8,
+      "description": "Poller stores and retrieves a last-polled timestamp to use as CreatedAfter/equivalent parameter in subsequent polls"
+    },
+    {
+      "name": "Walmart WM_QOS.CORRELATION_ID header",
+      "max_score": 9,
+      "description": "Walmart acknowledgment request includes WM_QOS.CORRELATION_ID header populated with a UUID (e.g., crypto.randomUUID())"
+    },
+    {
+      "name": "Walmart Basic auth header",
+      "max_score": 8,
+      "description": "Walmart acknowledgment uses Authorization: Basic with base64-encoded client_id:client_secret"
+    },
+    {
+      "name": "Walmart 4-hour acknowledgment SLA",
+      "max_score": 7,
+      "description": "Code comments or PIPELINE_NOTES.md reference the 4-hour acknowledgment requirement for Walmart orders"
+    },
+    {
+      "name": "Walmart 2-hour unacknowledged alert",
+      "max_score": 9,
+      "description": "Monitor triggers an alert if a Walmart order has not been acknowledged within 2 hours (not 4 hours)"
+    },
+    {
+      "name": "Automated Walmart acknowledgment",
+      "max_score": 7,
+      "description": "Walmart acknowledgment logic is automated (not dependent on manual fulfillment action to trigger)"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements the guest-to-user cart merge: reassigning when no user cart exists, using Math.max for quantity conflicts, marking the guest cart as 'abandoned' (not deleted), calling recalculateCart after merge, and handling empty guest carts as a no-op.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "No-op on empty guest cart",
+      "max_score": 8,
+      "description": "mergeGuestCartOnLogin returns early (no-op) when the guest cart does not exist or has no items"
+    },
+    {
+      "name": "Reassign when no user cart",
+      "max_score": 12,
+      "description": "When the user has no existing active cart, the guest cart is reassigned to the user (userId set, guestToken cleared) rather than creating a new cart"
+    },
+    {
+      "name": "Max quantity on conflict",
+      "max_score": 14,
+      "description": "When the same variant exists in both guest and user carts, the merged quantity is Math.max(guestQty, userQty) — the higher of the two"
+    },
+    {
+      "name": "Does NOT sum quantities",
+      "max_score": 8,
+      "description": "The merge does NOT add guest and user quantities together (i.e., does not use guestQty + userQty for conflicting variants)"
+    },
+    {
+      "name": "Non-overlapping items added",
+      "max_score": 10,
+      "description": "Guest items that do not exist in the user cart are added (created) in the user cart, not discarded"
+    },
+    {
+      "name": "Guest cart marked abandoned",
+      "max_score": 12,
+      "description": "After merge, the guest cart status is updated to 'abandoned', not deleted from the database"
+    },
+    {
+      "name": "Guest cart NOT deleted",
+      "max_score": 8,
+      "description": "The implementation does NOT call a delete/destroy operation on the guest cart — it only updates its status"
+    },
+    {
+      "name": "recalculateCart called after merge",
+      "max_score": 10,
+      "description": "recalculateCart (or equivalent total recalculation) is called on the user cart after the merge completes"
+    },
+    {
+      "name": "Test: no-user-cart case",
+      "max_score": 9,
+      "description": "Test file includes a test case for when the user has no existing active cart (guest cart reassignment path)"
+    },
+    {
+      "name": "Test: overlapping variants",
+      "max_score": 9,
+      "description": "Test file includes a test case where the same variant exists in both carts and verifies max-quantity logic"
+    }
+  ]
+}

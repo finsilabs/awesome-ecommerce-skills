@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements BNPL eligibility filtering (amount ranges and country codes per provider), the Afterpay and Klarna messaging widget components with correct attributes, and the Klarna widget refresh behavior on price changes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Afterpay min $35 / max $2000",
+      "max_score": 7,
+      "description": "The eligibility logic uses min=35 and max=2000 for Afterpay (not other values)"
+    },
+    {
+      "name": "Klarna min $10 / max $10000",
+      "max_score": 7,
+      "description": "The eligibility logic uses min=10 and max=10000 for Klarna (not other values)"
+    },
+    {
+      "name": "Affirm min $50 / max $17500",
+      "max_score": 7,
+      "description": "The eligibility logic uses min=50 and max=17500 for Affirm (not other values)"
+    },
+    {
+      "name": "Country filter per provider",
+      "max_score": 10,
+      "description": "The eligibility logic filters by both amount AND country code — providers are excluded when the customer's country is not in their supported list"
+    },
+    {
+      "name": "Afterpay placement element",
+      "max_score": 8,
+      "description": "The Afterpay messaging widget uses the <afterpay-placement> custom HTML element (not a div or img)"
+    },
+    {
+      "name": "Afterpay placement attributes",
+      "max_score": 8,
+      "description": "The <afterpay-placement> element includes data-locale, data-currency, and data-amount attributes"
+    },
+    {
+      "name": "Afterpay amount toFixed(2)",
+      "max_score": 6,
+      "description": "The data-amount attribute on <afterpay-placement> uses price.toFixed(2) or equivalent two-decimal formatting"
+    },
+    {
+      "name": "Klarna placement element",
+      "max_score": 8,
+      "description": "The Klarna messaging widget uses the <klarna-placement> custom HTML element"
+    },
+    {
+      "name": "Klarna data-key attribute",
+      "max_score": 8,
+      "description": "The <klarna-placement> element includes data-key='credit-promotion-auto-size'"
+    },
+    {
+      "name": "Klarna amount in cents",
+      "max_score": 10,
+      "description": "The data-purchase-amount on <klarna-placement> is in cents (e.g. Math.round(price * 100)), NOT in dollars"
+    },
+    {
+      "name": "Klarna refresh on price change",
+      "max_score": 9,
+      "description": "The Klarna component calls window.Klarna?.OnsiteMessaging?.refresh() (or Klarna.OnsiteMessaging.refresh()) when the price prop/value changes"
+    },
+    {
+      "name": "No widget shown outside range",
+      "max_score": 12,
+      "description": "The messaging components return null (or equivalent) when the price is below the provider's minimum or above the maximum"
+    }
+  ]
+}

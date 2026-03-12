@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent uses the correct Magento PHP APIs for reading and writing scoped configuration (WriterInterface, ScopeConfigInterface with ScopeInterface constants) and correctly assigns products to a website, including cache invalidation after config writes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "WriterInterface for config writes",
+      "max_score": 12,
+      "description": "Config writes use Magento\\Framework\\App\\Config\\Storage\\WriterInterface (via $configWriter->save()) rather than direct database writes or other mechanisms"
+    },
+    {
+      "name": "SCOPE_WEBSITE constant for website reads",
+      "max_score": 10,
+      "description": "Reading website-scoped config uses ScopeInterface::SCOPE_WEBSITE (from Magento\\Store\\Model\\ScopeInterface), not a raw string"
+    },
+    {
+      "name": "SCOPE_STORE constant for store reads",
+      "max_score": 10,
+      "description": "Reading store-view-scoped config uses ScopeInterface::SCOPE_STORE (from Magento\\Store\\Model\\ScopeInterface), not a raw string"
+    },
+    {
+      "name": "ScopeConfigInterface for reads",
+      "max_score": 10,
+      "description": "Config reads use Magento\\Framework\\App\\Config\\ScopeConfigInterface (via $scopeConfig->getValue()) rather than direct database or other access"
+    },
+    {
+      "name": "Config cache flushed after write",
+      "max_score": 12,
+      "description": "After writing config values, the code cleans the config cache (e.g., CacheTypeListInterface::cleanType('config') or equivalent)"
+    },
+    {
+      "name": "Product assigned via ProductResource",
+      "max_score": 12,
+      "description": "Product-to-website assignment uses ProductResource (Magento\\Catalog\\Model\\ResourceModel\\Product) and its websiteToProducts() method or equivalent API, not direct SQL"
+    },
+    {
+      "name": "Website-specific pricing approach",
+      "max_score": 10,
+      "description": "Website-specific price setting references tier prices with website scope OR the catalog price scope setting, NOT a simple direct price attribute assignment"
+    },
+    {
+      "name": "Dependency injection used",
+      "max_score": 8,
+      "description": "Classes receive dependencies (WriterInterface, ScopeConfigInterface, ProductResource, etc.) via constructor injection rather than using ObjectManager directly"
+    },
+    {
+      "name": "StoreManagerInterface used for website lookup",
+      "max_score": 8,
+      "description": "Website or store objects are retrieved via StoreManagerInterface (e.g., getWebsite($code)) rather than hardcoded IDs"
+    },
+    {
+      "name": "String codes for scope references",
+      "max_score": 8,
+      "description": "Scope references in config reads/writes use string codes (e.g., 'wholesale_site') not hardcoded numeric IDs"
+    }
+  ]
+}

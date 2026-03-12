@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent generates pick lists sorted by bin location for efficient warehouse routing, includes all required PickListItem fields, generates batch pick lists correctly consolidated by SKU, and produces server-side PDF packing slips using pdfkit with the correct page format, margins, and required content sections.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Pick list sorted by bin_location",
+      "max_score": 10,
+      "description": "generatePickList results are ordered/sorted by the warehouse bin_location field (ascending), not by order ID or product name"
+    },
+    {
+      "name": "PickListItem includes barcode",
+      "max_score": 8,
+      "description": "Each pick list item includes a barcode field (the product barcode), not just SKU"
+    },
+    {
+      "name": "PickListItem includes binLocation",
+      "max_score": 8,
+      "description": "Each pick list item includes a binLocation (or bin_location) field representing the warehouse shelf location"
+    },
+    {
+      "name": "PickListItem includes all required fields",
+      "max_score": 8,
+      "description": "Pick list items include all of: orderLineId, orderId, sku, productName, quantity, binLocation, barcode"
+    },
+    {
+      "name": "Batch pick list aggregates quantity",
+      "max_score": 10,
+      "description": "generateBatchPickList uses SUM(quantity) or equivalent to aggregate total quantity per SKU across multiple orders"
+    },
+    {
+      "name": "Batch pick list groups order numbers",
+      "max_score": 8,
+      "description": "Batch pick list output includes the associated order numbers for each aggregated row (e.g. via STRING_AGG or joining order numbers)"
+    },
+    {
+      "name": "Uses pdfkit for PDF generation",
+      "max_score": 10,
+      "description": "packing-slip.ts imports and uses PDFDocument from the 'pdfkit' package (not puppeteer, html-pdf, jsPDF, or other PDF libraries)"
+    },
+    {
+      "name": "PDF uses LETTER size",
+      "max_score": 8,
+      "description": "PDFDocument is instantiated with size: 'LETTER'"
+    },
+    {
+      "name": "PDF uses correct margins",
+      "max_score": 8,
+      "description": "PDFDocument margins are set to { top: 50, left: 50, right: 50, bottom: 50 } (all four sides exactly 50)"
+    },
+    {
+      "name": "Packing slip includes Ship To section",
+      "max_score": 8,
+      "description": "Packing slip PDF includes a 'Ship To' section with customer name and shipping address (city, state, zip, country)"
+    },
+    {
+      "name": "Packing slip includes SKU per line",
+      "max_score": 8,
+      "description": "Each line item in the packing slip PDF includes the product SKU alongside the product name and quantity"
+    },
+    {
+      "name": "generatePackingSlip returns Buffer",
+      "max_score": 6,
+      "description": "generatePackingSlip returns a Promise<Buffer> (collects PDF chunks and resolves with Buffer.concat), not a file path or stream"
+    }
+  ]
+}

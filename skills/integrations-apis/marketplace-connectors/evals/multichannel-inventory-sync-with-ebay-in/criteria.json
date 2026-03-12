@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements multichannel inventory sync that excludes the source channel, uses Promise.allSettled for resilient parallel sync, builds eBay auth with Basic credentials and correct API endpoint, subtracts safety stock before sending quantities to marketplaces, and includes a reconciliation job.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Source channel excluded",
+      "max_score": 10,
+      "description": "Sync logic skips updating the channel that was the source of the inventory change (e.g., if source='ebay', eBay is not updated)"
+    },
+    {
+      "name": "Promise.allSettled for parallel sync",
+      "max_score": 10,
+      "description": "Uses Promise.allSettled (not Promise.all) to run channel syncs in parallel, so one failure does not block others"
+    },
+    {
+      "name": "eBay Basic auth with base64 credentials",
+      "max_score": 8,
+      "description": "eBay client uses Basic auth where credentials are base64-encoded 'client_id:client_secret' string"
+    },
+    {
+      "name": "eBay client_credentials grant",
+      "max_score": 8,
+      "description": "eBay token request uses grant_type=client_credentials"
+    },
+    {
+      "name": "eBay token 60s expiry buffer",
+      "max_score": 7,
+      "description": "eBay client caches token and checks with at least a 60-second buffer before expiry (Date.now() + 60000)"
+    },
+    {
+      "name": "eBay Inventory API endpoint",
+      "max_score": 10,
+      "description": "Uses https://api.ebay.com/sell/inventory/v1/inventory_item/{sku} endpoint (not the older Trading API)"
+    },
+    {
+      "name": "Content-Language: en-US header",
+      "max_score": 8,
+      "description": "eBay inventory item PUT request includes Content-Language: en-US header"
+    },
+    {
+      "name": "eBay PUT method for inventory items",
+      "max_score": 7,
+      "description": "eBay createOrReplaceInventoryItem uses HTTP PUT method"
+    },
+    {
+      "name": "Safety stock buffer subtracted",
+      "max_score": 10,
+      "description": "Quantity sent to marketplaces is reduced by a safety stock buffer (not the raw internal quantity)"
+    },
+    {
+      "name": "Individual failure logging",
+      "max_score": 7,
+      "description": "Errors from individual channel syncs are caught and logged rather than allowed to propagate and block the whole sync"
+    },
+    {
+      "name": "Reconciliation job present",
+      "max_score": 8,
+      "description": "A reconciliation function or class exists that compares internal inventory against marketplace-reported inventory"
+    },
+    {
+      "name": "DESIGN.md covers sync loop prevention",
+      "max_score": 7,
+      "description": "DESIGN.md explains how the system prevents infinite sync loops between channels"
+    }
+  ]
+}

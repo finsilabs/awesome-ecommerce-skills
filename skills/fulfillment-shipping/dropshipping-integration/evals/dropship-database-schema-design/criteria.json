@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent designs the dropshipping database schema with correct column types, constraints, and structure for suppliers, supplier_products, and dropship_orders tables. Verifies that key design decisions like UUID primary keys, cents-based pricing, correct status enumerations, and encryption annotations are applied correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "UUID primary keys",
+      "max_score": 8,
+      "description": "All three tables (suppliers, supplier_products, dropship_orders) use UUID as primary key type with gen_random_uuid() default"
+    },
+    {
+      "name": "order_method check constraint",
+      "max_score": 10,
+      "description": "The suppliers table order_method column has a CHECK constraint with exactly these four values: 'api', 'email', 'edi', 'csv_ftp'"
+    },
+    {
+      "name": "cost_price as integer cents",
+      "max_score": 10,
+      "description": "cost_price column in supplier_products is defined as INTEGER (not DECIMAL or NUMERIC), representing price in cents"
+    },
+    {
+      "name": "dropship_orders status constraint",
+      "max_score": 10,
+      "description": "The dropship_orders status column has a CHECK constraint with exactly: 'pending', 'submitted', 'confirmed', 'shipped', 'failed'"
+    },
+    {
+      "name": "api_key encryption annotation",
+      "max_score": 8,
+      "description": "The suppliers.api_key column includes a comment or annotation indicating it is encrypted at rest (e.g., SQL comment '-- encrypted at rest' or equivalent)"
+    },
+    {
+      "name": "lead_time_days column",
+      "max_score": 8,
+      "description": "The suppliers table includes a lead_time_days column (INTEGER, NOT NULL, DEFAULT 2)"
+    },
+    {
+      "name": "supplier_sku column",
+      "max_score": 8,
+      "description": "The supplier_products table includes a supplier_sku column to store the supplier's own SKU identifier (separate from product_id)"
+    },
+    {
+      "name": "last_synced_at column",
+      "max_score": 8,
+      "description": "The supplier_products table includes a last_synced_at column with TIMESTAMPTZ type for tracking when inventory was last synced"
+    },
+    {
+      "name": "supplier_order_ref column",
+      "max_score": 8,
+      "description": "The dropship_orders table includes a supplier_order_ref column to store the supplier's own order reference/confirmation number"
+    },
+    {
+      "name": "total_cost as integer",
+      "max_score": 8,
+      "description": "The dropship_orders.total_cost column is defined as INTEGER (cents), not a floating point or decimal type"
+    },
+    {
+      "name": "is_active default true",
+      "max_score": 7,
+      "description": "The suppliers table includes an is_active BOOLEAN column with DEFAULT true"
+    },
+    {
+      "name": "Foreign key references",
+      "max_score": 7,
+      "description": "supplier_products.supplier_id references suppliers(id) and supplier_products.product_id references products(id); dropship_orders.order_id references orders(id) and dropship_orders.supplier_id references suppliers(id)"
+    }
+  ]
+}

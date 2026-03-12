@@ -1,0 +1,91 @@
+{
+  "context": "Tests whether the agent correctly instruments a Node.js commerce storefront using the expected OpenTelemetry packages, SDK configuration, commerce-specific SLO values, metric naming conventions, histogram bucket boundaries, and attribute schemas for checkout funnel events.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "OTel SDK package",
+      "max_score": 5,
+      "description": "package.json or deps file includes @opentelemetry/sdk-node"
+    },
+    {
+      "name": "Auto-instrumentations package",
+      "max_score": 5,
+      "description": "package.json or deps file includes @opentelemetry/auto-instrumentations-node"
+    },
+    {
+      "name": "OTLP exporters packages",
+      "max_score": 5,
+      "description": "package.json or deps file includes both @opentelemetry/exporter-metrics-otlp-http AND @opentelemetry/exporter-trace-otlp-http"
+    },
+    {
+      "name": "prom-client included",
+      "max_score": 5,
+      "description": "package.json or deps file includes prom-client"
+    },
+    {
+      "name": "Instrumentation load order",
+      "max_score": 5,
+      "description": "INSTRUMENTATION_NOTES.md or code comments explicitly state that instrumentation.ts must be required/loaded before any other imports"
+    },
+    {
+      "name": "Service name value",
+      "max_score": 5,
+      "description": "NodeSDK is configured with serviceName: 'commerce-storefront'"
+    },
+    {
+      "name": "Metric export interval",
+      "max_score": 6,
+      "description": "PeriodicExportingMetricReader is configured with exportIntervalMillis: 15000"
+    },
+    {
+      "name": "HTTP/pg/ioredis instrumentations",
+      "max_score": 5,
+      "description": "All three auto-instrumentations are explicitly enabled: @opentelemetry/instrumentation-http, @opentelemetry/instrumentation-pg, @opentelemetry/instrumentation-ioredis"
+    },
+    {
+      "name": "Checkout SLO targets",
+      "max_score": 7,
+      "description": "COMMERCE_SLOS defines paymentSuccessRate with target: 0.95 and alert: 0.90, and checkoutCompletionRate with target: 0.75 and alert: 0.60"
+    },
+    {
+      "name": "Latency SLO values",
+      "max_score": 5,
+      "description": "COMMERCE_SLOS defines orderCreationLatencyP99 with target: 3000 and alert: 5000 (milliseconds)"
+    },
+    {
+      "name": "Meter name",
+      "max_score": 7,
+      "description": "Metrics are obtained via metrics.getMeter('commerce-checkout')"
+    },
+    {
+      "name": "Checkout counter names",
+      "max_score": 7,
+      "description": "Counter metric names are exactly: checkout.started, checkout.completed, checkout.abandoned"
+    },
+    {
+      "name": "Payment counter names",
+      "max_score": 7,
+      "description": "Counter metric names are exactly: payment.attempts, payment.successes, payment.failures"
+    },
+    {
+      "name": "Histogram name and boundaries",
+      "max_score": 8,
+      "description": "Histogram is named 'order.creation.duration_ms' with boundaries [100, 250, 500, 1000, 2000, 5000, 10000]"
+    },
+    {
+      "name": "Checkout start attribute",
+      "max_score": 5,
+      "description": "recordCheckoutStart (or equivalent) passes a 'channel' attribute to the checkout.started counter"
+    },
+    {
+      "name": "Checkout complete attributes",
+      "max_score": 5,
+      "description": "recordCheckoutComplete (or equivalent) passes both 'channel' and 'payment_method' attributes"
+    },
+    {
+      "name": "Payment failure attributes",
+      "max_score": 8,
+      "description": "recordPaymentFailure (or equivalent) passes both 'gateway' and 'decline_code' attributes"
+    }
+  ]
+}

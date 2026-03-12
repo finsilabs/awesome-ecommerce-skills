@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent uses declarative schema (db_schema.xml) instead of legacy InstallSchema scripts, registers REST routes via webapi.xml pointing to service contract interfaces, implements NoSuchEntityException in the repository getById method, documents required CLI commands including the whitelist generation command, and wires up DI preferences correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Declarative schema file",
+      "max_score": 10,
+      "description": "etc/db_schema.xml exists and defines the FAQ table using the Magento declarative schema XSD — no InstallSchema.php or UpgradeSchema.php files are present"
+    },
+    {
+      "name": "No legacy schema scripts",
+      "max_score": 8,
+      "description": "The module does NOT contain Setup/InstallSchema.php or Setup/UpgradeSchema.php files"
+    },
+    {
+      "name": "REST routes in webapi.xml",
+      "max_score": 10,
+      "description": "etc/webapi.xml exists and defines at least two <route> elements (GET list and GET by ID) mapping to service contract interface methods"
+    },
+    {
+      "name": "Service contract used in webapi.xml",
+      "max_score": 8,
+      "description": "The <service class> attribute in webapi.xml references an interface (e.g., ends in 'Interface'), not a concrete class"
+    },
+    {
+      "name": "NoSuchEntityException in getById",
+      "max_score": 8,
+      "description": "The repository's getById() method throws Magento\\Framework\\Exception\\NoSuchEntityException when no entity with the given ID is found"
+    },
+    {
+      "name": "DI preferences bound",
+      "max_score": 8,
+      "description": "etc/di.xml contains <preference> elements for both the data interface and the repository interface"
+    },
+    {
+      "name": "setup:upgrade in deployment guide",
+      "max_score": 6,
+      "description": "deployment-guide.md includes bin/magento setup:upgrade"
+    },
+    {
+      "name": "setup:di:compile in deployment guide",
+      "max_score": 7,
+      "description": "deployment-guide.md includes bin/magento setup:di:compile"
+    },
+    {
+      "name": "generate-whitelist in deployment guide",
+      "max_score": 8,
+      "description": "deployment-guide.md includes the command bin/magento setup:db-declaration:generate-whitelist"
+    },
+    {
+      "name": "declare(strict_types=1) in PHP files",
+      "max_score": 6,
+      "description": "Every PHP file in the module begins with declare(strict_types=1) after <?php"
+    },
+    {
+      "name": "No Object Manager direct usage",
+      "max_score": 6,
+      "description": "No PHP file contains ObjectManager::getInstance() — all dependencies injected via constructor"
+    },
+    {
+      "name": "Repository interface methods",
+      "max_score": 7,
+      "description": "The repository interface defines at minimum getById(), save(), delete(), and getList() method signatures"
+    },
+    {
+      "name": "Constructor injection in Repository",
+      "max_score": 8,
+      "description": "The Repository implementation receives ResourceModel, Factory, and SearchResultsInterfaceFactory as constructor parameters"
+    }
+  ]
+}

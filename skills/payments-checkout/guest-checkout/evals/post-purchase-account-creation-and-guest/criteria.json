@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements post-purchase account creation correctly: validating and expiring the token, linking all historical guest orders to the new account, deleting the token after use, enforcing a minimum password length, providing a skip option, and implementing guest order tracking without requiring login.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Token expiry checked",
+      "max_score": 10,
+      "description": "The createAccountFromOrder handler checks record.expiresAt < new Date() (or equivalent) and returns an error response (4xx) when the token is expired or missing"
+    },
+    {
+      "name": "Token deleted after use",
+      "max_score": 12,
+      "description": "After successfully creating the account, the token record is deleted (or marked used) from the accountCreationTokens table — it is not left in place for potential reuse"
+    },
+    {
+      "name": "All guest orders linked",
+      "max_score": 12,
+      "description": "On account creation, ALL orders where guestEmail matches the token's email AND userId is null are updated to set userId to the new user's ID — not just the single order from the token"
+    },
+    {
+      "name": "Duplicate account check",
+      "max_score": 8,
+      "description": "The handler checks whether an account with the same email already exists and returns a 409 (or similar conflict) error if so, rather than creating a duplicate account"
+    },
+    {
+      "name": "Password min length 8 UI",
+      "max_score": 8,
+      "description": "The password input in OrderConfirmationPage.jsx has minLength={8} (or equivalent attribute) and the Create Account button is disabled when password.length < 8"
+    },
+    {
+      "name": "Skip option present",
+      "max_score": 8,
+      "description": "OrderConfirmationPage.jsx includes a 'No thanks' (or equivalent) button/link that allows the customer to dismiss the account creation prompt without creating an account"
+    },
+    {
+      "name": "Prompt only shown with token",
+      "max_score": 8,
+      "description": "The account creation prompt in OrderConfirmationPage.jsx is only rendered when accountCreationToken is present (not shown if the prop is absent/null)"
+    },
+    {
+      "name": "Order tracking by email+number",
+      "max_score": 10,
+      "description": "The trackGuestOrder handler accepts orderNumber and email as inputs and looks up the order using both (not requiring authentication)"
+    },
+    {
+      "name": "Tracking OR condition",
+      "max_score": 12,
+      "description": "The order lookup in trackGuestOrder matches either guestEmail OR the email of an associated user account — so orders that have been claimed by an account are still findable"
+    },
+    {
+      "name": "autoComplete new-password",
+      "max_score": 12,
+      "description": "The password input in OrderConfirmationPage.jsx has autoComplete=\"new-password\" set"
+    }
+  ]
+}

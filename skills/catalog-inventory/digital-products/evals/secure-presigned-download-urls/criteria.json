@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements secure digital file delivery using the AWS SDK with short-lived presigned URLs, enforces access controls (expiry and download limits), atomically tracks downloads, and avoids exposing storage keys or proxying files through the server.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "AWS SDK client package",
+      "max_score": 8,
+      "description": "Imports S3Client and GetObjectCommand from '@aws-sdk/client-s3' (not from the older 'aws-sdk' package)"
+    },
+    {
+      "name": "Presigner package",
+      "max_score": 8,
+      "description": "Imports getSignedUrl from '@aws-sdk/s3-request-presigner'"
+    },
+    {
+      "name": "60-second TTL",
+      "max_score": 10,
+      "description": "Calls getSignedUrl with expiresIn: 60 (exactly 60 seconds, not a larger value)"
+    },
+    {
+      "name": "Content-Disposition header",
+      "max_score": 8,
+      "description": "Sets ResponseContentDisposition to 'attachment; filename=...' using the product's file name on the GetObjectCommand"
+    },
+    {
+      "name": "Content-Type header",
+      "max_score": 8,
+      "description": "Sets ResponseContentType using the product's mimeType on the GetObjectCommand"
+    },
+    {
+      "name": "Expiration check",
+      "max_score": 10,
+      "description": "Checks whether expiresAt has passed before proceeding; throws or returns an error specific to expired access (not a generic error)"
+    },
+    {
+      "name": "Download limit check",
+      "max_score": 10,
+      "description": "Checks whether downloadCount >= maxDownloads (when maxDownloads is not null) before proceeding; throws or returns an error specific to limit exceeded"
+    },
+    {
+      "name": "Atomic count increment",
+      "max_score": 12,
+      "description": "Uses an atomic increment operation (e.g., { increment: 1 } or SQL increment) rather than reading the count, adding 1, and writing it back"
+    },
+    {
+      "name": "No raw S3 key in response",
+      "max_score": 10,
+      "description": "Does NOT return or expose the fileStorageKey (S3 object key) in any API response body"
+    },
+    {
+      "name": "No server-side file proxy",
+      "max_score": 8,
+      "description": "Does NOT pipe, stream, or buffer the S3 file contents through the application server — returns only a URL to the client"
+    },
+    {
+      "name": "Dependencies listed",
+      "max_score": 8,
+      "description": "package.json includes '@aws-sdk/client-s3' and '@aws-sdk/s3-request-presigner' as dependencies"
+    }
+  ]
+}

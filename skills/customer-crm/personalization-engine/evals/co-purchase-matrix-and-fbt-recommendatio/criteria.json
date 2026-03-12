@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements item-based collaborative filtering: building the co-purchase SQL matrix with the right deduplication strategy and upsert logic, applying quality filters and confidence thresholds, and implementing the FBT retrieval function with proper out-of-stock handling and over-fetch strategy.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Pair deduplication in SQL",
+      "max_score": 10,
+      "description": "The SQL uses a condition like `a.product_id < b.product_id` (or equivalent) on the self-join to ensure each product pair is counted only once rather than twice (once each way)."
+    },
+    {
+      "name": "Upsert on conflict",
+      "max_score": 10,
+      "description": "The SQL uses ON CONFLICT ... DO UPDATE (or equivalent upsert) to update co_purchase_count when the pair already exists, rather than failing or inserting duplicates."
+    },
+    {
+      "name": "Bundle promotion filter",
+      "max_score": 10,
+      "description": "The SQL excludes orders (or order pairs) where all items belonged to the same promotion bundle (e.g., filtering on promotion_bundle_id being null or checking that the two items aren't from the same bundle), so bundled items don't artificially inflate co-purchase scores."
+    },
+    {
+      "name": "Confidence threshold",
+      "max_score": 10,
+      "description": "Either the SQL or the retrieval function applies a minimum co-occurrence threshold (e.g., co_purchase_count >= 10 or similar) to filter out unreliable product pairs."
+    },
+    {
+      "name": "Over-fetch for out-of-stock",
+      "max_score": 10,
+      "description": "The FBT retrieval function fetches more records than the requested limit (e.g., limit * 2 or another multiplier) from the co-purchase table before applying the active/in-stock filter."
+    },
+    {
+      "name": "Active and in-stock filter",
+      "max_score": 10,
+      "description": "The FBT function filters returned products to only those with active status AND inventory greater than zero (applied at query time on the products table)."
+    },
+    {
+      "name": "Current product excluded",
+      "max_score": 10,
+      "description": "The FBT function accepts an excludeProductIds parameter and uses it to exclude the source product (and any other specified products) from the results."
+    },
+    {
+      "name": "Ordered by affinity",
+      "max_score": 10,
+      "description": "Co-purchase pairs are retrieved ordered by co_purchase_count descending so the most-frequently co-purchased products appear first."
+    },
+    {
+      "name": "Nightly refresh schedule",
+      "max_score": 10,
+      "description": "The refresh_schedule.md (or equivalent documentation) specifies a nightly (or similar daily) schedule for refreshing the co-purchase matrix, with reasoning related to order frequency vs. computational cost."
+    },
+    {
+      "name": "Default limit of 6",
+      "max_score": 10,
+      "description": "The FBT function defaults to returning 6 products when no limit is specified (or uses a default parameter value of 6)."
+    }
+  ]
+}

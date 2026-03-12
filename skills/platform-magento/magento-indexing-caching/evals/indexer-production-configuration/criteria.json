@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly configures Magento indexers for production use on a large catalog, including setting schedule mode, enabling parallel/async indexing, and providing correct diagnostic procedures for stale data issues.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Schedule mode for price indexer",
+      "max_score": 8,
+      "description": "The setup script sets catalog_product_price indexer to 'schedule' mode (using indexer:set-mode schedule catalog_product_price)"
+    },
+    {
+      "name": "Schedule mode for search indexer",
+      "max_score": 8,
+      "description": "The setup script sets catalogsearch_fulltext indexer to 'schedule' mode"
+    },
+    {
+      "name": "Schedule mode for category indexers",
+      "max_score": 8,
+      "description": "The setup script sets both catalog_category_product and catalog_product_category (or catalog_category_flat and catalog_product_flat) to 'schedule' mode"
+    },
+    {
+      "name": "Async indexing enabled",
+      "max_score": 10,
+      "description": "The setup script enables async/parallel indexing via 'bin/magento config:set dev/grid/async_indexing 1'"
+    },
+    {
+      "name": "Batch sizes in env.php",
+      "max_score": 10,
+      "description": "The env-indexer-snippet.php sets batch_size for catalog_product_price with values for 'simple' and 'configurable' product types"
+    },
+    {
+      "name": "Correct batch size values",
+      "max_score": 8,
+      "description": "The env.php snippet uses simple=200 and configurable=50 for catalog_product_price, and simple=500 for catalogsearch_fulltext"
+    },
+    {
+      "name": "show-changelog for diagnosis",
+      "max_score": 10,
+      "description": "The runbook includes 'bin/magento indexer:show-changelog' as the command to diagnose pending index rows / stale data"
+    },
+    {
+      "name": "Single indexer reindex preference",
+      "max_score": 8,
+      "description": "The runbook specifies reindexing a single indexer (e.g., catalog_product_price) rather than full 'indexer:reindex' when diagnosing price issues"
+    },
+    {
+      "name": "Avoid full reindex during hours",
+      "max_score": 8,
+      "description": "The runbook explicitly cautions against running full reindex during business hours on production"
+    },
+    {
+      "name": "Cron check for stopped indexing",
+      "max_score": 8,
+      "description": "The runbook includes checking cron job status (cron_schedule table, cron logs, or system crontab) when automatic reindexing stops"
+    },
+    {
+      "name": "Changelog table monitoring",
+      "max_score": 8,
+      "description": "The runbook or setup script references monitoring changelog table sizes (e.g., catalog_product_price_cl) as an indicator of cron health"
+    },
+    {
+      "name": "indexer:reset usage",
+      "max_score": 6,
+      "description": "The runbook or script includes 'bin/magento indexer:reset' to force a scheduled re-run of an indexer"
+    }
+  ]
+}

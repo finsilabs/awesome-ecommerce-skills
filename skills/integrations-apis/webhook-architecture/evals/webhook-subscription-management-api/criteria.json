@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements webhook subscription management with a cryptographically secure signing secret that is shown only once, URL reachability validation with correct error handling, and DLQ monitoring that alerts when the queue depth exceeds 10 events.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "32-byte random secret",
+      "max_score": 12,
+      "description": "The signing secret is generated using crypto.randomBytes(32).toString('hex'), producing a 64-character hex string"
+    },
+    {
+      "name": "Secret shown once only",
+      "max_score": 10,
+      "description": "The API response includes the signingSecret value, AND the code/README explicitly states that the secret will not be shown again after creation (not stored retrievably or re-exposed in subsequent API calls)"
+    },
+    {
+      "name": "URL reachability check",
+      "max_score": 10,
+      "description": "Before creating a subscription, the code attempts a POST request to the provided URL to verify it is reachable"
+    },
+    {
+      "name": "URL validation timeout",
+      "max_score": 8,
+      "description": "The URL validation fetch uses AbortSignal.timeout(5000) or equivalent 5-second timeout"
+    },
+    {
+      "name": "Any status acceptable for validation",
+      "max_score": 8,
+      "description": "The URL validation accepts any HTTP response status as valid (does NOT reject based on non-2xx status), only failing if the request itself throws/times out"
+    },
+    {
+      "name": "400 returned on unreachable URL",
+      "max_score": 8,
+      "description": "Returns HTTP 400 (not 500 or other status) when the URL validation request fails/times out"
+    },
+    {
+      "name": "DLQ threshold alert at 10",
+      "max_score": 12,
+      "description": "The monitoring logic triggers an alert when the dead-letter queue count for a subscriber meets or exceeds 10 events (not a higher or unspecified threshold)"
+    },
+    {
+      "name": "DLQ alert mechanism",
+      "max_score": 10,
+      "description": "The monitoring function calls an alerting function (Slack, PagerDuty, or generic notification) when the threshold is exceeded, not just logs to console"
+    },
+    {
+      "name": "node:crypto used for secret",
+      "max_score": 8,
+      "description": "Uses the built-in node:crypto module (randomBytes) rather than a third-party library or Math.random() for secret generation"
+    },
+    {
+      "name": "Subscription stores events list",
+      "max_score": 6,
+      "description": "The subscription record stores a list of event types the subscriber is interested in (e.g., events: string[])"
+    },
+    {
+      "name": "isActive flag on subscription",
+      "max_score": 8,
+      "description": "The subscription record includes an isActive (or equivalent enabled/active) boolean field"
+    }
+  ]
+}

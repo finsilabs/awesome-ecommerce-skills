@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements cursor-based pagination (not offset-based), uses the @inContext directive for international pricing, reuses GraphQL fragments across queries, checks availableForSale on both product and variant, and applies BEST_SELLING sort key.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cursor-based pagination",
+      "max_score": 10,
+      "description": "Pagination uses an 'after' cursor argument (not skip/offset), e.g. products(first: N, after: $cursor)"
+    },
+    {
+      "name": "pageInfo fields",
+      "max_score": 10,
+      "description": "Product list query includes pageInfo { hasNextPage endCursor } to support next-page fetching"
+    },
+    {
+      "name": "endCursor stored/returned",
+      "max_score": 8,
+      "description": "The endCursor value is stored or returned from the fetch function so the caller can request the next page"
+    },
+    {
+      "name": "@inContext directive present",
+      "max_score": 12,
+      "description": "At least one GraphQL query uses the @inContext directive (e.g. @inContext(country: $country)) to localise pricing"
+    },
+    {
+      "name": "country passed to @inContext",
+      "max_score": 8,
+      "description": "The @inContext directive receives a country variable (or hardcoded country code), not just a language"
+    },
+    {
+      "name": "GraphQL fragment defined",
+      "max_score": 10,
+      "description": "A named GraphQL fragment (e.g. fragment ProductFields on Product) is defined and reused in at least one query"
+    },
+    {
+      "name": "availableForSale on product",
+      "max_score": 8,
+      "description": "The product query selects availableForSale at the product level"
+    },
+    {
+      "name": "availableForSale on variant",
+      "max_score": 8,
+      "description": "The product query selects availableForSale at the variant level"
+    },
+    {
+      "name": "BEST_SELLING sort key",
+      "max_score": 8,
+      "description": "Product list query uses sortKey: BEST_SELLING"
+    },
+    {
+      "name": "Does NOT use offset pagination",
+      "max_score": 8,
+      "description": "No use of skip, offset, or page number parameters for pagination"
+    },
+    {
+      "name": "priceRange or price in buyer currency",
+      "max_score": 10,
+      "description": "Price fields (priceRange or variant price) are included in the query alongside the @inContext directive to return localised prices"
+    }
+  ]
+}

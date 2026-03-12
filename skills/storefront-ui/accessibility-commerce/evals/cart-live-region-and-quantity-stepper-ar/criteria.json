@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements ARIA live regions for cart announcements, the sr-only CSS pattern, message-clearing behaviour, the quantity stepper ARIA roles and labels, and an accessible cart count badge.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Live region role",
+      "max_score": 8,
+      "description": "The cart announcement element has role=\"status\" (or role=\"log\") — not just aria-live alone"
+    },
+    {
+      "name": "aria-live polite",
+      "max_score": 8,
+      "description": "The live region element uses aria-live=\"polite\" (not \"assertive\")"
+    },
+    {
+      "name": "aria-atomic true",
+      "max_score": 8,
+      "description": "The live region element has aria-atomic=\"true\""
+    },
+    {
+      "name": "sr-only CSS present",
+      "max_score": 8,
+      "description": "A visually-hidden CSS class is present that includes at minimum: position:absolute, width/height 1px, overflow:hidden, and clip or clip-path"
+    },
+    {
+      "name": "Message clearing",
+      "max_score": 9,
+      "description": "After setting the cart announcement message, the code clears it after a short delay (e.g. setTimeout) so the same message can trigger again"
+    },
+    {
+      "name": "Stepper group role",
+      "max_score": 8,
+      "description": "The quantity stepper wrapper element has role=\"group\""
+    },
+    {
+      "name": "Stepper group label",
+      "max_score": 9,
+      "description": "The stepper group has an aria-label that references the product name"
+    },
+    {
+      "name": "Stepper button labels",
+      "max_score": 9,
+      "description": "The decrement and increment buttons each have an aria-label that mentions the action AND the product name (e.g. 'Decrease quantity of ...')"
+    },
+    {
+      "name": "Stepper input label",
+      "max_score": 8,
+      "description": "The number input inside the stepper has an aria-label referencing the product name"
+    },
+    {
+      "name": "Cart badge context",
+      "max_score": 9,
+      "description": "The cart count badge does NOT expose a bare number — it uses aria-label with full context (e.g. 'N items in cart') OR is wrapped in a live region that announces changes with context"
+    },
+    {
+      "name": "Live region visually hidden",
+      "max_score": 8,
+      "description": "The cart live region element is rendered visually hidden (using the sr-only class or equivalent inline styles) so it does not take up visual space"
+    },
+    {
+      "name": "No outline removal",
+      "max_score": 8,
+      "description": "The CSS does NOT apply outline:none globally or to :focus without a replacement; if focus styles are reset they use :focus:not(:focus-visible)"
+    }
+  ]
+}

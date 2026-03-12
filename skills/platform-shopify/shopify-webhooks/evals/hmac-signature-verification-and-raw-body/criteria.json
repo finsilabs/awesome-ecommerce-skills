@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements Shopify HMAC verification using the right crypto approach (timingSafeEqual), uses the raw body for signature computation, and structures the Express middleware pipeline so that raw body parsing happens before any JSON parsing on webhook routes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "HMAC algorithm",
+      "max_score": 12,
+      "description": "Verification function uses `crypto.createHmac('sha256', secret).update(rawBody).digest('base64')` to compute the digest"
+    },
+    {
+      "name": "Timing-safe comparison",
+      "max_score": 12,
+      "description": "Comparison of the computed digest with the provided HMAC header uses `crypto.timingSafeEqual` (not `===` or other direct string comparison)"
+    },
+    {
+      "name": "Buffer wrapping",
+      "max_score": 8,
+      "description": "Both arguments to `crypto.timingSafeEqual` are wrapped with `Buffer.from(...)` before comparison"
+    },
+    {
+      "name": "timingSafeEqual error handling",
+      "max_score": 8,
+      "description": "A try/catch wraps the `timingSafeEqual` call and returns false on exception (handles unequal-length buffers)"
+    },
+    {
+      "name": "Raw body parser placement",
+      "max_score": 14,
+      "description": "The Express router applies `express.raw({ type: 'application/json' })` on the webhook route BEFORE the verification middleware or any JSON body parsing"
+    },
+    {
+      "name": "No pre-parse JSON on webhook routes",
+      "max_score": 10,
+      "description": "No `express.json()` or `bodyParser.json()` is applied globally or before the raw parser on the webhook route path"
+    },
+    {
+      "name": "401 on failure",
+      "max_score": 10,
+      "description": "The middleware responds with HTTP 401 when HMAC verification fails"
+    },
+    {
+      "name": "rawBody is Buffer",
+      "max_score": 8,
+      "description": "The raw body is passed as a `Buffer` (not a string) to the HMAC computation function"
+    },
+    {
+      "name": "200 quick response",
+      "max_score": 9,
+      "description": "The sample `orders-create` handler sends a 200 response before or immediately upon receiving the request (not after performing heavy processing inline)"
+    },
+    {
+      "name": "HMAC header source",
+      "max_score": 9,
+      "description": "The HMAC value is read from the `x-shopify-hmac-sha256` header"
+    }
+  ]
+}

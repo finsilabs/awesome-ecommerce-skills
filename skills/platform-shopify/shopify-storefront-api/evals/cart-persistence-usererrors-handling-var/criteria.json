@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly persists the cart ID in localStorage, checks userErrors after cart mutations, implements variant option matching across ALL selected options, and handles the checkout redirect correctly for cross-browser compatibility.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "cartId stored in localStorage",
+      "max_score": 10,
+      "description": "The cart ID is stored in localStorage (e.g. localStorage.setItem(...)) after cart creation"
+    },
+    {
+      "name": "cartId read from localStorage",
+      "max_score": 10,
+      "description": "On initialisation the cart ID is retrieved from localStorage (e.g. localStorage.getItem(...)) before attempting to create a new cart"
+    },
+    {
+      "name": "New cart only if none exists",
+      "max_score": 10,
+      "description": "cartCreate is called ONLY when there is no existing cart ID; existing carts reuse cartLinesAdd instead"
+    },
+    {
+      "name": "userErrors checked after cartCreate",
+      "max_score": 8,
+      "description": "The userErrors field is included in the cartCreate mutation response AND its value is checked/handled before updating state"
+    },
+    {
+      "name": "userErrors checked after cartLinesAdd",
+      "max_score": 8,
+      "description": "The userErrors field is included in the cartLinesAdd mutation response AND its value is checked/handled before updating state"
+    },
+    {
+      "name": "All selectedOptions matched for variant",
+      "max_score": 12,
+      "description": "Variant lookup compares ALL selectedOptions (e.g. both size and color) when finding the matching variant, not just one option"
+    },
+    {
+      "name": "Does NOT match on single option",
+      "max_score": 8,
+      "description": "Variant selection does NOT short-circuit on a single matching option — every selectedOption must match"
+    },
+    {
+      "name": "window.location.href for checkout redirect",
+      "max_score": 10,
+      "description": "Checkout redirect uses window.location.href = checkoutUrl (not router.push, window.open, or an <a> tag navigation)"
+    },
+    {
+      "name": "Checkout redirect in user gesture handler",
+      "max_score": 12,
+      "description": "The window.location.href assignment is inside a synchronous click/event handler, NOT inside an async callback or Promise.then()"
+    },
+    {
+      "name": "checkoutUrl returned from cart mutations",
+      "max_score": 12,
+      "description": "The cartCreate and/or cartLinesAdd mutation response includes the checkoutUrl field"
+    }
+  ]
+}

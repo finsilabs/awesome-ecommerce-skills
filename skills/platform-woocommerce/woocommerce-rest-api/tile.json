@@ -1,0 +1,10 @@
+{
+  "name": "finsi/woocommerce-rest-api",
+  "version": "0.1.0",
+  "summary": "WooCommerce REST API for headless and integration use cases",
+  "skills": {
+    "woocommerce-rest-api": {
+      "path": "SKILL.md"
+    }
+  }
+}

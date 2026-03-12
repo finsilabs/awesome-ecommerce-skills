@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds an AI-powered batch description pipeline following the skill's specific model choices, prompt structure, concurrency pattern, temperature settings, and draft-saving workflow.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Prompt templates in dedicated file",
+      "max_score": 8,
+      "description": "Prompt template strings are defined in a separate module file (e.g., lib/enrichmentPrompts.js or similar), not inline inside the generation function"
+    },
+    {
+      "name": "Correct description model",
+      "max_score": 8,
+      "description": "Uses 'gpt-4o' (not gpt-3.5-turbo, gpt-4, gpt-4o-mini or other models) for description generation"
+    },
+    {
+      "name": "Temperature in range",
+      "max_score": 8,
+      "description": "Temperature parameter for the description generation call is set to a value in the range 0.3–0.5 (inclusive)"
+    },
+    {
+      "name": "max_tokens 400",
+      "max_score": 8,
+      "description": "max_tokens is set to 400 for the description generation API call"
+    },
+    {
+      "name": "Three-part prompt structure",
+      "max_score": 8,
+      "description": "The description prompt instructs the model to produce: (1) an opening sentence, (2) a feature paragraph, and (3) a bulleted list of key features"
+    },
+    {
+      "name": "Opening sentence word cap",
+      "max_score": 8,
+      "description": "The prompt explicitly constrains the opening sentence to a maximum of 20 words"
+    },
+    {
+      "name": "Paragraph word count target",
+      "max_score": 8,
+      "description": "The prompt specifies a target length of 80–120 words for the feature paragraph"
+    },
+    {
+      "name": "No superlatives constraint",
+      "max_score": 8,
+      "description": "The prompt explicitly instructs the model not to use superlatives such as 'best' or 'amazing'"
+    },
+    {
+      "name": "Attributes-only constraint",
+      "max_score": 8,
+      "description": "The prompt contains an explicit instruction not to invent or guess product specifications beyond those provided"
+    },
+    {
+      "name": "Concurrency limit of 5",
+      "max_score": 8,
+      "description": "Batch processing uses a chunk size or concurrency limit of 5 (not larger, not smaller) parallel API calls"
+    },
+    {
+      "name": "Drafts saved as pending_review",
+      "max_score": 10,
+      "description": "Generated descriptions are saved to a drafts store/table with a status value of 'pending_review', not written directly to the published product record"
+    },
+    {
+      "name": "Per-product error handling",
+      "max_score": 10,
+      "description": "Individual product failures are caught and logged without aborting the rest of the batch (try/catch per product inside the batch loop)"
+    }
+  ]
+}

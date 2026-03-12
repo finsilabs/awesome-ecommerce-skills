@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses diff-based variant update logic (computing new vs. archived rather than delete-and-recreate), archives discontinued variants by marking published=false instead of removing them, and validates option value completeness to surface unpublished combinations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Diff function present",
+      "max_score": 10,
+      "description": "lib/variantLifecycle.js exports a function that accepts existing variants and new combinations and returns distinct 'toCreate' and 'toArchive' (or equivalent) collections"
+    },
+    {
+      "name": "toCreate uses set-difference logic",
+      "max_score": 8,
+      "description": "The diff function identifies variants to create by finding new combinations that do NOT already exist in the existing variant set — not by recreating all combinations from scratch"
+    },
+    {
+      "name": "toArchive uses set-difference logic",
+      "max_score": 8,
+      "description": "The diff function identifies variants to archive by finding existing variants whose combination is NOT in the new option set"
+    },
+    {
+      "name": "Archive sets published=false",
+      "max_score": 12,
+      "description": "The demo output (lifecycle-report.json) shows archived variants represented with published: false (or an equivalent archival flag), NOT as deleted/absent records"
+    },
+    {
+      "name": "No hard delete of variants",
+      "max_score": 10,
+      "description": "The code does NOT use any delete, remove, or splice operation on existing variant records — discontinued variants are retained and marked as archived/unpublished"
+    },
+    {
+      "name": "Completeness check function",
+      "max_score": 8,
+      "description": "lib/variantLifecycle.js exports a separate function that checks whether all option value combinations are represented and published, returning any missing or unpublished combinations"
+    },
+    {
+      "name": "Completeness warnings in report",
+      "max_score": 8,
+      "description": "output/lifecycle-report.json includes a field listing unpublished or missing combinations (not just an empty array) given the demo input that has at least one unpublished variant"
+    },
+    {
+      "name": "Report includes toCreate",
+      "max_score": 8,
+      "description": "output/lifecycle-report.json contains a field (toCreate or equivalent) listing the newly added variant combinations"
+    },
+    {
+      "name": "Report includes toArchive",
+      "max_score": 8,
+      "description": "output/lifecycle-report.json contains a field (toArchive or equivalent) listing the discontinued variant combinations"
+    },
+    {
+      "name": "Unchanged variants preserved",
+      "max_score": 8,
+      "description": "Variants whose option combination exists in both the old and new option set appear in neither toCreate nor toArchive — they are left unchanged"
+    },
+    {
+      "name": "Key-based comparison",
+      "max_score": 6,
+      "description": "The diff logic compares variants using a derived key (e.g., joining option values with a separator) rather than comparing full object references or IDs"
+    },
+    {
+      "name": "deleted_at or similar timestamp",
+      "max_score": 6,
+      "description": "Archived variants in the report or code include a deleted_at, archivedAt, or equivalent timestamp field alongside published: false"
+    }
+  ]
+}

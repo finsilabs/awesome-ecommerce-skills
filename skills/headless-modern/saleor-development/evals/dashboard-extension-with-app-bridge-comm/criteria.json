@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly declares a Dashboard Extension in the Saleor App manifest with the required fields, uses the app-bridge hooks from @saleor/app-sdk to communicate with the dashboard host, dispatches a Notification action, and documents the HTTPS and CORS production requirements.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "extensions array in manifest",
+      "max_score": 8,
+      "description": "The AppManifest object in pages/api/manifest.ts contains an `extensions` array (not undefined or absent)"
+    },
+    {
+      "name": "Extension mount point",
+      "max_score": 10,
+      "description": "The extension entry includes a `mount` property set to a valid Saleor dashboard mount point (e.g., PRODUCT_DETAILS_MORE_ACTIONS or similar PRODUCT_* mount)"
+    },
+    {
+      "name": "Extension target field",
+      "max_score": 8,
+      "description": "The extension entry includes a `target` property (e.g., POPUP or APP_PAGE)"
+    },
+    {
+      "name": "Extension permissions",
+      "max_score": 8,
+      "description": "The extension entry includes a `permissions` array containing at least one permission (e.g., MANAGE_PRODUCTS)"
+    },
+    {
+      "name": "Extension URL from env",
+      "max_score": 8,
+      "description": "The extension `url` property is constructed using process.env.APP_URL (or equivalent env var) — not hardcoded"
+    },
+    {
+      "name": "useAppBridge import",
+      "max_score": 10,
+      "description": "pages/extension/inventory-reserve.tsx imports useAppBridge from @saleor/app-sdk/app-bridge"
+    },
+    {
+      "name": "actions import",
+      "max_score": 8,
+      "description": "pages/extension/inventory-reserve.tsx imports actions from @saleor/app-sdk/app-bridge"
+    },
+    {
+      "name": "Notification dispatch",
+      "max_score": 12,
+      "description": "The extension page calls appBridge.dispatch(actions.Notification({ ... })) or appBridge?.dispatch(actions.Notification({ ... })) to send a notification to the dashboard"
+    },
+    {
+      "name": "HTTPS requirement documented",
+      "max_score": 8,
+      "description": "README.md (or inline comments) explicitly states that the extension URL must be served over HTTPS in production"
+    },
+    {
+      "name": "CORS requirement documented",
+      "max_score": 10,
+      "description": "README.md (or inline comments) explicitly states that the extension page must include Access-Control-Allow-Origin headers for the dashboard origin"
+    },
+    {
+      "name": "createManifestHandler used",
+      "max_score": 10,
+      "description": "pages/api/manifest.ts exports a handler created with createManifestHandler from @saleor/app-sdk/handlers/next"
+    }
+  ]
+}

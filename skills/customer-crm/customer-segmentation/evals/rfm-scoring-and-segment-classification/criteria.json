@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements RFM scoring using quantile-based scoring (NTILE), excludes invalid orders, applies the correct segment classification thresholds, and persists scores using an upsert pattern with nightly refresh.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "NTILE quantile scoring",
+      "max_score": 10,
+      "description": "The SQL uses NTILE(5) window functions to compute r_score, f_score, and m_score — NOT fixed numeric thresholds or CASE WHEN ranges"
+    },
+    {
+      "name": "Exclude cancelled/refunded",
+      "max_score": 8,
+      "description": "The SQL WHERE clause excludes orders with status 'cancelled' AND 'refunded' (both must be excluded)"
+    },
+    {
+      "name": "Recency scored inversely",
+      "max_score": 8,
+      "description": "NTILE for recency orders by recency_days DESC (so more recent customers get higher r_score, not lower)"
+    },
+    {
+      "name": "rfm_cell as concatenation",
+      "max_score": 8,
+      "description": "The SQL outputs rfm_cell as the concatenation of the three scores (e.g., CONCAT(r_score, f_score, m_score))"
+    },
+    {
+      "name": "Eleven named segments",
+      "max_score": 10,
+      "description": "The TypeScript segment type includes all of: champions, loyal_customers, potential_loyalists, recent_customers, promising, need_attention, about_to_sleep, at_risk, cannot_lose_them, hibernating, lost (all 11)"
+    },
+    {
+      "name": "Champions threshold",
+      "max_score": 8,
+      "description": "classifyRFMSegment returns 'champions' when r>=4, f>=4, AND m>=4"
+    },
+    {
+      "name": "cannot_lose_them threshold",
+      "max_score": 8,
+      "description": "classifyRFMSegment returns 'cannot_lose_them' when r<=2, f>=4, AND m>=4"
+    },
+    {
+      "name": "at_risk classification",
+      "max_score": 8,
+      "description": "classifyRFMSegment returns 'at_risk' when r<=2 AND f>=3 (distinct from cannot_lose_them which also requires m>=4)"
+    },
+    {
+      "name": "Upsert not insert",
+      "max_score": 8,
+      "description": "refreshRFMScores() uses an upsert operation (upsert, ON CONFLICT, or equivalent) rather than a plain insert, so existing records are updated"
+    },
+    {
+      "name": "rfm_total as sum",
+      "max_score": 8,
+      "description": "The SQL computes rfm_total as r_score + f_score + m_score"
+    },
+    {
+      "name": "Hibernating vs lost distinction",
+      "max_score": 8,
+      "description": "classifyRFMSegment distinguishes 'hibernating' (r=1, f<=2) from 'lost' (fallback for remaining cases) as two separate segments"
+    },
+    {
+      "name": "Segment summary with actions",
+      "max_score": 8,
+      "description": "getSegmentSummary() or SEGMENT_ACTIONS includes a recommendedAction field mapping at least 3 segment names to specific marketing actions"
+    }
+  ]
+}

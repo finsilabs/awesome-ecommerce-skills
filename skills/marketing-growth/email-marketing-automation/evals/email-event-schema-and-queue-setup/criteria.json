@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly models the email event schema and queue infrastructure for a triggered email system. Covers the core EmailEvent interface shape, BullMQ queue setup, the scheduleEmail helper, and worker configuration with deduplication and cleanup guards.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "EmailEvent type union",
+      "max_score": 8,
+      "description": "The EmailEvent type/interface includes a 'type' field with exactly the union 'welcome' | 'post_purchase' | 'win_back' | 'browse_abandon'"
+    },
+    {
+      "name": "EmailEvent required fields",
+      "max_score": 8,
+      "description": "The EmailEvent type/interface contains all six required fields: customerId, email, firstName, payload, scheduledAt, flowStep"
+    },
+    {
+      "name": "payload typed as Record",
+      "max_score": 6,
+      "description": "The payload field is typed as Record<string, unknown> (or equivalent generic map type) rather than a specific object shape"
+    },
+    {
+      "name": "flowStep is 0-indexed",
+      "max_score": 5,
+      "description": "A comment or documentation note indicates flowStep is 0-indexed"
+    },
+    {
+      "name": "BullMQ or SQS queue",
+      "max_score": 10,
+      "description": "Uses BullMQ Queue (or SQS or equivalent job queue library) to schedule delayed email sends — does NOT just use setTimeout or setInterval"
+    },
+    {
+      "name": "Deterministic jobId pattern",
+      "max_score": 12,
+      "description": "Jobs are added with a jobId following the pattern `${type}-${customerId}-step${flowStep}` (or equivalent interpolation of type, customerId, and step index)"
+    },
+    {
+      "name": "removeOnComplete set",
+      "max_score": 7,
+      "description": "Queue add options include removeOnComplete: true"
+    },
+    {
+      "name": "delay parameter used",
+      "max_score": 8,
+      "description": "Queue add options include a delay parameter (in milliseconds) passed from the scheduleEmail function"
+    },
+    {
+      "name": "Unsubscribe check in worker",
+      "max_score": 10,
+      "description": "The worker or send function checks opt-out/unsubscribe status before sending each email (NOT only at trigger time)"
+    },
+    {
+      "name": "Daily send cap guard",
+      "max_score": 10,
+      "description": "The worker implements a daily send-count limit per customer (max 2 or 3 emails per customer per day)"
+    },
+    {
+      "name": "Redis connection config",
+      "max_score": 8,
+      "description": "The queue and worker are configured with a Redis connection using process.env.REDIS_HOST"
+    },
+    {
+      "name": "Worker processes queue",
+      "max_score": 8,
+      "description": "A Worker instance is created that processes the same named queue as the Queue instance (matching queue name string)"
+    }
+  ]
+}

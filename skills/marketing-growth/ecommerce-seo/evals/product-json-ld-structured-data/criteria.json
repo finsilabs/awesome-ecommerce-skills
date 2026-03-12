@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly builds a product JSON-LD schema using Schema.org types, handles single vs. aggregate offers, conditionally includes aggregate ratings, and uses proper availability URLs. Also tests Open Graph meta tag completeness and correct price formatting.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "JSON-LD script tag",
+      "max_score": 8,
+      "description": "Structured data is output inside a <script type=\"application/ld+json\"> tag (not microdata attributes in HTML elements)"
+    },
+    {
+      "name": "Schema.org context",
+      "max_score": 6,
+      "description": "JSON-LD object includes '@context': 'https://schema.org' and '@type': 'Product'"
+    },
+    {
+      "name": "Required Product fields",
+      "max_score": 10,
+      "description": "JSON-LD Product object includes all of: name, image (as array), description, sku, mpn, and brand (as an object with @type 'Brand')"
+    },
+    {
+      "name": "Description truncation",
+      "max_score": 6,
+      "description": "Product description in JSON-LD uses a dedicated SEO/meta description field when available, otherwise truncates to 200 characters"
+    },
+    {
+      "name": "Single vs aggregate offers",
+      "max_score": 10,
+      "description": "Single-variant products use @type 'Offer'; multi-variant products use @type 'AggregateOffer' with lowPrice, highPrice, and offerCount"
+    },
+    {
+      "name": "Schema.org availability URLs",
+      "max_score": 8,
+      "description": "Offer availability uses full schema.org URL strings: 'https://schema.org/InStock' or 'https://schema.org/OutOfStock' (not short strings like 'instock')"
+    },
+    {
+      "name": "Conditional aggregateRating",
+      "max_score": 8,
+      "description": "aggregateRating is only added to the Product schema when review count is greater than 0; products with no reviews do not include aggregateRating"
+    },
+    {
+      "name": "AggregateRating fields",
+      "max_score": 6,
+      "description": "When present, aggregateRating includes ratingValue (formatted to 1 decimal place), reviewCount, bestRating: '5', worstRating: '1'"
+    },
+    {
+      "name": "Price as decimal string",
+      "max_score": 8,
+      "description": "Prices in offers are formatted as a 2-decimal-place string (e.g. '19.99') converted from integer cents, not as raw integers"
+    },
+    {
+      "name": "OG product type",
+      "max_score": 8,
+      "description": "Open Graph meta tags include og:type='product' and product:price:amount, product:price:currency, and product:availability"
+    },
+    {
+      "name": "OG availability values",
+      "max_score": 8,
+      "description": "product:availability meta tag uses the correct OG values: 'instock', 'oos', or 'preorder' (not schema.org URL strings)"
+    },
+    {
+      "name": "Twitter card type",
+      "max_score": 6,
+      "description": "Twitter meta includes twitter:card='summary_large_image'"
+    },
+    {
+      "name": "Breadcrumb JSON-LD",
+      "max_score": 8,
+      "description": "Page also includes a separate BreadcrumbList JSON-LD block with @type='BreadcrumbList' and itemListElement as a list of ListItem objects with position (1-indexed), name, and item (full URL)"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/order-processing-pipeline",
+  "version": "0.1.0",
+  "summary": "Order state machine: pending -> confirmed -> processing -> shipped -> delivered",
+  "skills": {
+    "order-processing-pipeline": {
+      "path": "SKILL.md"
+    }
+  }
+}

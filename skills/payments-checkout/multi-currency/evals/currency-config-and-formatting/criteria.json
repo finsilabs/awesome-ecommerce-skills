@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly structures the currency configuration registry with the right metadata fields and values, and implements locale-aware price formatting using the Intl API rather than manual string construction.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SUPPORTED_CURRENCIES exported",
+      "max_score": 5,
+      "description": "The file exports a SUPPORTED_CURRENCIES object (not just a local variable)"
+    },
+    {
+      "name": "All 7 currencies present",
+      "max_score": 8,
+      "description": "SUPPORTED_CURRENCIES contains entries for all of: USD, EUR, GBP, CAD, AUD, JPY, BRL"
+    },
+    {
+      "name": "decimalDigits field present",
+      "max_score": 5,
+      "description": "Each currency entry includes a decimalDigits field"
+    },
+    {
+      "name": "JPY zero decimals",
+      "max_score": 10,
+      "description": "JPY entry has decimalDigits set to 0 (not 2)"
+    },
+    {
+      "name": "EUR symbolFirst false",
+      "max_score": 8,
+      "description": "EUR entry has symbolFirst set to false"
+    },
+    {
+      "name": "CAD/AUD label field",
+      "max_score": 8,
+      "description": "CAD entry includes a label field (e.g. 'CA$') and AUD entry includes a label field (e.g. 'AU$') to disambiguate from plain '$'"
+    },
+    {
+      "name": "BASE_CURRENCY is USD",
+      "max_score": 6,
+      "description": "A BASE_CURRENCY constant is exported and its value is 'USD'"
+    },
+    {
+      "name": "Intl.NumberFormat used",
+      "max_score": 15,
+      "description": "The formatPrice function uses Intl.NumberFormat (not manual string concatenation) to format the amount"
+    },
+    {
+      "name": "style: currency option",
+      "max_score": 8,
+      "description": "Intl.NumberFormat is called with style: 'currency' option"
+    },
+    {
+      "name": "Fraction digits from config",
+      "max_score": 10,
+      "description": "Both minimumFractionDigits and maximumFractionDigits are set from the currency's decimalDigits config value"
+    },
+    {
+      "name": "Fallback handling",
+      "max_score": 8,
+      "description": "formatPrice includes a try/catch (or equivalent) with a fallback string that uses label ?? symbol plus amount.toFixed(decimalDigits) for unsupported environments"
+    },
+    {
+      "name": "Locale parameter used",
+      "max_score": 9,
+      "description": "formatPrice accepts and passes a locale parameter to Intl.NumberFormat (defaults to 'en-US' when not provided)"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent collects SMS marketing consent correctly at checkout: unchecked checkbox by default, full audit trail storage, phone normalization to E.164, separation of marketing vs transactional consent types, and GDPR-ready export capability.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Checkbox not pre-checked",
+      "max_score": 12,
+      "description": "The opt-in checkbox is explicitly set to unchecked by default (e.g., defaultChecked={false} or checked={false} or equivalent) — NOT left to browser defaults or set to true"
+    },
+    {
+      "name": "Consent timestamp stored",
+      "max_score": 8,
+      "description": "The consent record includes a timestamp field (e.g., consentGivenAt, created_at, or similar) capturing when consent was given"
+    },
+    {
+      "name": "IP address stored",
+      "max_score": 8,
+      "description": "The consent record stores the user's IP address"
+    },
+    {
+      "name": "Consent source stored",
+      "max_score": 8,
+      "description": "The consent record stores how/where consent was collected (e.g., 'checkout', 'popup', 'keyword', or equivalent source field)"
+    },
+    {
+      "name": "Consent type stored",
+      "max_score": 8,
+      "description": "The consent record distinguishes between 'marketing' and 'transactional' consent types — both types are represented as distinct values"
+    },
+    {
+      "name": "E.164 phone format",
+      "max_score": 10,
+      "description": "Phone numbers are normalized to E.164 format (starting with '+' followed by country code and number, e.g. +12125551234) before being stored"
+    },
+    {
+      "name": "Marketing vs transactional separation",
+      "max_score": 12,
+      "description": "Marketing consent and transactional consent are stored or queried as separate types — the implementation does NOT conflate them into a single boolean flag"
+    },
+    {
+      "name": "STOP language in opt-in UI",
+      "max_score": 8,
+      "description": "The opt-in UI or consent language includes a reference to replying STOP (or similar keyword) to unsubscribe"
+    },
+    {
+      "name": "GDPR export includes required fields",
+      "max_score": 10,
+      "description": "The consent export or audit trail includes at minimum: phone, consentType, consentSource, consentGivenAt, and ipAddress fields"
+    },
+    {
+      "name": "revokedAt in GDPR export",
+      "max_score": 8,
+      "description": "The consent export includes a revocation timestamp field (revokedAt or equivalent) that can be null when consent is still active"
+    },
+    {
+      "name": "Privacy policy linked",
+      "max_score": 8,
+      "description": "The opt-in UI includes a link or reference to a privacy policy"
+    }
+  ]
+}

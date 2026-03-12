@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-comparison",
+  "version": "0.1.0",
+  "summary": "Side-by-side feature comparison tables with dynamic attribute selection",
+  "skills": {
+    "product-comparison": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the correct churn risk thresholds for win-back vs nurture routing, the duplicate win-back check, intervention logging, the minimum recency guard, blended CLV tier calculation, and the correct tier thresholds.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Win-back churn threshold",
+      "max_score": 8,
+      "description": "Win-back flow is triggered only when churnProbability > 0.70 (not >= 0.70, not a different value like 0.60 or 0.80)"
+    },
+    {
+      "name": "Win-back CLV threshold",
+      "max_score": 8,
+      "description": "Win-back flow is triggered only when predictedCLV > 200 (combined with the churn threshold, not just churn alone)"
+    },
+    {
+      "name": "Win-back discount parameters",
+      "max_score": 8,
+      "description": "triggerWinBackFlow is called with discountPct: 20 and expiresInDays: 7"
+    },
+    {
+      "name": "Duplicate win-back prevention",
+      "max_score": 10,
+      "description": "Code checks whether the customer is already in a win-back flow (e.g., via db.emailQueue.has or equivalent) before triggering a new win-back"
+    },
+    {
+      "name": "Intervention logging",
+      "max_score": 8,
+      "description": "A record is written to a churn interventions store/table (e.g., db.churnInterventions.create) including customerId, churnProbability, predictedCLV, and a timestamp"
+    },
+    {
+      "name": "Nurture email threshold",
+      "max_score": 8,
+      "description": "Personalized nurture email is sent for customers with churnProbability > 0.40 AND churnProbability <= 0.70"
+    },
+    {
+      "name": "Minimum recency guard",
+      "max_score": 8,
+      "description": "Win-back or churn automation only triggers for customers who have been inactive for at least 60 days (days since last purchase >= 60)"
+    },
+    {
+      "name": "Blended CLV formula",
+      "max_score": 12,
+      "description": "assignCustomerTier computes blendedCLV = predictedCLV * 0.7 + historicalCLV * 0.3"
+    },
+    {
+      "name": "Tier thresholds",
+      "max_score": 10,
+      "description": "Tier assignments are: platinum >= 1000, gold >= 500, silver >= 200, standard below 200 (all based on blended CLV)"
+    },
+    {
+      "name": "Tier persisted",
+      "max_score": 8,
+      "description": "assignCustomerTier updates the customer record with the computed tier (e.g., db.customers.update with loyaltyTier)"
+    },
+    {
+      "name": "Design doc covers logic",
+      "max_score": 12,
+      "description": "retention-design.md documents the churn probability routing thresholds (0.40, 0.70) and the CLV blend weights (0.7/0.3)"
+    }
+  ]
+}

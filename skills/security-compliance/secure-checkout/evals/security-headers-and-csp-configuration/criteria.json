@@ -1,0 +1,96 @@
+{
+  "context": "Tests whether the agent correctly configures HTTP security headers and a nonce-based Content Security Policy for a Next.js e-commerce application, including HSTS with the right parameters, checkout-specific headers, and a strict CSP generated in middleware.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "HSTS max-age value",
+      "max_score": 7,
+      "description": "Strict-Transport-Security header has max-age=63072000 (exactly 2 years, not a shorter value like 31536000)"
+    },
+    {
+      "name": "HSTS includeSubDomains",
+      "max_score": 4,
+      "description": "Strict-Transport-Security header includes the includeSubDomains directive"
+    },
+    {
+      "name": "HSTS preload",
+      "max_score": 5,
+      "description": "Strict-Transport-Security header includes the preload directive"
+    },
+    {
+      "name": "X-Frame-Options DENY",
+      "max_score": 4,
+      "description": "X-Frame-Options header is set to DENY (not SAMEORIGIN)"
+    },
+    {
+      "name": "X-Content-Type-Options",
+      "max_score": 4,
+      "description": "X-Content-Type-Options header is set to nosniff"
+    },
+    {
+      "name": "Referrer-Policy value",
+      "max_score": 4,
+      "description": "Referrer-Policy header is set to strict-origin-when-cross-origin"
+    },
+    {
+      "name": "Permissions-Policy camera/mic/geo",
+      "max_score": 4,
+      "description": "Permissions-Policy header disables camera=(), microphone=(), and geolocation=()"
+    },
+    {
+      "name": "Global headers route pattern",
+      "max_score": 4,
+      "description": "Security headers are applied to all routes using source: '/(.*)'  in next.config.ts"
+    },
+    {
+      "name": "Checkout Cache-Control",
+      "max_score": 8,
+      "description": "Checkout routes have Cache-Control set to no-store, no-cache, must-revalidate"
+    },
+    {
+      "name": "Checkout X-Robots-Tag",
+      "max_score": 4,
+      "description": "Checkout routes have X-Robots-Tag set to noindex"
+    },
+    {
+      "name": "Nonce per request",
+      "max_score": 8,
+      "description": "CSP nonce is generated uniquely per request in middleware (e.g., using crypto.randomUUID() encoded as base64), not statically"
+    },
+    {
+      "name": "CSP in middleware",
+      "max_score": 8,
+      "description": "Content-Security-Policy header is set inside Next.js middleware (not statically in next.config.ts)"
+    },
+    {
+      "name": "CSP nonce in script-src",
+      "max_score": 8,
+      "description": "CSP script-src directive includes the nonce value (nonce-${nonce}) rather than 'unsafe-inline'"
+    },
+    {
+      "name": "CSP no unsafe-inline in script-src",
+      "max_score": 8,
+      "description": "CSP script-src does NOT contain 'unsafe-inline'"
+    },
+    {
+      "name": "CSP Stripe frame-src",
+      "max_score": 8,
+      "description": "CSP frame-src includes both https://js.stripe.com and https://hooks.stripe.com"
+    },
+    {
+      "name": "CSP object-src none",
+      "max_score": 4,
+      "description": "CSP includes object-src 'none'"
+    },
+    {
+      "name": "CSP base-uri self",
+      "max_score": 4,
+      "description": "CSP includes base-uri 'self'"
+    },
+    {
+      "name": "unsafe-eval dev-only",
+      "max_score": 4,
+      "description": "CSP 'unsafe-eval' is only included in development (gated on NODE_ENV check), not hardcoded unconditionally"
+    }
+  ]
+}

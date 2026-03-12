@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a clean ERP adapter interface with SAP-specific patterns (CSRF token fetching, padded order item numbers), correct cents-to-dollars currency conversion, a separate data transformation layer, and proper handling of base vs promotional prices.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ERPAdapter interface",
+      "max_score": 8,
+      "description": "Defines an abstract ERPAdapter interface (or abstract class) with distinct methods for orders, inventory, customers, and products — not a single generic 'call ERP' method"
+    },
+    {
+      "name": "Separate mapper/transformer",
+      "max_score": 10,
+      "description": "Implements a dedicated mapping or transformation function/class to convert e-commerce order format to ERP format, separate from the adapter's HTTP call logic"
+    },
+    {
+      "name": "SAP CSRF token fetch",
+      "max_score": 12,
+      "description": "Fetches the SAP CSRF token by first making a HEAD/GET request with 'X-CSRF-Token: Fetch' header before submitting mutating requests"
+    },
+    {
+      "name": "CSRF token on mutating requests",
+      "max_score": 8,
+      "description": "Includes the retrieved CSRF token value in the 'X-CSRF-Token' header of POST/PUT requests to SAP"
+    },
+    {
+      "name": "SAP order item numbering",
+      "max_score": 10,
+      "description": "Numbers SAP sales order line items starting at 10 and incrementing by 10 (000010, 000020, ...) zero-padded to 6 digits"
+    },
+    {
+      "name": "Cents to dollars conversion",
+      "max_score": 10,
+      "description": "Divides monetary values (unit price, tax, shipping, discounts) by 100 when converting from e-commerce (cents) to ERP (dollars/base currency) format"
+    },
+    {
+      "name": "Base price vs promotional price separation",
+      "max_score": 10,
+      "description": "Keeps ERP base prices and e-commerce promotional/discount prices separate; does NOT overwrite the base price with a discounted price during sync"
+    },
+    {
+      "name": "Rate limiting in adapter",
+      "max_score": 8,
+      "description": "Implements or references rate limiting (token bucket, sliding window, or delay between batched calls) within the ERP adapter to avoid API throttling"
+    },
+    {
+      "name": "External reference for idempotency",
+      "max_score": 8,
+      "description": "Uses the e-commerce order number (or another external reference) as a duplicate-check field when creating orders in the ERP"
+    },
+    {
+      "name": "SAP OData API path",
+      "max_score": 8,
+      "description": "Uses the SAP OData API path /sap/opu/odata/sap for SAP requests"
+    },
+    {
+      "name": "ERP-specific code isolated",
+      "max_score": 8,
+      "description": "SAP-specific field names (SalesOrderType, SoldToParty, etc.) appear only inside the SAP adapter implementation, not in shared e-commerce business logic"
+    }
+  ]
+}

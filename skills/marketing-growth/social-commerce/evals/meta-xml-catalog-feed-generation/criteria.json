@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct XML library and structure for Meta catalog feeds, assigns item IDs correctly from SKU, groups variants with item_group_id, sets appropriate HTTP headers, uses correct price format, and uses HTTPS image URLs.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses fast-xml-parser",
+      "max_score": 12,
+      "description": "The implementation imports XMLBuilder from 'fast-xml-parser' (not a different XML library such as xml2js, xmlbuilder2, or manual string concatenation)"
+    },
+    {
+      "name": "SKU as item ID",
+      "max_score": 12,
+      "description": "The 'id' field in each catalog item is set to the variant's SKU value, not to an internal numeric database ID or product ID"
+    },
+    {
+      "name": "item_group_id present",
+      "max_score": 10,
+      "description": "Each variant item includes an 'item_group_id' field set to the parent product's ID, enabling Meta to group variants under one product display"
+    },
+    {
+      "name": "Cache-Control header set",
+      "max_score": 8,
+      "description": "The response sets a Cache-Control header with value 'public, max-age=3600'"
+    },
+    {
+      "name": "Content-Type XML header",
+      "max_score": 6,
+      "description": "The response sets Content-Type header to 'application/xml'"
+    },
+    {
+      "name": "Price format correct",
+      "max_score": 10,
+      "description": "Price values are formatted as '{decimal_amount} USD' (e.g. '29.99 USD'), derived by dividing cents by 100 with toFixed(2) and appending ' USD'"
+    },
+    {
+      "name": "HTTPS image URLs",
+      "max_score": 8,
+      "description": "IMPLEMENTATION_NOTES.md mentions that image URLs must use HTTPS (not HTTP), or the code explicitly ensures/documents HTTPS-only image links"
+    },
+    {
+      "name": "google_product_category included",
+      "max_score": 8,
+      "description": "Each item includes a 'google_product_category' field in the XML output"
+    },
+    {
+      "name": "Correct availability values",
+      "max_score": 8,
+      "description": "The 'availability' field is set to exactly 'in stock' or 'out of stock' based on inventory level (not other values like 'available' or 'true'/'false')"
+    },
+    {
+      "name": "condition field present",
+      "max_score": 6,
+      "description": "Each item includes a 'condition' field set to 'new'"
+    },
+    {
+      "name": "additional_image_link included",
+      "max_score": 6,
+      "description": "Each item includes an 'additional_image_link' field populated from product images beyond the first"
+    },
+    {
+      "name": "XMLBuilder arrayNodeName",
+      "max_score": 6,
+      "description": "XMLBuilder is instantiated with { arrayNodeName: 'item' } option so items render as individual <item> elements"
+    }
+  ]
+}

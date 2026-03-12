@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the social proof feed (Redis caching, 24-hour order window) and the Q&A notification system (product team alerts, email to question author, upvote deduplication, daily unanswered digest).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Redis setex with 300s TTL",
+      "max_score": 10,
+      "description": "Caches the social proof feed using redis.setex (or equivalent) with a TTL of exactly 300 seconds"
+    },
+    {
+      "name": "24-hour order window",
+      "max_score": 10,
+      "description": "Fetches orders from the last 24 hours only (using subHours(new Date(), 24) or equivalent) and status 'completed'"
+    },
+    {
+      "name": "No fabricated signals",
+      "max_score": 8,
+      "description": "Social proof data is derived entirely from actual order records — no static arrays, hardcoded names, or invented purchase entries"
+    },
+    {
+      "name": "Product team notified on question",
+      "max_score": 8,
+      "description": "Calls a notification function (e.g. notifyProductTeam) after a new question is submitted"
+    },
+    {
+      "name": "Author email notification on answer",
+      "max_score": 10,
+      "description": "Sends a transactional email to the question author when their question is answered (conditional on authorEmail existing)"
+    },
+    {
+      "name": "Email includes product URL",
+      "max_score": 6,
+      "description": "The answer notification email includes the product URL (e.g. ${STORE_URL}/products/${slug})"
+    },
+    {
+      "name": "Upvote deduplication",
+      "max_score": 10,
+      "description": "The upvote endpoint checks for an existing vote by the same voter (customerId or IP) and returns 409 if already voted"
+    },
+    {
+      "name": "Daily unanswered digest",
+      "max_score": 10,
+      "description": "Implements or documents a daily digest/notification to the product team listing unanswered questions (e.g. a scheduled job or cron)"
+    },
+    {
+      "name": "7-day threshold mentioned",
+      "max_score": 8,
+      "description": "The unanswered-question follow-up logic references a 7-day threshold (questions unanswered for more than 7 days are highlighted or escalated)"
+    },
+    {
+      "name": "Gallery verified-first ordering",
+      "max_score": 8,
+      "description": "The photo gallery query orders results by verifiedPurchase descending before createdAt descending"
+    },
+    {
+      "name": "Verified purchase badge returned",
+      "max_score": 6,
+      "description": "The gallery API response includes a verifiedPurchase field (boolean or badge indicator) for each photo"
+    },
+    {
+      "name": "CDN URLs for photo responses",
+      "max_score": 6,
+      "description": "Returns CDN-based URLs (using CDN_URL environment variable or equivalent) for thumbnailUrl and mediumUrl, not direct S3 URLs"
+    }
+  ]
+}

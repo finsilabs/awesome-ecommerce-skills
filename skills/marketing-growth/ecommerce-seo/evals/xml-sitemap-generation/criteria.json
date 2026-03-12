@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent generates a correct XML sitemap index with gzip-compressed child sitemaps for products, collections, and pages, includes image entries in product sitemaps, uses the sitemap npm package, applies correct field values (changefreq, priority), and pings Google after generation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "sitemap npm package used",
+      "max_score": 9,
+      "description": "The solution imports from the 'sitemap' package (e.g. SitemapStream, streamToPromise) rather than building XML string concatenation manually for product sitemaps"
+    },
+    {
+      "name": "Sitemap index structure",
+      "max_score": 9,
+      "description": "Generated sitemap index XML contains entries for at least: a products sitemap, a collections sitemap (collections.xml.gz), and a pages sitemap (pages.xml.gz)"
+    },
+    {
+      "name": "50,000 URL limit per child sitemap",
+      "max_score": 10,
+      "description": "Product data is split across multiple child sitemaps with a maximum of 50,000 URLs per file (i.e. Math.ceil(total / 50000) files are created)"
+    },
+    {
+      "name": "Gzip compression",
+      "max_score": 9,
+      "description": "Child sitemap files are gzip-compressed (e.g. using gzipSync from 'zlib') and saved with a .gz extension"
+    },
+    {
+      "name": "Product sitemap filename pattern",
+      "max_score": 7,
+      "description": "Product child sitemap files follow the naming pattern products-{N}.xml.gz (e.g. products-1.xml.gz, products-2.xml.gz)"
+    },
+    {
+      "name": "Product entry fields",
+      "max_score": 9,
+      "description": "Each product entry in the sitemap includes: url, lastmod (ISO 8601 string), changefreq set to 'daily', and priority set to 0.8"
+    },
+    {
+      "name": "Image entries in sitemap",
+      "max_score": 9,
+      "description": "Product sitemap entries include an img array with at least url and title per product image"
+    },
+    {
+      "name": "Image title fallback",
+      "max_score": 7,
+      "description": "Image title uses the image's alt text when available, falling back to the product title"
+    },
+    {
+      "name": "Google ping after generation",
+      "max_score": 8,
+      "description": "After sitemaps are generated, the script sends an HTTP request to https://www.google.com/ping?sitemap=... to notify Google"
+    },
+    {
+      "name": "Sitemap index uses lastmod",
+      "max_score": 7,
+      "description": "Each <sitemap> entry in the index includes a <lastmod> element with the current timestamp in ISO format"
+    },
+    {
+      "name": "Offset-based pagination",
+      "max_score": 7,
+      "description": "Product sitemaps use offset-based database queries (limit=50000, offset=(page-1)*50000) to paginate through the full catalog"
+    },
+    {
+      "name": "Sitemap output in public directory",
+      "max_score": 9,
+      "description": "Sitemap index is saved as sitemap.xml in the public directory root; child sitemaps go into a public/sitemaps/ subdirectory"
+    }
+  ]
+}

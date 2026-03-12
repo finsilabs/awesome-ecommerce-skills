@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly manages cart state using Commerce.js APIs, uses a single module-level client instance, passes variant selections in the correct format, uses the right cart API methods, and accesses the correct cart property for item count.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Single Commerce instance",
+      "max_score": 10,
+      "description": "The Commerce client is created exactly once, at module level (not inside useEffect, component functions, or event handlers)"
+    },
+    {
+      "name": "cart.retrieve() on mount",
+      "max_score": 8,
+      "description": "Calls `commerce.cart.retrieve()` to get or create the cart (e.g. in useEffect or on initialization)"
+    },
+    {
+      "name": "cart.add() with variant selections",
+      "max_score": 12,
+      "description": "Calls `commerce.cart.add(productId, quantity, selections)` where `selections` is an object mapping variant group IDs to option IDs (third argument)"
+    },
+    {
+      "name": "cart.update() for quantity",
+      "max_score": 8,
+      "description": "Calls `commerce.cart.update(lineItemId, {quantity: N})` to update a line item's quantity"
+    },
+    {
+      "name": "cart.remove() for line items",
+      "max_score": 8,
+      "description": "Calls `commerce.cart.remove(lineItemId)` to remove a specific item from the cart"
+    },
+    {
+      "name": "cart.empty() to clear cart",
+      "max_score": 8,
+      "description": "Calls `commerce.cart.empty()` to empty/clear the entire cart"
+    },
+    {
+      "name": "React Context pattern",
+      "max_score": 8,
+      "description": "Uses React's createContext and a Provider component to share cart state across the component tree"
+    },
+    {
+      "name": "useCart hook exported",
+      "max_score": 6,
+      "description": "Exports a `useCart` hook (or equivalent) that returns cart state and cart action functions"
+    },
+    {
+      "name": "total_unique_items for badge",
+      "max_score": 12,
+      "description": "Uses `cart.total_unique_items` (not `cart.total_items` or a manual count) for the cart item count display"
+    },
+    {
+      "name": "Variant group ID as key",
+      "max_score": 10,
+      "description": "When building the variant selections object, uses the variant group ID as the key and option ID as the value (not option name or group name)"
+    },
+    {
+      "name": "Public key for client",
+      "max_score": 10,
+      "description": "The Commerce client is initialized with the public API key (an environment variable), not the secret key"
+    }
+  ]
+}

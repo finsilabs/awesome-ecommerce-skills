@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent sends notifications only for the correct subset of statuses, deduplicates per order/status via a notification log, uses the correct named email templates, builds carrier-specific tracking URLs with correct URL patterns, and triggers a Slack/internal alert specifically for exception events.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Notify only 4 statuses",
+      "max_score": 10,
+      "description": "sendTrackingNotification only sends emails for: in_transit, out_for_delivery, delivered, exception — and skips pre_transit and returned (returns early or does not send for those statuses)"
+    },
+    {
+      "name": "Deduplication check",
+      "max_score": 10,
+      "description": "Before sending, the code checks a notification log (db.notificationLog or equivalent) to see if a notification for this order+status was already sent"
+    },
+    {
+      "name": "Dedup record insert",
+      "max_score": 8,
+      "description": "After sending, the code inserts a record into the notification log with the order_id and status (e.g. tracking_in_transit, tracking_delivered) to prevent future duplicates"
+    },
+    {
+      "name": "in_transit template name",
+      "max_score": 7,
+      "description": "Uses 'shipment-in-transit' as the email template name for in_transit status (not a generic or differently-named template)"
+    },
+    {
+      "name": "out_for_delivery template name",
+      "max_score": 7,
+      "description": "Uses 'shipment-out-for-delivery' as the email template name for out_for_delivery status"
+    },
+    {
+      "name": "delivered template name",
+      "max_score": 7,
+      "description": "Uses 'shipment-delivered' as the email template name for delivered status"
+    },
+    {
+      "name": "exception template name",
+      "max_score": 7,
+      "description": "Uses 'shipment-exception' as the email template name for exception status"
+    },
+    {
+      "name": "UPS tracking URL",
+      "max_score": 6,
+      "description": "buildTrackingUrl returns a URL containing 'ups.com/track' (or equivalent UPS tracking domain) for carrier 'ups'"
+    },
+    {
+      "name": "FedEx tracking URL",
+      "max_score": 6,
+      "description": "buildTrackingUrl returns a URL containing 'fedex.com' for carrier 'fedex'"
+    },
+    {
+      "name": "USPS tracking URL",
+      "max_score": 6,
+      "description": "buildTrackingUrl returns a URL containing 'usps.com' for carrier 'usps'"
+    },
+    {
+      "name": "Unknown carrier fallback",
+      "max_score": 6,
+      "description": "buildTrackingUrl returns a fallback URL (e.g. Google search or similar) for unknown/unrecognized carrier names rather than throwing an error"
+    },
+    {
+      "name": "Exception Slack alert",
+      "max_score": 10,
+      "description": "For exception status events, the code triggers an internal Slack (or equivalent internal) alert/notification — separate from or in addition to the customer email"
+    },
+    {
+      "name": "Design doc covers statuses",
+      "max_score": 5,
+      "description": "notification-design.md lists which statuses trigger customer emails and which trigger internal alerts (exception)"
+    },
+    {
+      "name": "Design doc covers dedup",
+      "max_score": 5,
+      "description": "notification-design.md explains the deduplication mechanism (notification log / one per status per order)"
+    }
+  ]
+}

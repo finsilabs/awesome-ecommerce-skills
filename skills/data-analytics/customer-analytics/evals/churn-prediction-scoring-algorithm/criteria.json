@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements churn scoring using the specified TypeScript interface shape, the correct formulas for single-purchase vs multi-purchase customers (linear growth vs z-score sigmoid), seasonal purchase pattern handling, monthly validation recommendations, and the correct high-value action thresholds.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CustomerChurnRisk interface",
+      "max_score": 10,
+      "description": "Defines a TypeScript type/interface for churn risk that includes: churnScore (number 0-1), churnCategory ('low'|'medium'|'high'|'churned'), daysSinceLastOrder, avgPurchaseIntervalDays, and predictedNextOrderDate (Date|null)"
+    },
+    {
+      "name": "Single-purchase linear formula",
+      "max_score": 10,
+      "description": "For customers with exactly one order, computes churnScore using a formula based on days since purchase (increasing linearly), capped at a maximum value (e.g. 0.95)"
+    },
+    {
+      "name": "Multi-purchase z-score sigmoid",
+      "max_score": 10,
+      "description": "For repeat customers, computes churnScore using a sigmoid function applied to a z-score (standard deviations past due relative to average purchase interval)"
+    },
+    {
+      "name": "Std dev floor",
+      "max_score": 8,
+      "description": "Uses Math.max(1, stdDev) or equivalent to prevent division by zero when computing the z-score for multi-purchase customers"
+    },
+    {
+      "name": "churnScore clamped",
+      "max_score": 6,
+      "description": "churnScore is clamped to a [0.01, 0.99] or similar range (does NOT allow exactly 0 or 1 for multi-purchase customers)"
+    },
+    {
+      "name": "Category thresholds",
+      "max_score": 7,
+      "description": "Uses 0.75 (or similar) as the high/medium boundary and 0.45 (or similar) as the medium/low boundary for multi-purchase customers"
+    },
+    {
+      "name": "Excludes cancelled/refunded",
+      "max_score": 7,
+      "description": "Filters out cancelled and refunded orders before computing purchase history metrics"
+    },
+    {
+      "name": "Seasonal pattern flag",
+      "max_score": 8,
+      "description": "churn-design.md or code includes a mention of a seasonal purchase pattern flag or logic to avoid marking seasonal buyers as churned during their off-season"
+    },
+    {
+      "name": "Monthly validation plan",
+      "max_score": 8,
+      "description": "churn-design.md recommends a monthly validation process comparing predicted scores from a past period to actual churn outcomes"
+    },
+    {
+      "name": "Personal outreach threshold",
+      "max_score": 8,
+      "description": "getHighValueAtRiskCustomers returns a recommendedAction of 'personal_outreach' for customers above a lifetime spend threshold and 'win_back_email' for others"
+    },
+    {
+      "name": "Ordered by lifetime value",
+      "max_score": 8,
+      "description": "getHighValueAtRiskCustomers orders results by lifetime spend/value descending (highest value customers first)"
+    },
+    {
+      "name": "Predicted next order date",
+      "max_score": 10,
+      "description": "For multi-purchase customers, computes a predictedNextOrderDate as lastOrderDate + avgInterval"
+    }
+  ]
+}

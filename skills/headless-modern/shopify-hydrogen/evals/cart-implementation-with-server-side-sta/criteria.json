@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements Hydrogen's cart system using CartForm, CartForm.getFormInput, CartForm.ACTIONS enum, and server-side cookie-based cart ID storage rather than client-side state.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CartForm import from hydrogen",
+      "max_score": 8,
+      "description": "Imports `CartForm` from '@shopify/hydrogen' (not from a custom implementation or other package)"
+    },
+    {
+      "name": "ActionFunctionArgs from remix-oxygen",
+      "max_score": 7,
+      "description": "Imports `ActionFunctionArgs` from '@shopify/remix-oxygen' in the cart route action function"
+    },
+    {
+      "name": "CartForm.getFormInput usage",
+      "max_score": 12,
+      "description": "Uses `CartForm.getFormInput(formData)` to extract `action` and `inputs` from the form data in the action function"
+    },
+    {
+      "name": "LinesAdd action handled",
+      "max_score": 8,
+      "description": "Handles `CartForm.ACTIONS.LinesAdd` case calling `cart.addLines(inputs.lines)`"
+    },
+    {
+      "name": "LinesUpdate action handled",
+      "max_score": 8,
+      "description": "Handles `CartForm.ACTIONS.LinesUpdate` case calling `cart.updateLines(inputs.lines)`"
+    },
+    {
+      "name": "LinesRemove action handled",
+      "max_score": 8,
+      "description": "Handles `CartForm.ACTIONS.LinesRemove` case calling `cart.removeLines(inputs.lineIds)`"
+    },
+    {
+      "name": "cart.setCartId in response headers",
+      "max_score": 15,
+      "description": "Calls `cart.setCartId(result.cart.id)` and includes the returned headers in the JSON response"
+    },
+    {
+      "name": "No client-side cart state",
+      "max_score": 10,
+      "description": "Does NOT store cart ID or cart data in React state (useState), localStorage, or sessionStorage — cart state is managed server-side only"
+    },
+    {
+      "name": "CartForm component in AddToCartButton",
+      "max_score": 12,
+      "description": "AddToCartButton component uses the `<CartForm>` component with `route='/cart'` and `action={CartForm.ACTIONS.LinesAdd}`"
+    },
+    {
+      "name": "Correct lines input structure",
+      "max_score": 12,
+      "description": "The CartForm inputs for adding lines uses `{ lines: [{ merchandiseId: variantId, quantity: 1 }] }` structure"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly extends WC_Shipping_Method to create a custom shipping class, registers it via the appropriate filter, supports shipping zones and instance settings, and builds a REST API endpoint with proper permission handling and HPOS-compatible order queries.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Extends WC_Shipping_Method",
+      "max_score": 12,
+      "description": "Custom shipping class extends \\WC_Shipping_Method (not implementing from scratch or extending a different base class)"
+    },
+    {
+      "name": "Registered via filter",
+      "max_score": 10,
+      "description": "Custom shipping method class is registered using the 'woocommerce_shipping_methods' filter that returns the modified $methods array with the class name as the value"
+    },
+    {
+      "name": "Supports shipping zones",
+      "max_score": 8,
+      "description": "$this->supports includes 'shipping-zones' in the array"
+    },
+    {
+      "name": "Supports instance settings",
+      "max_score": 5,
+      "description": "$this->supports includes 'instance-settings' in the array"
+    },
+    {
+      "name": "instance_form_fields used",
+      "max_score": 8,
+      "description": "Shipping configuration fields are defined in $this->instance_form_fields inside init_form_fields()"
+    },
+    {
+      "name": "add_rate() in calculate_shipping",
+      "max_score": 10,
+      "description": "The calculate_shipping() method calls $this->add_rate() to add a rate with at least 'id', 'label', and 'cost' keys"
+    },
+    {
+      "name": "REST endpoint via rest_api_init",
+      "max_score": 10,
+      "description": "REST routes are registered inside a callback hooked to the 'rest_api_init' action"
+    },
+    {
+      "name": "register_rest_route used",
+      "max_score": 8,
+      "description": "REST routes are registered using register_rest_route() with a versioned namespace (e.g., 'myplugin/v1')"
+    },
+    {
+      "name": "Admin permission callback",
+      "max_score": 12,
+      "description": "Protected REST endpoint uses current_user_can('manage_woocommerce') in its permission_callback (not hardcoded true or '__return_true' for admin endpoints)"
+    },
+    {
+      "name": "HPOS-compatible order query",
+      "max_score": 10,
+      "description": "Order queries use wc_get_orders() rather than new WP_Query() or $wpdb direct queries"
+    },
+    {
+      "name": "validate_callback on args",
+      "max_score": 7,
+      "description": "REST route args include at least one parameter with a 'validate_callback' key"
+    }
+  ]
+}

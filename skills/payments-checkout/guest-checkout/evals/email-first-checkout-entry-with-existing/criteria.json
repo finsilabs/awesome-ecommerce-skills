@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the email-first checkout entry step correctly: collecting only the email initially, validating it properly, checking for an existing account, and offering both login and continue-as-guest options without ever blocking the checkout path.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Email only at entry",
+      "max_score": 10,
+      "description": "The component renders only an email input field (and a submit/continue button) as its initial visible form — no password, name, or other account fields are present in the initial state"
+    },
+    {
+      "name": "Email regex validation",
+      "max_score": 12,
+      "description": "The component validates the email using a regex pattern equivalent to /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/ before calling the check-email API or invoking any callback"
+    },
+    {
+      "name": "API check-email called",
+      "max_score": 10,
+      "description": "The component calls /api/auth/check-email via a POST request with a JSON body containing the email to check whether an account exists"
+    },
+    {
+      "name": "Both options shown for existing account",
+      "max_score": 12,
+      "description": "When the API returns { exists: true }, the component displays both a 'Log in' option and a 'Continue as guest' option — not just one"
+    },
+    {
+      "name": "Guest proceeds without login prompt",
+      "max_score": 10,
+      "description": "When the API returns { exists: false }, the component calls onContinueAsGuest(email) directly, without showing a login prompt"
+    },
+    {
+      "name": "Checkout not blocked",
+      "max_score": 12,
+      "description": "There is no code path that prevents checkout from proceeding — a user with an existing account can choose 'Continue as guest' and the onContinueAsGuest callback is invoked"
+    },
+    {
+      "name": "onLogin callback used",
+      "max_score": 8,
+      "description": "Clicking the 'Log in' option invokes the onLogin(email) prop callback (not a navigation redirect or inline form expansion)"
+    },
+    {
+      "name": "Loading/disabled state",
+      "max_score": 8,
+      "description": "The continue button is disabled or shows a loading indicator while the check-email API call is in-flight (prevents double-submission)"
+    },
+    {
+      "name": "autoComplete email",
+      "max_score": 8,
+      "description": "The email input element has autoComplete=\"email\" set"
+    },
+    {
+      "name": "Enter key triggers continue",
+      "max_score": 10,
+      "description": "Pressing the Enter key in the email input triggers the same continue/check action as clicking the button"
+    }
+  ]
+}

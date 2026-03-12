@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent adds correct ARIA roles and attributes to the navigation bar, implements full keyboard navigation following the ARIA menu pattern, properly manages the close timer to prevent panel flicker, and opens the panel on focus.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "nav aria-label",
+      "max_score": 8,
+      "description": "The <nav> element has aria-label=\"Main navigation\" (or equivalent descriptive label)"
+    },
+    {
+      "name": "ul role menubar",
+      "max_score": 8,
+      "description": "The top-level <ul> element has role=\"menubar\""
+    },
+    {
+      "name": "li role none",
+      "max_score": 8,
+      "description": "Each top-level <li> element has role=\"none\""
+    },
+    {
+      "name": "a role menuitem",
+      "max_score": 8,
+      "description": "Each top-level <a> element has role=\"menuitem\""
+    },
+    {
+      "name": "aria-haspopup on trigger",
+      "max_score": 8,
+      "description": "Top-level anchors with an associated mega panel have aria-haspopup=\"true\""
+    },
+    {
+      "name": "aria-expanded state",
+      "max_score": 8,
+      "description": "Top-level anchors with an associated mega panel have aria-expanded set to \"true\" when the panel is open and \"false\" (or omitted) when closed"
+    },
+    {
+      "name": "Open on focus",
+      "max_score": 8,
+      "description": "The onFocus handler on top-level anchors opens the corresponding mega panel (same as hover)"
+    },
+    {
+      "name": "ArrowDown opens panel",
+      "max_score": 9,
+      "description": "Pressing ArrowDown (or Enter or Space) on a top-level item with a megaMenu opens the panel and moves focus to the first link inside it"
+    },
+    {
+      "name": "ArrowRight/Left between items",
+      "max_score": 8,
+      "description": "Pressing ArrowRight moves focus to the next top-level item; pressing ArrowLeft moves focus to the previous one (wrapping around)"
+    },
+    {
+      "name": "Escape closes panel",
+      "max_score": 8,
+      "description": "Pressing Escape while a panel is open closes it (sets activeItem to null)"
+    },
+    {
+      "name": "150ms close delay",
+      "max_score": 10,
+      "description": "The onMouseLeave handler uses a setTimeout of 150ms (or a value in the 150-200ms range) rather than immediately closing the panel"
+    },
+    {
+      "name": "Cancel close on panel enter",
+      "max_score": 9,
+      "description": "Entering the mega panel (onMouseEnter on the panel) cancels the pending close timer so the panel stays open"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the quick view modal using a native <dialog> element with showModal()/close(), an accessible loading skeleton, backdrop-click-to-close, and WCAG-compliant focus return on close.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses native <dialog> element",
+      "max_score": 12,
+      "description": "QuickViewModal.jsx renders a <dialog> HTML element as the modal container (not a <div> with role=\"dialog\" or similar)"
+    },
+    {
+      "name": "Uses showModal() to open",
+      "max_score": 10,
+      "description": "QuickViewModal.jsx calls dialogRef.current.showModal() (or equivalent ref-based call) to open the dialog, not setAttribute or className toggling"
+    },
+    {
+      "name": "Uses dialog.close() to close",
+      "max_score": 10,
+      "description": "QuickViewModal.jsx calls dialogRef.current.close() (or equivalent) to programmatically close the dialog"
+    },
+    {
+      "name": "Loading skeleton shown while fetching",
+      "max_score": 8,
+      "description": "QuickViewModal.jsx (or useQuickView.js) renders a skeleton/placeholder UI element when the product data is still loading (loading state is true)"
+    },
+    {
+      "name": "aria-live on loading element",
+      "max_score": 8,
+      "description": "The loading skeleton element has aria-live=\"polite\" attribute"
+    },
+    {
+      "name": "aria-label on loading element",
+      "max_score": 8,
+      "description": "The loading skeleton element has an aria-label attribute describing the loading state (e.g. 'Loading product details')"
+    },
+    {
+      "name": "Backdrop click closes modal",
+      "max_score": 10,
+      "description": "QuickViewModal.jsx handles click events on the dialog element itself and calls onClose when e.target is the dialog element (not its children)"
+    },
+    {
+      "name": "Trigger element reference stored",
+      "max_score": 8,
+      "description": "The component or hook stores a ref to the trigger element (button that opened the modal) before or at the time of opening"
+    },
+    {
+      "name": "Focus returned via requestAnimationFrame",
+      "max_score": 12,
+      "description": "On close, focus is returned to the trigger element using requestAnimationFrame (e.g. requestAnimationFrame(() => triggerRef.current?.focus()) or similar)"
+    },
+    {
+      "name": "Fetch error closes modal",
+      "max_score": 8,
+      "description": "useQuickView.js (or equivalent) handles fetch errors by setting isOpen to false (closing the modal) rather than leaving it open in a broken state"
+    },
+    {
+      "name": "Hook sets loading: true on open before fetch resolves",
+      "max_score": 6,
+      "description": "useQuickView.js sets loading to true immediately when openQuickView is called, before the fetch completes"
+    }
+  ]
+}

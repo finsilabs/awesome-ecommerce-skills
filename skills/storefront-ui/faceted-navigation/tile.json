@@ -1,0 +1,10 @@
+{
+  "name": "finsi/faceted-navigation",
+  "version": "0.1.0",
+  "summary": "Build filterable product listings with multi-select facets and URL-driven state",
+  "skills": {
+    "faceted-navigation": {
+      "path": "SKILL.md"
+    }
+  }
+}

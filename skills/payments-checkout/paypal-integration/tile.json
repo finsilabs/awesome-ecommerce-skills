@@ -1,0 +1,10 @@
+{
+  "name": "finsi/paypal-integration",
+  "version": "0.1.0",
+  "summary": "PayPal checkout, express buttons, PayPal Commerce Platform setup",
+  "skills": {
+    "paypal-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

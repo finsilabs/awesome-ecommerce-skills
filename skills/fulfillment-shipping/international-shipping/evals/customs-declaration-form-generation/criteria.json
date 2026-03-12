@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly generates customs declaration payloads following the international shipping skill. Focuses on field-level correctness: description length limits, weight unit conversion, declared value override logic, non-delivery handling, export compliance fields, and contents metadata.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Description length cap",
+      "max_score": 12,
+      "description": "Customs item description is truncated to at most 45 characters (e.g. uses .slice(0, 45) or equivalent)"
+    },
+    {
+      "name": "Weight unit conversion",
+      "max_score": 12,
+      "description": "Product weight_oz is divided by 16 to convert to pounds for the net_weight field"
+    },
+    {
+      "name": "Declared value override",
+      "max_score": 12,
+      "description": "Uses declared_value_override when non-null, falling back to unit_price when it is null"
+    },
+    {
+      "name": "Non-delivery option",
+      "max_score": 10,
+      "description": "Sets non_delivery_option to 'return' (not 'abandon' or any other value)"
+    },
+    {
+      "name": "EEL/PFC exemption code",
+      "max_score": 10,
+      "description": "Sets eel_pfc to exactly 'NOEEI 30.37(a)'"
+    },
+    {
+      "name": "Contents type",
+      "max_score": 8,
+      "description": "Sets contents_type to 'merchandise'"
+    },
+    {
+      "name": "Customs certify flag",
+      "max_score": 8,
+      "description": "Sets customs_certify to true (boolean)"
+    },
+    {
+      "name": "Signer from environment",
+      "max_score": 8,
+      "description": "Sets customs_signer from an environment variable (e.g. process.env.CUSTOMS_SIGNER_NAME or similar) rather than a hardcoded string"
+    },
+    {
+      "name": "Currency USD",
+      "max_score": 6,
+      "description": "Sets currency to 'USD' on each customs item"
+    },
+    {
+      "name": "Generic descriptions",
+      "max_score": 7,
+      "description": "README or code comments note that customs descriptions should be generic/category-level (avoiding brand names or trade names)"
+    },
+    {
+      "name": "Value in dollars",
+      "max_score": 7,
+      "description": "Declared value is converted from cents to dollars (divided by 100) and formatted as a decimal string (e.g. toFixed(2)) in the customs item"
+    }
+  ]
+}

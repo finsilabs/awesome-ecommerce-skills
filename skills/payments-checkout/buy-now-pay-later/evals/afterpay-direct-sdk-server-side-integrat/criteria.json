@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the Afterpay direct JS SDK integration pattern including server-side checkout token creation (correct API endpoint, auth, headers, amount formatting), the two-step client-side redirect flow, proper click-handler wiring to avoid popup blocking, and server-side payment capture with idempotency.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Afterpay SDK script tag",
+      "max_score": 7,
+      "description": "The solution loads Afterpay JS SDK from 'https://js.afterpay.com/afterpay-1.x.js' (not a different URL or npm package)"
+    },
+    {
+      "name": "Server-side token endpoint",
+      "max_score": 8,
+      "description": "A server-side route/function creates the Afterpay checkout by POSTing to 'https://global-api.afterpay.com/v2/checkouts'"
+    },
+    {
+      "name": "Basic auth header",
+      "max_score": 9,
+      "description": "The Afterpay API request uses a Basic Authorization header constructed from AFTERPAY_MERCHANT_ID and AFTERPAY_SECRET_KEY (base64-encoded 'id:key')"
+    },
+    {
+      "name": "User-Agent header",
+      "max_score": 7,
+      "description": "The Afterpay API request includes a User-Agent header containing the store name and/or merchant ID"
+    },
+    {
+      "name": "Amount toFixed(2)",
+      "max_score": 8,
+      "description": "Monetary amount values sent to Afterpay's API are formatted with toFixed(2) or equivalent two-decimal-place formatting"
+    },
+    {
+      "name": "AfterPay.initialize called",
+      "max_score": 7,
+      "description": "The client-side code calls AfterPay.initialize({ countryCode: ... }) before launching the redirect"
+    },
+    {
+      "name": "AfterPay.redirect in sync click handler",
+      "max_score": 10,
+      "description": "AfterPay.redirect() is called synchronously within a click event handler — NOT inside an async function or after an await"
+    },
+    {
+      "name": "onComplete status check",
+      "max_score": 7,
+      "description": "The onComplete callback checks for status === 'SUCCESS' before proceeding to capture"
+    },
+    {
+      "name": "Server-side capture endpoint",
+      "max_score": 10,
+      "description": "A server-side route/function captures the payment by calling the Afterpay capture API (https://global-api.afterpay.com/v2/payments/capture) — capture is NOT assumed complete from the client callback alone"
+    },
+    {
+      "name": "Idempotency-Key on capture",
+      "max_score": 10,
+      "description": "The Afterpay capture API request includes an Idempotency-Key header set to the orderToken"
+    },
+    {
+      "name": "redirectConfirmUrl and redirectCancelUrl",
+      "max_score": 8,
+      "description": "The checkout creation payload includes merchant.redirectConfirmUrl and merchant.redirectCancelUrl"
+    },
+    {
+      "name": "Items array in checkout payload",
+      "max_score": 9,
+      "description": "The checkout creation payload includes an items array with name, sku, quantity, and price fields per line item"
+    }
+  ]
+}

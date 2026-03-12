@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements bulk variant update rules (set_price, adjust_price_pct, set_inventory) with optional filtering, uses lazy/on-demand variant generation for large matrices, applies Promise.all for concurrent updates, and respects the 3-axis limit.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "set_price rule",
+      "max_score": 7,
+      "description": "bulkVariantUpdate.js supports a rule type that sets an absolute price value on matching variants"
+    },
+    {
+      "name": "adjust_price_pct rule",
+      "max_score": 7,
+      "description": "bulkVariantUpdate.js supports a rule type that adjusts price by a percentage (e.g., +8% means multiply by 1.08) on matching variants"
+    },
+    {
+      "name": "set_inventory rule",
+      "max_score": 7,
+      "description": "bulkVariantUpdate.js supports a rule type that sets inventory quantity on matching variants"
+    },
+    {
+      "name": "Filter by option name/value",
+      "max_score": 8,
+      "description": "bulkVariantUpdate.js accepts an optional filter parameter restricting updates to variants where a specified option name equals a specified value (e.g., only Gloss finish)"
+    },
+    {
+      "name": "Filter applied correctly",
+      "max_score": 8,
+      "description": "output/bulk-update-report.json shows that at least one update was applied with a filter — variants NOT matching the filter retain their original values"
+    },
+    {
+      "name": "Price rounding to 2 decimal places",
+      "max_score": 6,
+      "description": "Percentage-adjusted prices in the output are rounded to 2 decimal places (e.g., using .toFixed(2) or equivalent)"
+    },
+    {
+      "name": "Concurrent updates via Promise.all",
+      "max_score": 8,
+      "description": "If the bulk update function is async, updates are executed concurrently using Promise.all() rather than sequentially in a loop"
+    },
+    {
+      "name": "Lazy variant creation",
+      "max_score": 10,
+      "description": "lib/lazyVariants.js returns an existing variant if the combination is already in the store, or creates and stores a new one only on first request"
+    },
+    {
+      "name": "Lazy store grows on demand",
+      "max_score": 8,
+      "description": "output/lazy-variants-store.json contains a variant that was not in the initial store (created on first request in the demo)"
+    },
+    {
+      "name": "SKU generated in lazy creation",
+      "max_score": 7,
+      "description": "Lazily created variants in output/lazy-variants-store.json include a generated sku field (not null or undefined)"
+    },
+    {
+      "name": "3-axis limit documented or enforced",
+      "max_score": 8,
+      "description": "The code or demo includes a comment, validation, or documentation note indicating that variant option axes should be limited to 3 dimensions"
+    },
+    {
+      "name": "variantKey or equivalent lookup",
+      "max_score": 8,
+      "description": "The lazy variant resolver uses a composite key derived from option values (e.g., joining with '|') to look up existing variants — not iterating and comparing object properties"
+    },
+    {
+      "name": "Pricing rules applied in report",
+      "max_score": 8,
+      "description": "output/bulk-update-report.json shows before/after prices (or the updated variant list) demonstrating that at least two different rule types were applied"
+    }
+  ]
+}

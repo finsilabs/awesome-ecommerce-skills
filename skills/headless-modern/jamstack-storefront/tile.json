@@ -1,0 +1,10 @@
+{
+  "name": "finsi/jamstack-storefront",
+  "version": "0.1.0",
+  "summary": "Static-generated storefronts with Next.js/Astro + commerce API backends",
+  "skills": {
+    "jamstack-storefront": {
+      "path": "SKILL.md"
+    }
+  }
+}

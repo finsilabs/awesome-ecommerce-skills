@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent produces a correctly structured SFCC catalog XML import file. Focuses on correct namespaces, required attributes, localized string formatting, variation product structure, and category assignment correctness.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct catalog namespace",
+      "max_score": 10,
+      "description": "The <catalog> root element uses xmlns=\"http://www.demandware.com/xml/impex/catalog/2006-10-31\""
+    },
+    {
+      "name": "catalog-id on root",
+      "max_score": 10,
+      "description": "The <catalog> root element includes a catalog-id attribute with a non-empty value"
+    },
+    {
+      "name": "x-default locale on display names",
+      "max_score": 10,
+      "description": "Every <display-name> element in the XML includes xml:lang=\"x-default\" (no display-name elements are missing this attribute)"
+    },
+    {
+      "name": "Products have online-flag true",
+      "max_score": 8,
+      "description": "All product definitions include <online-flag>true</online-flag>"
+    },
+    {
+      "name": "Variation master structure",
+      "max_score": 12,
+      "description": "The variation master product includes a <variations> block containing both <attributes> (with at least one <variation-attribute>) and <variants> (with at least two <variant product-id=\"...\"/> entries)"
+    },
+    {
+      "name": "Variant attribute values",
+      "max_score": 10,
+      "description": "Each variant product definition includes a <variation-attribute-values> block with at least one <variation-attribute-value> element"
+    },
+    {
+      "name": "Category assignment primary-flag",
+      "max_score": 10,
+      "description": "Every <category-assignment> element includes <primary-flag>true</primary-flag>"
+    },
+    {
+      "name": "classification-category catalog-id",
+      "max_score": 10,
+      "description": "Product <classification-category> elements include a catalog-id attribute that matches the catalog root's catalog-id"
+    },
+    {
+      "name": "Simple products completeness",
+      "max_score": 8,
+      "description": "Simple products include at least: display-name, online-flag, and a category-assignment"
+    },
+    {
+      "name": "XML declaration present",
+      "max_score": 6,
+      "description": "File starts with <?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+    },
+    {
+      "name": "Notes on gotchas",
+      "max_score": 6,
+      "description": "import-notes.md mentions at least one of: wrong catalog risk, primary-flag, online-flag visibility, or x-default locale requirement"
+    }
+  ]
+}

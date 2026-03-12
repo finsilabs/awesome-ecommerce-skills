@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements responsive product images with correct srcset breakpoints, proper LCP prioritization, explicit dimensions to prevent CLS, AVIF/WebP/JPEG format negotiation via <picture>, and LCP image preloading.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "srcset breakpoints",
+      "max_score": 12,
+      "description": "Product images include srcset with at least these width values: 240w, 400w, 800w, 1200w, and 1600w"
+    },
+    {
+      "name": "Default sizes attribute",
+      "max_score": 8,
+      "description": "img elements include a sizes attribute with breakpoints covering mobile (100vw), tablet (~50vw), and desktop (~25vw) — e.g. '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'"
+    },
+    {
+      "name": "LCP image eager loading",
+      "max_score": 12,
+      "description": "Only the first (LCP) product image has loading='eager'; all other product images have loading='lazy'"
+    },
+    {
+      "name": "LCP fetchpriority high",
+      "max_score": 10,
+      "description": "Only the first (LCP) product image has fetchpriority='high' (or fetchPriority='high'); other images do NOT have fetchpriority='high'"
+    },
+    {
+      "name": "Explicit width and height",
+      "max_score": 8,
+      "description": "All img elements have explicit numeric width and height attributes set"
+    },
+    {
+      "name": "AVIF source first",
+      "max_score": 10,
+      "description": "Product images use a <picture> element with a <source type='image/avif'> listed BEFORE any <source type='image/webp'>"
+    },
+    {
+      "name": "WebP source second",
+      "max_score": 8,
+      "description": "Product images include a <source type='image/webp'> as a second option inside the <picture> element"
+    },
+    {
+      "name": "img fallback inside picture",
+      "max_score": 6,
+      "description": "The <picture> element contains an <img> tag as the final fallback (not a <source>)"
+    },
+    {
+      "name": "LCP preload link",
+      "max_score": 10,
+      "description": "The <head> contains a <link rel='preload' as='image'> tag for the LCP product image"
+    },
+    {
+      "name": "preload with imageSrcSet",
+      "max_score": 8,
+      "description": "The LCP preload link includes an imageSrcSet (or imagesrcset) attribute"
+    },
+    {
+      "name": "Uses img not background-image",
+      "max_score": 8,
+      "description": "Product images are rendered using <img> elements (or <picture>/<source>), NOT CSS background-image"
+    }
+  ]
+}

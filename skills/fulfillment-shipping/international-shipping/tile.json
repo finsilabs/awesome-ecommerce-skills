@@ -1,0 +1,10 @@
+{
+  "name": "finsi/international-shipping",
+  "version": "0.1.0",
+  "summary": "Cross-border commerce: customs forms, duties estimation, restricted items",
+  "skills": {
+    "international-shipping": {
+      "path": "SKILL.md"
+    }
+  }
+}

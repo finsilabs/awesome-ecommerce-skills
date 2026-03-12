@@ -1,0 +1,10 @@
+{
+  "name": "finsi/marketplace-connectors",
+  "version": "0.1.0",
+  "summary": "List products on Amazon, eBay, Walmart with inventory sync and order import",
+  "skills": {
+    "marketplace-connectors": {
+      "path": "SKILL.md"
+    }
+  }
+}

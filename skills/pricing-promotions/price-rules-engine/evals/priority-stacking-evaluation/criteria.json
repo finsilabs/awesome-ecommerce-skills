@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the rule evaluation loop correctly: sorting by priority descending, handling non-stackable exclusion via a flag, requiring coupon codes for coupon-linked rules, applying discounts to the running (already-discounted) price, capping discounts at cart subtotal, respecting usage limits, filtering by schedule, and supporting a dry-run mode.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Priority descending sort",
+      "max_score": 12,
+      "description": "Rules are fetched or sorted by priority in descending order (higher priority rules are processed first)"
+    },
+    {
+      "name": "Non-stackable flag introduced",
+      "max_score": 10,
+      "description": "A boolean flag (or equivalent) is initialised to false before the evaluation loop and set to true after the first non-stackable rule is applied"
+    },
+    {
+      "name": "Non-stackable rule skipped",
+      "max_score": 10,
+      "description": "A non-stackable rule is skipped (not applied) when another non-stackable rule has already been applied in the same evaluation pass"
+    },
+    {
+      "name": "Stackable rules unaffected",
+      "max_score": 8,
+      "description": "Stackable rules continue to be applied even after a non-stackable rule has been applied"
+    },
+    {
+      "name": "Coupon code check",
+      "max_score": 10,
+      "description": "A rule with a coupon_code is skipped when the cart does NOT include that coupon code; it is applied when the cart DOES include the matching code"
+    },
+    {
+      "name": "Discount from currentPrice",
+      "max_score": 10,
+      "description": "Percentage or line-level discounts are calculated from the line's currentPrice (not basePrice / original price)"
+    },
+    {
+      "name": "Discount cap at subtotal",
+      "max_score": 8,
+      "description": "Total discount is capped so it cannot exceed the cart subtotal (order total cannot go negative)"
+    },
+    {
+      "name": "Usage limit respected",
+      "max_score": 8,
+      "description": "A rule whose usage_count has reached usage_limit is skipped during evaluation"
+    },
+    {
+      "name": "Schedule filter applied",
+      "max_score": 8,
+      "description": "Only rules where is_active is true, starts_at <= now, and ends_at is null or > now are considered"
+    },
+    {
+      "name": "Monetary values in cents",
+      "max_score": 8,
+      "description": "All monetary amounts (cartSubtotal, discountAmount, prices) are represented as integers (cents), not floating-point dollars"
+    },
+    {
+      "name": "Dry-run / evaluate-only mode",
+      "max_score": 8,
+      "description": "The implementation includes an evaluate-only or dry-run flag/option that returns the evaluation result without persisting any applications"
+    }
+  ]
+}

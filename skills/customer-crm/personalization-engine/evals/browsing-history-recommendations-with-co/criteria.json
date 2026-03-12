@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements browsing-history based recommendations using attribute vectors and cosine similarity, handles cold-start and single-category visitors with category affinity, excludes browsed and out-of-stock products, and implements click tracking with all required fields.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Category one-hot encoding",
+      "max_score": 8,
+      "description": "buildProductVector includes a one-hot encoding of the product's categoryId (using ALL_CATEGORY_IDS or equivalent category list)."
+    },
+    {
+      "name": "Price normalization",
+      "max_score": 8,
+      "description": "buildProductVector includes a normalized price value (priceInCents divided by MAX_PRICE_CENTS or a similar 0–1 normalization)."
+    },
+    {
+      "name": "Tag one-hot encoding",
+      "max_score": 8,
+      "description": "buildProductVector includes a one-hot encoding of the product's tags (using ALL_TAGS or equivalent tag list)."
+    },
+    {
+      "name": "Taste vector by averaging",
+      "max_score": 10,
+      "description": "The user taste vector is computed by averaging (element-wise mean) the vectors of all browsed products, not by summing or using only the most recent."
+    },
+    {
+      "name": "Cosine similarity formula",
+      "max_score": 10,
+      "description": "cosineSimilarity computes dot(a,b) / (|a| * |b|) and returns 0 when either magnitude is zero (no division by zero)."
+    },
+    {
+      "name": "Empty session fallback",
+      "max_score": 8,
+      "description": "getRecommendationsFromBrowsingHistory returns bestsellers (or equivalent) when sessionProductIds is empty."
+    },
+    {
+      "name": "Browsed products excluded",
+      "max_score": 8,
+      "description": "Products the user has already browsed (in sessionProductIds) are excluded from the recommendation results."
+    },
+    {
+      "name": "Active and in-stock filter",
+      "max_score": 8,
+      "description": "Candidate products are filtered to active status and inventory > 0 before ranking."
+    },
+    {
+      "name": "Category affinity for cold-start",
+      "max_score": 10,
+      "description": "cold_start.md (or equivalent) describes constraining bestseller or recommendation results to the category of the first-browsed product when only one or two products have been viewed."
+    },
+    {
+      "name": "Click tracking fields",
+      "max_score": 10,
+      "description": "trackRecommendationClick stores at minimum: sourceProductId, clickedProductId, context, algorithm, and a session/customer identifier — matching the schema described in the skill."
+    },
+    {
+      "name": "Click tracking timestamp",
+      "max_score": 5,
+      "description": "The click tracking record includes a clickedAt timestamp (e.g., new Date() or equivalent)."
+    },
+    {
+      "name": "Anonymous customer handling",
+      "max_score": 7,
+      "description": "The click tracking handler stores customerId as null (rather than throwing or omitting) when the user is not logged in."
+    }
+  ]
+}

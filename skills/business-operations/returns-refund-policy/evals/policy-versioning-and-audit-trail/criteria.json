@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements policy versioning (immutable JSONB snapshots on every change), queries version history using the return_policy_versions table, and uses the policy active at purchase time for evaluation rather than the current policy.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Version row on create",
+      "max_score": 10,
+      "description": "When a new policy is created, a corresponding row is inserted into `return_policy_versions` with a JSONB snapshot of the full policy"
+    },
+    {
+      "name": "Version row on update",
+      "max_score": 10,
+      "description": "When an existing policy is modified, a new row is inserted into `return_policy_versions` with a JSONB snapshot of the updated policy — the original row is not mutated"
+    },
+    {
+      "name": "Snapshot is full policy JSON",
+      "max_score": 9,
+      "description": "The `snapshot` column in `return_policy_versions` stores a complete JSONB representation of the policy at the time of the change, not just the changed fields"
+    },
+    {
+      "name": "changed_by recorded",
+      "max_score": 7,
+      "description": "Each version row records a `changed_by` value (user/actor ID) alongside the snapshot and timestamp"
+    },
+    {
+      "name": "Audit query by policy ID",
+      "max_score": 9,
+      "description": "A function or SQL query is provided that retrieves the version history for a specific policy, ordered by changed_at DESC"
+    },
+    {
+      "name": "Policy-at-purchase-time lookup",
+      "max_score": 12,
+      "description": "The implementation includes a function or query that retrieves the policy snapshot that was active at a specific timestamp (e.g., order.created_at) rather than the current policy"
+    },
+    {
+      "name": "Eligibility uses historical policy",
+      "max_score": 12,
+      "description": "The return eligibility evaluation uses the policy that was in effect at purchase time (not the current policy) when determining return window and fee"
+    },
+    {
+      "name": "Version table FK constraint",
+      "max_score": 8,
+      "description": "The `return_policy_versions` table has a foreign key referencing `return_policies(id)`"
+    },
+    {
+      "name": "Soft-delete, not hard-delete",
+      "max_score": 8,
+      "description": "Policies are deactivated via `is_active = false` (soft delete) rather than being removed from the table, preserving the foreign key chain for version history"
+    },
+    {
+      "name": "Test demonstrates version accumulation",
+      "max_score": 8,
+      "description": "A test or demonstration script shows that updating a policy twice results in two separate rows in `return_policy_versions` (i.e. history accumulates, not overwritten)"
+    },
+    {
+      "name": "Different decisions at different times",
+      "max_score": 7,
+      "description": "A test or example demonstrates that an order placed before a policy tightening (e.g., window reduced from 30 to 15 days) is still evaluated against the original 30-day window"
+    }
+  ]
+}

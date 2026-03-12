@@ -1,0 +1,10 @@
+{
+  "name": "finsi/demand-forecasting",
+  "version": "0.1.0",
+  "summary": "Inventory demand prediction using sales history, seasonality, and trends",
+  "skills": {
+    "demand-forecasting": {
+      "path": "SKILL.md"
+    }
+  }
+}

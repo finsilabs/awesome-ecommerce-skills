@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the correct async job pattern for catalog imports: accepting the file upload with MIME validation, creating a job and returning 202 immediately without awaiting the job, tracking progress every 100 rows, using upsert for idempotency, and returning capped error lists via the status endpoint.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "multer for upload",
+      "max_score": 7,
+      "description": "Uses multer middleware for handling the file upload (import from 'multer'), not a manual body parser or busboy"
+    },
+    {
+      "name": "Upload destination path",
+      "max_score": 6,
+      "description": "multer is configured with dest: '/tmp/catalog-uploads/' (or equivalent tmp path)"
+    },
+    {
+      "name": "MIME type validation",
+      "max_score": 9,
+      "description": "Checks req.file.mimetype against an allowed list containing 'text/csv' and 'application/json', returning 400 if rejected"
+    },
+    {
+      "name": "Returns HTTP 202",
+      "max_score": 8,
+      "description": "The import endpoint responds with HTTP status 202 (Accepted), not 200 or 201"
+    },
+    {
+      "name": "Immediate response with jobId",
+      "max_score": 8,
+      "description": "Response body includes jobId and status: 'queued' (job is not awaited before responding)"
+    },
+    {
+      "name": "Fire-and-forget job",
+      "max_score": 9,
+      "description": "The import job function is called without await (non-blocking), allowing the response to be sent immediately"
+    },
+    {
+      "name": "Job status transitions",
+      "max_score": 8,
+      "description": "Job moves through at least: 'queued' → 'processing' → 'completed' (or 'completed_with_errors' or 'failed')"
+    },
+    {
+      "name": "completed_with_errors status",
+      "max_score": 7,
+      "description": "Uses the status 'completed_with_errors' (distinct from 'completed') when the import finishes but some rows had errors"
+    },
+    {
+      "name": "Progress update every 100 rows",
+      "max_score": 9,
+      "description": "The import loop updates processedRows in the job record every 100 processed rows (not every row, not once at the end)"
+    },
+    {
+      "name": "Upsert for products",
+      "max_score": 9,
+      "description": "Uses an upsert operation (not insert) for creating/updating products, keyed on handle + merchantId (or equivalent unique compound key)"
+    },
+    {
+      "name": "Upsert for variants",
+      "max_score": 8,
+      "description": "Uses an upsert operation (not insert) for creating/updating product variants, keyed on sku + merchantId"
+    },
+    {
+      "name": "Status endpoint error cap",
+      "max_score": 9,
+      "description": "The GET status endpoint returns at most 50 errors (e.g., errorLog.slice(0, 50)), not the full unbounded error list"
+    },
+    {
+      "name": "Status endpoint fields",
+      "max_score": 3,
+      "description": "The status response includes jobId, status, processedRows, skippedRows, errors, and completedAt"
+    }
+  ]
+}

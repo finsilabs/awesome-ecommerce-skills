@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly sets up Shopify metafield definitions before writing data, uses the metafieldsSet mutation for bulk writes (not productUpdate), batches requests at the 25-per-mutation limit, serializes values as strings, and uses the correct namespace for merchant-managed data.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Definitions created first",
+      "max_score": 10,
+      "description": "The script calls metafieldDefinitionCreate (or equivalent definition setup) before any metafieldsSet write operations — definitions precede data writes in the code flow"
+    },
+    {
+      "name": "metafieldsSet used for writes",
+      "max_score": 10,
+      "description": "Metafield values are written using the metafieldsSet mutation, NOT via productUpdate or any other mutation"
+    },
+    {
+      "name": "Batch size limit respected",
+      "max_score": 12,
+      "description": "Metafield writes are split into batches of at most 25 items per metafieldsSet call — the code includes logic to chunk the payload at 25"
+    },
+    {
+      "name": "Number values as strings",
+      "max_score": 12,
+      "description": "Numeric values (weight, dimensions) are passed as JSON-serialized strings (e.g., \"450\" or \"32.5\") rather than raw numbers in the metafields array"
+    },
+    {
+      "name": "custom namespace used",
+      "max_score": 8,
+      "description": "All metafield definitions and write operations use the \"custom\" namespace, not an arbitrary or app-specific namespace"
+    },
+    {
+      "name": "visibleToStorefrontApi set",
+      "max_score": 10,
+      "description": "Metafield definitions include visibleToStorefrontApi: true so they are accessible from themes and the Storefront API"
+    },
+    {
+      "name": "Correct type for weight",
+      "max_score": 8,
+      "description": "The weight field definition uses the type \"number_integer\" (not number_decimal or string types)"
+    },
+    {
+      "name": "Correct type for dimensions",
+      "max_score": 8,
+      "description": "The dimension fields (length, width, height) use a numeric type — either number_decimal or number_integer"
+    },
+    {
+      "name": "PRODUCT ownerType",
+      "max_score": 7,
+      "description": "Metafield definitions specify ownerType: \"PRODUCT\""
+    },
+    {
+      "name": "Batch count correct",
+      "max_score": 8,
+      "description": "With 30 products × 4 metafields = 120 total metafields, the dry-run output shows at least 5 batch calls (ceil(120/25) = 5) to metafieldsSet"
+    },
+    {
+      "name": "Dry-run output produced",
+      "max_score": 7,
+      "description": "dry-run-output.txt exists and shows at least one example variable payload including ownerId, namespace, key, value, and type fields"
+    }
+  ]
+}

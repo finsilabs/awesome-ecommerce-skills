@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly uses Shopify Storefront API metafield query patterns — explicitly requesting metafields by namespace and key, using reference vs references for single vs list references, applying inline fragments for typed references, and using the correct Liquid access patterns including .value and parse_json for list types.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Explicit namespace+key query",
+      "max_score": 10,
+      "description": "Storefront API query requests each metafield using metafield(namespace: \"custom\", key: \"...\") syntax — metafields are not assumed to be returned automatically"
+    },
+    {
+      "name": "reference field for single ref",
+      "max_score": 10,
+      "description": "The sustainability_cert metaobject_reference is queried using the reference { ... } field (singular), not references"
+    },
+    {
+      "name": "references field for list ref",
+      "max_score": 10,
+      "description": "The compatible_accessories list.product_reference is queried using references(first: N) { edges { node { ... } } } (plural), not reference"
+    },
+    {
+      "name": "Metaobject inline fragment",
+      "max_score": 10,
+      "description": "The sustainability_cert reference uses an inline fragment \"... on Metaobject\" (or equivalent typed fragment) to access its fields"
+    },
+    {
+      "name": "Product inline fragment for accessories",
+      "max_score": 10,
+      "description": "The compatible_accessories list items use an inline fragment \"... on Product\" to access id, title, handle, or similar product fields"
+    },
+    {
+      "name": "Liquid .value for list metafield",
+      "max_score": 12,
+      "description": "In the Liquid snippet, compatible_accessories is accessed via .value (e.g., product.metafields.custom.compatible_accessories.value) and iterated with a for loop — raw value is NOT used directly as an array"
+    },
+    {
+      "name": "Liquid namespace.key pattern",
+      "max_score": 8,
+      "description": "Liquid snippet accesses metafields using the product.metafields.custom.key pattern for all three fields"
+    },
+    {
+      "name": "Plain value .value access",
+      "max_score": 10,
+      "description": "In the Storefront API response destructuring, the plain text field (tech_spec) is accessed via .value property on the metafield result"
+    },
+    {
+      "name": "Notes cover both contexts",
+      "max_score": 10,
+      "description": "notes.md explains the different access patterns for at least two of the three field types, covering both Storefront API and Liquid contexts"
+    },
+    {
+      "name": "references uses first: N",
+      "max_score": 10,
+      "description": "The references query for list.product_reference includes a first: parameter (e.g., first: 8) to limit results"
+    }
+  ]
+}

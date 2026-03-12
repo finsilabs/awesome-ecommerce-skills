@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shopify-webhooks",
+  "version": "0.1.0",
+  "summary": "Webhook registration, verification, and reliable event processing",
+  "skills": {
+    "shopify-webhooks": {
+      "path": "SKILL.md"
+    }
+  }
+}

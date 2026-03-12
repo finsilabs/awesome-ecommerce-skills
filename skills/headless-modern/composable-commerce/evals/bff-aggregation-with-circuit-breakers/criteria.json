@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements a BFF aggregation layer following composable commerce patterns: parallel fetching with Promise.all for independent services, sequential fetching for dependent calls, GraphQL gateway via schema stitching, and opossum circuit breakers with correct configuration and fallback for resilience.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Parallel fetch with Promise.all",
+      "max_score": 12,
+      "description": "Uses Promise.all (or equivalent) to fetch from at least two independent services simultaneously rather than awaiting them sequentially"
+    },
+    {
+      "name": "Sequential for dependent calls",
+      "max_score": 10,
+      "description": "Makes a sequential await (not inside Promise.all) for a service call that depends on the result of a prior call (e.g. reviews fetched after obtaining a product SKU/ID)"
+    },
+    {
+      "name": "GraphQL stitching package",
+      "max_score": 12,
+      "description": "Imports and uses @graphql-tools/stitch (specifically stitchSchemas) for the GraphQL gateway setup, NOT Apollo Federation or hand-rolled GraphQL schemas"
+    },
+    {
+      "name": "HTTP executor for subschemas",
+      "max_score": 8,
+      "description": "Uses @graphql-tools/executor-http (buildHTTPExecutor) to connect remote subschemas in the stitched gateway"
+    },
+    {
+      "name": "opossum package",
+      "max_score": 12,
+      "description": "Imports CircuitBreaker from the 'opossum' package (not a custom implementation or alternative library)"
+    },
+    {
+      "name": "Circuit breaker timeout config",
+      "max_score": 8,
+      "description": "Circuit breaker instance is configured with a numeric 'timeout' property (request timeout in milliseconds)"
+    },
+    {
+      "name": "Circuit breaker threshold config",
+      "max_score": 8,
+      "description": "Circuit breaker instance is configured with 'errorThresholdPercentage' property"
+    },
+    {
+      "name": "Circuit breaker reset config",
+      "max_score": 8,
+      "description": "Circuit breaker instance is configured with 'resetTimeout' property"
+    },
+    {
+      "name": "Fallback function",
+      "max_score": 12,
+      "description": "Calls .fallback() on the circuit breaker instance to provide a default response when the circuit is open"
+    },
+    {
+      "name": "Circuit open event handling",
+      "max_score": 10,
+      "description": "Subscribes to the 'open' event on the circuit breaker (e.g. .on('open', ...)) to emit a log or metric when the circuit opens"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent sets up the @wordpress/scripts build system correctly with explicit entry points, creates a valid block.json with required fields, and uses registerCheckoutFilters from @woocommerce/blocks-checkout for client-side checkout validation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "@wordpress/scripts devDependency",
+      "max_score": 9,
+      "description": "package.json includes @wordpress/scripts in devDependencies (not dependencies, and not webpack or other custom build tools as the primary build mechanism)"
+    },
+    {
+      "name": "Explicit build entry points",
+      "max_score": 10,
+      "description": "package.json build script explicitly lists both entry point files: src/frontend.js and src/blocks/vat-number/index.js (or equivalent paths) as arguments to wp-scripts build"
+    },
+    {
+      "name": "Start script present",
+      "max_score": 8,
+      "description": "package.json includes a 'start' (or 'dev') script using wp-scripts start with the same entry points as the build script"
+    },
+    {
+      "name": "block.json apiVersion 3",
+      "max_score": 8,
+      "description": "block.json sets apiVersion to 3"
+    },
+    {
+      "name": "block.json parent field",
+      "max_score": 8,
+      "description": "block.json includes a parent array containing a woocommerce/* checkout block name (e.g. woocommerce/checkout-contact-information-block or similar)"
+    },
+    {
+      "name": "block.json schema",
+      "max_score": 7,
+      "description": "block.json includes the $schema field pointing to https://schemas.wp.org/trunk/block.json"
+    },
+    {
+      "name": "registerCheckoutFilters usage",
+      "max_score": 12,
+      "description": "validation.js calls registerCheckoutFilters() imported from @woocommerce/blocks-checkout"
+    },
+    {
+      "name": "validateAdditionalFields filter",
+      "max_score": 10,
+      "description": "registerCheckoutFilters registers a validateAdditionalFields handler (or equivalent checkout validation filter)"
+    },
+    {
+      "name": "VAT format validation logic",
+      "max_score": 10,
+      "description": "Validation logic checks that the VAT number matches a pattern requiring a 2-letter prefix followed by alphanumeric characters (regex or equivalent check)"
+    },
+    {
+      "name": "Error return structure",
+      "max_score": 10,
+      "description": "When validation fails, the filter returns an object with a field key and a message property (not throwing an error or returning a plain string)"
+    },
+    {
+      "name": "@woocommerce/blocks-checkout import in validation",
+      "max_score": 8,
+      "description": "validation.js imports registerCheckoutFilters from @woocommerce/blocks-checkout (not from a different package or as a global)"
+    }
+  ]
+}

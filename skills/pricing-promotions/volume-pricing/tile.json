@@ -1,0 +1,10 @@
+{
+  "name": "finsi/volume-pricing",
+  "version": "0.1.0",
+  "summary": "Quantity-based price breaks, tiered pricing tables, and B2B price lists",
+  "skills": {
+    "volume-pricing": {
+      "path": "SKILL.md"
+    }
+  }
+}

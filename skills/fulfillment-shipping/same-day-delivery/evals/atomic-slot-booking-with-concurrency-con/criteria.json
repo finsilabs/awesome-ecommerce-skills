@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements slot booking with proper concurrency control — using database-level row locking and a single atomic transaction — and correctly handles the three failure conditions (slot inactive, slot full, cutoff passed) while incrementing the booked count safely.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Transaction wrapping",
+      "max_score": 10,
+      "description": "The entire booking operation (read slot, validate, increment booked, create assignment) is wrapped in a single database transaction"
+    },
+    {
+      "name": "SELECT FOR UPDATE",
+      "max_score": 14,
+      "description": "The slot row is fetched inside the transaction using SELECT ... FOR UPDATE (or equivalent advisory/row lock) before validation and update"
+    },
+    {
+      "name": "Capacity check in transaction",
+      "max_score": 12,
+      "description": "The check booked >= capacity (or booked < capacity) is performed INSIDE the transaction, after the lock is acquired — not before the transaction begins"
+    },
+    {
+      "name": "Cutoff check in transaction",
+      "max_score": 10,
+      "description": "The check that current time has not passed cutoff_time is performed INSIDE the transaction"
+    },
+    {
+      "name": "is_active check",
+      "max_score": 8,
+      "description": "The slot's is_active field is checked inside the transaction and booking is rejected if the slot is not active"
+    },
+    {
+      "name": "Atomic booked increment",
+      "max_score": 14,
+      "description": "The booked count is incremented with a SQL expression (e.g. booked = booked + 1) rather than reading the current value in application code and writing back a calculated number"
+    },
+    {
+      "name": "Assignment record created",
+      "max_score": 10,
+      "description": "A delivery_assignments row with status 'pending' is inserted inside the same transaction as the booked increment"
+    },
+    {
+      "name": "SLOT_FULL error raised",
+      "max_score": 8,
+      "description": "A clear error (exception, rejected promise, or error response) is thrown/returned when booked >= capacity"
+    },
+    {
+      "name": "SLOT_CUTOFF_PASSED error raised",
+      "max_score": 8,
+      "description": "A clear error is thrown/returned when the current time is past cutoff_time"
+    },
+    {
+      "name": "No pre-transaction validation",
+      "max_score": 6,
+      "description": "The implementation does NOT do a capacity or cutoff check outside the transaction (e.g. an unprotected findById before opening the transaction) as the sole guard"
+    }
+  ]
+}

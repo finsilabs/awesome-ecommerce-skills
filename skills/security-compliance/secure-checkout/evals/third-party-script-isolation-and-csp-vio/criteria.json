@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent removes non-essential third-party scripts from the checkout layout, adds Subresource Integrity (SRI) hashes to CDN-loaded scripts, loads Stripe.js from CDN rather than bundling it, and implements a CSP violation reporting API endpoint that detects and alerts on checkout-page violations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "No analytics in checkout layout",
+      "max_score": 10,
+      "description": "The checkout layout file does NOT load any analytics scripts (e.g., Google Analytics, Segment, Mixpanel) — either they are absent or explicitly excluded"
+    },
+    {
+      "name": "No advertising/chat scripts",
+      "max_score": 8,
+      "description": "The checkout layout does NOT load advertising tags, chat widgets, or other non-payment third-party scripts"
+    },
+    {
+      "name": "Stripe.js from CDN",
+      "max_score": 10,
+      "description": "Stripe.js is loaded from https://js.stripe.com/v3/ via a <script> tag (or equivalent), NOT imported/bundled via npm package"
+    },
+    {
+      "name": "SRI integrity attribute",
+      "max_score": 10,
+      "description": "The Stripe.js <script> tag (or any other CDN-loaded script in checkout) includes an integrity attribute with a SHA hash value"
+    },
+    {
+      "name": "SRI crossOrigin attribute",
+      "max_score": 8,
+      "description": "The CDN script tag with integrity also sets crossOrigin=\"anonymous\""
+    },
+    {
+      "name": "CSP report-uri in policy",
+      "max_score": 10,
+      "description": "The Content-Security-Policy header includes a report-uri directive pointing to a local reporting endpoint (e.g., /api/csp-report)"
+    },
+    {
+      "name": "Reporting endpoint exists",
+      "max_score": 8,
+      "description": "An API route file exists that handles POST requests to receive CSP violation reports"
+    },
+    {
+      "name": "Violation logging",
+      "max_score": 8,
+      "description": "The CSP reporting endpoint logs the violation details (violated-directive, blocked-uri, document-uri, source-file)"
+    },
+    {
+      "name": "Checkout violation alerting",
+      "max_score": 12,
+      "description": "The CSP reporting endpoint specifically detects violations from checkout pages (checks document-uri for '/checkout') and triggers a special alert or warning"
+    },
+    {
+      "name": "Reporting endpoint returns 204",
+      "max_score": 8,
+      "description": "The CSP reporting endpoint returns an HTTP 204 No Content response (not 200 with a body)"
+    },
+    {
+      "name": "Conditional third-party loading",
+      "max_score": 8,
+      "description": "Any third-party scripts that exist on the main site (outside checkout) include a conditional check or are placed in a non-checkout layout so they do not appear on /checkout routes"
+    }
+  ]
+}

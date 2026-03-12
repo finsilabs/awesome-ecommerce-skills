@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly configures Redis for Magento with separate databases for cache/FPC/sessions, correct backend class, appropriate compression settings, persistent connections, session tuning, and multi-environment id_prefix isolation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Separate Redis databases",
+      "max_score": 10,
+      "description": "env-redis.php uses different 'database' values for the default cache, page_cache, and session storage (e.g., 0, 1, 2 or any three distinct values)"
+    },
+    {
+      "name": "Correct backend class",
+      "max_score": 10,
+      "description": "env-redis.php uses 'Magento\\\\Framework\\\\Cache\\\\Backend\\\\Redis' as the 'backend' value for cache frontends"
+    },
+    {
+      "name": "compress_data for default cache",
+      "max_score": 8,
+      "description": "env-redis.php sets compress_data to '1' (enabled) for the default cache frontend"
+    },
+    {
+      "name": "No compression for page_cache",
+      "max_score": 8,
+      "description": "env-redis.php sets compress_data to '0' (disabled) for the page_cache frontend"
+    },
+    {
+      "name": "Persistent cache connection",
+      "max_score": 6,
+      "description": "env-redis.php includes a 'persistent' key for the cache backend_options (e.g., 'mgto_cache' or similar)"
+    },
+    {
+      "name": "Persistent session connection",
+      "max_score": 6,
+      "description": "env-redis.php includes a 'persistent_identifier' key for session Redis configuration"
+    },
+    {
+      "name": "Disable locking for sessions",
+      "max_score": 8,
+      "description": "env-redis.php sets 'disable_locking' to '1' in the session Redis configuration"
+    },
+    {
+      "name": "Max lifetime for sessions",
+      "max_score": 6,
+      "description": "env-redis.php sets 'max_lifetime' to '7200' in the session Redis configuration"
+    },
+    {
+      "name": "Session max_concurrency",
+      "max_score": 6,
+      "description": "env-redis.php sets 'max_concurrency' in the session Redis configuration (value of 6 or similar)"
+    },
+    {
+      "name": "Distinct id_prefix",
+      "max_score": 8,
+      "description": "env-redis.php includes an 'id_prefix' value in the cache frontend configuration to distinguish environments"
+    },
+    {
+      "name": "allkeys-lru for cache DBs",
+      "max_score": 10,
+      "description": "redis-server.conf or redis-setup-notes.md specifies maxmemory-policy allkeys-lru for the application cache and/or FPC database"
+    },
+    {
+      "name": "noeviction for session DB",
+      "max_score": 10,
+      "description": "redis-server.conf or redis-setup-notes.md specifies maxmemory-policy noeviction for the session database"
+    },
+    {
+      "name": "id_prefix multi-env isolation",
+      "max_score": 4,
+      "description": "redis-setup-notes.md explains that staging and production use different id_prefix values to avoid cache poisoning when sharing Redis"
+    }
+  ]
+}

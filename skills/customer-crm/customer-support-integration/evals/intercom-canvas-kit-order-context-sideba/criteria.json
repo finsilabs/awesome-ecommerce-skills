@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements an Intercom Canvas Kit endpoint that renders order context in the conversation sidebar, using the correct component schema, conditionally including a tracking button, handling missing order data gracefully, and meeting Intercom's performance constraints.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Canvas content structure",
+      "max_score": 10,
+      "description": "Response has a top-level 'content' key containing a 'components' array (i.e., { content: { components: [...] } })"
+    },
+    {
+      "name": "Header component for order",
+      "max_score": 8,
+      "description": "Uses a component with style 'header' (or equivalent heading) to display the order number or 'Last Order' label"
+    },
+    {
+      "name": "Paragraph/muted text components",
+      "max_score": 8,
+      "description": "Uses components with style 'paragraph' or 'muted' for order status, total, and placed date fields"
+    },
+    {
+      "name": "Track Package button type",
+      "max_score": 10,
+      "description": "The tracking button uses type 'button' (not 'link' or 'anchor')"
+    },
+    {
+      "name": "Track Package button action",
+      "max_score": 10,
+      "description": "The tracking button's action uses type 'url' pointing to the shipment tracking URL"
+    },
+    {
+      "name": "Conditional tracking button",
+      "max_score": 10,
+      "description": "The 'Track Package' button is only included when a tracking URL is present — not rendered when tracking URL is null/undefined"
+    },
+    {
+      "name": "No-order fallback",
+      "max_score": 8,
+      "description": "Returns a canvas with a paragraph-style text component saying no orders found (or equivalent) when the customer has no recent orders"
+    },
+    {
+      "name": "Email normalization",
+      "max_score": 8,
+      "description": "Normalizes the customer email to lowercase before the order database lookup"
+    },
+    {
+      "name": "Performance awareness",
+      "max_score": 8,
+      "description": "Implementation notes or code comments acknowledge the 5-second Intercom timeout constraint, or the query uses indexing/limiting strategies to stay under 2 seconds"
+    },
+    {
+      "name": "Contact email extraction",
+      "max_score": 8,
+      "description": "Extracts the customer email from req.body.contact.email (or equivalent canvas kit payload structure)"
+    },
+    {
+      "name": "Total formatted as currency",
+      "max_score": 6,
+      "description": "Displays order total formatted as a dollar amount (converts cents to dollars, e.g., totalCents / 100 with 2 decimal places)"
+    },
+    {
+      "name": "Server-side only",
+      "max_score": 6,
+      "description": "Implementation is a server-side HTTP handler with no client-side credential exposure"
+    }
+  ]
+}

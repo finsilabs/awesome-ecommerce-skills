@@ -1,0 +1,10 @@
+{
+  "name": "finsi/customer-lifetime-value",
+  "version": "0.1.0",
+  "summary": "CLV calculation models, prediction, and retention strategy automation",
+  "skills": {
+    "customer-lifetime-value": {
+      "path": "SKILL.md"
+    }
+  }
+}

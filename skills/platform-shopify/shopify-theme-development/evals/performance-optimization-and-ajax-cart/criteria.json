@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements a performance-optimized Shopify theme layout with critical CSS inlining, deferred non-critical CSS, hero image preloading, CDN preconnect hints, deferred JS, and a correct AJAX cart implementation that fetches /cart.js after mutations and updates the badge.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "preconnect to Shopify CDN",
+      "max_score": 8,
+      "description": "The layout/theme.liquid `<head>` includes `<link rel=\"preconnect\" href=\"https://cdn.shopify.com\" crossorigin>` and `<link rel=\"preconnect\" href=\"https://fonts.shopifycdn.com\" crossorigin>`"
+    },
+    {
+      "name": "Hero image preload tag",
+      "max_score": 10,
+      "description": "A `<link rel=\"preload\" as=\"image\">` tag is conditionally rendered in `<head>` for the product featured image when on a product template (checks `template.name == 'product'`)"
+    },
+    {
+      "name": "Critical CSS inlined",
+      "max_score": 10,
+      "description": "Critical CSS content is inlined inside a `<style>` tag in `<head>` rather than loaded via an external `<link>` tag"
+    },
+    {
+      "name": "Non-critical CSS deferred",
+      "max_score": 10,
+      "description": "Non-critical CSS (e.g. theme.css) uses the `media=\"print\" onload=\"this.media='all'\"` pattern to defer loading, with a `<noscript>` fallback"
+    },
+    {
+      "name": "JS uses defer attribute",
+      "max_score": 8,
+      "description": "Main theme JavaScript is loaded with `defer` attribute (or `type=\"module\"`) on the `<script>` tag — no render-blocking synchronous script tags"
+    },
+    {
+      "name": "Cart API add endpoint",
+      "max_score": 8,
+      "description": "AJAX add-to-cart uses POST to `/cart/add.js` with JSON body containing `items` array"
+    },
+    {
+      "name": "Cart API change endpoint",
+      "max_score": 8,
+      "description": "Cart quantity update uses POST to `/cart/change.js` with `id` and `quantity` fields"
+    },
+    {
+      "name": "Fetch /cart.js after mutation",
+      "max_score": 12,
+      "description": "After any cart mutation (add or update), `/cart.js` is fetched separately to retrieve the current cart state for UI update — NOT relying solely on the response from `/cart/add.js`"
+    },
+    {
+      "name": "Cart count badge updated",
+      "max_score": 10,
+      "description": "The cart item count badge (selected by a data attribute like `[data-cart-count]`) is updated with `cart.item_count` from the `/cart.js` response"
+    },
+    {
+      "name": "asset_url for stylesheets",
+      "max_score": 8,
+      "description": "CSS files are referenced using `| asset_url` Liquid filter rather than hardcoded paths or CDN URLs"
+    },
+    {
+      "name": "content_for_header tag",
+      "max_score": 8,
+      "description": "The layout includes `{{ content_for_header }}` inside `<head>` and `{{ content_for_layout }}` in the `<body>`"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements the PDP conversion funnel SQL with proper session deduplication, minimum views threshold, correct metric formulas, and low-conversion alerting thresholds per the product analytics skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Session deduplication in views CTE",
+      "max_score": 15,
+      "description": "The views CTE counts DISTINCT session_id per product_id (not COUNT(*) of raw events) — this addresses the multi-variant page view inflation issue"
+    },
+    {
+      "name": "Three-CTE structure",
+      "max_score": 8,
+      "description": "Query uses three separate CTEs: one for views, one for add-to-cart sessions, and one for purchases — not a single monolithic join"
+    },
+    {
+      "name": "Minimum views filter",
+      "max_score": 10,
+      "description": "A minimum pdp_views threshold of greater than 50 is applied to exclude low-traffic products from funnel results"
+    },
+    {
+      "name": "Cancelled orders excluded",
+      "max_score": 10,
+      "description": "The purchases CTE or orders join filters out cancelled orders (e.g., status NOT IN ('cancelled') or equivalent)"
+    },
+    {
+      "name": "pdp_to_atc_pct formula",
+      "max_score": 10,
+      "description": "pdp_to_atc_pct is computed as ROUND(100.0 * atc_sessions / NULLIF(pdp_views, 0), 1) — using NULLIF to guard against division by zero"
+    },
+    {
+      "name": "pdp_conversion_pct formula",
+      "max_score": 8,
+      "description": "pdp_conversion_pct is computed separately as ROUND(100.0 * purchase_count / NULLIF(pdp_views, 0), 2) — a two-decimal metric distinct from ATC rate"
+    },
+    {
+      "name": "COALESCE for missing products",
+      "max_score": 8,
+      "description": "COALESCE is used to handle products with no ATC events or no purchases (returning 0 rather than NULL for atc_sessions and purchase_count)"
+    },
+    {
+      "name": "Low-conversion views threshold",
+      "max_score": 12,
+      "description": "The low-conversion alert query filters for products with more than 100 pdp_views (not just >50)"
+    },
+    {
+      "name": "Low-conversion ATC threshold",
+      "max_score": 12,
+      "description": "The low-conversion alert query filters for products where pdp_to_atc_pct is below 2% (not a different threshold)"
+    },
+    {
+      "name": "Investigation context in notes",
+      "max_score": 7,
+      "description": "analysis_notes.md mentions that low ATC rate can indicate pricing, description, or image quality issues (not just generic 'poor conversion')"
+    }
+  ]
+}

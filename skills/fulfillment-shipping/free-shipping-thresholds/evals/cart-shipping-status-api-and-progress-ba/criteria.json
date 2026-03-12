@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the shipping-status API endpoint with proper unit conversion and progress clamping, the FreeShippingProgress React component with the correct conditional rendering states and CSS class names, currency formatting, and animated progress bar styling. This scenario covers the full UI/API contract for the cart shipping progress feature.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Endpoint path",
+      "max_score": 6,
+      "description": "A GET endpoint at /api/cart/shipping-status (or equivalent route) is defined"
+    },
+    {
+      "name": "Response has isFree",
+      "max_score": 6,
+      "description": "The endpoint response includes an isFree boolean field"
+    },
+    {
+      "name": "threshold in dollars",
+      "max_score": 10,
+      "description": "The threshold field in the API response is in dollars (divided by 100 from the cents stored in the rule), or null"
+    },
+    {
+      "name": "amountNeeded in dollars",
+      "max_score": 10,
+      "description": "The amountNeeded field in the API response is in dollars (divided by 100), not cents"
+    },
+    {
+      "name": "progressPct clamped",
+      "max_score": 8,
+      "description": "progressPct is capped at 100 (using Math.min(100, ...) or equivalent) and is rounded to an integer"
+    },
+    {
+      "name": "null threshold returns null",
+      "max_score": 8,
+      "description": "FreeShippingProgress (or equivalent component) returns null / renders nothing when threshold is null"
+    },
+    {
+      "name": "Unlocked state message",
+      "max_score": 8,
+      "description": "When isFree is true, the component displays 'You unlocked FREE shipping!' (or functionally equivalent text containing 'unlocked' and 'FREE shipping')"
+    },
+    {
+      "name": "Not-yet-free message",
+      "max_score": 8,
+      "description": "When isFree is false, the component displays a message of the form 'Add [amount] more for FREE shipping'"
+    },
+    {
+      "name": "Intl.NumberFormat currency",
+      "max_score": 10,
+      "description": "Currency amounts are formatted using Intl.NumberFormat with locale 'en-US' and style 'currency' / currency 'USD'"
+    },
+    {
+      "name": "Unlocked CSS class",
+      "max_score": 8,
+      "description": "The unlocked state adds the CSS class 'shipping-progress--unlocked' (BEM modifier) to the container"
+    },
+    {
+      "name": "Progress bar fill transition",
+      "max_score": 10,
+      "description": "The progress bar fill element has a CSS transition for 'width' with a duration of 0.4s and ease-in-out timing (i.e., 'transition: width 0.4s ease-in-out' or equivalent)"
+    },
+    {
+      "name": "Both surfaces included",
+      "max_score": 8,
+      "description": "The progress bar component is placed in (or documented as being required in) both the main cart page and a mini-cart/drawer, not just one location"
+    }
+  ]
+}

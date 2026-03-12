@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent uses upsert semantics for exposure deduplication, gates conversion tracking on prior exposure, applies the chi-squared test with the specific p-value approximation formula, reports relative lift, and surfaces sample size sufficiency in the results API.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Exposure upsert",
+      "max_score": 12,
+      "description": "trackExposure uses an upsert operation (not a plain insert) keyed on experimentId + userId to prevent double-counting when the same user is exposed multiple times"
+    },
+    {
+      "name": "Conversion exposure gate",
+      "max_score": 12,
+      "description": "trackConversion checks for an existing exposure record before recording the conversion, and returns/exits early if no exposure is found"
+    },
+    {
+      "name": "Chi-squared test used",
+      "max_score": 10,
+      "description": "calculateSignificance uses a chi-squared (not z-test, t-test, or Fisher exact) approach to compute statistical significance"
+    },
+    {
+      "name": "p-value approximation formula",
+      "max_score": 12,
+      "description": "Uses the specific formula Math.exp(-0.717 * chiSquared - 0.416 * chiSquared * chiSquared) to derive the p-value from the chi-squared statistic"
+    },
+    {
+      "name": "Relative lift calculation",
+      "max_score": 8,
+      "description": "Reports relative lift as (variantCVR - controlCVR) / controlCVR — not absolute difference"
+    },
+    {
+      "name": "Significance threshold",
+      "max_score": 6,
+      "description": "Flags results as statistically significant when pValue < 0.05"
+    },
+    {
+      "name": "Sample size sufficiency",
+      "max_score": 10,
+      "description": "Results response includes whether the current sample size has reached the required minimum (a 'reached' or equivalent flag)"
+    },
+    {
+      "name": "Results API structure",
+      "max_score": 8,
+      "description": "GET /api/experiments/:id/results handler returns control stats, variant stats, and significance information in a single response"
+    },
+    {
+      "name": "analysis-notes mentions novelty",
+      "max_score": 12,
+      "description": "analysis-notes.md mentions reporting results with and without early data (first few days) to detect novelty effects"
+    },
+    {
+      "name": "analysis-notes mentions stopping rule",
+      "max_score": 10,
+      "description": "analysis-notes.md explicitly warns against stopping the test early and mentions using pre-calculated sample size as the stopping rule"
+    }
+  ]
+}

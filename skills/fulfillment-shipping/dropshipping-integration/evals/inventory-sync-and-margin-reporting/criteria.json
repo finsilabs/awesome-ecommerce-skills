@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements inventory synchronization using the correct CSV parsing library with proper column mappings, zeroes out discontinued SKUs, schedules syncs at the correct interval using Promise.allSettled, correctly calculates gross margin from subtotal_cents and dropship order costs, and writes a SQL margin report filtered by the right statuses and time window.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "csv-parse/sync import",
+      "max_score": 8,
+      "description": "The inventory sync code imports the parse function from 'csv-parse/sync' (not 'csv-parse' streaming API, not papaparse, not another CSV library)"
+    },
+    {
+      "name": "CSV column mapping SKU",
+      "max_score": 7,
+      "description": "The CSV parser maps the column named 'SKU' (uppercase) to the sku field"
+    },
+    {
+      "name": "CSV column mapping QUANTITY",
+      "max_score": 7,
+      "description": "The CSV parser maps the column named 'QUANTITY' (uppercase) to qty using parseInt with radix 10"
+    },
+    {
+      "name": "CSV column mapping COST",
+      "max_score": 7,
+      "description": "The CSV parser maps the column named 'COST' (uppercase) to price using parseFloat multiplied by 100 (and rounded) to store as cents"
+    },
+    {
+      "name": "Zero out discontinued SKUs",
+      "max_score": 10,
+      "description": "After processing the feed, any supplier_products records with SKUs NOT present in the latest feed have their stock_qty set to 0 (discontinued items are not left with stale positive stock)"
+    },
+    {
+      "name": "Cron schedule 4 hours",
+      "max_score": 8,
+      "description": "The scheduled sync job uses the cron expression '0 */4 * * *' (every 4 hours), not a different interval"
+    },
+    {
+      "name": "Promise.allSettled for parallel sync",
+      "max_score": 10,
+      "description": "The scheduled sync processes all suppliers using Promise.allSettled() (not Promise.all()), so one supplier failure does not block others from syncing"
+    },
+    {
+      "name": "Margin revenue from subtotal_cents",
+      "max_score": 8,
+      "description": "The margin calculation uses order.subtotal_cents as the revenue figure"
+    },
+    {
+      "name": "Margin cost from dropship total_cost",
+      "max_score": 8,
+      "description": "The cost figure is the sum of total_cost across all dropship_orders for the given order"
+    },
+    {
+      "name": "Margin percentage formula",
+      "max_score": 8,
+      "description": "Gross margin percentage is calculated as (grossMarginCents / revenue) * 100, with a guard against division by zero when revenue is 0"
+    },
+    {
+      "name": "SQL status filter",
+      "max_score": 8,
+      "description": "The supplier margin report SQL filters dropship_orders by status IN ('confirmed', 'shipped') — does NOT include 'pending', 'submitted', or 'failed' statuses"
+    },
+    {
+      "name": "SQL 30-day window",
+      "max_score": 7,
+      "description": "The supplier margin report SQL filters orders to the last 30 days (e.g., created_at >= NOW() - INTERVAL '30 days')"
+    },
+    {
+      "name": "NULLIF division guard in SQL",
+      "max_score": 4,
+      "description": "The SQL margin percentage calculation uses NULLIF or equivalent to prevent division by zero on the revenue sum"
+    }
+  ]
+}

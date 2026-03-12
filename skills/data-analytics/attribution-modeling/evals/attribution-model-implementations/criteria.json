@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements all four standard attribution models correctly, including the time-decay half-life, channel key format, fractional order counting, empty path handling, and multi-model comparison output.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "All four models present",
+      "max_score": 10,
+      "description": "The code implements all four attribution functions: last-click, first-click, linear, and time-decay (not just one or two)"
+    },
+    {
+      "name": "Time-decay half-life = 7 days",
+      "max_score": 12,
+      "description": "The time-decay model uses a half-life of exactly 7 days — i.e., the exponent divides days-before-conversion by 7 (not 14, 30, or another value)"
+    },
+    {
+      "name": "Time-decay uses exponential decay",
+      "max_score": 8,
+      "description": "Time-decay weights are computed using Math.pow(0.5, daysBeforeConversion / halfLifeDays) or equivalent — not a linear ramp"
+    },
+    {
+      "name": "Channel key format: source/medium",
+      "max_score": 10,
+      "description": "Channel keys in the aggregation output are formatted as 'source/medium' (e.g., 'google/cpc'), not just 'source' or some other format"
+    },
+    {
+      "name": "Fractional order counting",
+      "max_score": 10,
+      "description": "Order count attribution uses fractional values (credit / orderRevenue) rather than incrementing by 1 per order"
+    },
+    {
+      "name": "Empty path fallback: direct/none",
+      "max_score": 10,
+      "description": "When a conversion path has zero touchpoints, the attribution assigns credit to source='direct', medium='none', campaign='(none)'"
+    },
+    {
+      "name": "Multi-model comparison produced",
+      "max_score": 10,
+      "description": "The results.json or output includes channel revenue figures under multiple attribution models side-by-side (not just one model)"
+    },
+    {
+      "name": "Discrepancy analysis present",
+      "max_score": 10,
+      "description": "The output identifies which channels have the largest difference between models (e.g., last-click vs linear), not just raw totals"
+    },
+    {
+      "name": "Last-click assigns full credit to final touch",
+      "max_score": 10,
+      "description": "In results.json, last-click model assigns 100% of each order's revenue to a single channel (the last touchpoint), not split across channels"
+    },
+    {
+      "name": "Linear splits evenly",
+      "max_score": 10,
+      "description": "In results.json, the linear model splits revenue equally across all touchpoints in a path (e.g., a 4-touch path gets 25% each)"
+    }
+  ]
+}

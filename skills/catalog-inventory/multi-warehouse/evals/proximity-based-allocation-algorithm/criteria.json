@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the allocation algorithm correctly: placing geo utilities in lib/geo.js, using haversine distance with the correct Earth radius, scoring all active locations by proximity, preferring single-location fulfillment before falling back to a greedy split, and throwing the right error when stock is insufficient.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "geo module path",
+      "max_score": 6,
+      "description": "The distance utility is placed in lib/geo.js (not inline in allocation.js or another path)"
+    },
+    {
+      "name": "haversine formula used",
+      "max_score": 8,
+      "description": "lib/geo.js implements the haversine formula (contains sin, cos, atan2 or equivalent spherical trigonometry)"
+    },
+    {
+      "name": "Earth radius constant",
+      "max_score": 6,
+      "description": "The haversine implementation uses 6371 as the Earth radius (in km)"
+    },
+    {
+      "name": "allocation module path",
+      "max_score": 6,
+      "description": "The allocation logic is placed in lib/allocation.js"
+    },
+    {
+      "name": "haversine import",
+      "max_score": 8,
+      "description": "lib/allocation.js imports the distance function from './geo' (not a third-party library or inline copy)"
+    },
+    {
+      "name": "inventory map built",
+      "max_score": 8,
+      "description": "allocation.js builds a two-level map of locationId -> variantId -> available quantity before scoring locations"
+    },
+    {
+      "name": "proximity sort",
+      "max_score": 8,
+      "description": "Locations are scored by distance to the shipping address and sorted ascending (nearest first) before single or split attempts"
+    },
+    {
+      "name": "single-location tried first",
+      "max_score": 10,
+      "description": "The algorithm iterates sorted locations and attempts to fulfill the full order from one location before considering a split"
+    },
+    {
+      "name": "single result type",
+      "max_score": 8,
+      "description": "When a single location can fulfill the order, the return value has type: 'single'"
+    },
+    {
+      "name": "split fallback",
+      "max_score": 10,
+      "description": "When no single location can fulfill the order, the algorithm falls back to greedy split fulfillment (assigning items to nearest locations with stock)"
+    },
+    {
+      "name": "split result type",
+      "max_score": 8,
+      "description": "The split result has type: 'split' and a fulfillments array with one entry per contributing location"
+    },
+    {
+      "name": "AllocationError thrown",
+      "max_score": 8,
+      "description": "When total stock across all locations is insufficient to fulfill the order, an error is thrown (not a silent failure or null return)"
+    },
+    {
+      "name": "active filter",
+      "max_score": 6,
+      "description": "Only locations with active: true are considered during allocation"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent fetches existing customer tags before updating (to avoid clearing them), uses REST for simple customer lookup, handles rate limiting with exponential backoff, and uses the correct Shopify library.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses @shopify/shopify-api",
+      "max_score": 7,
+      "description": "Code imports and uses the `@shopify/shopify-api` package (not raw fetch/axios alone), visible in imports or package.json"
+    },
+    {
+      "name": "Imports node adapter",
+      "max_score": 7,
+      "description": "Code includes `import '@shopify/shopify-api/adapters/node'` or `require('@shopify/shopify-api/adapters/node')`"
+    },
+    {
+      "name": "Fetches current tags first",
+      "max_score": 14,
+      "description": "Before updating a customer's tags, code fetches the customer's existing tags (via GET request or GraphQL query) rather than writing tags directly"
+    },
+    {
+      "name": "Appends tag, does not replace",
+      "max_score": 14,
+      "description": "Code merges/appends the new tag to the existing tags list — does NOT send only the new tag as the complete tags value"
+    },
+    {
+      "name": "REST for customer lookup",
+      "max_score": 8,
+      "description": "Customer lookup by email uses the REST API (`customers/search` endpoint) rather than a GraphQL query"
+    },
+    {
+      "name": "Exponential backoff on 429",
+      "max_score": 12,
+      "description": "Code implements retry logic with exponential backoff (or a delay) when a 429 (Too Many Requests) response is received"
+    },
+    {
+      "name": "Respects Retry-After header",
+      "max_score": 8,
+      "description": "Rate-limiting retry logic reads or references the `Retry-After` header to determine the wait duration"
+    },
+    {
+      "name": "Offline session",
+      "max_score": 7,
+      "description": "Session is created with `isOnline: false` for a custom app with static token"
+    },
+    {
+      "name": "Uses January25 API version",
+      "max_score": 7,
+      "description": "Code sets the API version to `ApiVersion.January25` or the string `'2025-01'`"
+    },
+    {
+      "name": "Writes tagging-results.json",
+      "max_score": 8,
+      "description": "Script writes a results file (`tagging-results.json` or similar) with per-customer outcome information"
+    },
+    {
+      "name": "Tags joined as comma string",
+      "max_score": 8,
+      "description": "When updating customer tags via REST PUT, tags are joined as a comma-separated string (not an array), matching the Shopify REST API format"
+    }
+  ]
+}

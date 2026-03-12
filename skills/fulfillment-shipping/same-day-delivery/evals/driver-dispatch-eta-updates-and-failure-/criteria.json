@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements driver dispatch with push notifications, real-time ETA updates via WebSocket, a heartbeat check for GPS loss, delivery completion side-effects, and a failure recovery flow that reschedules the customer.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Push notification on assignment",
+      "max_score": 8,
+      "description": "When a driver is assigned, a push notification is sent to the driver containing at minimum: the order identifier (order number or ID) and the delivery address"
+    },
+    {
+      "name": "Notification includes assignmentId",
+      "max_score": 6,
+      "description": "The push notification payload includes assignmentId (and/or orderId) in a data/metadata field"
+    },
+    {
+      "name": "WebSocket update on status change",
+      "max_score": 10,
+      "description": "Every call to update delivery status pushes a real-time message to the customer (e.g. via websocketHub.sendToOrder or equivalent), including the new status and ETA"
+    },
+    {
+      "name": "ETA update interval 2-3 minutes",
+      "max_score": 10,
+      "description": "The design or code specifies that ETA is recalculated and pushed every 2–3 minutes (or a value in the 2–3 minute range) while the driver is en_route — not less frequently or only once"
+    },
+    {
+      "name": "ETA computed from driver location",
+      "max_score": 8,
+      "description": "ETA is estimated using the driver's current latitude and longitude (passed as parameters or sourced from a location update), not a static value"
+    },
+    {
+      "name": "Heartbeat threshold 5 minutes",
+      "max_score": 10,
+      "description": "A heartbeat or watchdog mechanism alerts dispatch if no driver GPS update is received for 5 minutes (not a different threshold) while the assignment is en_route"
+    },
+    {
+      "name": "Heartbeat scope: en_route only",
+      "max_score": 6,
+      "description": "The heartbeat/watchdog check is only triggered when the assignment status is en_route, not for all statuses"
+    },
+    {
+      "name": "delivered_at set on completion",
+      "max_score": 8,
+      "description": "When status is updated to 'delivered', the delivered_at timestamp is set on the delivery_assignments record"
+    },
+    {
+      "name": "Order status updated on delivery",
+      "max_score": 8,
+      "description": "When status is 'delivered', the associated order record is also updated to status 'delivered'"
+    },
+    {
+      "name": "Confirmation email on delivery",
+      "max_score": 8,
+      "description": "When status is 'delivered', a delivery confirmation email is sent (e.g. sendDeliveryConfirmationEmail or equivalent)"
+    },
+    {
+      "name": "Failed: customer reschedule offered",
+      "max_score": 9,
+      "description": "When a driver reports 'failed', the system offers (or triggers) a reschedule for the customer to the next available slot"
+    },
+    {
+      "name": "Failed: re-assignment triggered",
+      "max_score": 9,
+      "description": "When a driver reports 'failed', the system also triggers a driver re-assignment (not just a customer notification)"
+    }
+  ]
+}

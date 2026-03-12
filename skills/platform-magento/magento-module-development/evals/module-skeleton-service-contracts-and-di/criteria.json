@@ -1,0 +1,81 @@
+{
+  "context": "Tests whether the agent creates a properly structured Magento 2 module with correct module skeleton files, service contracts in the Api/ directory, Model/ResourceModel layers, DI configuration with interface-to-implementation bindings, and declarative database schema — following Magento 2 conventions throughout.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Module directory location",
+      "max_score": 4,
+      "description": "Module files are placed under app/code/<Vendor>/<Module>/ (not in vendor/ or any other location)"
+    },
+    {
+      "name": "registration.php uses ComponentRegistrar",
+      "max_score": 7,
+      "description": "registration.php calls ComponentRegistrar::register() with ComponentRegistrar::MODULE, a 'Vendor_Module' string, and __DIR__"
+    },
+    {
+      "name": "module.xml has sequence node",
+      "max_score": 7,
+      "description": "etc/module.xml contains a <sequence> element listing at least one dependent module (e.g., Magento_Customer or similar)"
+    },
+    {
+      "name": "Data interface in Api/Data/",
+      "max_score": 7,
+      "description": "An interface file exists under Api/Data/ defining getter/setter methods for the entity's fields"
+    },
+    {
+      "name": "Repository interface in Api/",
+      "max_score": 7,
+      "description": "A repository interface exists under Api/ with at minimum getById(), save(), delete(), and getList() method signatures"
+    },
+    {
+      "name": "Model extends AbstractModel",
+      "max_score": 7,
+      "description": "The Model class extends Magento\\Framework\\Model\\AbstractModel and implements the data interface"
+    },
+    {
+      "name": "Model _construct calls _init",
+      "max_score": 7,
+      "description": "The Model class has a _construct() method that calls $this->_init() passing the ResourceModel class name"
+    },
+    {
+      "name": "ResourceModel extends AbstractDb",
+      "max_score": 7,
+      "description": "The ResourceModel class extends Magento\\Framework\\Model\\ResourceModel\\Db\\AbstractDb with _construct() calling _init() with table name and primary key"
+    },
+    {
+      "name": "DI preferences in di.xml",
+      "max_score": 8,
+      "description": "etc/di.xml contains <preference> elements binding both the data interface and repository interface to their concrete implementations"
+    },
+    {
+      "name": "Declarative schema file",
+      "max_score": 8,
+      "description": "etc/db_schema.xml exists and defines the custom table with columns, a primary key constraint, and uses the Magento declarative schema XSD"
+    },
+    {
+      "name": "No Object Manager direct usage",
+      "max_score": 8,
+      "description": "No PHP file contains ObjectManager::getInstance() or direct instantiation via the Object Manager; all dependencies are injected via constructor"
+    },
+    {
+      "name": "declare(strict_types=1) in PHP files",
+      "max_score": 8,
+      "description": "Every PHP file begins with declare(strict_types=1) immediately after the opening <?php tag"
+    },
+    {
+      "name": "setup:di:compile in setup notes",
+      "max_score": 5,
+      "description": "setup-notes.md includes the command bin/magento setup:di:compile"
+    },
+    {
+      "name": "generate-whitelist in setup notes",
+      "max_score": 5,
+      "description": "setup-notes.md includes the command bin/magento setup:db-declaration:generate-whitelist"
+    },
+    {
+      "name": "Constructor DI throughout",
+      "max_score": 5,
+      "description": "Repository class receives ResourceModel, Factory, and SearchResultsInterfaceFactory via constructor parameters, not created inline"
+    }
+  ]
+}

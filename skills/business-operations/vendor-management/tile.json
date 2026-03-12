@@ -1,0 +1,10 @@
+{
+  "name": "finsi/vendor-management",
+  "version": "0.1.0",
+  "summary": "Vendor portal, purchase orders, dropship routing, and performance scorecards",
+  "skills": {
+    "vendor-management": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/order-management-system",
+  "version": "0.1.0",
+  "summary": "OMS design with distributed fulfillment, split orders, and backorder handling",
+  "skills": {
+    "order-management-system": {
+      "path": "SKILL.md"
+    }
+  }
+}

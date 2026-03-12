@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shipment-tracking",
+  "version": "0.1.0",
+  "summary": "Track shipments across carriers with webhook-driven status updates",
+  "skills": {
+    "shipment-tracking": {
+      "path": "SKILL.md"
+    }
+  }
+}

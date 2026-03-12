@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent correctly defines the retention schedule with legally-mandated periods and actions for all data categories, implements a paginated/batched purge approach to avoid table locks, schedules jobs at the correct time, and produces an append-only audit log for every retention action.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Orders retention period",
+      "max_score": 6,
+      "description": "Retention schedule sets orders retentionDays to 365*7 (2555) or equivalent 7-year value"
+    },
+    {
+      "name": "Orders action anonymize",
+      "max_score": 6,
+      "description": "Retention schedule sets orders action to 'anonymize' (not 'delete' or 'archive')"
+    },
+    {
+      "name": "Invoices action archive",
+      "max_score": 6,
+      "description": "Retention schedule sets invoices action to 'archive' (not 'delete')"
+    },
+    {
+      "name": "Sessions 90 days",
+      "max_score": 5,
+      "description": "Retention schedule sets sessions retentionDays to 90"
+    },
+    {
+      "name": "cartData 30 days",
+      "max_score": 5,
+      "description": "Retention schedule sets cartData retentionDays to 30"
+    },
+    {
+      "name": "analyticsEvents 395 days",
+      "max_score": 5,
+      "description": "Retention schedule sets analyticsEvents retentionDays to 395 (13 months)"
+    },
+    {
+      "name": "analyticsEvents aggregate_then_delete",
+      "max_score": 6,
+      "description": "Retention schedule sets analyticsEvents action to 'aggregate_then_delete' (not plain 'delete')"
+    },
+    {
+      "name": "Cron schedule 2 AM UTC",
+      "max_score": 8,
+      "description": "Job cron expression is '0 2 * * *' (nightly at 2 AM UTC)"
+    },
+    {
+      "name": "Batch pagination used",
+      "max_score": 10,
+      "description": "Purge functions use a pagination loop (cursor-based or offset) with a row LIMIT rather than a single DELETE/UPDATE query on all rows"
+    },
+    {
+      "name": "Sleep between batches",
+      "max_score": 8,
+      "description": "Purge loop includes a delay/yield (e.g. setTimeout or sleep) between batch iterations"
+    },
+    {
+      "name": "Audit log entry per job",
+      "max_score": 10,
+      "description": "Each purge/retention job records an audit log entry (insert into retentionAuditLog or equivalent) after running"
+    },
+    {
+      "name": "Audit log fields",
+      "max_score": 8,
+      "description": "Audit log entry includes at least: job name, data category or action type, record count, and execution timestamp"
+    },
+    {
+      "name": "Audit log append-only comment",
+      "max_score": 7,
+      "description": "Code or README explicitly notes that the audit log table is append-only and must not be deleted from"
+    },
+    {
+      "name": "Error alerting per job",
+      "max_score": 10,
+      "description": "Job runner catches errors per individual job and triggers an alert (alertOpsTeam or equivalent) rather than letting the whole runner crash silently"
+    }
+  ]
+}

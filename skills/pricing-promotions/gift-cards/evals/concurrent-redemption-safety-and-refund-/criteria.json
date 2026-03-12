@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements gift card redemption using row-level locking (SELECT FOR UPDATE), correct partial-use balance capping (Math.min), negative debit amounts, deactivation on full depletion, balance via SUM of transactions, and proper refund reactivation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Row-level lock on redemption",
+      "max_score": 15,
+      "description": "The redemption function uses SELECT ... FOR UPDATE (or equivalent row-level locking) on the gift card row inside a transaction before reading the balance"
+    },
+    {
+      "name": "Redemption inside transaction",
+      "max_score": 10,
+      "description": "The entire redemption operation (lock, balance check, ledger insert, possible deactivation) is wrapped in a single database transaction"
+    },
+    {
+      "name": "Partial-use cap with Math.min",
+      "max_score": 15,
+      "description": "The amount applied to an order is Math.min(cardBalance, orderTotal) — never exceeds the card's available balance"
+    },
+    {
+      "name": "Balance via SUM of transactions",
+      "max_score": 10,
+      "description": "The card balance is computed by summing the amount column from the transactions ledger table — NOT read from a stored balance column"
+    },
+    {
+      "name": "Balance floored at zero",
+      "max_score": 5,
+      "description": "The computed balance is floored at 0 (e.g. Math.max(0, sum)) so it can never be returned as a negative number"
+    },
+    {
+      "name": "Redemption amount is negative",
+      "max_score": 10,
+      "description": "The ledger transaction inserted for a redemption uses a negative integer for the amount field (debit), not a positive one"
+    },
+    {
+      "name": "Type 'redeem' on redemption",
+      "max_score": 5,
+      "description": "The ledger transaction inserted for a redemption uses the type value 'redeem'"
+    },
+    {
+      "name": "Deactivate on full depletion",
+      "max_score": 10,
+      "description": "After a redemption that fully exhausts the card balance (appliedCents === balance), the card's is_active field is set to false"
+    },
+    {
+      "name": "Reactivate card on refund",
+      "max_score": 10,
+      "description": "When refunding to a card that has is_active=false, the refund function sets is_active=true before or during the refund transaction"
+    },
+    {
+      "name": "Refund amount is positive",
+      "max_score": 5,
+      "description": "The ledger transaction inserted for a refund uses a positive integer for the amount field (credit), not a negative one"
+    },
+    {
+      "name": "Type 'refund' on refund",
+      "max_score": 5,
+      "description": "The ledger transaction inserted for a refund uses the type value 'refund'"
+    }
+  ]
+}

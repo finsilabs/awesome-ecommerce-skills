@@ -1,0 +1,10 @@
+{
+  "name": "finsi/edge-commerce",
+  "version": "0.1.0",
+  "summary": "Edge computing for commerce — geo-routing, edge-side personalization, KV stores",
+  "skills": {
+    "edge-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

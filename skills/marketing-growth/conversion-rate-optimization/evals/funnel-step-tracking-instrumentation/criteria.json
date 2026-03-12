@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent instruments a checkout funnel using the correct step type union, dual-destination tracking (dataLayer + API endpoint), SQL funnel report structure with the correct CTE pattern and percentage calculation, field error instrumentation, and advice about analytics ground truth.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "FunnelStep type union",
+      "max_score": 12,
+      "description": "Defines a FunnelStep type (or equivalent) that includes all seven named steps: view_product, add_to_cart, begin_checkout, enter_email, enter_shipping, enter_payment, purchase"
+    },
+    {
+      "name": "DataLayer push",
+      "max_score": 10,
+      "description": "Pushes funnel step events to window.dataLayer (e.g. window.dataLayer?.push) with an 'event' property and the funnel step name"
+    },
+    {
+      "name": "Fetch to analytics endpoint",
+      "max_score": 8,
+      "description": "Also sends each funnel step via a fetch POST call to an API endpoint (e.g. /api/analytics/funnel), in addition to the dataLayer push — not just one or the other"
+    },
+    {
+      "name": "Fetch payload includes sessionId and userId",
+      "max_score": 6,
+      "description": "The fetch POST body includes both a session identifier and a user identifier (not just the step name)"
+    },
+    {
+      "name": "SQL uses WITH CTEs",
+      "max_score": 6,
+      "description": "The SQL funnel report uses a WITH clause (CTE) rather than a flat query or subqueries only"
+    },
+    {
+      "name": "SQL counts distinct sessions",
+      "max_score": 6,
+      "description": "The SQL counts COUNT(DISTINCT session_id) (or equivalent unique session counting) per funnel step"
+    },
+    {
+      "name": "SQL 30-day filter",
+      "max_score": 5,
+      "description": "The SQL report filters to the last 30 days (e.g. NOW() - INTERVAL '30 days' or equivalent)"
+    },
+    {
+      "name": "SQL step-to-step percentages",
+      "max_score": 10,
+      "description": "The SQL query calculates step-to-step conversion rate percentages (e.g. dividing one step's count by the previous step's count), using division-by-zero protection (NULLIF or CASE WHEN)"
+    },
+    {
+      "name": "Field error event tracking",
+      "max_score": 10,
+      "description": "Tracks form validation errors by listening to the 'invalid' event on form elements (not just onSubmit or a custom approach) and records which field triggered the error"
+    },
+    {
+      "name": "Field error sent to endpoint",
+      "max_score": 7,
+      "description": "Sends field error data via a fetch/API call to an analytics endpoint (e.g. /api/analytics/field-error), not just logging to console"
+    },
+    {
+      "name": "Server-side ground truth",
+      "max_score": 10,
+      "description": "analytics-notes.md states that the server-side / internal order database should be treated as the source of truth when reconciling discrepancies, and explains why front-end analytics tools may under-count (ad blockers, script errors, etc.)"
+    },
+    {
+      "name": "Per-field error counting",
+      "max_score": 6,
+      "description": "Field error tracking accumulates counts per field name (e.g. a counter/map keyed by field name) rather than only recording individual events"
+    },
+    {
+      "name": "SQL daily grouping",
+      "max_score": 4,
+      "description": "The SQL report groups results by day (e.g. DATE_TRUNC('day', ...) or equivalent)"
+    }
+  ]
+}

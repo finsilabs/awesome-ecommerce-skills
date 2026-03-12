@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements catalog export correctly: streaming products in batches with cursor pagination, using csv-stringify with the canonical column list and correct HTTP headers, and generating a Google Merchant Center XML feed using xmlbuilder2 with the correct RSS 2.0 structure and g: namespace fields.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Batch size 500",
+      "max_score": 8,
+      "description": "Exports products in batches of 500 (not fetching all at once), with a loop that continues until no more products remain"
+    },
+    {
+      "name": "Cursor-based pagination",
+      "max_score": 8,
+      "description": "Uses cursor-based pagination (tracking the last product ID) rather than offset-based pagination for the batch fetching loop"
+    },
+    {
+      "name": "csv-stringify used",
+      "max_score": 8,
+      "description": "Uses the csv-stringify library (import from 'csv-stringify') to generate CSV output, not manual string concatenation"
+    },
+    {
+      "name": "csv-stringify header:true",
+      "max_score": 7,
+      "description": "Passes header: true to csv-stringify so column names are written as the first row"
+    },
+    {
+      "name": "Canonical CSV columns",
+      "max_score": 8,
+      "description": "The exported CSV contains all of: handle, title, vendor, product_type, tags, price, compare_at_price, sku, inventory_quantity, option1_name, option1_value, option2_name, option2_value, image_url, published"
+    },
+    {
+      "name": "Content-Type header",
+      "max_score": 7,
+      "description": "Sets Content-Type: text/csv on the export HTTP response"
+    },
+    {
+      "name": "Content-Disposition header",
+      "max_score": 7,
+      "description": "Sets Content-Disposition: attachment; filename=\"catalog-{timestamp}.csv\" (with a dynamic timestamp, not a static filename)"
+    },
+    {
+      "name": "xmlbuilder2 used",
+      "max_score": 8,
+      "description": "Uses the xmlbuilder2 library (import { create } from 'xmlbuilder2') for generating the Google Merchant feed XML"
+    },
+    {
+      "name": "RSS 2.0 root structure",
+      "max_score": 8,
+      "description": "The XML feed has an <rss version='2.0'> root element with xmlns:g='http://base.google.com/ns/1.0' namespace attribute"
+    },
+    {
+      "name": "Google feed g: fields",
+      "max_score": 9,
+      "description": "Each product item includes g:id, g:title, g:price (with currency suffix e.g. '99.99 USD'), g:availability, g:link, and g:image_link elements"
+    },
+    {
+      "name": "g:availability values",
+      "max_score": 8,
+      "description": "g:availability uses 'in_stock' or 'out_of_stock' string values (not boolean or numeric)"
+    },
+    {
+      "name": "Streamed response",
+      "max_score": 7,
+      "description": "The CSV export pipes the stringifier directly to the response (res) rather than buffering all output before sending"
+    },
+    {
+      "name": "Tags as comma-separated string",
+      "max_score": 7,
+      "description": "When exporting, tags array is joined with commas into a single string value in the CSV"
+    }
+  ]
+}

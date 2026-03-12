@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements dimensional weight calculation using the specified DIM factors (139 for domestic/imperial, 5000 for metric), always charges the greater of actual vs dimensional weight with ceiling applied, and properly normalizes weight units.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "DIM factor 139 used",
+      "max_score": 12,
+      "description": "Uses the value 139 as the DIM factor for imperial (cubic inches to pounds) calculations"
+    },
+    {
+      "name": "DIM factor 5000 used",
+      "max_score": 12,
+      "description": "Uses the value 5000 as the DIM factor for metric (cubic cm to kg) calculations"
+    },
+    {
+      "name": "Max of actual vs dim weight",
+      "max_score": 12,
+      "description": "Returns the greater of actual weight vs dimensional weight (uses Math.max or equivalent comparison)"
+    },
+    {
+      "name": "Ceiling on dim weight",
+      "max_score": 10,
+      "description": "Applies Math.ceil (or equivalent ceiling function) to the dimensional weight before comparison"
+    },
+    {
+      "name": "oz conversion correct",
+      "max_score": 8,
+      "description": "Converts ounces to pounds by dividing by 16"
+    },
+    {
+      "name": "g conversion correct",
+      "max_score": 8,
+      "description": "Converts grams to pounds by dividing by 453.592 (or equivalent accurate conversion)"
+    },
+    {
+      "name": "kg conversion correct",
+      "max_score": 8,
+      "description": "Converts kilograms to pounds by multiplying by 2.20462 (or equivalent accurate conversion)"
+    },
+    {
+      "name": "Package interface defined",
+      "max_score": 10,
+      "description": "Package interface includes weight with value+unit (oz|lb|g|kg) and dimensions with length/width/height+unit (in|cm)"
+    },
+    {
+      "name": "Imperial vs metric branching",
+      "max_score": 10,
+      "description": "Calculation branches on dimensions.unit ('in' vs 'cm') to select the appropriate DIM factor"
+    },
+    {
+      "name": "Result in pounds",
+      "max_score": 10,
+      "description": "The final billable weight result is expressed in pounds (not kg or oz)"
+    }
+  ]
+}

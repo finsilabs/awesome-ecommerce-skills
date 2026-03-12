@@ -1,0 +1,10 @@
+{
+  "name": "finsi/gdpr-ecommerce",
+  "version": "0.1.0",
+  "summary": "GDPR compliance — consent management, data export, right to deletion",
+  "skills": {
+    "gdpr-ecommerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent designs the correct RMA schema (tables, fields, constraints), generates human-readable RMA numbers using a database sequence, implements configurable return window policies with correct category logic, validates return eligibility server-side, and returns the correct eligibility response structure.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "return_requests table",
+      "max_score": 6,
+      "description": "schema.sql includes a return_requests table with a UUID primary key and a rma_number column that is unique"
+    },
+    {
+      "name": "Status CHECK constraint",
+      "max_score": 8,
+      "description": "return_requests.status has a CHECK constraint that includes at minimum: 'requested', 'approved', 'label_issued', 'in_transit', 'received', 'inspecting', 'resolved', 'rejected'"
+    },
+    {
+      "name": "Resolution CHECK constraint",
+      "max_score": 7,
+      "description": "return_requests.resolution has a CHECK constraint with exactly the three values: 'refund', 'exchange', 'store_credit'"
+    },
+    {
+      "name": "Restocking fee in cents",
+      "max_score": 6,
+      "description": "return_requests includes a restocking_fee column defined as INTEGER (not DECIMAL/FLOAT), defaulting to 0"
+    },
+    {
+      "name": "return_lines condition CHECK",
+      "max_score": 6,
+      "description": "return_lines table includes a condition column with CHECK constraint containing: 'new', 'like_new', 'damaged', 'defective'"
+    },
+    {
+      "name": "Restock and quarantine columns",
+      "max_score": 6,
+      "description": "return_lines table includes both restock_quantity and quarantine_quantity columns (both INTEGER, default 0)"
+    },
+    {
+      "name": "return_shipments table",
+      "max_score": 6,
+      "description": "schema.sql includes a return_shipments table with tracking_number, carrier, label_url, and received_at columns"
+    },
+    {
+      "name": "RMA number format",
+      "max_score": 10,
+      "description": "RMA number generation produces format 'RMA-YYYY-NNNNN' (year + 5-digit zero-padded sequence number), using a database sequence (nextval) rather than random values"
+    },
+    {
+      "name": "Policy: default window",
+      "max_score": 5,
+      "description": "Return policy configuration sets the default window to 30 days"
+    },
+    {
+      "name": "Policy: electronics",
+      "max_score": 8,
+      "description": "Return policy configuration sets electronics window to 15 days with a restocking fee percentage of 15%"
+    },
+    {
+      "name": "Policy: final_sale",
+      "max_score": 8,
+      "description": "Return policy configuration includes a final_sale category with a window of 0 days (no returns allowed)"
+    },
+    {
+      "name": "Server-side window validation",
+      "max_score": 8,
+      "description": "The return request creation function computes daysSincePurchase from order.created_at on the server (not trusting any client-provided value) and throws/rejects if it exceeds the configured window"
+    },
+    {
+      "name": "Customer ownership check",
+      "max_score": 7,
+      "description": "The return request creation function validates that the order's customer_id matches the requesting customerId before proceeding"
+    },
+    {
+      "name": "Eligibility response shape",
+      "max_score": 9,
+      "description": "The eligibility endpoint returns an object with: eligible (boolean), daysRemaining (non-negative integer), and reason (null when eligible, or a string constant like 'WINDOW_EXPIRED' or 'ORDER_NOT_DELIVERED' when not eligible)"
+    }
+  ]
+}

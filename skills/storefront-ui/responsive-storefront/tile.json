@@ -1,0 +1,10 @@
+{
+  "name": "finsi/responsive-storefront",
+  "version": "0.1.0",
+  "summary": "Mobile-first responsive patterns for commerce (thumb-friendly cart, sticky buy bar)",
+  "skills": {
+    "responsive-storefront": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements Medusa v2 event subscribers and custom workflows, including proper TypeScript imports, using the DI container to resolve services, re-fetching entity data inside the subscriber, and adding compensation functions to workflow steps that have side effects.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SubscriberArgs/SubscriberConfig import",
+      "max_score": 8,
+      "description": "Subscriber file imports SubscriberArgs and/or SubscriberConfig from '@medusajs/framework' (not from a sub-path like /utils)"
+    },
+    {
+      "name": "Subscriber config export",
+      "max_score": 8,
+      "description": "Subscriber file exports a `config` object of type SubscriberConfig containing an `event` field with the event name string"
+    },
+    {
+      "name": "container.resolve() in subscriber",
+      "max_score": 10,
+      "description": "All services used inside the subscriber are obtained via container.resolve() rather than direct imports"
+    },
+    {
+      "name": "Entity re-fetched in subscriber",
+      "max_score": 10,
+      "description": "The subscriber retrieves the full entity data (e.g. order) from a service using the ID from the event payload, rather than relying solely on the event payload for entity fields"
+    },
+    {
+      "name": "Subscriber for side effects only",
+      "max_score": 8,
+      "description": "The subscriber delegates substantive processing to a workflow or service call rather than containing inline core business logic"
+    },
+    {
+      "name": "createWorkflow / createStep imports",
+      "max_score": 8,
+      "description": "Workflow file imports createWorkflow, createStep, and StepResponse from '@medusajs/framework/workflows-sdk'"
+    },
+    {
+      "name": "StepResponse returned from step",
+      "max_score": 8,
+      "description": "Each createStep handler returns a new StepResponse(...) rather than returning a plain object or value"
+    },
+    {
+      "name": "Compensation function on side-effect step",
+      "max_score": 12,
+      "description": "At least one step that writes data or calls an external API includes a compensation function (third argument to createStep) for rollback"
+    },
+    {
+      "name": "Compensation data passed to StepResponse",
+      "max_score": 8,
+      "description": "The StepResponse for a step with a compensation function passes rollback data as the second argument (e.g. new StepResponse(result, { id: result.id }))"
+    },
+    {
+      "name": "container.resolve() in workflow step",
+      "max_score": 10,
+      "description": "Services accessed inside workflow steps are resolved from the container (second argument to the step handler), not imported directly"
+    },
+    {
+      "name": "Correct file placement",
+      "max_score": 6,
+      "description": "Subscriber file is placed under src/subscribers/ and workflow file under src/workflows/"
+    },
+    {
+      "name": "Logger resolved from container",
+      "max_score": 4,
+      "description": "Logging uses a logger resolved from the container (container.resolve('logger')) rather than console.log"
+    }
+  ]
+}

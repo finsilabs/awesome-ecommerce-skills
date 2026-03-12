@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements reorder point, safety stock, order quantity, and urgency classification logic according to the demand forecasting skill. The scenario provides raw daily sales and inventory data and asks for replenishment recommendations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Z-score 1.645 used",
+      "max_score": 8,
+      "description": "Uses Z = 1.645 (95% service level) as the default z-score for safety stock calculation"
+    },
+    {
+      "name": "Safety stock formula",
+      "max_score": 10,
+      "description": "Safety stock is computed as Z * residualStdDev * sqrt(leadTimeDays), not a simpler heuristic"
+    },
+    {
+      "name": "Reorder point formula",
+      "max_score": 10,
+      "description": "Reorder point = avgDailyDemand * leadTimeDays + safetyStock (ceiling applied)"
+    },
+    {
+      "name": "Default lead time 7 days",
+      "max_score": 6,
+      "description": "When a product has no specified lead time, defaults to 7 days"
+    },
+    {
+      "name": "Order qty formula",
+      "max_score": 10,
+      "description": "Recommended order quantity = max(ceil(avgDailyDemand * 30), min_order_quantity)"
+    },
+    {
+      "name": "Urgency critical threshold",
+      "max_score": 8,
+      "description": "Urgency is 'critical' when daysOfSupply < leadTimeDays"
+    },
+    {
+      "name": "Urgency warning threshold",
+      "max_score": 8,
+      "description": "Urgency is 'warning' when daysOfSupply < leadTimeDays * 2 (and not critical)"
+    },
+    {
+      "name": "daysOfSupply formula",
+      "max_score": 8,
+      "description": "daysOfSupply = floor(quantity_on_hand / avgDailyDemand), returns 999 (or equivalent large number) when avgDailyDemand is 0"
+    },
+    {
+      "name": "Pending PO subtraction",
+      "max_score": 10,
+      "description": "quantity_on_order (open purchase orders) is subtracted from the recommended order quantity before output"
+    },
+    {
+      "name": "High-velocity Z adjustment",
+      "max_score": 8,
+      "description": "Uses Z = 2.05 (98% service level) for products flagged as high-velocity/high-margin"
+    },
+    {
+      "name": "Slow-mover Z adjustment",
+      "max_score": 8,
+      "description": "Uses Z = 1.28 (90% service level) for products flagged as slow movers"
+    },
+    {
+      "name": "Report filters ok urgency",
+      "max_score": 6,
+      "description": "The output report / recommendations list does NOT include products with 'ok' urgency — only 'critical' and 'warning' items are present"
+    }
+  ]
+}

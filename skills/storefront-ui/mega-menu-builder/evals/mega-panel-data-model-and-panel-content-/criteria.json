@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the mega panel data model, renders featured products and banners with required attributes, applies proper image loading strategy, uses the correct CSS grid layout, and wires up CMS data fetching with Next.js ISR caching.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Data model shape",
+      "max_score": 8,
+      "description": "The nav data structure includes columns (with heading and links), featuredProducts, and banner fields on the megaMenu object — matching the prescribed JSON shape"
+    },
+    {
+      "name": "Featured product image dimensions",
+      "max_score": 9,
+      "description": "Each featured product <img> element has explicit width and height attributes (e.g. width=\"80\" height=\"80\" or equivalent numeric values)"
+    },
+    {
+      "name": "Featured product name and price",
+      "max_score": 8,
+      "description": "Each featured product card renders both the product name and the product price"
+    },
+    {
+      "name": "Banner alt text",
+      "max_score": 8,
+      "description": "The banner <img> element uses the alt field from the data (not an empty alt or hardcoded text)"
+    },
+    {
+      "name": "Banner headline and CTA",
+      "max_score": 8,
+      "description": "The rendered banner includes both a headline element and a CTA link/button"
+    },
+    {
+      "name": "Banner image dimensions",
+      "max_score": 9,
+      "description": "The banner <img> element has explicit width and height attributes set to prevent layout shift"
+    },
+    {
+      "name": "Lazy-load panel images",
+      "max_score": 9,
+      "description": "Featured product images and/or banner images use loading=\"lazy\" attribute"
+    },
+    {
+      "name": "Close timer delay",
+      "max_score": 9,
+      "description": "The MegaNav hover-close logic uses a setTimeout delay of 150ms (or a value between 150-200ms) before setting the active item to null"
+    },
+    {
+      "name": "Panel role attribute",
+      "max_score": 8,
+      "description": "The mega panel container div has role=\"region\""
+    },
+    {
+      "name": "CSS grid layout",
+      "max_score": 9,
+      "description": "mega-panel.css (or equivalent) uses display:grid with a grid-template-columns value that includes at least three flexible columns and one fixed-width column (e.g. 1fr 1fr 1fr 200px)"
+    },
+    {
+      "name": "Mobile hide breakpoint",
+      "max_score": 8,
+      "description": "CSS includes a media query at max-width:768px (or similar mobile breakpoint) that hides the .mega-panel"
+    },
+    {
+      "name": "CMS revalidate interval",
+      "max_score": 7,
+      "description": "The navigation data fetching helper passes next: { revalidate: 300 } (or 5 minutes expressed as 300 seconds) in the fetch options"
+    }
+  ]
+}

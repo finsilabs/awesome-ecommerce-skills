@@ -1,0 +1,10 @@
+{
+  "name": "finsi/b2b-commerce",
+  "version": "0.1.0",
+  "summary": "B2B features — company accounts, quote workflows, custom catalogs, net terms",
+  "skills": {
+    "b2b-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

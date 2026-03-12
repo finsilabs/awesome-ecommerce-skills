@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly designs the multi-channel recovery sequence with the right channel order, timing, and cart-value-based incentive escalation, avoids early discounts, applies segment-based logic for VIP customers, handles SMS opt-in, and keeps the sequence to the right number of touchpoints.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "4-step max sequence",
+      "max_score": 8,
+      "description": "Recovery sequence contains exactly 4 steps (or fewer) — does NOT exceed 4 touchpoints"
+    },
+    {
+      "name": "Channel order",
+      "max_score": 10,
+      "description": "Sequence follows the order: email first, then push, then email, then SMS (email → push → email → sms)"
+    },
+    {
+      "name": "Step 1 timing",
+      "max_score": 7,
+      "description": "First step (email) is delayed by 1 hour (60 minutes / 3600000ms) from abandonment"
+    },
+    {
+      "name": "Step 2 timing",
+      "max_score": 7,
+      "description": "Second step (push) is delayed by 4 hours (14400000ms) from abandonment"
+    },
+    {
+      "name": "Step 3/4 timing",
+      "max_score": 7,
+      "description": "Third step is at 24 hours and fourth step is at 48 hours from abandonment"
+    },
+    {
+      "name": "No discount on steps 1-2",
+      "max_score": 10,
+      "description": "First two steps (email and push) have null incentive — no discount or free shipping offered"
+    },
+    {
+      "name": "High-value step 3 incentive",
+      "max_score": 8,
+      "description": "For carts ≥ $100, step 3 offers free_shipping (not a % discount)"
+    },
+    {
+      "name": "Low-value step 3 incentive",
+      "max_score": 7,
+      "description": "For carts < $100, step 3 offers percent_off with value 10"
+    },
+    {
+      "name": "High-value step 4 escalation",
+      "max_score": 7,
+      "description": "For carts ≥ $100, step 4 escalates to percent_off with value 15"
+    },
+    {
+      "name": "VIP free shipping only",
+      "max_score": 8,
+      "description": "VIP customers (≥ $500 lifetime spend) receive free_shipping incentive and never a percent_off discount"
+    },
+    {
+      "name": "First-time abandoner no incentive",
+      "max_score": 8,
+      "description": "Customers with zero prior recovery sequences receive null incentive (no offer withheld)"
+    },
+    {
+      "name": "SMS opt-in gate",
+      "max_score": 8,
+      "description": "SMS step is gated behind opt-in check — either via `smsMarketingOptIn` field or equivalent guard that defaults to NOT sending"
+    },
+    {
+      "name": "One-time discount codes",
+      "max_score": 5,
+      "description": "STRATEGY.md or code documents/implements that discount codes are one-time use (not reusable/shareable)"
+    }
+  ]
+}

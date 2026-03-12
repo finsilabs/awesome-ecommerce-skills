@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the CSS-transform-based zoom approach correctly, including the specific scale factor, transform-origin tracking, required CSS properties, and layout shift prevention techniques.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CSS transform approach",
+      "max_score": 12,
+      "description": "Zoom is achieved via CSS transform: scale on the image element — no additional image URLs are fetched or swapped during hover"
+    },
+    {
+      "name": "Scale factor 2.5",
+      "max_score": 8,
+      "description": "The zoom scale value is 2.5 (i.e., transform: scale(2.5) or equivalent scale value of 2.5)"
+    },
+    {
+      "name": "Cursor-relative transform origin",
+      "max_score": 10,
+      "description": "transformOrigin is set dynamically to the cursor's position as percentages relative to the container (e.g., '${x}% ${y}%') during mouse move"
+    },
+    {
+      "name": "overflow hidden on container",
+      "max_score": 8,
+      "description": "The container element has overflow: hidden in its CSS to prevent the scaled image from overflowing"
+    },
+    {
+      "name": "will-change transform on image",
+      "max_score": 8,
+      "description": "The image element has will-change: transform in its CSS"
+    },
+    {
+      "name": "cursor crosshair",
+      "max_score": 6,
+      "description": "The container element has cursor: crosshair in its CSS"
+    },
+    {
+      "name": "aspect-ratio 1/1",
+      "max_score": 6,
+      "description": "The container element uses aspect-ratio: 1/1 in its CSS"
+    },
+    {
+      "name": "transition timing",
+      "max_score": 8,
+      "description": "The image element has a CSS transition on transform of 0.05s linear (or transition: transform 0.05s linear)"
+    },
+    {
+      "name": "object-fit cover",
+      "max_score": 6,
+      "description": "The image element has object-fit: cover so it fills the container dimensions"
+    },
+    {
+      "name": "Zoom reset on mouse leave",
+      "max_score": 8,
+      "description": "The zoom state is cleared (transform removed) when the mouse leaves the container (onMouseLeave handler)"
+    },
+    {
+      "name": "Accessible aria-label",
+      "max_score": 8,
+      "description": "The container element includes an aria-label that references both the image alt text and the zoom affordance (e.g., contains 'hover to zoom' or similar phrasing)"
+    },
+    {
+      "name": "README zoom mechanism",
+      "max_score": 12,
+      "description": "README.md documents that zoom uses CSS transform/scale rather than loading a separate image, and mentions at least one of: transformOrigin, will-change, or overflow:hidden"
+    }
+  ]
+}

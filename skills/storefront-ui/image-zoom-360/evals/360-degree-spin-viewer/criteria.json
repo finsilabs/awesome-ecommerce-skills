@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the 360-degree spin viewer with requestIdleCallback-based lazy frame loading, requestAnimationFrame throttling for mobile, correct drag sensitivity, keyboard support, and appropriate ARIA attributes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "requestIdleCallback preload",
+      "max_score": 12,
+      "description": "Remaining frames (frames after the first) are preloaded using requestIdleCallback rather than being preloaded eagerly all at once or via setTimeout"
+    },
+    {
+      "name": "requestIdleCallback timeout",
+      "max_score": 8,
+      "description": "The requestIdleCallback call includes a { timeout: 5000 } option"
+    },
+    {
+      "name": "requestAnimationFrame throttling",
+      "max_score": 12,
+      "description": "Frame index updates on touch/pointer move are throttled using requestAnimationFrame (rAF) rather than updating directly on every event"
+    },
+    {
+      "name": "8px per frame sensitivity",
+      "max_score": 8,
+      "description": "The drag-to-frame mapping uses approximately 8 pixels of movement per frame (e.g., Math.round(delta / 8) or equivalent)"
+    },
+    {
+      "name": "Loading state",
+      "max_score": 6,
+      "description": "A loading state is displayed while frames are being preloaded, before the viewer becomes interactive"
+    },
+    {
+      "name": "Keyboard left/right arrows",
+      "max_score": 12,
+      "description": "The spin viewer responds to left and right arrow key presses to navigate between frames"
+    },
+    {
+      "name": "role img aria-label",
+      "max_score": 8,
+      "description": "The spin viewer container has role='img' and an aria-label that references rotating/dragging the product (e.g., '360 degree product view' or similar)"
+    },
+    {
+      "name": "ew-resize cursor",
+      "max_score": 6,
+      "description": "The spin viewer container uses cursor: ew-resize (or cursor: 'ew-resize' inline style)"
+    },
+    {
+      "name": "Drag hint text",
+      "max_score": 6,
+      "description": "A visible 'Drag to rotate' (or equivalent) hint text element is rendered with aria-hidden='true'"
+    },
+    {
+      "name": "Notes: requestIdleCallback reason",
+      "max_score": 8,
+      "description": "IMPLEMENTATION_NOTES.md mentions requestIdleCallback (or idle callback) as the mechanism for background frame preloading"
+    },
+    {
+      "name": "Notes: rAF throttling reason",
+      "max_score": 8,
+      "description": "IMPLEMENTATION_NOTES.md mentions requestAnimationFrame (or rAF) as the mobile jitter prevention technique"
+    },
+    {
+      "name": "Frame wrap-around",
+      "max_score": 6,
+      "description": "Frame index wraps correctly at both ends (modulo arithmetic so frame after last returns to first, and before first goes to last)"
+    }
+  ]
+}

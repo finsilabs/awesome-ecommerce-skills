@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shopify-app-development",
+  "version": "0.1.0",
+  "summary": "Shopify app scaffold with OAuth, App Bridge, and Polaris UI",
+  "skills": {
+    "shopify-app-development": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements the collection ranking pipeline: boost/bury score formulas, exclusion via map deletion, manual pinning with score 999 and 1-based positions, and the correct ordering of operations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Boost formula",
+      "max_score": 10,
+      "description": "Boost increases a product's score by adding (boostValue / 100) to the current score (e.g. score + 40/100 for a +40 boost), using 50 as default if no value specified"
+    },
+    {
+      "name": "Bury formula",
+      "max_score": 10,
+      "description": "Bury decreases a product's score by subtracting (buryValue / 100) from the current score (e.g. score - 60/100 for a -60 bury), using 50 as default if no value specified"
+    },
+    {
+      "name": "Exclusion removes from scores",
+      "max_score": 10,
+      "description": "Excluded products are removed from the scores map/structure entirely (not set to 0 or -1), so they do not appear in output"
+    },
+    {
+      "name": "Pinned score 999",
+      "max_score": 8,
+      "description": "Pinned products are assigned a score of 999 (not just placed at their position)"
+    },
+    {
+      "name": "isPinned flag",
+      "max_score": 8,
+      "description": "Pinned products have an isPinned: true flag (or equivalent boolean field) in the output"
+    },
+    {
+      "name": "1-based position insert",
+      "max_score": 10,
+      "description": "A pin to position N inserts the product at array index N-1 (1-based), and the insert index is clamped to the array length if N exceeds the total product count"
+    },
+    {
+      "name": "Score-descending sort",
+      "max_score": 8,
+      "description": "Non-pinned products are sorted in descending score order before pins are applied"
+    },
+    {
+      "name": "Pins processed in position order",
+      "max_score": 8,
+      "description": "When multiple pins exist, they are inserted in ascending position order (pin to slot 1 before slot 3) to avoid index shifting conflicts"
+    },
+    {
+      "name": "Scoring before overrides",
+      "max_score": 10,
+      "description": "Boost/bury rules are applied to scores before manual pin/exclude overrides are processed (correct pipeline order)"
+    },
+    {
+      "name": "Priority order for rules",
+      "max_score": 8,
+      "description": "Boost/bury rules are applied in priority order (higher priority number = applied first) or the implementation otherwise defines explicit rule precedence"
+    },
+    {
+      "name": "Duplicate pin removal",
+      "max_score": 10,
+      "description": "If a pinned product already appears in the sorted list, it is removed from its current position before being inserted at the pin position"
+    }
+  ]
+}

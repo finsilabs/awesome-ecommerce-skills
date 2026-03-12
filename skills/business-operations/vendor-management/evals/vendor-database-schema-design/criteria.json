@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent follows the vendor management skill's specific schema design choices: UUID keys, integer cent storage, sequence-based PO numbering, correct status enumerations, and generated columns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "UUID primary keys",
+      "max_score": 10,
+      "description": "All three tables (vendors, purchase_orders, po_lines) use UUID as the primary key type with gen_random_uuid() as default"
+    },
+    {
+      "name": "Cents storage",
+      "max_score": 12,
+      "description": "Monetary fields (unit_cost, total_cost, or equivalent) are stored as INTEGER (not DECIMAL/NUMERIC/FLOAT), with a comment or note indicating cents"
+    },
+    {
+      "name": "PO sequence exists",
+      "max_score": 10,
+      "description": "A PostgreSQL sequence (CREATE SEQUENCE or equivalent) is created for generating purchase order numbers"
+    },
+    {
+      "name": "PO number format",
+      "max_score": 10,
+      "description": "The schema or notes describe/implement a PO number format of PO-YYYYMM-NNNN (year+month prefix with zero-padded 4-digit sequence number)"
+    },
+    {
+      "name": "PO number unique constraint",
+      "max_score": 8,
+      "description": "The purchase_orders table has a UNIQUE constraint on the po_number column"
+    },
+    {
+      "name": "Vendor status CHECK",
+      "max_score": 8,
+      "description": "The vendors table has a status column with a CHECK constraint limiting values to 'active', 'inactive', and 'probation'"
+    },
+    {
+      "name": "PO status CHECK",
+      "max_score": 10,
+      "description": "The purchase_orders table has a status column with a CHECK constraint that includes all of: 'draft', 'submitted', 'acknowledged', 'partial', 'received', 'cancelled'"
+    },
+    {
+      "name": "Generated line total",
+      "max_score": 12,
+      "description": "The po_lines table includes a computed/generated column for line total (quantity * unit_cost) using GENERATED ALWAYS AS ... STORED syntax"
+    },
+    {
+      "name": "Payment terms values",
+      "max_score": 8,
+      "description": "The vendors table includes a payment_terms column with default 'net30' and notes/comment indicating valid values include 'net30', 'net60', and 'prepay'"
+    },
+    {
+      "name": "Partial receipts support",
+      "max_score": 12,
+      "description": "The po_lines table includes a quantity_received column (separate from quantity_ordered) to support partial receipt tracking"
+    }
+  ]
+}

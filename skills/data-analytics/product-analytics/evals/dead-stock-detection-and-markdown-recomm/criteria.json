@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements dead stock detection using the prescribed thresholds, applies the tiered markdown recommendation logic, includes inventory value in output, excludes new arrivals, and applies category-specific thresholds for fashion vs. basics.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Days-on-hand threshold",
+      "max_score": 8,
+      "description": "Dead stock detection uses a minimum days-on-hand threshold of 90 days (not 30, 60, or other values) as the default cutoff"
+    },
+    {
+      "name": "Sell-through threshold",
+      "max_score": 8,
+      "description": "Dead stock filter applies a maximum sell-through threshold of 15% (0.15) or lower"
+    },
+    {
+      "name": "Inventory value threshold",
+      "max_score": 8,
+      "description": "Dead stock filter only flags products with inventory value (units × cost) above a minimum dollar threshold (e.g., $100), not just any product with remaining stock"
+    },
+    {
+      "name": "Inventory value in output",
+      "max_score": 10,
+      "description": "Each flagged product's output includes a calculated inventory value (units on hand × unit cost), not just unit count"
+    },
+    {
+      "name": "New arrivals excluded",
+      "max_score": 10,
+      "description": "Products available for fewer than 30 days are excluded from dead stock results (P006 with first_available_at 2026-02-20 should NOT appear in results)"
+    },
+    {
+      "name": "Tiered action: liquidate",
+      "max_score": 8,
+      "description": "Products with more than 180 days on hand are assigned 'liquidate' action"
+    },
+    {
+      "name": "Tiered action: 120-day bracket",
+      "max_score": 8,
+      "description": "Products with 120–180 days on hand are assigned 'markdown_20pct' action (not liquidate)"
+    },
+    {
+      "name": "Markdown percentages",
+      "max_score": 10,
+      "description": "Suggested prices use 40% discount for 'liquidate', 20% for 'markdown_20pct', and 10% for 'markdown_10pct' actions"
+    },
+    {
+      "name": "Category-specific thresholds",
+      "max_score": 12,
+      "description": "Fashion items use a stricter dead-stock threshold (e.g., 60 days) while basics use a more lenient threshold (e.g., 180 days), resulting in different products being flagged per category"
+    },
+    {
+      "name": "Human-readable reason string",
+      "max_score": 8,
+      "description": "Each recommendation includes a reason string that mentions sell-through percentage and days on hand (e.g., '18% sell-through after 163 days')"
+    },
+    {
+      "name": "Output structure",
+      "max_score": 10,
+      "description": "JSON output includes productId, productName, currentPrice, suggestedPrice, markdownPct, inventoryValue, daysOnHand, and reason fields for each item"
+    }
+  ]
+}

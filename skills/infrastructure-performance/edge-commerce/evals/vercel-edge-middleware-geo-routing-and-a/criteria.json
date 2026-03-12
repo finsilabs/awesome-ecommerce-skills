@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements Vercel Edge Middleware for a multi-region e-commerce site using the prescribed geolocation API, cookie conventions, header patterns for A/B testing, and Edge Config for feature flags — without making synchronous external API calls on the critical path.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Geolocation import source",
+      "max_score": 12,
+      "description": "Imports `geolocation` from `@vercel/functions` (not from any other package or custom implementation)"
+    },
+    {
+      "name": "Next.js server imports",
+      "max_score": 5,
+      "description": "Imports `NextRequest` and `NextResponse` from `next/server`"
+    },
+    {
+      "name": "Geo-redirect status code",
+      "max_score": 8,
+      "description": "Geo-routing redirect uses HTTP 302 (not 301 or other codes)"
+    },
+    {
+      "name": "Country header forwarding",
+      "max_score": 7,
+      "description": "Sets `x-user-country` header on the response (passing country to downstream handlers)"
+    },
+    {
+      "name": "Middleware matcher paths",
+      "max_score": 8,
+      "description": "Exported `config.matcher` includes all three of: `'/'`, `'/products/:path*'`, and `'/collections/:path*'`"
+    },
+    {
+      "name": "A/B cookie name format",
+      "max_score": 8,
+      "description": "A/B variant cookie is named using the pattern `ab_{experimentId}` (e.g., `ab_checkout-button-color`)"
+    },
+    {
+      "name": "A/B cookie attributes",
+      "max_score": 10,
+      "description": "A/B cookie is set with maxAge equivalent to 30 days (2592000 seconds), `sameSite: 'lax'`, and `httpOnly: true`"
+    },
+    {
+      "name": "A/B variant response header",
+      "max_score": 8,
+      "description": "Sets `x-ab-{experimentId}` response header with the assigned variant value"
+    },
+    {
+      "name": "Edge Config for feature flags",
+      "max_score": 12,
+      "description": "Uses `get()` from `@vercel/edge-config` to read feature flag values (not an external fetch/axios call)"
+    },
+    {
+      "name": "No synchronous external API calls",
+      "max_score": 12,
+      "description": "Middleware does NOT make synchronous `fetch()` calls to third-party or external APIs (all configuration is read from Edge Config or request metadata)"
+    },
+    {
+      "name": "Existing variant respected",
+      "max_score": 10,
+      "description": "Before assigning a new A/B variant, the middleware checks for an existing variant cookie and reuses it if present"
+    }
+  ]
+}

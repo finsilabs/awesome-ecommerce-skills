@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct ShippingRule data model with proper field types and monetary conventions, and implements the rule-resolution logic that handles zone/segment filtering, date-bounded rules, and priority-based rule selection. The scenario covers the core domain model and resolver that underpin all other features.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "freeShippingThreshold type",
+      "max_score": 8,
+      "description": "ShippingRule has freeShippingThreshold typed as number | null (not just number or string)"
+    },
+    {
+      "name": "Monetary values in cents",
+      "max_score": 8,
+      "description": "freeShippingThreshold values are stored as integers representing cents (e.g., 7500 for $75, not 75 or 75.00)"
+    },
+    {
+      "name": "null means never-free",
+      "max_score": 8,
+      "description": "A rule with freeShippingThreshold === null is treated as 'no free shipping' (returns isFree: false), not as 'always free'"
+    },
+    {
+      "name": "Filters inactive rules",
+      "max_score": 8,
+      "description": "resolveShippingRule (or equivalent) skips rules where isActive is false"
+    },
+    {
+      "name": "Filters by date window",
+      "max_score": 8,
+      "description": "resolveShippingRule skips rules whose startsAt is in the future or endsAt is in the past"
+    },
+    {
+      "name": "Empty zones = all zones",
+      "max_score": 8,
+      "description": "A rule with an empty applicableZones array matches any shipping zone (catch-all behavior)"
+    },
+    {
+      "name": "Empty segments = all segments",
+      "max_score": 8,
+      "description": "A rule with an empty customerSegments array matches any customer (not just customers with no segment)"
+    },
+    {
+      "name": "Priority-based selection",
+      "max_score": 8,
+      "description": "When multiple rules are applicable, the rule with the highest priority number is selected"
+    },
+    {
+      "name": "Return shape",
+      "max_score": 8,
+      "description": "The resolver returns an object with isFree (boolean), threshold (number|null), and amountNeeded (number)"
+    },
+    {
+      "name": "amountNeeded is 0 when free",
+      "max_score": 8,
+      "description": "When isFree is true, amountNeeded is 0 (not negative or null)"
+    },
+    {
+      "name": "progressPct server-side",
+      "max_score": 8,
+      "description": "progressPct is calculated on the server/in the resolver (Math.min(100, ...) clamping applied), not deferred to the client"
+    },
+    {
+      "name": "Server-side eligibility",
+      "max_score": 12,
+      "description": "Shipping eligibility is computed in the backend/API layer and not solely determined from client-provided state"
+    }
+  ]
+}

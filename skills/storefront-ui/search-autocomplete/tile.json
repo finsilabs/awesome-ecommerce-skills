@@ -1,0 +1,10 @@
+{
+  "name": "finsi/search-autocomplete",
+  "version": "0.1.0",
+  "summary": "Implement typeahead search with fuzzy matching, filters, and merchandising rules",
+  "skills": {
+    "search-autocomplete": {
+      "path": "SKILL.md"
+    }
+  }
+}

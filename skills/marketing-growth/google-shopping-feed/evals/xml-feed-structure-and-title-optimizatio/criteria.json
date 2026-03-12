@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent generates a Google-compliant XML product feed using the correct library, RSS structure, required fields, title optimization rules, price format, response headers, and proper handling of images, identifiers, and variant grouping.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "xmlbuilder2 library",
+      "max_score": 8,
+      "description": "The XML feed is built using the `xmlbuilder2` package (imports `create` from `xmlbuilder2`), not a hand-concatenated string, DOM, or alternative XML library"
+    },
+    {
+      "name": "RSS 2.0 with g namespace",
+      "max_score": 8,
+      "description": "The root element is `rss` with `version: '2.0'` and the attribute `xmlns:g` set to `'http://base.google.com/ns/1.0'`"
+    },
+    {
+      "name": "g:id uses SKU",
+      "max_score": 7,
+      "description": "The `g:id` field is populated with the variant SKU (not a product ID, database ID, or other identifier)"
+    },
+    {
+      "name": "Description max length",
+      "max_score": 7,
+      "description": "The `g:description` value is sliced or truncated to a maximum of 5000 characters"
+    },
+    {
+      "name": "Title format and length",
+      "max_score": 10,
+      "description": "Titles are constructed in the order: Brand, Product Name, then variant attributes (color, size, material); the final string is capped at 150 characters"
+    },
+    {
+      "name": "Price format",
+      "max_score": 8,
+      "description": "Prices are formatted as `X.XX USD` — two decimal places followed by a space and the currency code (e.g., `29.99 USD`), not as a plain number or object"
+    },
+    {
+      "name": "Cache-Control header",
+      "max_score": 7,
+      "description": "The feed endpoint sets a `Cache-Control` header of `public, max-age=3600` (1-hour TTL)"
+    },
+    {
+      "name": "Content-Type header",
+      "max_score": 7,
+      "description": "The feed endpoint sets `Content-Type` to `application/xml; charset=utf-8`"
+    },
+    {
+      "name": "Additional images",
+      "max_score": 8,
+      "description": "Multiple `g:additional_image_link` entries are included (up to 9 additional images, i.e., images at index 1–9), providing at least 3 total images per product where available"
+    },
+    {
+      "name": "identifier_exists correctness",
+      "max_score": 8,
+      "description": "`g:identifier_exists` is set to `'yes'` when a GTIN is present and `'no'` only when it is absent — NOT hardcoded to a single value for all products"
+    },
+    {
+      "name": "item_group_id for variants",
+      "max_score": 8,
+      "description": "All variants of the same product share the same `g:item_group_id` value (the parent product's ID), not the variant ID"
+    },
+    {
+      "name": "prettyPrint false",
+      "max_score": 7,
+      "description": "The XML is serialized with `prettyPrint: false` (compact output), not with indentation/newlines"
+    },
+    {
+      "name": "Numeric product category",
+      "max_score": 7,
+      "description": "The `g:google_product_category` field uses a numeric taxonomy ID (e.g., `187`), not a human-readable category name string"
+    }
+  ]
+}

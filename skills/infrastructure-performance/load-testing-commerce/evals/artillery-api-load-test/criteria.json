@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent writes an Artillery load test configuration that follows the skill's guidance on phase structure, scenario weights, response capture for request chaining, and processor-based test data generation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Warm-up phase",
+      "max_score": 7,
+      "description": "Artillery config includes a warm-up phase (low arrivalRate, e.g., 5 rps, ~60s duration)"
+    },
+    {
+      "name": "Ramp-up phase",
+      "max_score": 7,
+      "description": "Artillery config includes a ramp-up phase with a `rampTo` field going from low to ~50 rps"
+    },
+    {
+      "name": "Peak load phase",
+      "max_score": 7,
+      "description": "Artillery config includes a sustained peak load phase (~50 rps for ~300s duration)"
+    },
+    {
+      "name": "Spike phase",
+      "max_score": 7,
+      "description": "Artillery config includes a brief spike phase with significantly higher arrivalRate (e.g., 200 rps for ~30s)"
+    },
+    {
+      "name": "Recovery phase",
+      "max_score": 7,
+      "description": "Artillery config includes a recovery phase after the spike with reduced arrivalRate"
+    },
+    {
+      "name": "Browse scenario weight 60",
+      "max_score": 9,
+      "description": "The catalog browsing scenario has a weight of 60"
+    },
+    {
+      "name": "Checkout scenario weight",
+      "max_score": 9,
+      "description": "The checkout scenario has a weight of 20 (or close to 20)"
+    },
+    {
+      "name": "Response capture",
+      "max_score": 11,
+      "description": "At least one scenario uses `capture` with a `json` path expression to extract a value (e.g., productId, cartId) from a response and passes it to a later step"
+    },
+    {
+      "name": "Processor file exists",
+      "max_score": 9,
+      "description": "A processor JavaScript file exists at artillery/processors/commerce-helpers.js (or referenced path)"
+    },
+    {
+      "name": "Processor generates email",
+      "max_score": 10,
+      "description": "The processor function sets context.vars.email to a unique address using a non-production domain (e.g., @test.invalid)"
+    },
+    {
+      "name": "Processor generates productId",
+      "max_score": 10,
+      "description": "The processor function sets context.vars.productId (or similar) to a dynamically generated product identifier"
+    },
+    {
+      "name": "Think time in checkout",
+      "max_score": 7,
+      "description": "The checkout flow includes at least one `think` step between requests to simulate form-filling or user delay"
+    }
+  ]
+}

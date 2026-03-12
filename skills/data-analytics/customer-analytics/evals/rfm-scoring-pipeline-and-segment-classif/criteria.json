@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent builds an RFM scoring pipeline using the correct SQL patterns: NTILE(5) window functions with correct ordering, the specified segment label set, proper exclusion of cancelled/refunded orders, cents-to-dollars conversion, and appropriate architecture recommendations for production scheduling.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "NTILE for R score",
+      "max_score": 8,
+      "description": "Uses NTILE(5) OVER (ORDER BY recency_days DESC) or equivalent to compute the recency score (most recent = highest score)"
+    },
+    {
+      "name": "NTILE for F score",
+      "max_score": 8,
+      "description": "Uses NTILE(5) OVER (ORDER BY frequency ASC) or equivalent to compute the frequency score"
+    },
+    {
+      "name": "NTILE for M score",
+      "max_score": 8,
+      "description": "Uses NTILE(5) OVER (ORDER BY monetary ASC) or equivalent to compute the monetary score"
+    },
+    {
+      "name": "Excludes cancelled/refunded",
+      "max_score": 8,
+      "description": "Filters out orders with status 'cancelled' and 'refunded' before computing any metrics"
+    },
+    {
+      "name": "Cents conversion",
+      "max_score": 6,
+      "description": "Divides subtotal_cents by 100.0 (not 100) to convert order amounts to currency units"
+    },
+    {
+      "name": "champions segment",
+      "max_score": 7,
+      "description": "Assigns the label 'champions' for customers with high scores on all three dimensions (r>=4, f>=4, m>=4 or equivalent)"
+    },
+    {
+      "name": "cannot_lose_them segment",
+      "max_score": 7,
+      "description": "Assigns the label 'cannot_lose_them' (or cannot_lose_them) for high-value customers with low recency"
+    },
+    {
+      "name": "at_risk segment",
+      "max_score": 7,
+      "description": "Assigns the label 'at_risk' for customers with low recency but moderate frequency"
+    },
+    {
+      "name": "lost segment",
+      "max_score": 7,
+      "description": "Assigns the label 'lost' for customers with the lowest recency and low frequency"
+    },
+    {
+      "name": "All 8 segment labels",
+      "max_score": 8,
+      "description": "The query uses all 8 named segments: champions, loyal_customers, recent_customers, potential_loyalists, cannot_lose_them, at_risk, lost, other"
+    },
+    {
+      "name": "Nightly batch recommendation",
+      "max_score": 8,
+      "description": "notes.md recommends running the query on a nightly/daily schedule (not weekly or on-demand)"
+    },
+    {
+      "name": "Customer join",
+      "max_score": 8,
+      "description": "Joins to the customers table to include email and first_name in the output"
+    },
+    {
+      "name": "Recency in days",
+      "max_score": 10,
+      "description": "Computes recency as elapsed days (difference between now and last order date), not as a raw timestamp"
+    }
+  ]
+}

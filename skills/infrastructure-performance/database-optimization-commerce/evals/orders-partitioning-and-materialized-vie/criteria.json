@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements range partitioning on orders by created_at with quarterly partitions, automates partition management with a stored procedure, adds correct indexes on the partitioned table, creates a materialized view for aggregations, and uses EXPLAIN (ANALYZE, BUFFERS) for validation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "PARTITION BY RANGE on created_at",
+      "max_score": 10,
+      "description": "The orders table is defined with PARTITION BY RANGE (created_at) — not by any other column or method"
+    },
+    {
+      "name": "Four quarterly partitions",
+      "max_score": 8,
+      "description": "At least four quarterly partition tables are created (e.g. orders_2025_q1 through orders_2025_q4 or equivalent year), each with non-overlapping FROM/TO date ranges"
+    },
+    {
+      "name": "Quarterly stored procedure",
+      "max_score": 10,
+      "description": "A stored procedure or function exists that accepts year and quarter parameters and creates the corresponding partition using dynamic SQL (EXECUTE format(...))"
+    },
+    {
+      "name": "Partition key in WHERE clause",
+      "max_score": 8,
+      "description": "The design_notes.md mentions that queries must include a WHERE condition on created_at (the partition key) for partition pruning to work"
+    },
+    {
+      "name": "customer_id index on orders",
+      "max_score": 8,
+      "description": "An index is created on orders(customer_id, created_at DESC) or orders(customer_id) on the parent partitioned table"
+    },
+    {
+      "name": "status index on orders",
+      "max_score": 7,
+      "description": "An index is created on orders(status, created_at DESC) or orders(status) on the parent partitioned table"
+    },
+    {
+      "name": "Materialized view for aggregations",
+      "max_score": 10,
+      "description": "A materialized view is created that aggregates sales data (revenue, order count, or units) grouped by date/time and category"
+    },
+    {
+      "name": "Unique index on materialized view",
+      "max_score": 7,
+      "description": "A UNIQUE index is created on the materialized view (required for CONCURRENTLY refresh) covering at minimum the date and category_id columns"
+    },
+    {
+      "name": "REFRESH CONCURRENTLY",
+      "max_score": 10,
+      "description": "The materialized view refresh uses REFRESH MATERIALIZED VIEW CONCURRENTLY (not a plain REFRESH without CONCURRENTLY)"
+    },
+    {
+      "name": "EXPLAIN ANALYZE BUFFERS syntax",
+      "max_score": 10,
+      "description": "The design_notes.md shows or references EXPLAIN (ANALYZE, BUFFERS) — not just EXPLAIN alone — for validating index usage after migration"
+    },
+    {
+      "name": "Nightly cron for refresh",
+      "max_score": 7,
+      "description": "design_notes.md recommends scheduling the materialized view refresh as a nightly (or similar periodic) cron job rather than an ad-hoc manual step"
+    },
+    {
+      "name": "CONCURRENTLY index creation",
+      "max_score": 5,
+      "description": "Any new indexes created in the migration script use CREATE INDEX CONCURRENTLY to avoid write locks"
+    }
+  ]
+}

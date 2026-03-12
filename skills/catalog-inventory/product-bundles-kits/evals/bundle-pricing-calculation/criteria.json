@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements bundle pricing logic correctly, covering all four pricing types, proper savings calculations, and server-side price calculation patterns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "sum pricing type",
+      "max_score": 8,
+      "description": "Implements 'sum' pricing type that returns the total of all component prices as the bundle price"
+    },
+    {
+      "name": "fixed pricing type",
+      "max_score": 8,
+      "description": "Implements 'fixed' pricing type that returns a fixed dollar amount regardless of component prices"
+    },
+    {
+      "name": "discount_pct pricing type",
+      "max_score": 8,
+      "description": "Implements 'discount_pct' pricing type that applies a percentage discount to the component sum (e.g. sumPrice * (1 - value/100))"
+    },
+    {
+      "name": "discount_abs pricing type",
+      "max_score": 8,
+      "description": "Implements 'discount_abs' pricing type that subtracts a fixed amount from the component sum, floored at 0"
+    },
+    {
+      "name": "componentSum returned",
+      "max_score": 8,
+      "description": "The function returns a 'componentSum' (or equivalent) representing the total of all individual component prices"
+    },
+    {
+      "name": "savings returned",
+      "max_score": 8,
+      "description": "The function returns 'savings' (or equivalent) as the difference between componentSum and bundlePrice"
+    },
+    {
+      "name": "savingsPct returned",
+      "max_score": 8,
+      "description": "The function returns 'savingsPct' (or equivalent) as the percentage of savings relative to componentSum, rounded to an integer"
+    },
+    {
+      "name": "current prices fetched",
+      "max_score": 10,
+      "description": "Prices are fetched from a data source (DB, API, or input data) rather than using client-submitted or hardcoded prices"
+    },
+    {
+      "name": "toFixed precision",
+      "max_score": 8,
+      "description": "Bundle price for discount_pct and discount_abs uses toFixed(2) or equivalent rounding to 2 decimal places"
+    },
+    {
+      "name": "price per variant and quantity",
+      "max_score": 8,
+      "description": "Component sum accounts for quantity (price * quantity per component), not just unit price"
+    },
+    {
+      "name": "tests cover all pricing types",
+      "max_score": 10,
+      "description": "Test cases (or demo inputs) exercise all four pricing_type values (sum, fixed, discount_pct, discount_abs)"
+    },
+    {
+      "name": "no client price trust",
+      "max_score": 8,
+      "description": "Pricing function does NOT accept a pre-calculated price as a direct input — it computes price from component data"
+    }
+  ]
+}

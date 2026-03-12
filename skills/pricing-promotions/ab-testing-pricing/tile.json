@@ -1,0 +1,10 @@
+{
+  "name": "finsi/ab-testing-pricing",
+  "version": "0.1.0",
+  "summary": "Price experimentation frameworks with statistical significance and revenue tracking",
+  "skills": {
+    "ab-testing-pricing": {
+      "path": "SKILL.md"
+    }
+  }
+}

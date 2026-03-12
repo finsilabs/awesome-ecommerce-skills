@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements Magento cache tag integration by using IdentityInterface on a custom block, implementing proper FPC invalidation in an observer using TypeListInterface, and providing correct cache CLI guidance.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "IdentityInterface implemented",
+      "max_score": 12,
+      "description": "Block/FeaturedProducts.php implements \\Magento\\Framework\\DataObject\\IdentityInterface"
+    },
+    {
+      "name": "getIdentities returns entity CACHE_TAG",
+      "max_score": 10,
+      "description": "The getIdentities() method returns at least \\Magento\\Catalog\\Model\\Product::CACHE_TAG (the entity-level tag)"
+    },
+    {
+      "name": "getIdentities returns per-ID tags",
+      "max_score": 10,
+      "description": "The getIdentities() method returns per-product tags in the format CACHE_TAG . '_' . $id for each product ID"
+    },
+    {
+      "name": "Observer uses TypeListInterface",
+      "max_score": 12,
+      "description": "Observer/ProductSaveObserver.php injects and uses \\Magento\\Framework\\App\\Cache\\TypeListInterface to invalidate the cache"
+    },
+    {
+      "name": "Observer invalidates PageCacheType",
+      "max_score": 12,
+      "description": "The observer calls invalidate() with \\Magento\\PageCache\\Model\\Cache\\Type::TYPE_IDENTIFIER (or the equivalent page cache type identifier)"
+    },
+    {
+      "name": "cache:clean recommended for routine use",
+      "max_score": 12,
+      "description": "cache-maintenance.md recommends 'bin/magento cache:clean' (not cache:flush) for routine maintenance tasks"
+    },
+    {
+      "name": "cache:flush distinction explained",
+      "max_score": 10,
+      "description": "cache-maintenance.md explains that cache:flush removes all caches including those shared in Redis, while cache:clean is selective"
+    },
+    {
+      "name": "Observer uses constructor injection",
+      "max_score": 8,
+      "description": "Observer/ProductSaveObserver.php uses constructor dependency injection (not ObjectManager) to obtain TypeListInterface"
+    },
+    {
+      "name": "Block uses readonly property",
+      "max_score": 8,
+      "description": "The block class uses PHP constructor with dependency injection for any new services (does not use ObjectManager directly)"
+    },
+    {
+      "name": "No ObjectManager usage",
+      "max_score": 6,
+      "description": "Neither FeaturedProducts.php nor ProductSaveObserver.php directly uses \\Magento\\Framework\\App\\ObjectManager"
+    }
+  ]
+}

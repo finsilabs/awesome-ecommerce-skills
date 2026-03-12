@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent structures the checkout page with collapsible contact/shipping/payment sections driven by completedSteps and activeStep state, includes a responsive sticky order summary, keeps the order summary visible at all times, persists multi-step data to sessionStorage, and ensures keyboard accessibility for expanding/collapsing sections.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Three-step STEPS array",
+      "max_score": 8,
+      "description": "The checkout steps are defined as an ordered collection (array or equivalent) containing exactly the three steps: contact, shipping, and payment — in that order"
+    },
+    {
+      "name": "completedSteps state",
+      "max_score": 8,
+      "description": "A completedSteps Set (or equivalent) tracks which steps the user has finished; a step is added to it when that step is submitted/completed"
+    },
+    {
+      "name": "activeStep state",
+      "max_score": 8,
+      "description": "An activeStep string (or equivalent) tracks which section is currently expanded; it advances automatically to the next step after completion"
+    },
+    {
+      "name": "isLocked prop logic",
+      "max_score": 10,
+      "description": "Sections are locked (not editable/expandable) until their prerequisite step is completed — e.g. shipping is locked until contact is done"
+    },
+    {
+      "name": "Order summary always visible",
+      "max_score": 10,
+      "description": "The order summary component is rendered on every step of the checkout and is NOT conditionally hidden or removed at any step"
+    },
+    {
+      "name": "Sticky order summary",
+      "max_score": 8,
+      "description": "The order summary panel has position: sticky (or equivalent) applied so it stays in view as the user scrolls through the form"
+    },
+    {
+      "name": "Responsive two-column layout",
+      "max_score": 10,
+      "description": "On viewports 768px and wider the layout uses a two-column grid with a 380px summary column; on smaller screens it is single-column"
+    },
+    {
+      "name": "sessionStorage step data",
+      "max_score": 10,
+      "description": "Each completed step's form data is saved to sessionStorage and restored when the user navigates back to that step"
+    },
+    {
+      "name": "Keyboard expand/collapse",
+      "max_score": 10,
+      "description": "Collapsible checkout sections can be expanded or collapsed using keyboard interaction (Enter or Space key) in addition to mouse click"
+    },
+    {
+      "name": "Progress indicator",
+      "max_score": 9,
+      "description": "A checkout progress indicator (e.g. step numbers, labels, or completed checkmarks) is displayed, reflecting the current activeStep and completedSteps"
+    },
+    {
+      "name": "Mobile single-column layout",
+      "max_score": 9,
+      "description": "On mobile (below 768px breakpoint) the layout collapses to a single column with the summary not sticky or stacked below/above the form"
+    }
+  ]
+}

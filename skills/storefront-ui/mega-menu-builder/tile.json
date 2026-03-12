@@ -1,0 +1,10 @@
+{
+  "name": "finsi/mega-menu-builder",
+  "version": "0.1.0",
+  "summary": "Category navigation with mega menus, featured products, and promotional banners",
+  "skills": {
+    "mega-menu-builder": {
+      "path": "SKILL.md"
+    }
+  }
+}

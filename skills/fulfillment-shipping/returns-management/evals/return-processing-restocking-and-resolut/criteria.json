@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the return processing workflow: segregating quarantine from restock items, gating inventory restocking behind an inspection status, issuing refunds only after physical receipt, storing restocking fees in cents as a deduction (not a negative line item), supporting three resolution types, and using current pricing for exchange orders.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Quarantine and restock tracked separately",
+      "max_score": 8,
+      "description": "The inspection results record both restock_quantity and quarantine_quantity as distinct fields on return_lines (not combined into one field)"
+    },
+    {
+      "name": "No auto-restock without inspection",
+      "max_score": 10,
+      "description": "Inventory is only incremented for units explicitly marked as restock_quantity > 0 (NOT quarantine_quantity); quarantine units are NOT added to sellable inventory"
+    },
+    {
+      "name": "Inspecting status gate",
+      "max_score": 8,
+      "description": "The code includes logic for or reference to an 'inspecting' status between 'received' and 'resolved' — does NOT jump directly from received to resolved without an inspection step"
+    },
+    {
+      "name": "Refund after receipt only",
+      "max_score": 10,
+      "description": "Resolution (refund, store credit, or exchange) is executed only after the return is confirmed received — the code does NOT issue refunds at label_issued or in_transit stage"
+    },
+    {
+      "name": "Restocking fee in cents (INTEGER)",
+      "max_score": 8,
+      "description": "Restocking fee is stored and passed as an integer value in cents (not dollars, not a float/decimal)"
+    },
+    {
+      "name": "Fee as refund deduction",
+      "max_score": 10,
+      "description": "Restocking fee is subtracted from the total refund amount (e.g., Math.max(0, totalRefund - restockingFee)), NOT recorded as a negative line item in the order"
+    },
+    {
+      "name": "Refund to original payment",
+      "max_score": 8,
+      "description": "When resolution is 'refund', the code calls a function that issues money back to the original payment method"
+    },
+    {
+      "name": "Store credit resolution",
+      "max_score": 8,
+      "description": "When resolution is 'store_credit', the code calls a separate store credit issuance function (distinct from the refund-to-payment path)"
+    },
+    {
+      "name": "Exchange order resolution",
+      "max_score": 8,
+      "description": "When resolution is 'exchange', the code creates a new exchange order (distinct from issuing a monetary refund)"
+    },
+    {
+      "name": "Exchange at current prices",
+      "max_score": 10,
+      "description": "DESIGN.md or code comments state that exchange orders use current/live prices plus a zero-cost adjustment for the return credit — NOT the original order's historical prices"
+    },
+    {
+      "name": "Transaction wraps multi-step writes",
+      "max_score": 8,
+      "description": "Multi-step database operations (updating return lines + updating inventory + updating RMA status) are wrapped in a database transaction"
+    },
+    {
+      "name": "resolved_at timestamp",
+      "max_score": 4,
+      "description": "The return request is updated with a resolved_at timestamp when its status changes to 'resolved'"
+    }
+  ]
+}

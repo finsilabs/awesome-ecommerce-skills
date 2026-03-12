@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements the 30-day refund hold before payout approval, uses Stripe transfers for payments, enforces minimum payout thresholds and account gating, records payment details, sets correct tier thresholds with sustained-volume calculations, sends tier upgrade notifications, and detects cookie stuffing via click-to-order timing.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "30-day refund hold",
+      "max_score": 10,
+      "description": "Conversions are only approved for payout after a 30-day window has elapsed since creation (cutoff = 30 days ago), not approved immediately"
+    },
+    {
+      "name": "Stripe transfers API",
+      "max_score": 8,
+      "description": "Payouts are sent using stripe.transfers.create() (not stripe.payouts.create() or a manual transfer approach)"
+    },
+    {
+      "name": "Minimum payout threshold",
+      "max_score": 8,
+      "description": "Affiliates with total commission below $50 are skipped (not paid out), not below some other threshold"
+    },
+    {
+      "name": "Stripe account gate",
+      "max_score": 8,
+      "description": "Affiliates without a stripeConnectAccountId are skipped entirely — the code explicitly checks for the presence of stripeConnectAccountId before attempting a transfer"
+    },
+    {
+      "name": "Transfer ID recorded",
+      "max_score": 8,
+      "description": "After a successful transfer, the Stripe transfer ID (transfer.id) is stored against the affiliate's conversion records"
+    },
+    {
+      "name": "Paid-at timestamp recorded",
+      "max_score": 6,
+      "description": "After a successful transfer, a paidAt timestamp is stored on the conversion records"
+    },
+    {
+      "name": "Silver tier threshold",
+      "max_score": 8,
+      "description": "The silver tier threshold is set at $5,000 of monthly referred revenue (not a different amount)"
+    },
+    {
+      "name": "Gold tier threshold",
+      "max_score": 8,
+      "description": "The gold tier threshold is set at $20,000 of monthly referred revenue (not a different amount)"
+    },
+    {
+      "name": "Pending included in tier calc",
+      "max_score": 8,
+      "description": "Tier calculation includes BOTH 'pending' and 'approved' conversions in the revenue sum — not just approved conversions"
+    },
+    {
+      "name": "Tier upgrade email",
+      "max_score": 6,
+      "description": "A notification/email is sent to the affiliate when their tier changes (sendTierUpgradeEmail or equivalent)"
+    },
+    {
+      "name": "Trailing average for downgrade",
+      "max_score": 10,
+      "description": "Tier recalculation uses a trailing multi-month average (3-month or similar sustained window) rather than only the current calendar month, addressing the tier downgrade problem"
+    },
+    {
+      "name": "Cookie stuffing time threshold",
+      "max_score": 6,
+      "description": "Cookie stuffing is detected when the gap between last click and order creation is less than 10 seconds (not 5, not 30 — specifically 10 seconds)"
+    },
+    {
+      "name": "Cookie stuffing alert created",
+      "max_score": 6,
+      "description": "When cookie stuffing is detected, a fraud alert record is created (or equivalent alert triggered), including the affiliateId and orderId"
+    }
+  ]
+}

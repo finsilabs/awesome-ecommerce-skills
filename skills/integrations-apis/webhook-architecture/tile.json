@@ -1,0 +1,10 @@
+{
+  "name": "finsi/webhook-architecture",
+  "version": "0.1.0",
+  "summary": "Reliable webhook delivery with retries, signatures, dead-letter queues",
+  "skills": {
+    "webhook-architecture": {
+      "path": "SKILL.md"
+    }
+  }
+}

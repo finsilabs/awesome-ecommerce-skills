@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements a complete GDPR customer purge with a legal hold check, deletes from all required satellite systems in the correct order, uses a saga/checklist pattern for resilience, logs the purge action to the retention audit log, and includes a 30-day deadline tracking mechanism.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Legal hold check",
+      "max_score": 10,
+      "description": "Function checks for an active legal hold before proceeding with any deletion, and throws an error (or returns an error) if a hold is found"
+    },
+    {
+      "name": "Primary DB deletion",
+      "max_score": 8,
+      "description": "Function deletes or anonymizes the customer's data from the primary database (profile deletion AND order anonymization)"
+    },
+    {
+      "name": "Search index deletion",
+      "max_score": 8,
+      "description": "Function deletes the customer from a search index (Elasticsearch, Algolia, or equivalent)"
+    },
+    {
+      "name": "Analytics platform deletion",
+      "max_score": 8,
+      "description": "Function deletes the customer from an analytics service (analytics.deleteUser or equivalent)"
+    },
+    {
+      "name": "Email platform deletion",
+      "max_score": 8,
+      "description": "Function removes the customer from an email marketing platform (emailPlatform.deleteContact or equivalent)"
+    },
+    {
+      "name": "CDN cache purge",
+      "max_score": 7,
+      "description": "Function purges the customer's cached pages from a CDN (cdn.purgePrefix('/account/{customerId}') or equivalent)"
+    },
+    {
+      "name": "Backup exclusion flag",
+      "max_score": 7,
+      "description": "Function flags the customer ID in the backup system for exclusion from restores (backupSystem.excludeFromRestore or equivalent)"
+    },
+    {
+      "name": "Saga/checklist pattern",
+      "max_score": 10,
+      "description": "Function maintains a log or checklist (array, map, or DB record) of which systems have been successfully purged — enabling partial failure recovery"
+    },
+    {
+      "name": "Retention audit log entry",
+      "max_score": 8,
+      "description": "Function records the purge event in a retention audit log (db.retentionAuditLog.insert or equivalent) including the reason and systems purged"
+    },
+    {
+      "name": "Reason parameter typed",
+      "max_score": 6,
+      "description": "The reason parameter is typed or documented with at least these values: 'gdpr_request', 'inactivity', 'account_closure'"
+    },
+    {
+      "name": "30-day deadline tracking",
+      "max_score": 10,
+      "description": "DESIGN.md or code describes a mechanism to track GDPR deletion requests with deadlines (a table with request date + deadline, or automated reminders/escalations)"
+    },
+    {
+      "name": "No deletion without hold check",
+      "max_score": 10,
+      "description": "Code does NOT proceed to any deletion step if the legal hold check has not been performed first (hold check appears before any delete/purge call)"
+    }
+  ]
+}

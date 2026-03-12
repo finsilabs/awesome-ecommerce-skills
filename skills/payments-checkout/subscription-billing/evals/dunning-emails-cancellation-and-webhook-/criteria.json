@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements escalating dunning emails keyed to attempt_count, prevents duplicate emails by checking invoice status and attempt tracking, handles immediate vs. period-end cancellation correctly, stores cancellation reason, sends a winback email for period-end cancellations, and revoking access on subscription deletion.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Escalating email templates",
+      "max_score": 10,
+      "description": "Uses distinct email templates (or content) for attempt 1, attempt 2, and attempt 3+, where the messaging escalates in urgency"
+    },
+    {
+      "name": "attempt_count drives template",
+      "max_score": 8,
+      "description": "Uses `invoice.attempt_count` to select which dunning email template/content to send"
+    },
+    {
+      "name": "Update payment link in email",
+      "max_score": 6,
+      "description": "Dunning email data includes a direct link for the customer to update their payment method"
+    },
+    {
+      "name": "Invoice URL in email",
+      "max_score": 6,
+      "description": "Dunning email data includes the `hosted_invoice_url` (or equivalent invoice link) from the Stripe invoice object"
+    },
+    {
+      "name": "Duplicate email guard: invoice.status",
+      "max_score": 10,
+      "description": "Checks that `invoice.status !== 'paid'` (or equivalent) before sending dunning email to avoid re-sending on already-paid invoices"
+    },
+    {
+      "name": "Duplicate email guard: attempt tracking",
+      "max_score": 10,
+      "description": "Guards against duplicate sends by checking whether an email has already been sent for this specific `attempt_count` (e.g., comparing stored `emailSentForAttempt` to `invoice.attempt_count`)"
+    },
+    {
+      "name": "Cancel at period end by default",
+      "max_score": 10,
+      "description": "When `immediately` is false (or absent), sets `cancel_at_period_end: true` on the Stripe subscription rather than immediately canceling"
+    },
+    {
+      "name": "Immediate cancel uses cancel()",
+      "max_score": 8,
+      "description": "When `immediately` is true, calls `stripe.subscriptions.cancel()` rather than updating `cancel_at_period_end`"
+    },
+    {
+      "name": "Cancellation reason stored",
+      "max_score": 7,
+      "description": "Stores the cancellation `reason` in the local database subscription record"
+    },
+    {
+      "name": "Winback email on period-end cancel",
+      "max_score": 10,
+      "description": "Sends a winback / retention offer email when `immediately` is false (i.e., when canceling at period end)"
+    },
+    {
+      "name": "Revoke access on deletion",
+      "max_score": 8,
+      "description": "The `customer.subscription.deleted` webhook handler calls a function to revoke access (e.g., `revokeSubscriptionAccess` or equivalent) in addition to updating the DB status"
+    },
+    {
+      "name": "IMPLEMENTATION_NOTES: idempotency explanation",
+      "max_score": 7,
+      "description": "`IMPLEMENTATION_NOTES.md` explains how duplicate dunning emails are prevented"
+    }
+  ]
+}

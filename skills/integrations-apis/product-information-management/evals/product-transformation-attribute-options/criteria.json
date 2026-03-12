@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the Akeneo attribute value locale/scope fallback priority, caches attribute option codes as a Map for label lookup, uses labels instead of raw option codes, validates required fields before publishing, and applies Akeneo completeness scores as a quality gate.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Locale+scope first fallback",
+      "max_score": 9,
+      "description": "Attribute value resolution tries locale+scope match first before falling back to less specific matches"
+    },
+    {
+      "name": "Four-level fallback chain",
+      "max_score": 9,
+      "description": "Fallback priority implements all four levels: locale+scope, then locale-only (scope null), then scope-only (locale null), then neither (both null)"
+    },
+    {
+      "name": "Attribute options as Map",
+      "max_score": 9,
+      "description": "Attribute options are stored in a Map (or equivalent key-value cache) indexed by attribute code, with values as a Map from option code to label string"
+    },
+    {
+      "name": "Labels used not codes",
+      "max_score": 9,
+      "description": "Transformed product output contains human-readable labels (e.g., 'Blue', 'Medium') rather than raw option codes (e.g., 'CLR_BLU', 'SZ_M') for select-list attributes"
+    },
+    {
+      "name": "Option code fallback",
+      "max_score": 6,
+      "description": "When no label is found for an option code, the code itself is returned as fallback rather than null or an error"
+    },
+    {
+      "name": "Name validation",
+      "max_score": 9,
+      "description": "Products with a missing or empty name field are rejected/filtered out before reaching the storefront output"
+    },
+    {
+      "name": "Image validation",
+      "max_score": 9,
+      "description": "Products without a primary image are rejected/filtered out before reaching the storefront output"
+    },
+    {
+      "name": "Completeness gate",
+      "max_score": 10,
+      "description": "Only products with 100% completeness for the ecommerce channel are passed through (products with <100% ecommerce completeness are excluded)"
+    },
+    {
+      "name": "Design doc explains fallback",
+      "max_score": 8,
+      "description": "pipeline-design.md (or equivalent documentation file) explains the locale/scope fallback priority order"
+    },
+    {
+      "name": "Design doc explains caching",
+      "max_score": 8,
+      "description": "pipeline-design.md explains how attribute option labels are loaded and cached"
+    },
+    {
+      "name": "Transformer file structure",
+      "max_score": 7,
+      "description": "Transformation logic is placed in lib/akeneo/product-transformer.ts (or equivalent path following the lib/akeneo/ convention)"
+    },
+    {
+      "name": "Options loader separate",
+      "max_score": 7,
+      "description": "Attribute option loading/caching logic is separated from the transformation logic (in a distinct file or function)"
+    }
+  ]
+}

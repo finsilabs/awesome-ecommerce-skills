@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses Stripe as the preferred BNPL integration path for a Stripe-based store, correctly adds BNPL payment method types to the PaymentIntent, and configures the PaymentElement UI appropriately — without requiring a separate BNPL SDK.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "No extra BNPL SDK",
+      "max_score": 10,
+      "description": "The solution does NOT install or import a separate Klarna, Afterpay, or Affirm SDK — relies solely on Stripe for BNPL"
+    },
+    {
+      "name": "klarna in payment_method_types",
+      "max_score": 10,
+      "description": "The server-side PaymentIntent creation includes 'klarna' in the payment_method_types array"
+    },
+    {
+      "name": "afterpay_clearpay in payment_method_types",
+      "max_score": 10,
+      "description": "The server-side PaymentIntent creation includes 'afterpay_clearpay' in the payment_method_types array (not 'afterpay')"
+    },
+    {
+      "name": "PaymentElement used",
+      "max_score": 10,
+      "description": "The frontend checkout form uses Stripe's PaymentElement component (not a custom card element or separate BNPL buttons)"
+    },
+    {
+      "name": "layout: tabs or accordion",
+      "max_score": 10,
+      "description": "The PaymentElement is configured with a layout option set to either 'tabs' or 'accordion'"
+    },
+    {
+      "name": "useStripe and useElements hooks",
+      "max_score": 8,
+      "description": "The frontend checkout component uses the useStripe() and useElements() hooks from @stripe/react-stripe-js"
+    },
+    {
+      "name": "PaymentIntent server-side",
+      "max_score": 10,
+      "description": "The PaymentIntent is created server-side (in a backend route/API handler), not on the client"
+    },
+    {
+      "name": "currency: 'usd'",
+      "max_score": 7,
+      "description": "The PaymentIntent includes currency: 'usd' (lowercase)"
+    },
+    {
+      "name": "amount in cents",
+      "max_score": 8,
+      "description": "The PaymentIntent amount is passed in cents (smallest currency unit, e.g. integer), not dollars"
+    },
+    {
+      "name": "BNPL eligibility range guard",
+      "max_score": 9,
+      "description": "The solution includes a check or comment indicating BNPL methods are only appropriate within an eligible order amount range (not shown/enabled for all order amounts)"
+    },
+    {
+      "name": "Card included",
+      "max_score": 8,
+      "description": "The payment_method_types array also includes 'card' alongside BNPL methods"
+    }
+  ]
+}

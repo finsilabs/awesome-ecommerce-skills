@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent uses the correct Shopify Storefront API package, the createStorefrontApiClient factory function, the current API version, and properly distinguishes between public (client-side) and private (server-side) token configurations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct npm package",
+      "max_score": 15,
+      "description": "Uses @shopify/storefront-api-client as the npm package (not shopify-buy, @shopify/shopify-api, or any other package)"
+    },
+    {
+      "name": "createStorefrontApiClient factory",
+      "max_score": 10,
+      "description": "Uses createStorefrontApiClient() (imported from @shopify/storefront-api-client) to instantiate the client"
+    },
+    {
+      "name": "API version 2025-01",
+      "max_score": 10,
+      "description": "Sets apiVersion to \"2025-01\" in the client configuration"
+    },
+    {
+      "name": "publicAccessToken for client-side",
+      "max_score": 10,
+      "description": "Uses the publicAccessToken field (not privateAccessToken) in the client-side/browser-facing client configuration"
+    },
+    {
+      "name": "privateAccessToken for server-side",
+      "max_score": 10,
+      "description": "Uses the privateAccessToken field (not publicAccessToken) in the server-side client configuration"
+    },
+    {
+      "name": "Private token env var",
+      "max_score": 10,
+      "description": "The private access token is read from a non-NEXT_PUBLIC_ environment variable (e.g. SHOPIFY_STOREFRONT_PRIVATE_TOKEN), ensuring it is NOT exposed to the browser"
+    },
+    {
+      "name": "Public token env var",
+      "max_score": 5,
+      "description": "The public access token is read from a NEXT_PUBLIC_ prefixed environment variable (e.g. NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN), making it safe for browser use"
+    },
+    {
+      "name": "Two separate clients",
+      "max_score": 10,
+      "description": "Creates two distinct client instances: one for public/client-side use and one for private/server-side use"
+    },
+    {
+      "name": "storeDomain config",
+      "max_score": 5,
+      "description": "Passes a storeDomain (the myshopify.com domain) to the client configuration"
+    },
+    {
+      "name": "Server-side data fetch uses private client",
+      "max_score": 15,
+      "description": "Any server-side data fetching (e.g. getStaticProps, React Server Component, route handler) uses the private/server client instance, not the public one"
+    }
+  ]
+}

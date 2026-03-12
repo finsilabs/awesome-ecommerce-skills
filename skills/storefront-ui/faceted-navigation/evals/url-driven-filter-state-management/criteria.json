@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements URL-driven filter state management: encoding multi-value filters as repeated query params, parsing on mount and popstate, using pushState for history, resetting page on filter change, and cleaning up empty filter keys.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Multi-value URL encoding",
+      "max_score": 12,
+      "description": "The URL builder appends multi-value filters using repeated query param keys (e.g., brand=Nike&brand=Adidas), not comma-joined or JSON-encoded values"
+    },
+    {
+      "name": "URL parse function",
+      "max_score": 10,
+      "description": "A parse function reads URLSearchParams entries and groups values by key into arrays, skipping reserved keys (sort, page, q)"
+    },
+    {
+      "name": "URL build function",
+      "max_score": 8,
+      "description": "A build function serializes a filters object back to a query string, including sort, page, and q parameters"
+    },
+    {
+      "name": "Mount initialization",
+      "max_score": 10,
+      "description": "The hook initializes filter state by parsing the URL query string at mount time (not from a hardcoded default empty object)"
+    },
+    {
+      "name": "Popstate listener",
+      "max_score": 12,
+      "description": "The hook adds a 'popstate' event listener to re-sync filter state when the browser navigates back or forward, and removes it on cleanup"
+    },
+    {
+      "name": "pushState not replaceState",
+      "max_score": 12,
+      "description": "Filter changes call history.pushState() to add a new history entry, NOT history.replaceState()"
+    },
+    {
+      "name": "Page reset on filter change",
+      "max_score": 8,
+      "description": "Toggling a filter resets the page to 1 (not preserving the current page number)"
+    },
+    {
+      "name": "Empty key removal",
+      "max_score": 10,
+      "description": "When the last value is removed from a facet key, that key is deleted from the filters object entirely (not left as an empty array)"
+    },
+    {
+      "name": "Clear all resets URL",
+      "max_score": 8,
+      "description": "The clearAll function resets the URL to '?' or removes all filter params, rather than leaving stale params in the URL"
+    },
+    {
+      "name": "Notes document",
+      "max_score": 10,
+      "description": "IMPLEMENTATION_NOTES.md explains multi-value URL representation, popstate handling, and empty-key removal behavior"
+    }
+  ]
+}

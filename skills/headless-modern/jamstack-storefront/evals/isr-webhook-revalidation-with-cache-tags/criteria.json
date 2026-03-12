@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements on-demand ISR revalidation with Authorization header security, targeted use of revalidatePath and revalidateTag, correct event type handling, and semantic fetch cache tags in the data layer.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Authorization header check",
+      "max_score": 12,
+      "description": "app/api/revalidate/route.ts reads the 'authorization' header and returns a 401 response if it does not match 'Bearer <token>' (using an env variable for the token)"
+    },
+    {
+      "name": "revalidatePath used",
+      "max_score": 10,
+      "description": "app/api/revalidate/route.ts calls revalidatePath() for specific page paths (e.g. /products/${handle})"
+    },
+    {
+      "name": "revalidateTag used",
+      "max_score": 10,
+      "description": "app/api/revalidate/route.ts calls revalidateTag() to invalidate named cache tags"
+    },
+    {
+      "name": "product event type handled",
+      "max_score": 10,
+      "description": "app/api/revalidate/route.ts handles a 'product' event type by revalidating the specific product path and/or 'products' tag"
+    },
+    {
+      "name": "collection event type handled",
+      "max_score": 8,
+      "description": "app/api/revalidate/route.ts handles a 'collection' event type by revalidating the specific collection path and/or 'collections' tag"
+    },
+    {
+      "name": "all event type handled",
+      "max_score": 8,
+      "description": "app/api/revalidate/route.ts handles an 'all' event type that revalidates both 'products' and 'collections' tags"
+    },
+    {
+      "name": "Semantic tag names in data layer",
+      "max_score": 12,
+      "description": "lib/get-product.ts assigns fetch cache tags using semantic names including a per-product tag like 'product-${handle}' AND a collection tag like 'products'"
+    },
+    {
+      "name": "fetch next.tags used",
+      "max_score": 10,
+      "description": "lib/get-product.ts uses the next: { tags: [...] } option in the fetch call (not a manual cache wrapper)"
+    },
+    {
+      "name": "Targeted invalidation only",
+      "max_score": 10,
+      "description": "The revalidation endpoint does NOT call revalidatePath('/') or any other blanket full-site purge — it only revalidates paths/tags related to the event type"
+    },
+    {
+      "name": "Success response",
+      "max_score": 10,
+      "description": "app/api/revalidate/route.ts returns a JSON response with at least { revalidated: true } on success"
+    }
+  ]
+}

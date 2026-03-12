@@ -1,0 +1,10 @@
+{
+  "name": "finsi/database-optimization-commerce",
+  "version": "0.1.0",
+  "summary": "Product query optimization, search indexing, and read-replica strategies",
+  "skills": {
+    "database-optimization-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

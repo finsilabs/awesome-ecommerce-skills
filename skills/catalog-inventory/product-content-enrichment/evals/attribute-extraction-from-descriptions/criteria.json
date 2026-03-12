@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements product attribute extraction using the correct model, API settings, prompt schema, and response processing as specified in the product content enrichment skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct extraction model",
+      "max_score": 10,
+      "description": "Uses 'gpt-4o-mini' (not gpt-4o, gpt-4, gpt-3.5-turbo, or other models) for attribute extraction"
+    },
+    {
+      "name": "json_object response format",
+      "max_score": 10,
+      "description": "The API call for attribute extraction sets response_format to { type: 'json_object' }"
+    },
+    {
+      "name": "Temperature zero",
+      "max_score": 10,
+      "description": "Temperature is set to 0 for the attribute extraction API call"
+    },
+    {
+      "name": "Required attribute keys",
+      "max_score": 10,
+      "description": "The extraction prompt asks for all seven specific keys: material, color, dimensions, weight, care_instructions, country_of_origin, and warranty"
+    },
+    {
+      "name": "Null for missing values",
+      "max_score": 10,
+      "description": "The prompt explicitly instructs the model to use null (not an empty string, 'unknown', or omit the key) for any attribute not mentioned in the description"
+    },
+    {
+      "name": "No inference instruction",
+      "max_score": 10,
+      "description": "The prompt explicitly states NOT to guess or infer values not explicitly stated in the description"
+    },
+    {
+      "name": "Null value stripping",
+      "max_score": 10,
+      "description": "After parsing the JSON response, null (and undefined) values are filtered out before the attributes object is returned or saved"
+    },
+    {
+      "name": "JSON parse try/catch",
+      "max_score": 10,
+      "description": "JSON.parse (or equivalent) of the model's response is wrapped in a try/catch block that throws or returns a meaningful error on parse failure"
+    },
+    {
+      "name": "Batch continues on failure",
+      "max_score": 10,
+      "description": "When processing multiple descriptions, a failure for one product is caught per-product and the batch continues rather than throwing and stopping all processing"
+    },
+    {
+      "name": "Extracted results in output file",
+      "max_score": 10,
+      "description": "A results file (JSON) is written containing the extracted attributes for each processed product, with null-stripped fields"
+    }
+  ]
+}

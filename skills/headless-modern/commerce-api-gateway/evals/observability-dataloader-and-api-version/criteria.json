@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent instruments tracing with the correct OpenTelemetry packages and service name, initializes tracing before other imports, uses DataLoader to solve N+1 queries, versions the gateway API at the route prefix level (not subgraphs), and wraps a legacy REST API using @graphql-tools/wrap.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "@opentelemetry/sdk-node package",
+      "max_score": 8,
+      "description": "tracing.ts imports NodeSDK from '@opentelemetry/sdk-node' (not a different OTel package or SDK)"
+    },
+    {
+      "name": "OTLP HTTP exporter",
+      "max_score": 8,
+      "description": "tracing.ts imports OTLPTraceExporter from '@opentelemetry/exporter-trace-otlp-http' (not grpc or another exporter)"
+    },
+    {
+      "name": "HttpInstrumentation",
+      "max_score": 7,
+      "description": "tracing.ts includes HttpInstrumentation from '@opentelemetry/instrumentation-http' in the instrumentations array"
+    },
+    {
+      "name": "serviceName commerce-gateway",
+      "max_score": 8,
+      "description": "NodeSDK is configured with serviceName: 'commerce-gateway'"
+    },
+    {
+      "name": "Tracing initialized first",
+      "max_score": 8,
+      "description": "DECISIONS.md or code comments/structure indicate that tracing.ts must be imported/initialized before other application modules"
+    },
+    {
+      "name": "DataLoader for inventory batching",
+      "max_score": 10,
+      "description": "inventory-resolver.ts uses DataLoader (from the 'dataloader' package or similar) to batch multiple product ID lookups into a single API call"
+    },
+    {
+      "name": "No per-item inventory calls",
+      "max_score": 8,
+      "description": "inventory-resolver.ts does NOT fetch inventory one product at a time (no loop with individual awaits per product ID)"
+    },
+    {
+      "name": "API versioning at gateway prefixes",
+      "max_score": 9,
+      "description": "server.ts or DECISIONS.md shows versioned routes using path prefixes (e.g. /api/v1/... and /api/v2/...) at the gateway level, not via separate subgraph schemas"
+    },
+    {
+      "name": "@graphql-tools/wrap for legacy service",
+      "max_score": 10,
+      "description": "executor.ts or pricing schema setup imports wrapSchema from '@graphql-tools/wrap' to wrap the legacy REST API"
+    },
+    {
+      "name": "OTEL_EXPORTER_OTLP_ENDPOINT env var",
+      "max_score": 7,
+      "description": "tracing.ts reads the OTLP endpoint from the OTEL_EXPORTER_OTLP_ENDPOINT environment variable (not hardcoded)"
+    },
+    {
+      "name": "Dependencies in package.json",
+      "max_score": 7,
+      "description": "package.json lists @opentelemetry/sdk-node, @opentelemetry/exporter-trace-otlp-http, and @opentelemetry/instrumentation-http as dependencies"
+    },
+    {
+      "name": "sdk.start() invoked",
+      "max_score": 5,
+      "description": "tracing.ts calls sdk.start() after creating the NodeSDK instance to activate the instrumentation"
+    },
+    {
+      "name": "Batch resolver receives ID array",
+      "max_score": 5,
+      "description": "The DataLoader batch function in inventory-resolver.ts accepts an array of IDs and makes a single bulk/batch API call for all of them"
+    }
+  ]
+}

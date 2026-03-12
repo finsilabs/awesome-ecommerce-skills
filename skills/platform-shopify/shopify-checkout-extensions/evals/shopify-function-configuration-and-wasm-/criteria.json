@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly builds a Shopify Function for discounts, respects the WASM compilation constraints (no network calls, fast execution), configures the TOML accurately with the function type, runtime, and build output path, and documents the correct activation path via Admin Discounts.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Function TOML type",
+      "max_score": 8,
+      "description": "The `shopify.extension.toml` sets `type = \"function\"` (not `type = \"ui_extension\"` or missing)"
+    },
+    {
+      "name": "Runtime declared",
+      "max_score": 8,
+      "description": "The `shopify.extension.toml` includes a `runtime` field set to `\"javascript\"` or `\"rust\"`"
+    },
+    {
+      "name": "WASM output path",
+      "max_score": 10,
+      "description": "The `[extensions.build]` section in TOML includes `path = \"dist/index.wasm\"` as the build output"
+    },
+    {
+      "name": "No network calls in Function",
+      "max_score": 12,
+      "description": "The Function source code (`index.ts`) does NOT contain any `fetch()`, HTTP client calls, or other network I/O inside the `run()` function"
+    },
+    {
+      "name": "Configuration via input variables",
+      "max_score": 10,
+      "description": "Discount thresholds or configuration values are either hardcoded constants or derived from Function input (e.g. `input.cart` metafields / input variables) — NOT fetched externally at runtime"
+    },
+    {
+      "name": "FunctionRunResult discounts field",
+      "max_score": 8,
+      "description": "The `run()` function returns an object with a `discounts` array containing at least one discount entry with a `value.percentage` or `value.fixedAmount` field"
+    },
+    {
+      "name": "discountApplicationStrategy present",
+      "max_score": 8,
+      "description": "The returned `FunctionRunResult` includes the `discountApplicationStrategy` field (e.g. `\"FIRST\"` or `\"MAXIMUM\"`)"
+    },
+    {
+      "name": "No-op return for zero discount",
+      "max_score": 8,
+      "description": "When no discount tier is reached, the Function returns early with an empty discounts array (avoids unnecessary processing)"
+    },
+    {
+      "name": "Activation via Admin Discounts",
+      "max_score": 14,
+      "description": "DEPLOYMENT.md states that after deployment, the Function is activated from Admin → Discounts (NOT from Admin → Checkout or Checkout editor)"
+    },
+    {
+      "name": "Deploy command documented",
+      "max_score": 8,
+      "description": "DEPLOYMENT.md includes `shopify app deploy` as the deployment command"
+    },
+    {
+      "name": "Testing note for Functions",
+      "max_score": 6,
+      "description": "DEPLOYMENT.md notes that Functions cannot be fully tested with local dev preview and require deployment to a real store for end-to-end testing"
+    }
+  ]
+}

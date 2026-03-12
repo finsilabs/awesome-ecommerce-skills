@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements edge-side personalization using the shell-caching pattern with Cloudflare's cache API, sets appropriate Vary headers to prevent cache pollution, avoids large library dependencies, and ensures edge writes are idempotent.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "caches.default usage",
+      "max_score": 12,
+      "description": "Uses `caches.default` (the Cloudflare Cache API) to store and retrieve the page shell, not a KV namespace or in-memory Map"
+    },
+    {
+      "name": "waitUntil for cache put",
+      "max_score": 12,
+      "description": "Cache writes are done via `ctx.waitUntil(cache.put(...))` or `env.ctx?.waitUntil(cache.put(...))` (background, non-blocking)"
+    },
+    {
+      "name": "Impersonal cache key",
+      "max_score": 10,
+      "description": "The cache key used for `cache.match()` and `cache.put()` is based only on the URL (NOT including customer ID, cookies, or other personalization data)"
+    },
+    {
+      "name": "Vary header on personalized responses",
+      "max_score": 12,
+      "description": "Personalized responses include a `Vary` header set to the customer identifier header (e.g. `Vary: x-customer-id` or equivalent)"
+    },
+    {
+      "name": "No broad Vary: Cookie",
+      "max_score": 8,
+      "description": "Does NOT set `Vary: Cookie` broadly on all responses (only sets Vary on the personalization-specific header that differentiates variants)"
+    },
+    {
+      "name": "Placeholder injection pattern",
+      "max_score": 10,
+      "description": "Personalization is injected by replacing a placeholder string in the cached HTML shell (e.g. `html.replace('<!--CUSTOMER_TIER-->', ...)`) rather than fetching a unique page from origin per customer"
+    },
+    {
+      "name": "Anonymous path returns cached shell",
+      "max_score": 8,
+      "description": "Requests without a customer identifier (unauthenticated users) are served the cached shell directly without triggering any personalization logic"
+    },
+    {
+      "name": "No large library imports",
+      "max_score": 8,
+      "description": "Does NOT import lodash, moment, or other large utility libraries; uses native Web APIs (e.g. native string methods, `URL`, `Response`, `Request`) throughout"
+    },
+    {
+      "name": "Idempotent edge writes",
+      "max_score": 10,
+      "description": "Any write operations (analytics events, cookie setting) are safe to execute more than once — either by design or with an explicit guard — to handle Worker retry scenarios"
+    },
+    {
+      "name": "Prefs from KV not external fetch",
+      "max_score": 10,
+      "description": "Customer personalization data (tier, preferences) is read from an edge KV store, NOT via an inline synchronous fetch to an external API"
+    }
+  ]
+}

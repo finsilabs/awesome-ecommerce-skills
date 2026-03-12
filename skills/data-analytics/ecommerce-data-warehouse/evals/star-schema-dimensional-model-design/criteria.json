@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent designs the e-commerce star schema following the prescribed dimensional modeling patterns, including correct SCD Type 2 implementation, fact table grain and measures, date key format, and monetary consistency documentation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Date key as INTEGER",
+      "max_score": 8,
+      "description": "The date dimension's primary key is defined as INTEGER (not DATE or VARCHAR), reflecting the YYYYMMDD integer format"
+    },
+    {
+      "name": "SCD Type 2 on customer dim",
+      "max_score": 10,
+      "description": "The customer dimension includes all three SCD Type 2 fields: effective_from (TIMESTAMP NOT NULL), effective_to with default '9999-12-31', and is_current BOOLEAN with default true"
+    },
+    {
+      "name": "SCD Type 2 on product dim",
+      "max_score": 10,
+      "description": "The product dimension includes all three SCD Type 2 fields: effective_from (TIMESTAMP NOT NULL), effective_to with default '9999-12-31', and is_current BOOLEAN with default true"
+    },
+    {
+      "name": "Fact grain: line item",
+      "max_score": 7,
+      "description": "The order fact table is documented or named to indicate the grain is one row per order line item (not per order)"
+    },
+    {
+      "name": "Derived measure: gross_revenue",
+      "max_score": 8,
+      "description": "The fact table defines gross_revenue as quantity multiplied by unit_price (comment or column name makes this derivation clear)"
+    },
+    {
+      "name": "Derived measure: net_revenue",
+      "max_score": 8,
+      "description": "The fact table defines net_revenue as gross_revenue minus discount_amount"
+    },
+    {
+      "name": "Derived measure: gross_profit",
+      "max_score": 8,
+      "description": "The fact table defines gross_profit as net_revenue minus cost_of_goods"
+    },
+    {
+      "name": "is_first_order flag",
+      "max_score": 7,
+      "description": "The order line item fact table includes an is_first_order BOOLEAN column"
+    },
+    {
+      "name": "Daily aggregate fact table",
+      "max_score": 8,
+      "description": "A separate daily aggregate fact table is defined for dashboard use (distinct from the line-item fact table)"
+    },
+    {
+      "name": "Aggregate fact composite PK",
+      "max_score": 7,
+      "description": "The daily aggregate fact table has a composite primary key on (date_key, channel_key)"
+    },
+    {
+      "name": "Date dimension attributes",
+      "max_score": 8,
+      "description": "The date dimension includes fiscal period fields (fiscal_quarter or fiscal_year) and at least one of: is_holiday, is_weekend, week_of_year"
+    },
+    {
+      "name": "Monetary convention documented",
+      "max_score": 11,
+      "description": "The schema file or design-notes.md explicitly states whether monetary values are stored as cents (integers) or dollars (decimals) and applies that convention consistently"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements inline video with iOS-compatible autoplay attributes, dual video sources in the right order, CDN image URL construction with proper parameters, retina-correct image sizing, hero image prioritization attributes, and modern image format guidance.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "playsInline attribute",
+      "max_score": 8,
+      "description": "The video element includes the playsInline attribute (or playsInline={true} in JSX)"
+    },
+    {
+      "name": "muted attribute",
+      "max_score": 8,
+      "description": "The video element includes the muted attribute (or muted={true} in JSX)"
+    },
+    {
+      "name": "preload metadata",
+      "max_score": 8,
+      "description": "The video element has preload='metadata' (not 'auto' or 'none')"
+    },
+    {
+      "name": "WebM source first",
+      "max_score": 8,
+      "description": "The video element includes both a WebM source and an MP4 source, with the WebM <source> listed before the MP4 <source>"
+    },
+    {
+      "name": "WebM URL derivation",
+      "max_score": 6,
+      "description": "The WebM URL is derived from the MP4 src by replacing '.mp4' with '.webm' (i.e., src.replace('.mp4', '.webm') or equivalent)"
+    },
+    {
+      "name": "Video fallback text",
+      "max_score": 6,
+      "description": "The video element contains a text fallback (inside <video> tags) that includes a download link to the MP4 src"
+    },
+    {
+      "name": "CDN URL quality and format auto",
+      "max_score": 8,
+      "description": "buildImageUrl constructs a URL containing both q_auto (or quality=auto) and f_auto (or format=auto) parameters"
+    },
+    {
+      "name": "CDN c_fill crop mode",
+      "max_score": 6,
+      "description": "buildImageUrl constructs a URL containing c_fill as the crop/fit mode"
+    },
+    {
+      "name": "fetchpriority high on hero",
+      "max_score": 10,
+      "description": "HeroImage.jsx includes fetchpriority='high' (or fetchPriority='high' in JSX) on the img element"
+    },
+    {
+      "name": "loading eager on hero",
+      "max_score": 8,
+      "description": "HeroImage.jsx includes loading='eager' on the img element"
+    },
+    {
+      "name": "2x retina sizing guidance",
+      "max_score": 10,
+      "description": "MEDIA_GUIDE.md states that images should be served at 2x the rendered/CSS size for retina screens (e.g., a 400px container needs an 800px image), and explicitly warns against requesting unnecessarily larger sizes"
+    },
+    {
+      "name": "WebP/AVIF format guidance",
+      "max_score": 8,
+      "description": "MEDIA_GUIDE.md recommends WebP or AVIF as the image format and mentions providing a JPEG fallback (via <picture> element or CDN content negotiation)"
+    },
+    {
+      "name": "iOS autoplay guidance",
+      "max_score": 6,
+      "description": "MEDIA_GUIDE.md explains that both playsInline and muted are required for autoplay on iOS Safari"
+    }
+  ]
+}

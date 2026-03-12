@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent correctly implements Web Push notifications using the web-push package, handles VAPID key security, uses the idb library for IndexedDB offline catalog, implements the useOnlineStatus hook correctly, and follows iOS push notification constraints.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "web-push package",
+      "max_score": 8,
+      "description": "The server-side push code imports from 'web-push' (not another push library)"
+    },
+    {
+      "name": "webpush.setVapidDetails",
+      "max_score": 8,
+      "description": "The server code calls webpush.setVapidDetails() with a mailto: address as the first argument, and VAPID public and private keys"
+    },
+    {
+      "name": "Promise.allSettled for bulk send",
+      "max_score": 10,
+      "description": "The code uses Promise.allSettled (NOT Promise.all) when sending notifications to multiple subscribers"
+    },
+    {
+      "name": "Push payload fields",
+      "max_score": 6,
+      "description": "The push notification payload includes title, body, icon, url, and tag fields"
+    },
+    {
+      "name": "SW badge and renotify",
+      "max_score": 8,
+      "description": "The service worker showNotification call includes badge set to an icon path and renotify: true"
+    },
+    {
+      "name": "notificationclick closes and opens",
+      "max_score": 6,
+      "description": "The notificationclick handler calls event.notification.close() AND clients.openWindow() with the notification's data URL"
+    },
+    {
+      "name": "userVisibleOnly subscription",
+      "max_score": 6,
+      "description": "The client-side pushManager.subscribe() call includes userVisibleOnly: true"
+    },
+    {
+      "name": "VAPID key as Uint8Array",
+      "max_score": 8,
+      "description": "The applicationServerKey in pushManager.subscribe() is converted from base64 string to Uint8Array (via a urlBase64ToUint8Array or equivalent conversion function)"
+    },
+    {
+      "name": "VAPID key storage warning",
+      "max_score": 8,
+      "description": "The PUSH_SETUP.md warns that the VAPID private key should be stored in a secrets manager and that losing it will invalidate all existing push subscriptions"
+    },
+    {
+      "name": "Permission timing advice",
+      "max_score": 6,
+      "description": "The PUSH_SETUP.md recommends requesting push permission only after a relevant user action (such as order placement or showing interest in back-in-stock alerts), not on page load"
+    },
+    {
+      "name": "iOS push limitations",
+      "max_score": 8,
+      "description": "The PUSH_SETUP.md mentions that iOS push requires iOS 16.4+ AND standalone display mode (user must add to Home Screen)"
+    },
+    {
+      "name": "idb library for IndexedDB",
+      "max_score": 6,
+      "description": "The offline page or related code uses the 'idb' library (openDB from 'idb') rather than raw IndexedDB API calls"
+    },
+    {
+      "name": "useOnlineStatus initial state",
+      "max_score": 6,
+      "description": "The useOnlineStatus hook initializes state with navigator.onLine (with a typeof navigator !== 'undefined' guard), NOT just hardcoded true"
+    },
+    {
+      "name": "Event listener cleanup",
+      "max_score": 6,
+      "description": "The useOnlineStatus hook's useEffect returns a cleanup function that removes both the 'online' and 'offline' event listeners"
+    }
+  ]
+}

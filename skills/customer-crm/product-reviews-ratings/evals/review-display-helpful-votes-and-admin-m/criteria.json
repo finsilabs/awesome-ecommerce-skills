@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the review display widget with correct default sort order, pagination behavior, verified-purchase badge display, and a helpful votes endpoint that prevents duplicate voting.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Default sort: most helpful",
+      "max_score": 10,
+      "description": "The review listing query or API orders by helpfulVotes descending (most helpful first) as the default sort, not by createdAt or rating"
+    },
+    {
+      "name": "Initial page size 5-10",
+      "max_score": 9,
+      "description": "The initial/default page size for review display is between 5 and 10 reviews (inclusive), not 20, 50, or 'all'"
+    },
+    {
+      "name": "Pagination implemented",
+      "max_score": 8,
+      "description": "The review listing supports pagination (page/offset parameter or cursor), enabling subsequent pages to be loaded beyond the initial set"
+    },
+    {
+      "name": "verifiedPurchase badge",
+      "max_score": 9,
+      "description": "The review display output or component includes a visual indicator (badge, label, or flag) for reviews where verifiedPurchase is true"
+    },
+    {
+      "name": "Duplicate vote prevention",
+      "max_score": 10,
+      "description": "The helpful vote endpoint checks whether (reviewId, voterId) already exists before creating a vote"
+    },
+    {
+      "name": "409 on duplicate vote",
+      "max_score": 9,
+      "description": "The helpful vote endpoint returns HTTP 409 (or an equivalent conflict error) when the same voter attempts to vote again on the same review"
+    },
+    {
+      "name": "voterId uses session or IP",
+      "max_score": 8,
+      "description": "The voterId is derived from the customer's session ID when available, falling back to the request IP address (not just IP, not just session)"
+    },
+    {
+      "name": "helpfulVotes counter incremented",
+      "max_score": 8,
+      "description": "After a successful vote, the review's helpfulVotes counter is incremented (not replaced or recalculated from a join)"
+    },
+    {
+      "name": "Review request email timing",
+      "max_score": 9,
+      "description": "The post-purchase review request is scheduled with a 5-day delay after delivery (not immediately, not 1 day, not at ship time)"
+    },
+    {
+      "name": "Signed token in review link",
+      "max_score": 10,
+      "description": "The review request email link includes a signed token (not a plain customerId or orderId), so customers can submit reviews without logging in"
+    },
+    {
+      "name": "Only approved reviews shown",
+      "max_score": 10,
+      "description": "The public review listing filters to only show reviews with status 'approved'; pending/spam/rejected reviews are excluded"
+    }
+  ]
+}

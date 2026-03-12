@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses SCAPI Shopper APIs (not OCAPI) for a headless storefront, leverages the Salesforce Commerce SDK for type-safe clients, applies the select parameter to limit response payload sizes, and implements proper resilience patterns for high-traffic catalog serving.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SCAPI over OCAPI Shop",
+      "max_score": 10,
+      "description": "Product catalog and search functionality uses SCAPI Shopper APIs (shopper-search, shopper-products endpoints) rather than OCAPI Shop API endpoints"
+    },
+    {
+      "name": "Commerce SDK package",
+      "max_score": 10,
+      "description": "Code imports or references `commerce-sdk-isomorphic` (for Node.js) or `@salesforce/commerce-sdk-react` (for React) rather than making raw fetch calls to SCAPI"
+    },
+    {
+      "name": "SCAPI base URL pattern",
+      "max_score": 8,
+      "description": "Any manually constructed SCAPI URLs follow the pattern `https://{shortCode}.api.commercecloud.salesforce.com/` using an environment variable for the short code"
+    },
+    {
+      "name": "select parameter usage",
+      "max_score": 10,
+      "description": "At least one API call to a list or search endpoint includes a `select` query parameter to limit returned fields (e.g. `?select=(id,name,price_min)` or equivalent)"
+    },
+    {
+      "name": "Product search expand fields",
+      "max_score": 7,
+      "description": "Product search calls include `expand=images,prices,availability,variations` (or a subset) in the query parameters"
+    },
+    {
+      "name": "siteId parameter present",
+      "max_score": 8,
+      "description": "All SCAPI endpoint calls include a `siteId` query parameter set from an environment variable"
+    },
+    {
+      "name": "Exponential backoff on 429",
+      "max_score": 10,
+      "description": "HTTP 429 (rate limit) responses trigger a retry with exponential backoff rather than immediate retry or hard failure"
+    },
+    {
+      "name": "Server-side catalog caching",
+      "max_score": 10,
+      "description": "Catalog or product list responses are cached server-side (e.g. in-memory cache, Redis, or HTTP caching headers) to reduce repeated API calls"
+    },
+    {
+      "name": "SLAS guest token for shopper calls",
+      "max_score": 9,
+      "description": "Shopper API calls are authenticated with a SLAS Bearer token (Authorization: Bearer ...) rather than Basic auth or no auth"
+    },
+    {
+      "name": "Avoid OCAPI for catalog",
+      "max_score": 8,
+      "description": "No OCAPI Shop API URLs (e.g. /s/{siteId}/dw/shop/...) are used for product catalog or search operations"
+    },
+    {
+      "name": "Environment variable config",
+      "max_score": 10,
+      "description": "SFCC_SHORT_CODE, SFCC_ORG_ID, and SFCC_SITE_ID are all sourced from environment variables rather than hardcoded"
+    }
+  ]
+}

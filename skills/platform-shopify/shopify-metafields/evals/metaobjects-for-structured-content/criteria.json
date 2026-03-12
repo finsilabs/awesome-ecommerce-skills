@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses Metaobjects (not JSON metafields) for structured multi-field content, correctly uses metaobjectDefinitionCreate followed by metaobjectCreate, applies metaobjectUpdate for updates, and renders content correctly in Liquid using the appropriate access patterns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Metaobjects used, not JSON",
+      "max_score": 15,
+      "description": "The FAQ and testimonial data is stored using Metaobject types (metaobjectDefinitionCreate + metaobjectCreate), NOT as a json-type metafield on the shop or product"
+    },
+    {
+      "name": "metaobjectDefinitionCreate for FAQs",
+      "max_score": 8,
+      "description": "A metaobjectDefinitionCreate mutation is called to define the FAQ type with fieldDefinitions (at minimum question and answer fields)"
+    },
+    {
+      "name": "metaobjectDefinitionCreate for testimonials",
+      "max_score": 8,
+      "description": "A separate metaobjectDefinitionCreate mutation is called to define the testimonial type with fieldDefinitions (at minimum customer_name and quote fields)"
+    },
+    {
+      "name": "fieldDefinitions have required flags",
+      "max_score": 7,
+      "description": "At least the core fields (question/answer for FAQs, customer_name/quote for testimonials) have required: true in their fieldDefinitions"
+    },
+    {
+      "name": "metaobjectCreate for entries",
+      "max_score": 10,
+      "description": "Each FAQ and testimonial entry is created using metaobjectCreate with a fields array — not via a bulk JSON import or metafieldsSet"
+    },
+    {
+      "name": "Liquid .value iteration",
+      "max_score": 10,
+      "description": "Liquid snippets access the list of entries using .value on the shop metafield (e.g., shop.metafields.custom.faq_entries.value) and iterate with a for loop"
+    },
+    {
+      "name": "Individual field access in Liquid",
+      "max_score": 10,
+      "description": "Liquid snippets access individual fields on each entry using .field_name.value pattern (e.g., faq.question.value) rather than treating the object as a plain hash"
+    },
+    {
+      "name": "metaobjectUpdate referenced",
+      "max_score": 8,
+      "description": "The script or schema notes include a metaobjectUpdate call or code example for updating an existing entry (not recreating it), or at minimum the dry-run log references metaobjectUpdate"
+    },
+    {
+      "name": "Rating field type correct",
+      "max_score": 7,
+      "description": "The testimonial rating field uses the type \"rating\" or \"number_integer\" (not plain text) in its field definition"
+    },
+    {
+      "name": "Type names in schema doc",
+      "max_score": 8,
+      "description": "content-schema.md documents the metaobject type names (e.g., faq_entry, testimonial) and the key+type for each field in both structures"
+    },
+    {
+      "name": "Dry-run log produced",
+      "max_score": 9,
+      "description": "dry-run-log.txt exists and shows at least one example of metaobjectDefinitionCreate payload and one metaobjectCreate payload"
+    }
+  ]
+}

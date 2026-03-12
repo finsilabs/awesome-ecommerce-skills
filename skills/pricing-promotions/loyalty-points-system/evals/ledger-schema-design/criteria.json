@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent designs a ledger-based loyalty schema with the correct tables, columns, constraints, and indexes as specified by the skill. The key distinction is using an append-only transaction ledger rather than a mutable balance column.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Append-only ledger table",
+      "max_score": 12,
+      "description": "Creates a transactions/ledger table (named loyalty_transactions or similar) rather than storing a mutable balance directly on the accounts table"
+    },
+    {
+      "name": "Accounts table: UUID primary key",
+      "max_score": 6,
+      "description": "loyalty_accounts table uses a UUID primary key (e.g., gen_random_uuid() or uuid_generate_v4())"
+    },
+    {
+      "name": "Accounts table: customer_id unique FK",
+      "max_score": 6,
+      "description": "loyalty_accounts has a customer_id column that is UNIQUE and references the customers table"
+    },
+    {
+      "name": "Accounts table: tier CHECK constraint",
+      "max_score": 10,
+      "description": "tier column has a CHECK constraint restricting values to exactly 'bronze', 'silver', 'gold', 'platinum'"
+    },
+    {
+      "name": "Accounts table: lifetime_spend column",
+      "max_score": 8,
+      "description": "loyalty_accounts includes a lifetime_spend column (INTEGER or BIGINT, in cents) used for tier calculation, defaulting to 0"
+    },
+    {
+      "name": "Transactions table: signed points column",
+      "max_score": 10,
+      "description": "loyalty_transactions has a points column that is INTEGER (positive for earned, negative for redeemed/expired) — NOT two separate columns or an unsigned type"
+    },
+    {
+      "name": "Transactions table: type CHECK constraint",
+      "max_score": 10,
+      "description": "type column has a CHECK constraint that includes at minimum: 'purchase', 'bonus', 'redemption', 'expiration', 'adjustment', 'referral'"
+    },
+    {
+      "name": "Transactions table: expires_at column",
+      "max_score": 8,
+      "description": "loyalty_transactions includes an expires_at column (TIMESTAMPTZ or TIMESTAMP, nullable) to support point expiration policies"
+    },
+    {
+      "name": "Transactions table: reference_id column",
+      "max_score": 6,
+      "description": "loyalty_transactions includes a reference_id column (UUID, nullable) for linking to orders, referrals, reviews etc."
+    },
+    {
+      "name": "Account-date index",
+      "max_score": 12,
+      "description": "Creates an index on loyalty_transactions covering (account_id, created_at DESC) for efficient balance lookups"
+    },
+    {
+      "name": "Partial expiry index",
+      "max_score": 12,
+      "description": "Creates a partial index on loyalty_transactions(expires_at) WHERE expires_at IS NOT NULL for efficient expiration job queries"
+    }
+  ]
+}

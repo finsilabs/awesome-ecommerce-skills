@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the bundle product display page and cart bundle UI, including pricing display with savings, default variant selection, and the cart group layout with savings badge.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "component sum displayed",
+      "max_score": 10,
+      "description": "The bundle PDP displays the total component sum (original value) as well as the final bundle price, not just the bundle price alone"
+    },
+    {
+      "name": "savings amount displayed",
+      "max_score": 8,
+      "description": "The PDP shows the savings amount (componentSum minus bundlePrice) when there is a discount"
+    },
+    {
+      "name": "savings percentage displayed",
+      "max_score": 8,
+      "description": "The PDP shows the savings percentage when there is a discount (e.g. '20% off' or 'Save 20%')"
+    },
+    {
+      "name": "first variant pre-selected",
+      "max_score": 10,
+      "description": "Required components with no fixed variant_id have the first available option pre-selected by default in the UI state"
+    },
+    {
+      "name": "required component check",
+      "max_score": 8,
+      "description": "Add-to-cart is only enabled (or pricing is only shown) when all required components have a selection"
+    },
+    {
+      "name": "cart bundle group header",
+      "max_score": 8,
+      "description": "In the cart display, bundled items are shown under a group header that includes the bundle name"
+    },
+    {
+      "name": "savings badge in cart",
+      "max_score": 10,
+      "description": "The cart bundle group header shows a savings badge/indicator with the savings amount when bundleSavings > 0"
+    },
+    {
+      "name": "bundle indicator on items",
+      "max_score": 8,
+      "description": "Individual cart line items within a bundle group show a bundle indicator (e.g. showBundleIndicator prop or equivalent visual marker)"
+    },
+    {
+      "name": "partial availability message",
+      "max_score": 10,
+      "description": "When a component is out of stock, the UI shows a message identifying which specific component is unavailable (not just a generic 'out of stock' message)"
+    },
+    {
+      "name": "no large files",
+      "max_score": 8,
+      "description": "No downloaded assets, images, or files larger than 50MB are left in the workspace"
+    },
+    {
+      "name": "pricing updated on selection change",
+      "max_score": 8,
+      "description": "For dynamic kits, the bundle price is recalculated (or a fetch is triggered) when the shopper changes a variant selection"
+    },
+    {
+      "name": "dynamic kit group name",
+      "max_score": 4,
+      "description": "For dynamic kit components, a group_name or label is shown to identify each selection slot (e.g. 'Camera Body', 'Lens')"
+    }
+  ]
+}

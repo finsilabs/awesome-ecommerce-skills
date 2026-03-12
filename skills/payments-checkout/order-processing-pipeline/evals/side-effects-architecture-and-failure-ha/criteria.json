@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements the side effect architecture: specific actions per state, side effects outside the DB transaction, error logging to a dedicated table, proper orchestration order (transition → side effects → webhook), and correct delivery timing for inventory deduction.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "confirmed side effects",
+      "max_score": 10,
+      "description": "The 'confirmed' status triggers all three of: sendOrderConfirmationEmail, deductInventory, and notifyFulfillmentProvider"
+    },
+    {
+      "name": "shipped side effects",
+      "max_score": 8,
+      "description": "The 'shipped' status triggers both: sendShippingConfirmationEmail and updateTrackingInformation"
+    },
+    {
+      "name": "delivered side effects",
+      "max_score": 8,
+      "description": "The 'delivered' status triggers sendDeliveryConfirmationEmail and scheduleReviewRequest with a delayDays: 3 parameter"
+    },
+    {
+      "name": "cancelled side effects",
+      "max_score": 8,
+      "description": "The 'cancelled' status triggers all three of: releaseInventoryReservations, initiateRefundIfPaid, and sendCancellationEmail"
+    },
+    {
+      "name": "Side effects outside transaction",
+      "max_score": 12,
+      "description": "runTransitionSideEffects (or equivalent) is called AFTER transitionOrder returns — it is NOT called inside a db.$transaction() block"
+    },
+    {
+      "name": "Error logged to sideEffectErrors table",
+      "max_score": 12,
+      "description": "Side effect failures are caught and persisted to a sideEffectErrors table (or equivalent) via a db create call, including orderId, status, and error message"
+    },
+    {
+      "name": "Side effect failure does not rethrow",
+      "max_score": 10,
+      "description": "A side effect failure does NOT re-throw or propagate the exception — the orchestration function continues after logging the error"
+    },
+    {
+      "name": "emitOrderWebhook called",
+      "max_score": 10,
+      "description": "The top-level orchestration function calls emitOrderWebhook after running side effects (not inside the transaction)"
+    },
+    {
+      "name": "Orchestration order",
+      "max_score": 10,
+      "description": "The orchestration function calls transitionOrder first, then runTransitionSideEffects, then emitOrderWebhook — in that sequence"
+    },
+    {
+      "name": "Inventory not deducted at order creation",
+      "max_score": 12,
+      "description": "Inventory deduction (deductInventory) appears only in the 'confirmed' side effects block, NOT in any 'pending' or order-creation logic"
+    }
+  ]
+}

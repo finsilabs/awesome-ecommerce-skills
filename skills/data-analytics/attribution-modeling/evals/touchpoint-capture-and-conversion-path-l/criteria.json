@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements the touchpoint capture schema with all required fields, fires capture on gclid/fbclid as well as utm_source, uses anonymousId for pre-login tracking, applies a 30-day lookback window, uses OR matching on customerId and anonymousId, converts revenue from cents to dollars, enforces UTM lowercase, and recommends indefinite raw data retention.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "MarketingTouchpoint schema fields",
+      "max_score": 12,
+      "description": "The touchpoint interface/type includes all required fields: sessionId, customerId (nullable), anonymousId, utmSource, utmMedium, utmCampaign, utmContent (nullable), utmTerm (nullable), landingPage, touchedAt, and touchType with the correct enum values"
+    },
+    {
+      "name": "touchType enum values",
+      "max_score": 8,
+      "description": "The touchType field is typed as exactly the union: 'organic' | 'paid' | 'email' | 'social' | 'direct' | 'referral' (not a freeform string)"
+    },
+    {
+      "name": "Captures gclid and fbclid",
+      "max_score": 10,
+      "description": "The client-side capture function checks for the presence of gclid or fbclid (not just utm_source) to trigger recording — these Google/Meta click IDs trigger capture even without UTM params"
+    },
+    {
+      "name": "anonymousId for pre-login visitors",
+      "max_score": 10,
+      "description": "The capture function uses a cookie-based anonymous identity (getOrCreateAnonymousId or equivalent) rather than relying solely on authenticated user identity"
+    },
+    {
+      "name": "30-day lookback window",
+      "max_score": 12,
+      "description": "The conversion path builder fetches touchpoints from a 30-day window before the order date (not 7, 14, or 90 days)"
+    },
+    {
+      "name": "OR match on customerId and anonymousId",
+      "max_score": 12,
+      "description": "The touchpoint query uses an OR condition matching on BOTH customerId AND anonymousId — not just one of them"
+    },
+    {
+      "name": "Revenue converted from cents",
+      "max_score": 8,
+      "description": "The conversion path builder stores order revenue as subtotalCents / 100 (converting from cents to dollars), not raw cents"
+    },
+    {
+      "name": "UTM lowercase enforcement",
+      "max_score": 8,
+      "description": "The design notes or code mentions enforcing lowercase for UTM values, or the capture code normalizes UTM params to lowercase"
+    },
+    {
+      "name": "Indefinite raw data retention",
+      "max_score": 10,
+      "description": "The design notes recommend storing raw touchpoint data indefinitely (or permanently), citing the ability to rerun attribution models as the reason"
+    },
+    {
+      "name": "Anonymous ID stitching described",
+      "max_score": 10,
+      "description": "The design notes explain that anonymousId is stored in both the touchpoint record and the order, and that stitching happens when the user logs in or registers"
+    }
+  ]
+}

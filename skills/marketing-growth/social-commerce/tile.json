@@ -1,0 +1,10 @@
+{
+  "name": "finsi/social-commerce",
+  "version": "0.1.0",
+  "summary": "Shoppable posts, Instagram/TikTok catalog sync, and social checkout",
+  "skills": {
+    "social-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

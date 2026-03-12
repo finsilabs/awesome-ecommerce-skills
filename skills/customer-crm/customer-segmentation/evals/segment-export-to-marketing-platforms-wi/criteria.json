@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements Klaviyo segment sync with correct batching, API versioning, profile field mapping, and authentication format; applies SHA-256 email hashing for Meta; creates suppression lists; validates segment sizes; and documents Klaviyo deduplication handling.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Klaviyo batch size 100",
+      "max_score": 10,
+      "description": "syncSegmentToKlaviyo splits customers into chunks/batches of 100 per request (NOT larger batches like 1000 or unbounded)"
+    },
+    {
+      "name": "API revision header",
+      "max_score": 10,
+      "description": "The Klaviyo API request includes a 'revision' header with value '2024-02-15'"
+    },
+    {
+      "name": "Klaviyo-API-Key auth format",
+      "max_score": 8,
+      "description": "The Authorization header uses the format 'Klaviyo-API-Key <key>' (NOT 'Bearer', NOT 'Token')"
+    },
+    {
+      "name": "Profile fields: four attributes",
+      "max_score": 10,
+      "description": "The Klaviyo profile payload includes all four attributes: email, first_name, last_name, and phone_number (all must be present)"
+    },
+    {
+      "name": "SHA-256 email hashing",
+      "max_score": 10,
+      "description": "exportSuppressionListForMeta applies SHA-256 hashing to email addresses before returning them"
+    },
+    {
+      "name": "Email normalization before hash",
+      "max_score": 8,
+      "description": "The email is normalized (lowercased AND trimmed) before hashing, not hashed as-is"
+    },
+    {
+      "name": "Suppression list created",
+      "max_score": 10,
+      "description": "There is a separate suppression list export (recent purchasers excluded from acquisition campaigns) distinct from the targeting list sync"
+    },
+    {
+      "name": "Segment size validation",
+      "max_score": 8,
+      "description": "klaviyo_sync.ts includes a guard or check for when a segment has 0 customers, preventing an empty/no-op sync from proceeding silently"
+    },
+    {
+      "name": "Klaviyo profiles endpoint",
+      "max_score": 8,
+      "description": "The Klaviyo API call targets the relationships/profiles sub-resource of the lists API (endpoint contains 'relationships/profiles')"
+    },
+    {
+      "name": "Email as dedup primary key",
+      "max_score": 8,
+      "description": "klaviyo_runbook.md states that email should be used as the primary key for profile matching/deduplication in Klaviyo"
+    },
+    {
+      "name": "Profile merge API mentioned",
+      "max_score": 5,
+      "description": "klaviyo_runbook.md mentions Klaviyo's profile merge API as the remedy for existing duplicate profiles"
+    },
+    {
+      "name": "KLAVIYO_PRIVATE_KEY env var",
+      "max_score": 5,
+      "description": "The API key is read from process.env.KLAVIYO_PRIVATE_KEY (not hardcoded, not a different env var name)"
+    }
+  ]
+}

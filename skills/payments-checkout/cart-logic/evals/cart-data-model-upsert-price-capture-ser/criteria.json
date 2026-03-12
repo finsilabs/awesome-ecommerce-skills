@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly defines the cart data model with all required fields, implements upsert semantics on add-to-cart, captures price at time of add, delegates quantity≤0 updates to remove, and always recalculates totals server-side.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cart status field",
+      "max_score": 6,
+      "description": "Cart schema / data model includes a 'status' field with values that include 'active', 'abandoned', and 'converted'"
+    },
+    {
+      "name": "Guest token field",
+      "max_score": 6,
+      "description": "Cart schema includes a guest_token field (UUID-based) for identifying guest carts, and user_id is null for guests"
+    },
+    {
+      "name": "unit_price vs original_unit_price",
+      "max_score": 8,
+      "description": "Line item schema includes both a unit_price (price at time of add) and an original_unit_price (before discounts) field"
+    },
+    {
+      "name": "Price captured at add time",
+      "max_score": 10,
+      "description": "addToCart captures the variant's price as unit_price at the time the item is added, not fetched dynamically on cart reads"
+    },
+    {
+      "name": "Upsert on duplicate variant",
+      "max_score": 12,
+      "description": "addToCart checks whether the variant already exists in the cart and increments quantity rather than creating a duplicate line item"
+    },
+    {
+      "name": "Delegate remove on qty ≤ 0",
+      "max_score": 8,
+      "description": "updateCartItem delegates to the remove function when the requested quantity is 0 or less, rather than setting quantity to 0"
+    },
+    {
+      "name": "recalculateCart after mutation",
+      "max_score": 10,
+      "description": "recalculateCart (or equivalent) is called after every cart mutation: add, update, and remove"
+    },
+    {
+      "name": "Server-side subtotal",
+      "max_score": 10,
+      "description": "subtotal is computed server-side as sum(unitPrice * quantity); totals are not accepted from the client"
+    },
+    {
+      "name": "Discount applied server-side",
+      "max_score": 8,
+      "description": "Discount / coupon is applied server-side during recalculation; total = max(0, subtotal - discount)"
+    },
+    {
+      "name": "Totals rounded to 2 decimals",
+      "max_score": 8,
+      "description": "subtotal, discountAmount, and total are rounded / fixed to 2 decimal places during recalculation"
+    },
+    {
+      "name": "Stock validation on add",
+      "max_score": 14,
+      "description": "addToCart validates that the variant exists (404 if not found) and checks available stock before adding (409 if insufficient and backorders not allowed)"
+    }
+  ]
+}

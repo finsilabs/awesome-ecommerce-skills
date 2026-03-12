@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent uses jose for JWT creation with HS256 and a 15-minute access token lifetime, issues a 30-day refresh token as a UUID, stores only the hashed refresh token in the database, implements rotation with replay detection that revokes the entire session family, and sets cookies with the correct security attributes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "jose package",
+      "max_score": 8,
+      "description": "Imports SignJWT (and/or jwtVerify) from the 'jose' package (not jsonwebtoken or other JWT library)"
+    },
+    {
+      "name": "HS256 algorithm",
+      "max_score": 6,
+      "description": "Access tokens are signed using the HS256 algorithm (setProtectedHeader({alg: 'HS256'}))"
+    },
+    {
+      "name": "15-minute access token",
+      "max_score": 8,
+      "description": "Access token expiry is set to exactly 15 minutes (e.g., setExpirationTime('15m'))"
+    },
+    {
+      "name": "30-day refresh token",
+      "max_score": 6,
+      "description": "Refresh token session lifetime is set to 30 days (expiresAt = now + 30 * 24 * 60 * 60 * 1000 ms or equivalent)"
+    },
+    {
+      "name": "Refresh token as UUID",
+      "max_score": 6,
+      "description": "Refresh token value is generated using crypto.randomUUID() (not a JWT or a random hex string)"
+    },
+    {
+      "name": "Hashed refresh token storage",
+      "max_score": 10,
+      "description": "Only the hashed version of the refresh token is stored in the database (refreshTokenHash); the raw token is never persisted"
+    },
+    {
+      "name": "Session metadata stored",
+      "max_score": 6,
+      "description": "Session record includes ip, userAgent, expiresAt, and lastUsedAt fields"
+    },
+    {
+      "name": "Refresh token rotation",
+      "max_score": 10,
+      "description": "Each successful refresh issues a new access token AND a new refresh token (old token is marked used/invalidated)"
+    },
+    {
+      "name": "Replay attack detection",
+      "max_score": 10,
+      "description": "If a refresh token that is already marked as used is presented again, all sessions for that customer are revoked"
+    },
+    {
+      "name": "Security team alert on replay",
+      "max_score": 6,
+      "description": "Replay detection triggers an alert/notification to the security team (not just silent revocation)"
+    },
+    {
+      "name": "httpOnly and secure cookie flags",
+      "max_score": 8,
+      "description": "Refresh token cookie has both httpOnly: true and secure: true attributes"
+    },
+    {
+      "name": "SameSite=Strict cookie",
+      "max_score": 8,
+      "description": "Refresh token cookie has sameSite: 'strict' attribute"
+    },
+    {
+      "name": "Cookie path restriction",
+      "max_score": 6,
+      "description": "Refresh token cookie has path set to '/api/auth' (not '/' or omitted)"
+    },
+    {
+      "name": "No localStorage usage",
+      "max_score": 2,
+      "description": "Code does NOT store any token in localStorage or sessionStorage"
+    }
+  ]
+}

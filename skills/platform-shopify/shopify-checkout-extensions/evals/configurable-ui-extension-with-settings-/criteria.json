@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent builds a Checkout UI extension correctly using the Shopify-specific component library, registers it with the right target and entry point pattern, exposes merchant configuration via settings (not hardcoded), handles the async cart mutation with a loading state, and configures the TOML with version-pinned API and matching settings keys.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct import source",
+      "max_score": 12,
+      "description": "Imports components and hooks exclusively from `@shopify/ui-extensions-react/checkout`, with no imports from `react-dom`, native HTML elements used directly, or other UI libraries"
+    },
+    {
+      "name": "reactExtension entry point",
+      "max_score": 8,
+      "description": "Uses `reactExtension()` as the exported entry point (not a plain React component export or other pattern)"
+    },
+    {
+      "name": "purchase.checkout.block.render target",
+      "max_score": 10,
+      "description": "Registers the extension against the `purchase.checkout.block.render` target (not a fixed-position target like `purchase.checkout.contact.render`)"
+    },
+    {
+      "name": "useSettings for variant ID",
+      "max_score": 12,
+      "description": "Reads the warranty product variant ID via `useSettings()` rather than hardcoding it as a literal string in the source code"
+    },
+    {
+      "name": "No DOM/browser APIs",
+      "max_score": 8,
+      "description": "Does NOT reference `document`, `window`, `localStorage`, or any other browser/DOM globals anywhere in the extension code"
+    },
+    {
+      "name": "Async loading state",
+      "max_score": 12,
+      "description": "Tracks a loading/pending state while `applyCartLinesChange` (or equivalent) is in flight, and uses it to disable the button or show a spinner during the operation"
+    },
+    {
+      "name": "Await cart mutation",
+      "max_score": 8,
+      "description": "Awaits the promise returned by `applyCartLinesChange` before treating the operation as complete (does not fire-and-forget)"
+    },
+    {
+      "name": "TOML api_version set",
+      "max_score": 8,
+      "description": "The `shopify.extension.toml` includes an `api_version` field (e.g. `api_version = \"2025-01\"`) rather than omitting it"
+    },
+    {
+      "name": "TOML settings field with handle",
+      "max_score": 12,
+      "description": "The `shopify.extension.toml` defines a settings field with a `key` (handle) that matches the key accessed via `useSettings()` in the TypeScript code"
+    },
+    {
+      "name": "Already-in-cart guard",
+      "max_score": 10,
+      "description": "Uses `useCartLines()` to check whether the warranty variant is already present in the cart and conditionally hides the upsell block"
+    }
+  ]
+}

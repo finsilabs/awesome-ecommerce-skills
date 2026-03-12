@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements backorder creation with restock date tracking, customer notification using the correct email template, FIFO processing of backorders during replenishment, prevention of partial line fulfillment, re-queuing of fulfillment planning, derivation of order status from actual fulfillment records, and atomic updates to prevent double-fulfillment.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Backorder record insertion",
+      "max_score": 8,
+      "description": "A backorder record is inserted with fields including: order_id, order_line_id, product_id, quantity, estimated_restock_date (sourced from product data), and an initial status of 'pending'"
+    },
+    {
+      "name": "Order line status update",
+      "max_score": 8,
+      "description": "The order line's fulfillment_status is updated to 'backordered' when a backorder is created for it"
+    },
+    {
+      "name": "Customer notification sent",
+      "max_score": 8,
+      "description": "A customer email notification is sent when items are backordered — NOT silently skipped"
+    },
+    {
+      "name": "Correct email template",
+      "max_score": 8,
+      "description": "The notification uses the 'backorder-notification' template name (not a generic 'order-update' or custom inline template)"
+    },
+    {
+      "name": "Notification includes restock date",
+      "max_score": 5,
+      "description": "The backorder notification email data includes the estimated restock/arrival date for each backordered item"
+    },
+    {
+      "name": "FIFO fulfillment order",
+      "max_score": 10,
+      "description": "When allocating newly arrived inventory to pending backorders, backorders are processed in the order they were created (oldest first / ascending by created_at), not by priority, value, or arbitrary order"
+    },
+    {
+      "name": "No partial line fulfillment",
+      "max_score": 10,
+      "description": "If available stock is less than a backorder line's quantity, that backorder line is skipped entirely rather than being partially fulfilled"
+    },
+    {
+      "name": "Re-queue fulfillment planning",
+      "max_score": 10,
+      "description": "After a backorder is marked as fulfilled, fulfillment planning for the associated order is re-triggered via a background queue (not called synchronously and not omitted)"
+    },
+    {
+      "name": "Derived order fulfillment status",
+      "max_score": 8,
+      "description": "Order fulfillment status (partially_fulfilled vs fulfilled) is derived by querying actual fulfillment/shipment records, not by decrementing a counter or maintaining a separate boolean flag"
+    },
+    {
+      "name": "Status derived from shipped/delivered",
+      "max_score": 7,
+      "description": "The fulfillment status derivation checks each fulfillment's status against ['shipped', 'delivered'] (allShipped → 'fulfilled', someShipped → 'partially_fulfilled')"
+    },
+    {
+      "name": "Atomic backorder update",
+      "max_score": 10,
+      "description": "The backorder fulfillment update uses an atomic conditional UPDATE (WHERE status = 'pending') and checks that exactly one row was affected to prevent double-fulfillment race conditions"
+    },
+    {
+      "name": "Partial cancellation support",
+      "max_score": 8,
+      "description": "The cancellation logic (or design notes) addresses partially-shipped orders by only cancelling lines not yet picked/shipped, rather than blocking cancellation entirely"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements correct CDN cache headers, dimension allowlisting for security, Cloudinary-specific configuration (gravity, quality, fetch_format, dpr, sign_url), content-hash-based cache busting, and eager pre-generation of image variants at upload time.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cache-Control immutable",
+      "max_score": 8,
+      "description": "Image API response sets Cache-Control header to 'public' with max-age of 31536000 (1 year) AND includes 'immutable'"
+    },
+    {
+      "name": "Vary Accept header",
+      "max_score": 8,
+      "description": "Image API response includes a Vary: Accept header"
+    },
+    {
+      "name": "Dimension allowlist",
+      "max_score": 8,
+      "description": "Image API validates requested dimensions against a fixed allowlist and returns a 400 error for unlisted dimensions"
+    },
+    {
+      "name": "Cloudinary gravity auto",
+      "max_score": 8,
+      "description": "getProductImageUrl uses gravity: 'auto' (or equivalent) for smart subject-aware crop"
+    },
+    {
+      "name": "Cloudinary quality auto",
+      "max_score": 8,
+      "description": "getProductImageUrl uses quality: 'auto:good' (or equivalent perceptual quality setting)"
+    },
+    {
+      "name": "Cloudinary fetch_format auto",
+      "max_score": 8,
+      "description": "getProductImageUrl uses fetch_format: 'auto' (or equivalent) to auto-serve WebP/AVIF based on Accept header"
+    },
+    {
+      "name": "Cloudinary dpr auto",
+      "max_score": 6,
+      "description": "getProductImageUrl includes dpr: 'auto' in transformations to serve 2x on Retina displays"
+    },
+    {
+      "name": "Cloudinary sign_url",
+      "max_score": 6,
+      "description": "getProductImageUrl or cloudinary.url() call includes sign_url: true"
+    },
+    {
+      "name": "Eager transformations on upload",
+      "max_score": 9,
+      "description": "uploadProductImage uses 'eager' transformations array to pre-generate at least two size variants at upload time"
+    },
+    {
+      "name": "Eager async upload",
+      "max_score": 7,
+      "description": "uploadProductImage sets eager_async: true so pre-generation does not block the upload response"
+    },
+    {
+      "name": "Content hash in filename",
+      "max_score": 10,
+      "description": "Versioned upload utility derives a hash from the file buffer content (e.g., SHA-256) and includes it in the storage key/filename"
+    },
+    {
+      "name": "No manual cache purge",
+      "max_score": 6,
+      "description": "ARCHITECTURE.md or code comments explain that URL versioning (new URL per content change) is used instead of manual CDN cache invalidation"
+    },
+    {
+      "name": "WebP for on-demand transforms",
+      "max_score": 8,
+      "description": "Code or documentation indicates WebP (not AVIF) is used for on-demand image transformation, with AVIF pre-generated at upload time"
+    }
+  ]
+}

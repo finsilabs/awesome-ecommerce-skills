@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent implements product image tagging and a human review workflow following the skill's specific model choice, API parameters, output schema, alt text constraints, color specificity, and draft/approval data model.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct image tagging model",
+      "max_score": 7,
+      "description": "Uses 'gpt-4o' (not gpt-4o-mini, gpt-4-vision-preview, or other models) for the image tagging API call"
+    },
+    {
+      "name": "detail: low for image URL",
+      "max_score": 7,
+      "description": "The image_url content part sets detail to 'low' when passing the image to the model"
+    },
+    {
+      "name": "json_object response format",
+      "max_score": 7,
+      "description": "The image tagging API call sets response_format to { type: 'json_object' }"
+    },
+    {
+      "name": "Temperature zero for tagging",
+      "max_score": 7,
+      "description": "Temperature is set to 0 for the image tagging API call"
+    },
+    {
+      "name": "max_tokens 200",
+      "max_score": 7,
+      "description": "max_tokens is set to 200 for the image tagging API call"
+    },
+    {
+      "name": "alt_text length constraint",
+      "max_score": 7,
+      "description": "The image tagging prompt explicitly constrains alt_text to a maximum of 125 characters"
+    },
+    {
+      "name": "Background enum constraint",
+      "max_score": 7,
+      "description": "The image tagging prompt specifies that the background field must be one of: white, lifestyle, studio, transparent"
+    },
+    {
+      "name": "Specific color instruction",
+      "max_score": 7,
+      "description": "The image tagging prompt instructs the model to be specific about colors (e.g., 'navy blue' not just 'blue', or equivalent specific color guidance)"
+    },
+    {
+      "name": "Manual alt text preserved",
+      "max_score": 7,
+      "description": "When saving image tagging results, existing manual alt text is NOT overwritten — the AI-generated alt_text is only applied if the image record has no existing alt text (logic equivalent to: altText = existingAltText || aiAltText)"
+    },
+    {
+      "name": "Never auto-publish",
+      "max_score": 7,
+      "description": "The code does NOT write AI-generated tags or descriptions directly to a live/published state — results are stored as drafts or in a pending state first"
+    },
+    {
+      "name": "Drafts in separate store",
+      "max_score": 7,
+      "description": "Generated content is saved to a dedicated drafts table or collection (e.g., productEnrichmentDrafts, enrichment_drafts) that is distinct from the published product/image record"
+    },
+    {
+      "name": "Atomic approval transaction",
+      "max_score": 7,
+      "description": "The approval operation updates both the product/image record AND the draft status in a single atomic transaction (e.g., db.$transaction, session.withTransaction, or equivalent)"
+    },
+    {
+      "name": "Minimum image dimension check",
+      "max_score": 8,
+      "description": "Before calling the image tagging API, the code checks that the image is at least 400×400 pixels and skips or flags images that are too small"
+    },
+    {
+      "name": "Review API endpoints",
+      "max_score": 8,
+      "description": "The implementation includes at least two HTTP endpoints (or equivalent handlers) for the review workflow: one to list pending drafts and at least one to approve or reject a draft"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly extends an SFRA controller using the prescribed layering pattern (server.extend + module.superModule + server.append), uses res.getViewData/setViewData to pass extra data, and creates an ISML template with isdecorate layout, correct isprint encoding for trusted HTML, and proper asset inclusion.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "module.superModule reference",
+      "max_score": 10,
+      "description": "The Cart.js controller uses `var page = module.superModule` (or equivalent) to reference the base controller before calling server.extend(page)"
+    },
+    {
+      "name": "server.extend called",
+      "max_score": 10,
+      "description": "The controller calls `server.extend(page)` with the superModule reference to inherit the base controller's routes"
+    },
+    {
+      "name": "server.append used",
+      "max_score": 12,
+      "description": "The loyalty points logic is added via `server.append('Show', ...)` rather than `server.replace` or by redefining the route with server.get/server.post"
+    },
+    {
+      "name": "getViewData and setViewData",
+      "max_score": 8,
+      "description": "The appended route handler calls `res.getViewData()` to retrieve existing view data and `res.setViewData(viewData)` to inject the loyalty points before calling next()"
+    },
+    {
+      "name": "next() called in handlers",
+      "max_score": 8,
+      "description": "Every route handler function ends with `next()` (or `return next()` in early-exit branches) — no handler is missing a next() call"
+    },
+    {
+      "name": "Use strict in controller",
+      "max_score": 5,
+      "description": "Cart.js starts with `'use strict';` at the top of the file"
+    },
+    {
+      "name": "isdecorate layout in template",
+      "max_score": 10,
+      "description": "The ISML template uses `<isdecorate template=\"common/layout/page\">` (or a similar standard layout decorator) as the outer wrapper"
+    },
+    {
+      "name": "isprint encoding off for body",
+      "max_score": 12,
+      "description": "The ISML template renders the content asset body using `<isprint value=\"${pdict.content.body}\" encoding=\"off\"/>` (encoding='off') to avoid double-escaping trusted HTML"
+    },
+    {
+      "name": "assets.addCss and addJs",
+      "max_score": 10,
+      "description": "The ISML template includes an <isscript> block that calls assets.addCss() and assets.addJs() to register the page-specific CSS and JS files"
+    },
+    {
+      "name": "module.exports = server.exports()",
+      "max_score": 5,
+      "description": "The Cart.js controller ends with `module.exports = server.exports();`"
+    },
+    {
+      "name": "No server.replace used",
+      "max_score": 10,
+      "description": "The controller does NOT use `server.replace` anywhere; only server.append (and optionally server.prepend) are used for modifying existing routes"
+    }
+  ]
+}

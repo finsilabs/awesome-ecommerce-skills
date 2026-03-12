@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the upsell product-suggestion logic with the correct price range, cart exclusion, stock filter, result count, and ordering, and also correctly models a time-limited promotional shipping rule with higher priority than the existing base rule — without modifying the base rule. This scenario covers upsell gating, query parameters, and priority-based promotional rules.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Upsell threshold gate",
+      "max_score": 12,
+      "description": "Upsell suggestions are suppressed (returns empty / shows nothing) when amountNeeded is 0 or below, OR when amountNeeded exceeds 3000 cents ($30)"
+    },
+    {
+      "name": "Upsell price lower bound",
+      "max_score": 10,
+      "description": "Upsell product query filters for price >= amountNeeded (products must cost at least as much as the gap)"
+    },
+    {
+      "name": "Upsell price upper bound",
+      "max_score": 10,
+      "description": "Upsell product query filters for price <= amountNeeded + 1000 (up to $10 above the gap)"
+    },
+    {
+      "name": "Cart exclusion",
+      "max_score": 10,
+      "description": "Upsell product query excludes products already in the cart (filters out existing cartProductIds / cart item ids)"
+    },
+    {
+      "name": "In-stock filter",
+      "max_score": 8,
+      "description": "Upsell product query filters for inStock: true (out-of-stock products are excluded)"
+    },
+    {
+      "name": "Result limit of 4",
+      "max_score": 10,
+      "description": "Upsell query is limited to returning a maximum of 4 products"
+    },
+    {
+      "name": "Popularity ordering",
+      "max_score": 10,
+      "description": "Upsell results are ordered by popularity_score in descending order"
+    },
+    {
+      "name": "Promotional rule priority",
+      "max_score": 10,
+      "description": "The promotional shipping rule has a higher priority number than the standard/base rule it is meant to override"
+    },
+    {
+      "name": "Promotional date window",
+      "max_score": 10,
+      "description": "The promotional rule uses startsAt and endsAt (or equivalent) to bound its active period (not just isActive flag alone)"
+    },
+    {
+      "name": "Base rule unchanged",
+      "max_score": 10,
+      "description": "The original/base shipping rule is NOT modified; the promotion is implemented as a separate, additional rule"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/recently-viewed-products",
+  "version": "0.1.0",
+  "summary": "Track and display browsing history with sessionStorage/cookie strategies",
+  "skills": {
+    "recently-viewed-products": {
+      "path": "SKILL.md"
+    }
+  }
+}

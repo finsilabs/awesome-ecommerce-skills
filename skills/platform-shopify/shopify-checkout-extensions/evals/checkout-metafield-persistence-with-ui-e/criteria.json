@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly uses Shopify's metafield hooks for reading and writing checkout data, imports from the correct Shopify extension library, registers the extension against a valid checkout target, and produces a properly configured TOML file.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct import source",
+      "max_score": 10,
+      "description": "All hooks, components, and `reactExtension` are imported exclusively from `@shopify/ui-extensions-react/checkout` — no imports from `react-dom`, native HTML form elements, or other UI libraries"
+    },
+    {
+      "name": "useApplyMetafieldsChange for saving",
+      "max_score": 15,
+      "description": "Uses the `useApplyMetafieldsChange` hook to persist the note text — does NOT use `useApplyCartLinesChange`, `fetch`, or `localStorage` for this purpose"
+    },
+    {
+      "name": "useMetafield for reading",
+      "max_score": 15,
+      "description": "Uses the `useMetafield` hook (with a namespace and key) to read the existing note value for pre-population — does NOT derive the value from local state alone"
+    },
+    {
+      "name": "updateMetafield operation type",
+      "max_score": 10,
+      "description": "Calls `applyMetafieldsChange` with `type: \"updateMetafield\"` and includes `namespace`, `key`, `valueType`, and `value` fields"
+    },
+    {
+      "name": "No DOM/browser APIs",
+      "max_score": 8,
+      "description": "Does NOT reference `document`, `window`, `localStorage`, `sessionStorage`, or other browser/DOM globals in the extension code"
+    },
+    {
+      "name": "reactExtension entry point",
+      "max_score": 8,
+      "description": "Uses `reactExtension()` as the exported entry point wrapping the component"
+    },
+    {
+      "name": "Valid checkout target in source",
+      "max_score": 8,
+      "description": "Registers against a valid checkout extension target string (e.g. `purchase.checkout.shipping-option-list.render-after`, `purchase.checkout.block.render`, or another documented target) — not an invented string"
+    },
+    {
+      "name": "TOML api_version present",
+      "max_score": 8,
+      "description": "The `shopify.extension.toml` includes an `api_version` field with a version string"
+    },
+    {
+      "name": "TOML type ui_extension",
+      "max_score": 8,
+      "description": "The `shopify.extension.toml` sets `type = \"ui_extension\"` (not `function` or other)"
+    },
+    {
+      "name": "TOML target matches source",
+      "max_score": 10,
+      "description": "The `target` value in `[[extensions.targeting]]` in the TOML matches the target string passed to `reactExtension()` in the source file"
+    }
+  ]
+}

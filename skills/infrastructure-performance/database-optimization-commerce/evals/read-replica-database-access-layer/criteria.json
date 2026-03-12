@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements a dual-pool database access layer in TypeScript with appropriate connection limits, correct read/write routing including the cart-to-primary rule, and proper transaction support.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Primary pool max connections",
+      "max_score": 10,
+      "description": "The primary database pool is configured with max: 20 (not the original 10 or another value)"
+    },
+    {
+      "name": "Replica pool max connections",
+      "max_score": 10,
+      "description": "The replica database pool is configured with max: 50 (higher than the primary)"
+    },
+    {
+      "name": "Separate pool instances",
+      "max_score": 10,
+      "description": "Two distinct Pool instances are created — one using DATABASE_URL (primary) and one using DATABASE_REPLICA_URL (or equivalent replica env var)"
+    },
+    {
+      "name": "Transaction method on primary",
+      "max_score": 12,
+      "description": "A transaction method exists that acquires a client from the primary pool, executes BEGIN/COMMIT/ROLLBACK, and calls client.release()"
+    },
+    {
+      "name": "queryRead routes to replica",
+      "max_score": 10,
+      "description": "A read method (queryRead or equivalent) issues queries against the replica pool, not the primary pool"
+    },
+    {
+      "name": "queryWrite routes to primary",
+      "max_score": 10,
+      "description": "A write method (queryWrite or equivalent) issues queries against the primary pool"
+    },
+    {
+      "name": "Cart reads on primary",
+      "max_score": 12,
+      "description": "The README or code comments explicitly state that cart reads must use the primary (not replica) to avoid stale data from replication lag"
+    },
+    {
+      "name": "Catalog reads on replica",
+      "max_score": 8,
+      "description": "The README documents that product listing / catalog queries should use the read method routed to the replica"
+    },
+    {
+      "name": "Order history on replica",
+      "max_score": 8,
+      "description": "The README documents that order history reads (where slight staleness is acceptable) should use the replica read method"
+    },
+    {
+      "name": "pg package used",
+      "max_score": 10,
+      "description": "The implementation uses the 'pg' package (Pool from 'pg') rather than an ORM or unrelated database library"
+    }
+  ]
+}

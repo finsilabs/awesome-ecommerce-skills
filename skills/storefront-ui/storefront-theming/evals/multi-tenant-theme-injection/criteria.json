@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements server-side tenant theme injection as an inline style tag (not client-only), serializes overrides as --store- CSS custom properties, and sanitizes tenant values to prevent XSS.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Server-side injection",
+      "max_score": 15,
+      "description": "Tenant theme overrides are applied in server-side middleware or server rendering logic — not exclusively in a client-side `useEffect` or `componentDidMount`"
+    },
+    {
+      "name": "Inline style tag in head",
+      "max_score": 12,
+      "description": "The server renders tenant overrides as an inline `<style>` tag (e.g., `res.locals.themeOverrides` or equivalent) placed in the `<head>` of the HTML document"
+    },
+    {
+      "name": "store- variable prefix",
+      "max_score": 10,
+      "description": "Serialized CSS overrides use the `--store-` prefix (e.g., `--store-color-brand-primary: #e63946;`) matching the generated token naming convention"
+    },
+    {
+      "name": "Overrides scoped to :root",
+      "max_score": 8,
+      "description": "The injected inline style block scopes overrides to `:root { ... }` so they cascade to all components"
+    },
+    {
+      "name": "Sanitization present",
+      "max_score": 15,
+      "description": "Code includes a sanitization or validation step that processes tenant theme values before they are injected into HTML"
+    },
+    {
+      "name": "Allows color values",
+      "max_score": 8,
+      "description": "Sanitization accepts valid CSS color formats (hex like `#e63946`, or named colors) as permitted values"
+    },
+    {
+      "name": "Allows rem/px lengths",
+      "max_score": 8,
+      "description": "Sanitization accepts rem and px length values (e.g., `1.0625rem`, `16px`) as permitted values"
+    },
+    {
+      "name": "Allows border-radius values",
+      "max_score": 7,
+      "description": "Sanitization accepts border-radius values including pixel and `9999px` pill values"
+    },
+    {
+      "name": "Rejects arbitrary strings",
+      "max_score": 12,
+      "description": "Sanitization rejects or strips values that are not colors, lengths, or border-radius — e.g., `url(...)`, `expression(...)`, multi-value strings with semicolons, or JavaScript"
+    },
+    {
+      "name": "Tenant lookup from request",
+      "max_score": 5,
+      "description": "Middleware resolves the tenant from the incoming request (e.g., via hostname, subdomain, or header) before applying overrides"
+    }
+  ]
+}

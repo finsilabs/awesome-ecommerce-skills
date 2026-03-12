@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the order status state machine using the correct status values, enforces valid transitions via a VALID_TRANSITIONS map, records every transition in an audit log within a transaction, protects against concurrent transition race conditions, and handles price adjustments correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct status values",
+      "max_score": 10,
+      "description": "OrderStatus type (or equivalent) includes all of: 'pending', 'payment_processing', 'paid', 'awaiting_fulfillment', 'partially_fulfilled', 'fulfilled', 'partially_delivered', 'delivered', 'cancelled', 'refunded', 'partially_refunded'"
+    },
+    {
+      "name": "VALID_TRANSITIONS map",
+      "max_score": 10,
+      "description": "Code defines a VALID_TRANSITIONS structure (map, object, or enum) that constrains which statuses can follow which — not just ad-hoc if/else checks"
+    },
+    {
+      "name": "Correct transition rules",
+      "max_score": 10,
+      "description": "The transition rules match the skill: 'pending' can go to 'payment_processing' or 'cancelled'; 'paid' can go to 'awaiting_fulfillment' or 'cancelled'; 'partially_fulfilled' cannot directly go to 'delivered'"
+    },
+    {
+      "name": "Throws on invalid transition",
+      "max_score": 10,
+      "description": "Attempting an invalid transition throws an exception (or returns an error) rather than silently failing or allowing the update"
+    },
+    {
+      "name": "Transition wrapped in transaction",
+      "max_score": 10,
+      "description": "The order status update and the event log insertion are performed inside a single database transaction (not two separate independent queries)"
+    },
+    {
+      "name": "Order events audit record",
+      "max_score": 10,
+      "description": "Each transition inserts a record that includes: from_status, to_status, actor/actor_id, and a timestamp (occurred_at or equivalent)"
+    },
+    {
+      "name": "Note field in event log",
+      "max_score": 5,
+      "description": "The event log record includes an optional note field (nullable when not provided)"
+    },
+    {
+      "name": "Atomic state check on update",
+      "max_score": 10,
+      "description": "The code guards against race conditions by performing the status check and update atomically — either via a single UPDATE WHERE status = old_status, or by using an optimistic lock / SELECT FOR UPDATE pattern"
+    },
+    {
+      "name": "No direct price mutation",
+      "max_score": 10,
+      "description": "Order line prices are NOT updated/overwritten after order placement; any price adjustments are modelled as separate records (credit/debit lines, refund records, or equivalent)"
+    },
+    {
+      "name": "Strict enforcement at model layer",
+      "max_score": 10,
+      "description": "Transition validation happens inside the order update function/method itself, not only at the API/controller layer"
+    },
+    {
+      "name": "actor_id captured",
+      "max_score": 5,
+      "description": "The function/method that performs a transition accepts an actor identifier (user id, system token, etc.) and stores it in the event log"
+    }
+  ]
+}

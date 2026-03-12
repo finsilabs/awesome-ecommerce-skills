@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements server-side push subscription storage with upsert logic, back-in-stock notification sending with 410 cleanup, price drop notification with watch deactivation, and proper error handling patterns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Upsert on userId+endpoint",
+      "max_score": 10,
+      "description": "api/push-subscribe.ts uses an upsert operation keyed on both userId AND endpoint (not a plain insert that could create duplicates)"
+    },
+    {
+      "name": "Stores p256dh and auth",
+      "max_score": 8,
+      "description": "api/push-subscribe.ts stores both subscription.keys.p256dh and subscription.keys.auth fields from the subscription object"
+    },
+    {
+      "name": "Back-in-stock title/body",
+      "max_score": 8,
+      "description": "api/notify-back-in-stock.ts sends a notification with title 'Back in stock!' and body containing the product name and text 'is available again'"
+    },
+    {
+      "name": "Back-in-stock Buy Now action",
+      "max_score": 8,
+      "description": "api/notify-back-in-stock.ts includes an actions array with a 'Buy Now' action entry in the notification payload"
+    },
+    {
+      "name": "410 error cleanup (back-in-stock)",
+      "max_score": 10,
+      "description": "api/notify-back-in-stock.ts catches errors from webpush.sendNotification and deletes the subscription when the error statusCode is 410"
+    },
+    {
+      "name": "Try/catch with status logging",
+      "max_score": 8,
+      "description": "At least one of the notification files wraps webpush.sendNotification() in a try/catch and logs or uses the error's status code"
+    },
+    {
+      "name": "Price drop threshold check",
+      "max_score": 8,
+      "description": "api/notify-price-drop.ts compares newPriceCents against the watch's target price and only sends a notification when the new price is at or below the target"
+    },
+    {
+      "name": "Price shown in body",
+      "max_score": 8,
+      "description": "api/notify-price-drop.ts includes the actual new price amount (converted from cents to dollars, e.g. toFixed(2)) in the notification body"
+    },
+    {
+      "name": "Price watch deactivated",
+      "max_score": 10,
+      "description": "api/notify-price-drop.ts deactivates or marks as inactive the price watch record after sending the notification (one-shot: not re-triggered on future price checks)"
+    },
+    {
+      "name": "Notification body length",
+      "max_score": 8,
+      "description": "All notification body strings in both notify files are under 100 characters in length (or use template strings that, with realistic product names, would remain under 100 characters)"
+    },
+    {
+      "name": "Product URL in payload",
+      "max_score": 8,
+      "description": "Both notify files include a url field in the notification payload pointing to the product page (using the product's slug or id)"
+    },
+    {
+      "name": "410 cleanup (price drop)",
+      "max_score": 6,
+      "description": "api/notify-price-drop.ts also handles 410 errors by removing or skipping expired subscriptions"
+    }
+  ]
+}

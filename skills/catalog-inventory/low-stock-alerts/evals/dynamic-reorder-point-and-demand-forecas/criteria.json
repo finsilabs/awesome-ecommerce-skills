@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements the demand forecasting module with the right velocity calculation window, order status filters, arithmetic formula, correct default parameters, and appropriate handling for seasonal products.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "30-day default window",
+      "max_score": 10,
+      "description": "calculateDailySalesVelocity defaults to a 30-day rolling window (windowDays = 30), not a different period like 7 or 90 days"
+    },
+    {
+      "name": "Order status filter",
+      "max_score": 10,
+      "description": "Velocity calculation filters order line items to only completed, shipped, and delivered orders (excludes pending/cancelled/returned orders)"
+    },
+    {
+      "name": "Velocity arithmetic",
+      "max_score": 10,
+      "description": "Daily velocity is computed as totalSold / windowDays (divides total quantity sold by the number of days in the window, not by number of orders or transactions)"
+    },
+    {
+      "name": "calculateDynamicReorderPoint signature",
+      "max_score": 10,
+      "description": "calculateDynamicReorderPoint function accepts dailyVelocity, leadTimeDays, and safetyStockMultiplier as parameters"
+    },
+    {
+      "name": "Default safetyStockMultiplier",
+      "max_score": 10,
+      "description": "The default value of safetyStockMultiplier in calculateDynamicReorderPoint is 1.5, not 1.0, 1.2, or any other value"
+    },
+    {
+      "name": "Reorder point formula",
+      "max_score": 15,
+      "description": "calculateDynamicReorderPoint computes Math.ceil(leadTimeDemand + safetyStock) where leadTimeDemand = dailyVelocity * leadTimeDays and safetyStock = leadTimeDemand * (safetyStockMultiplier - 1)"
+    },
+    {
+      "name": "Rounds up",
+      "max_score": 10,
+      "description": "The final reorder point value is rounded up using Math.ceil (not Math.round, Math.floor, or left as a float)"
+    },
+    {
+      "name": "Module exports",
+      "max_score": 10,
+      "description": "Both calculateDailySalesVelocity and calculateDynamicReorderPoint are exported from the demand forecasting module (named exports or equivalent)"
+    },
+    {
+      "name": "Seasonal product note",
+      "max_score": 10,
+      "description": "The implementation or documentation mentions that seasonal products should use separate high-season / off-season configurations (or equivalent note about rolling-window limitations for seasonal demand)"
+    },
+    {
+      "name": "1.2 multiplier in job",
+      "max_score": 5,
+      "description": "In the background stock check job (not the standalone function), when use_dynamic_reorder_point is true, the formula uses a 1.2 multiplier (20% safety buffer): Math.ceil(velocity * leadTimeDays * 1.2)"
+    }
+  ]
+}

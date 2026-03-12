@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent uses the correct Argon2 variant and parameters for password hashing, implements the HIBP breach check with k-anonymity correctly, uses otplib with the right secret length and TOTP window setting, generates the correct number of backup codes with hashed storage, and encrypts the TOTP secret at rest.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Argon2 package used",
+      "max_score": 8,
+      "description": "Imports from the 'argon2' package (not bcrypt, scrypt, or other password hashing library)"
+    },
+    {
+      "name": "Argon2id variant",
+      "max_score": 8,
+      "description": "Uses 'argon2id' as the hashing type/variant (not argon2i or argon2d)"
+    },
+    {
+      "name": "Argon2 memoryCost",
+      "max_score": 8,
+      "description": "memoryCost is set to exactly 65536 (64MB)"
+    },
+    {
+      "name": "Argon2 timeCost and parallelism",
+      "max_score": 6,
+      "description": "timeCost is set to 3 AND parallelism is set to 4"
+    },
+    {
+      "name": "HIBP k-anonymity",
+      "max_score": 8,
+      "description": "HIBP breach check sends only the first 5 characters of the SHA1 hash to the API (not the full hash or full password)"
+    },
+    {
+      "name": "HIBP Add-Padding header",
+      "max_score": 6,
+      "description": "HIBP API request includes the header 'Add-Padding: true'"
+    },
+    {
+      "name": "otplib used",
+      "max_score": 6,
+      "description": "Imports authenticator from 'otplib' for TOTP generation and verification"
+    },
+    {
+      "name": "32-byte TOTP secret",
+      "max_score": 8,
+      "description": "TOTP secret is generated with 32 bytes (e.g., authenticator.generateSecret(32))"
+    },
+    {
+      "name": "TOTP window setting",
+      "max_score": 6,
+      "description": "TOTP verification uses window: 1 to allow ±30-second drift"
+    },
+    {
+      "name": "8 backup codes generated",
+      "max_score": 6,
+      "description": "Exactly 8 backup codes are generated during MFA setup (not more, not fewer)"
+    },
+    {
+      "name": "Backup codes hashed",
+      "max_score": 8,
+      "description": "Backup codes are stored as hashed values (using Argon2 or equivalent), NOT as plain text strings"
+    },
+    {
+      "name": "TOTP secret encrypted",
+      "max_score": 8,
+      "description": "The TOTP secret is stored encrypted (e.g., AES-256-GCM or similar), NOT as plain text"
+    },
+    {
+      "name": "MFA not enabled until verified",
+      "max_score": 6,
+      "description": "MFA enabled flag is set to false at setup and only activated after a successful first verification"
+    },
+    {
+      "name": "Backup code single-use",
+      "max_score": 8,
+      "description": "A backup code is deleted or invalidated after it is successfully used (not reusable)"
+    }
+  ]
+}

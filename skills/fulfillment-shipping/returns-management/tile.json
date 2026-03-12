@@ -1,0 +1,10 @@
+{
+  "name": "finsi/returns-management",
+  "version": "0.1.0",
+  "summary": "RMA flow with return labels, refund/exchange logic, and restocking",
+  "skills": {
+    "returns-management": {
+      "path": "SKILL.md"
+    }
+  }
+}

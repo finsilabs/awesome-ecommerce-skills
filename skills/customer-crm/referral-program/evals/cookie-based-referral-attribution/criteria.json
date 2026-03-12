@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the referral tracking middleware with correct cookie settings, first-click attribution (not last-click), click logging, and IP-based rate limiting. Both the middleware and signup attribution logic should be present.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cookie name is ref_code",
+      "max_score": 10,
+      "description": "The referral cookie is stored under the exact name 'ref_code' (not 'referral', 'ref', or any other name)"
+    },
+    {
+      "name": "30-day cookie maxAge",
+      "max_score": 10,
+      "description": "Cookie maxAge is set to exactly 30 * 86400 * 1000 milliseconds (or equivalent 2592000000ms), representing a 30-day attribution window"
+    },
+    {
+      "name": "httpOnly cookie flag",
+      "max_score": 8,
+      "description": "Cookie has httpOnly: true set"
+    },
+    {
+      "name": "Secure cookie flag",
+      "max_score": 7,
+      "description": "Cookie has secure: true set"
+    },
+    {
+      "name": "sameSite lax",
+      "max_score": 7,
+      "description": "Cookie has sameSite set to 'lax' (not 'strict' or 'none')"
+    },
+    {
+      "name": "First-click wins",
+      "max_score": 15,
+      "description": "Cookie is only set when no existing ref_code cookie is present — existing ref_code cookies are NOT overwritten"
+    },
+    {
+      "name": "Click logging",
+      "max_score": 10,
+      "description": "Each click event is logged to the database with at minimum: the referral code, the visitor's IP address, and a timestamp"
+    },
+    {
+      "name": "User agent logged",
+      "max_score": 8,
+      "description": "The click log entry includes the user-agent from request headers"
+    },
+    {
+      "name": "IP rate limiting threshold",
+      "max_score": 15,
+      "description": "Clicks from the same IP are rate-limited, blocking or skipping cookie-set/logging after more than 10 clicks from the same IP within 24 hours"
+    },
+    {
+      "name": "Self-referral prevention",
+      "max_score": 10,
+      "description": "The signup attribution code checks that the referral code's owner is not the same as the newly created customer before creating the referral record"
+    }
+  ]
+}

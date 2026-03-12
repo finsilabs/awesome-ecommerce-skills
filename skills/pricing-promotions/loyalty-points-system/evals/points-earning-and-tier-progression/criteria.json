@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the points earning engine with the correct tier multipliers, base earn rate, expiration window, calculation math, transactional logic, tier thresholds, tier upgrade notification, and balance calculation using the skill's exact values.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Tier multipliers",
+      "max_score": 10,
+      "description": "Defines tier multipliers as: bronze=1, silver=1.25, gold=1.5, platinum=2 (exact values)"
+    },
+    {
+      "name": "Base earn rate",
+      "max_score": 8,
+      "description": "Uses a base rate of 1 point per dollar (POINTS_PER_DOLLAR = 1 or equivalent constant)"
+    },
+    {
+      "name": "12-month expiration",
+      "max_score": 8,
+      "description": "Sets points to expire 12 months after earning (not any other duration)"
+    },
+    {
+      "name": "Points math: floor then round",
+      "max_score": 8,
+      "description": "Calculates base points with Math.floor(orderSubtotalCents / 100) and applies tier multiplier with Math.round()"
+    },
+    {
+      "name": "Transactional award",
+      "max_score": 10,
+      "description": "Inserts the points transaction AND updates lifetime_spend inside a single database transaction (db.transaction or equivalent)"
+    },
+    {
+      "name": "Tier recalculation after award",
+      "max_score": 6,
+      "description": "Calls recalculateTier after the transaction commits (not inside the transaction itself)"
+    },
+    {
+      "name": "Tier thresholds",
+      "max_score": 10,
+      "description": "Uses tier thresholds: platinum >= 200000 cents ($2,000), gold >= 100000 ($1,000), silver >= 25000 ($250), bronze >= 0"
+    },
+    {
+      "name": "Tier upgrade email",
+      "max_score": 8,
+      "description": "Calls sendTierUpgradeEmail when a customer's tier changes to a higher tier"
+    },
+    {
+      "name": "Balance excludes expired",
+      "max_score": 10,
+      "description": "getPointsBalance query filters out expired points using: expires_at IS NULL OR expires_at > NOW()"
+    },
+    {
+      "name": "Balance non-negative",
+      "max_score": 6,
+      "description": "getPointsBalance returns Math.max(0, balance) or equivalent to prevent negative balance results"
+    },
+    {
+      "name": "getOrCreate account",
+      "max_score": 8,
+      "description": "Implements getOrCreateLoyaltyAccount that returns existing account or creates new one with default tier='bronze'"
+    },
+    {
+      "name": "Transaction type: purchase",
+      "max_score": 8,
+      "description": "Inserts the purchase transaction with type='purchase' (not 'earn', 'credit', or other)"
+    }
+  ]
+}

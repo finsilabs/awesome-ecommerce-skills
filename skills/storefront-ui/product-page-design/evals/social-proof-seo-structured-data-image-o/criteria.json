@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements correct stock indicator thresholds, avoids fake urgency, uses ProductJsonLd or builds correct JSON-LD with conditional aggregateRating, lazy-loads the reviews section, serves responsive images with srcset/WebP, and uses role=status on the stock warning.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Stock indicator > 10 threshold",
+      "max_score": 8,
+      "description": "StockIndicator renders nothing (returns null or empty) when inventory count is greater than 10"
+    },
+    {
+      "name": "Stock low message threshold",
+      "max_score": 8,
+      "description": "StockIndicator shows a low-stock warning (e.g. 'Only N left') when inventory is between 1 and 10 inclusive"
+    },
+    {
+      "name": "Out of stock message",
+      "max_score": 8,
+      "description": "StockIndicator shows an out-of-stock message (e.g. 'Out of stock') when inventory is 0 or less"
+    },
+    {
+      "name": "Stock status ARIA role",
+      "max_score": 7,
+      "description": "The low-stock warning element has role=\"status\" to announce the message to screen readers"
+    },
+    {
+      "name": "Real inventory data only",
+      "max_score": 9,
+      "description": "Stock/urgency indicators are driven by a real inventory value from props/hook — no hardcoded 'Only 3 left' or similar fabricated low-stock text"
+    },
+    {
+      "name": "JSON-LD @type Product",
+      "max_score": 8,
+      "description": "Structured data output uses @type: 'Product' and @context: 'https://schema.org' (via ProductJsonLd component or a manually built JSON-LD script tag)"
+    },
+    {
+      "name": "JSON-LD required fields",
+      "max_score": 8,
+      "description": "Structured data includes all of: name, image (array), description, sku, and brand fields"
+    },
+    {
+      "name": "JSON-LD aggregateRating conditional",
+      "max_score": 9,
+      "description": "aggregateRating is only included in the structured data when totalCount > 0 — it is omitted or undefined when there are no reviews"
+    },
+    {
+      "name": "Lazy-loaded reviews",
+      "max_score": 10,
+      "description": "The reviews section is lazy-loaded using IntersectionObserver, React.lazy/Suspense, dynamic import, or similar — it is NOT rendered/fetched eagerly on initial page load"
+    },
+    {
+      "name": "Responsive images srcset",
+      "max_score": 8,
+      "description": "Product images use the srcset attribute (or next/image or similar) to serve different sizes for different viewport widths"
+    },
+    {
+      "name": "Modern image format",
+      "max_score": 9,
+      "description": "Images are served in WebP or AVIF format (via srcset type, <picture> source element, or next/image format configuration)"
+    },
+    {
+      "name": "JSON-LD availability mapping",
+      "max_score": 8,
+      "description": "The offers availability field uses schema.org URIs: 'https://schema.org/InStock' or 'https://schema.org/OutOfStock' (not plain strings like 'in stock')"
+    }
+  ]
+}

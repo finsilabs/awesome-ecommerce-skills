@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shopify-theme-development",
+  "version": "0.1.0",
+  "summary": "Liquid templating, theme architecture, sections, and theme app extensions",
+  "skills": {
+    "shopify-theme-development": {
+      "path": "SKILL.md"
+    }
+  }
+}

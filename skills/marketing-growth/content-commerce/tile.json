@@ -1,0 +1,10 @@
+{
+  "name": "finsi/content-commerce",
+  "version": "0.1.0",
+  "summary": "Blog-to-commerce integration, shoppable content, and editorial merchandising",
+  "skills": {
+    "content-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

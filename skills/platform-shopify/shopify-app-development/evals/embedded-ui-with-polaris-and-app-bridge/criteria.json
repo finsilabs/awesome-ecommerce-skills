@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent builds an embedded Shopify app UI page using Polaris components and App Bridge patterns correctly, including the ResourcePicker for product selection, Toast for feedback, TitleBar for page headers, and avoiding iframe-breaking patterns like window.location navigation or browser alert().",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Polaris Page component",
+      "max_score": 7,
+      "description": "app/routes/app.tagging.tsx uses the <Page> component from @shopify/polaris as the top-level container"
+    },
+    {
+      "name": "Polaris Card or LegacyCard",
+      "max_score": 6,
+      "description": "app/routes/app.tagging.tsx uses <Card> (or <LegacyCard>) from @shopify/polaris to group content"
+    },
+    {
+      "name": "TitleBar from App Bridge",
+      "max_score": 9,
+      "description": "app/routes/app.tagging.tsx imports and renders <TitleBar> from @shopify/app-bridge-react"
+    },
+    {
+      "name": "useAppBridge hook present",
+      "max_score": 8,
+      "description": "app/routes/app.tagging.tsx calls useAppBridge() to get the shopify App Bridge instance"
+    },
+    {
+      "name": "App Bridge Toast for feedback",
+      "max_score": 12,
+      "description": "app/routes/app.tagging.tsx calls shopify.toast.show(...) for success or error notification (not browser alert() or window.alert())"
+    },
+    {
+      "name": "No browser alert()",
+      "max_score": 8,
+      "description": "app/routes/app.tagging.tsx does NOT call alert(), window.alert(), or confirm() for any user notification"
+    },
+    {
+      "name": "ResourcePicker for product selection",
+      "max_score": 10,
+      "description": "app/routes/app.tagging.tsx uses <ResourcePicker> from @shopify/app-bridge-react to allow product selection"
+    },
+    {
+      "name": "No window.location navigation",
+      "max_score": 9,
+      "description": "app/routes/app.tagging.tsx does NOT use window.location.href, window.location.assign(), or window.location.replace() for navigation"
+    },
+    {
+      "name": "authenticate.admin in loader/action",
+      "max_score": 10,
+      "description": "app/routes/app.tagging.tsx calls authenticate.admin(request) in at least one loader or action function"
+    },
+    {
+      "name": "Admin GraphQL API call",
+      "max_score": 11,
+      "description": "app/routes/app.tagging.tsx calls admin.graphql(...) to interact with the Shopify Admin API"
+    },
+    {
+      "name": "Polaris Layout component",
+      "max_score": 10,
+      "description": "app/routes/app.tagging.tsx uses <Layout> and/or <Layout.Section> from @shopify/polaris for page structure"
+    }
+  ]
+}

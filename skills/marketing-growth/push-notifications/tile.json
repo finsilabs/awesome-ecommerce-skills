@@ -1,0 +1,10 @@
+{
+  "name": "finsi/push-notifications",
+  "version": "0.1.0",
+  "summary": "Web push for price drops, back-in-stock, and cart reminders",
+  "skills": {
+    "push-notifications": {
+      "path": "SKILL.md"
+    }
+  }
+}

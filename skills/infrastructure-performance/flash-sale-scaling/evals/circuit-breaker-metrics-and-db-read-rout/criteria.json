@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses opossum with correct threshold settings, tracks circuit state changes using prom-client with the right labels, implements a fallback that queues orders with a delay, routes DB reads/writes to separate pools, and caches product data in Redis with the correct TTL and key pattern.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "opossum library",
+      "max_score": 8,
+      "description": "Imports and uses opossum for circuit breakers (not a custom circuit breaker implementation or other library)"
+    },
+    {
+      "name": "timeout: 5000",
+      "max_score": 8,
+      "description": "Circuit breaker(s) configured with timeout: 5000 (5 seconds)"
+    },
+    {
+      "name": "errorThresholdPercentage: 30",
+      "max_score": 8,
+      "description": "Circuit breaker(s) configured with errorThresholdPercentage: 30"
+    },
+    {
+      "name": "resetTimeout: 30000",
+      "max_score": 8,
+      "description": "Circuit breaker(s) configured with resetTimeout: 30000 (30 seconds)"
+    },
+    {
+      "name": "volumeThreshold: 10",
+      "max_score": 8,
+      "description": "Circuit breaker(s) configured with volumeThreshold: 10"
+    },
+    {
+      "name": "prom-client Counter",
+      "max_score": 8,
+      "description": "Uses a prom-client Counter (not Gauge or Histogram) to track circuit state transitions"
+    },
+    {
+      "name": "service + state labels",
+      "max_score": 8,
+      "description": "The prom-client Counter has labelNames including both 'service' and 'state'"
+    },
+    {
+      "name": "Fallback with DelaySeconds: 30",
+      "max_score": 10,
+      "description": "Payment circuit fallback queues the order to SQS with DelaySeconds: 30"
+    },
+    {
+      "name": "Separate DB pools",
+      "max_score": 10,
+      "description": "db-router.ts uses two separate pg Pool instances: one for primary (writes) and one for the read replica"
+    },
+    {
+      "name": "Read/write routing",
+      "max_score": 8,
+      "description": "db.write() uses the primary pool and db.read() uses the replica pool (not both using the same pool)"
+    },
+    {
+      "name": "setex TTL 300",
+      "max_score": 8,
+      "description": "getProductCached uses redis.setex with a TTL of 300 seconds (not a different TTL or redis.set with EX option in a different value)"
+    },
+    {
+      "name": "product cache key pattern",
+      "max_score": 8,
+      "description": "Product cache keys follow the pattern product:{productId}"
+    }
+  ]
+}

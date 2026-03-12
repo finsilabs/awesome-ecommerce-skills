@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements customer LTV, segmentation tiers, activity status logic, and daily KPI calculations following the prescribed thresholds and formulas, plus a customer identity resolution table.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Customer tier: one_time",
+      "max_score": 7,
+      "description": "Customer tier classification assigns 'one_time' to customers with exactly 1 total order"
+    },
+    {
+      "name": "Customer tier: repeat thresholds",
+      "max_score": 8,
+      "description": "Customer tier assigns 'repeat' for 2-3 orders and 'loyal' for 4-10 orders (both thresholds must be correct)"
+    },
+    {
+      "name": "Customer tier: champion",
+      "max_score": 7,
+      "description": "Customer tier assigns 'champion' for customers with more than 10 orders"
+    },
+    {
+      "name": "Activity status: churned threshold",
+      "max_score": 8,
+      "description": "Activity status assigns 'churned' when days since last order exceeds 365"
+    },
+    {
+      "name": "Activity status: at_risk and cooling",
+      "max_score": 8,
+      "description": "Activity status assigns 'at_risk' for >180 days and 'cooling' for >90 days since last order (both thresholds and labels must match)"
+    },
+    {
+      "name": "LTV 24-month formula",
+      "max_score": 10,
+      "description": "Predicted LTV uses the formula: (total_revenue / (customer_lifespan_days / 30.0)) * 24, cast to numeric"
+    },
+    {
+      "name": "LTV fallback for new customers",
+      "max_score": 8,
+      "description": "The LTV calculation falls back to total_revenue for customers with lifespan of 30 days or fewer"
+    },
+    {
+      "name": "KPI: gross_margin_pct formula",
+      "max_score": 8,
+      "description": "kpi_daily_summary calculates gross_margin_pct as (gross_profit / net_revenue * 100), guarded against division by zero"
+    },
+    {
+      "name": "KPI: avg_order_value formula",
+      "max_score": 8,
+      "description": "kpi_daily_summary calculates avg_order_value as (net_revenue / total_orders), guarded against division by zero"
+    },
+    {
+      "name": "KPI: returning_customer_pct",
+      "max_score": 8,
+      "description": "kpi_daily_summary calculates a returning customer percentage metric (returning_customers / unique_customers * 100 or equivalent)"
+    },
+    {
+      "name": "Cohort month field",
+      "max_score": 7,
+      "description": "The LTV model includes a cohort_month field derived from the customer's first order date truncated to month"
+    },
+    {
+      "name": "Customer identity mapping table",
+      "max_score": 13,
+      "description": "dim_customer_identity.sql defines a table or model that maps multiple identifiers (at minimum: email and at least one platform-specific ID) to a single canonical customer key"
+    }
+  ]
+}

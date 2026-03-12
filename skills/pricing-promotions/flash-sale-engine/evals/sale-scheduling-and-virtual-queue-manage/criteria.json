@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the cron package for sale scheduling with the correct cron expression, includes a real-time sale lookup as a fallback, implements the queue using a Redis Sorted Set with correct operations, sets admission token TTL to 300 seconds, returns 1-indexed queue position, and includes bot-protection measures.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CronJob import",
+      "max_score": 8,
+      "description": "Uses CronJob from the 'cron' package (import { CronJob } from 'cron') rather than node-cron, setInterval, or another scheduling library"
+    },
+    {
+      "name": "Per-minute cron expression",
+      "max_score": 7,
+      "description": "The cron job uses the expression '* * * * *' (every minute) for sale status transitions"
+    },
+    {
+      "name": "Activate scheduled sales",
+      "max_score": 8,
+      "description": "The cron job includes a query to transition sales from 'scheduled' to 'active' where starts_at <= NOW() and ends_at > NOW()"
+    },
+    {
+      "name": "End expired sales",
+      "max_score": 8,
+      "description": "The cron job includes a query to transition sales from 'active' to 'ended' where ends_at <= NOW()"
+    },
+    {
+      "name": "Real-time sale lookup",
+      "max_score": 8,
+      "description": "A function (e.g. getActiveSale) performs a live DB query with starts_at <= now AND ends_at > now checks, not relying solely on the status field set by the cron job"
+    },
+    {
+      "name": "Redis Sorted Set for queue",
+      "max_score": 10,
+      "description": "The queue is backed by a Redis Sorted Set (zadd) where the score is the join timestamp (Date.now() or equivalent epoch value)"
+    },
+    {
+      "name": "zpopmin for batch admission",
+      "max_score": 9,
+      "description": "Batch admission uses redis.zpopmin() (or equivalent atomic sorted set pop) rather than zrange + zrem"
+    },
+    {
+      "name": "1-indexed queue position",
+      "max_score": 7,
+      "description": "The queue join function returns the position as (zrank result + 1), i.e., 1-indexed, not 0-indexed"
+    },
+    {
+      "name": "Admission token TTL 300s",
+      "max_score": 9,
+      "description": "Admission tokens are stored with a TTL of exactly 300 seconds (5 minutes) using redis.setex() or equivalent"
+    },
+    {
+      "name": "Token admission check",
+      "max_score": 7,
+      "description": "The isAdmitted function checks the Redis admission token key and returns true only when the token value equals '1'"
+    },
+    {
+      "name": "Bot protection measures",
+      "max_score": 9,
+      "description": "DESIGN.md or code comments mention at least two of the following: rate limiting on queue join, CAPTCHA requirement, IP velocity checks"
+    },
+    {
+      "name": "Token expiry re-queue rationale",
+      "max_score": 10,
+      "description": "DESIGN.md explains that expired admission tokens cause the slot to be released or returned to the queue (customers who don't complete checkout lose their spot)"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses the lifetimes Python library with BetaGeoFitter and GammaGammaFitter, applies the correct utility function for RFM preparation, filters out zero-frequency customers for the monetary model, uses penalizer_coef=0.001, and applies the correct discount rate and time horizon.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses lifetimes library",
+      "max_score": 8,
+      "description": "clv_model.py imports from the lifetimes package (not a different CLV library like pymc-marketing or lifetimes2)"
+    },
+    {
+      "name": "BetaGeoFitter used",
+      "max_score": 8,
+      "description": "clv_model.py instantiates and fits a BetaGeoFitter model (from lifetimes)"
+    },
+    {
+      "name": "GammaGammaFitter used",
+      "max_score": 8,
+      "description": "clv_model.py instantiates and fits a GammaGammaFitter model (from lifetimes)"
+    },
+    {
+      "name": "summary_data_from_transaction_data",
+      "max_score": 10,
+      "description": "clv_model.py uses summary_data_from_transaction_data (from lifetimes.utils) to build the RFM summary, rather than computing recency/frequency/T manually"
+    },
+    {
+      "name": "GGF zero-frequency filter",
+      "max_score": 10,
+      "description": "GammaGammaFitter is fitted only on customers where frequency > 0 (i.e., the rfm dataframe is filtered before fitting GGF)"
+    },
+    {
+      "name": "penalizer_coef=0.001",
+      "max_score": 10,
+      "description": "Both BetaGeoFitter and GammaGammaFitter are initialized with penalizer_coef=0.001"
+    },
+    {
+      "name": "12-month prediction window",
+      "max_score": 8,
+      "description": "ggf.customer_lifetime_value is called with time=12 (months)"
+    },
+    {
+      "name": "Monthly discount rate 0.01",
+      "max_score": 8,
+      "description": "ggf.customer_lifetime_value is called with discount_rate=0.01"
+    },
+    {
+      "name": "Cancelled orders excluded",
+      "max_score": 8,
+      "description": "Transaction data is filtered to exclude non-completed orders before being passed to the model (e.g., only status='completed' rows are used)"
+    },
+    {
+      "name": "Notes explain GGF filter",
+      "max_score": 8,
+      "description": "model-notes.md explains why customers with zero repeat purchases (frequency=0) are excluded from GammaGammaFitter fitting"
+    },
+    {
+      "name": "Notes state penalizer and discount",
+      "max_score": 14,
+      "description": "model-notes.md states the penalizer_coef value (0.001) AND the monthly discount rate used (0.01)"
+    }
+  ]
+}

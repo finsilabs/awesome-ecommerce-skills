@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-data-modeling",
+  "version": "0.1.0",
+  "summary": "Schema design for products with variants, options, attributes, and relationships",
+  "skills": {
+    "product-data-modeling": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/price-rules-engine",
+  "version": "0.1.0",
+  "summary": "Stackable pricing rules with priority, exclusions, and customer segment targeting",
+  "skills": {
+    "price-rules-engine": {
+      "path": "SKILL.md"
+    }
+  }
+}

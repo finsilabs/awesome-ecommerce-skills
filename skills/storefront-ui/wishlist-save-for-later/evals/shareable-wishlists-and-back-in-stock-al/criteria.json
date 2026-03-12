@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent designs the wishlist system following the skill's specific schema fields, nanoid-based slug generation, privacy-safe shared pages, upsert-based subscription deduplication, notifiedAt-based single-notification enforcement, and named-wishlist support in the data model.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "share_slug field in schema",
+      "max_score": 6,
+      "description": "The wishlists table (or model) includes a share_slug field (or shareSlug column) for the public sharing URL identifier"
+    },
+    {
+      "name": "is_public field in schema",
+      "max_score": 6,
+      "description": "The wishlists table (or model) includes an is_public (or isPublic) boolean field"
+    },
+    {
+      "name": "notify_back_in_stock field",
+      "max_score": 6,
+      "description": "The wishlist_items table (or model) includes a notify_back_in_stock (or notifyBackInStock) field"
+    },
+    {
+      "name": "Multiple named wishlists",
+      "max_score": 6,
+      "description": "The wishlists table (or model) includes a 'name' field, supporting multiple named wishlists per user"
+    },
+    {
+      "name": "nanoid for slug generation",
+      "max_score": 10,
+      "description": "The share link generation code uses nanoid (imported from 'nanoid') to create the share slug, specifically with a length of 10 characters"
+    },
+    {
+      "name": "Shared page field exclusion",
+      "max_score": 10,
+      "description": "The shared wishlist endpoint/handler (slug route) explicitly limits returned data to product name, image, and price — and includes a comment or note stating that user info, addresses, or notes are excluded"
+    },
+    {
+      "name": "Subscription upsert",
+      "max_score": 10,
+      "description": "The back-in-stock subscribe endpoint uses an upsert operation keyed on both variantId AND email (not a plain insert that could create duplicates)"
+    },
+    {
+      "name": "notifiedAt null filter",
+      "max_score": 12,
+      "description": "The back-in-stock notify function queries for subscribers where notifiedAt IS NULL (or equivalent), ensuring only un-notified subscribers receive emails"
+    },
+    {
+      "name": "Mark notifiedAt after send",
+      "max_score": 12,
+      "description": "After successfully sending an email to a subscriber, the notify function updates that subscriber's notifiedAt field to the current timestamp"
+    },
+    {
+      "name": "Guest email support",
+      "max_score": 8,
+      "description": "The subscribe endpoint accepts an email in the request body (for guests who are not authenticated) and falls back to the session email for authenticated users"
+    },
+    {
+      "name": "notifiedAt field in schema",
+      "max_score": 8,
+      "description": "The back-in-stock subscriptions table (or model) includes a notifiedAt field (can be nullable datetime)"
+    },
+    {
+      "name": "Design doc covers dedup and rate limiting",
+      "max_score": 6,
+      "description": "DESIGN.md (or equivalent) mentions both how duplicate subscriptions are prevented AND how repeated notifications for the same restock event are avoided"
+    }
+  ]
+}

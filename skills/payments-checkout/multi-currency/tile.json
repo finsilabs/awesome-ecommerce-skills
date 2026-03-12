@@ -1,0 +1,10 @@
+{
+  "name": "finsi/multi-currency",
+  "version": "0.1.0",
+  "summary": "Currency detection, conversion, rounding rules, and localized formatting",
+  "skills": {
+    "multi-currency": {
+      "path": "SKILL.md"
+    }
+  }
+}

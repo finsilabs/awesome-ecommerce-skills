@@ -1,0 +1,10 @@
+{
+  "name": "finsi/checkout-flow-optimization",
+  "version": "0.1.0",
+  "summary": "Multi-step vs single-page checkout design with conversion best practices",
+  "skills": {
+    "checkout-flow-optimization": {
+      "path": "SKILL.md"
+    }
+  }
+}

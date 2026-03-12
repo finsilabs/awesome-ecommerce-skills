@@ -1,0 +1,10 @@
+{
+  "name": "finsi/commerce-api-gateway",
+  "version": "0.1.0",
+  "summary": "API gateway patterns for aggregating multiple commerce microservices",
+  "skills": {
+    "commerce-api-gateway": {
+      "path": "SKILL.md"
+    }
+  }
+}

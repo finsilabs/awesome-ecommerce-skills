@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent fixes N+1 product queries using wc_get_products() with batch loading, implements fragment caching with the correct group name and TTL, hooks cache invalidation on product update, and fixes unbounded order queries with pagination.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Batch product fetch",
+      "max_score": 12,
+      "description": "featured-products-widget.php uses wc_get_products() with an 'include' parameter to fetch all products in a single query, rather than calling wc_get_product() in a loop"
+    },
+    {
+      "name": "wp_cache_get used",
+      "max_score": 8,
+      "description": "featured-products-widget.php calls wp_cache_get() before rendering to attempt a cache hit"
+    },
+    {
+      "name": "product_cards cache group",
+      "max_score": 10,
+      "description": "wp_cache_get() and wp_cache_set() use 'product_cards' as the cache group name"
+    },
+    {
+      "name": "30-minute TTL",
+      "max_score": 10,
+      "description": "wp_cache_set() uses a TTL of 30 minutes (1800 seconds or 30 * MINUTE_IN_SECONDS)"
+    },
+    {
+      "name": "Locale in cache key",
+      "max_score": 8,
+      "description": "The cache key includes get_locale() to avoid serving the wrong locale's cached output"
+    },
+    {
+      "name": "Cache invalidation hook",
+      "max_score": 10,
+      "description": "featured-products-widget.php adds an action on 'woocommerce_update_product' to invalidate cached product output"
+    },
+    {
+      "name": "wp_cache_flush_group used",
+      "max_score": 10,
+      "description": "The invalidation handler calls wp_cache_flush_group('product_cards') to clear all locale variants"
+    },
+    {
+      "name": "No limit=-1 in order query",
+      "max_score": 10,
+      "description": "admin-order-report.php does NOT use 'limit' => -1 (or posts_per_page=-1) for the order query"
+    },
+    {
+      "name": "Paginated order query",
+      "max_score": 12,
+      "description": "admin-order-report.php uses a 'paged' or 'page' parameter with a limit of 100 or less per page to paginate through orders"
+    },
+    {
+      "name": "Cache key includes product_id",
+      "max_score": 10,
+      "description": "Cache key is scoped per product_id (not a single key for the entire widget)"
+    }
+  ]
+}

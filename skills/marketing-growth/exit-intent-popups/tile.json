@@ -1,0 +1,10 @@
+{
+  "name": "finsi/exit-intent-popups",
+  "version": "0.1.0",
+  "summary": "Exit-intent detection with offer targeting, frequency capping, and A/B testing",
+  "skills": {
+    "exit-intent-popups": {
+      "path": "SKILL.md"
+    }
+  }
+}

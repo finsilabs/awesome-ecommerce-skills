@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements a choreography-based saga for distributed order processing: using AWS EventBridge for async event publishing, including structured event fields (Source, DetailType, EventBusName), adding schemaVersion to event payloads, implementing compensating transactions on payment failure, and referencing the outbox pattern for reliable event delivery.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "EventBridge import",
+      "max_score": 10,
+      "description": "Imports EventBridge from '@aws-sdk/client-eventbridge' for publishing events (not SNS, SQS, or a custom in-memory bus as the primary mechanism)"
+    },
+    {
+      "name": "putEvents with Source field",
+      "max_score": 8,
+      "description": "Calls eventBridge.putEvents() with an entry that includes a 'Source' field (e.g. 'commerce.orders')"
+    },
+    {
+      "name": "putEvents with DetailType field",
+      "max_score": 8,
+      "description": "Event entries include a 'DetailType' field naming the event (e.g. 'OrderPlaced', 'PaymentCaptured')"
+    },
+    {
+      "name": "EventBusName field",
+      "max_score": 8,
+      "description": "Event entries include an 'EventBusName' field specifying the target event bus"
+    },
+    {
+      "name": "Choreography-based saga",
+      "max_score": 10,
+      "description": "Each service has its own event handlers that subscribe to events and publish follow-on events — NOT a single orchestrator that calls each service directly"
+    },
+    {
+      "name": "Payment failure compensation — inventory release",
+      "max_score": 10,
+      "description": "On payment failure event, inventory that was reserved is explicitly released (calls a function like releaseInventory or equivalent)"
+    },
+    {
+      "name": "Payment failure compensation — order status update",
+      "max_score": 8,
+      "description": "On payment failure event, the order's status is updated to a failed/cancelled state"
+    },
+    {
+      "name": "Payment failure compensation — customer notification",
+      "max_score": 8,
+      "description": "On payment failure event, a customer notification is triggered (calls notifyCustomer or equivalent)"
+    },
+    {
+      "name": "schemaVersion in event payload",
+      "max_score": 12,
+      "description": "Event payloads include a 'schemaVersion' field (or equivalent version identifier) in the Detail object"
+    },
+    {
+      "name": "Outbox pattern reference",
+      "max_score": 18,
+      "description": "Code or comments reference the outbox pattern (transactional outbox) to guarantee event publication after a database write, either as an implementation or an explicit architectural note"
+    }
+  ]
+}

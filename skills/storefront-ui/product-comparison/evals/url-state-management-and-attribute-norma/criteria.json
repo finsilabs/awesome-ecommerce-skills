@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements URL-based comparison state using replaceState (not pushState), normalises missing product attributes to null (not skipped), renders N/A for missing values rather than empty cells, and produces CSS with overflow-x auto, correct sticky column positioning, and min-width/border-collapse on the table.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "URLSearchParams usage",
+      "max_score": 8,
+      "description": "The hook reads and writes comparison IDs using URLSearchParams with 'compare' as the query parameter key (params.getAll('compare') or equivalent)"
+    },
+    {
+      "name": "history.replaceState not pushState",
+      "max_score": 12,
+      "description": "The hook updates the URL using window.history.replaceState (NOT history.pushState or router.push) when toggling products"
+    },
+    {
+      "name": "Normalize all attribute keys",
+      "max_score": 8,
+      "description": "getComparisonData collects the union of all attribute keys across all fetched products before building each product's attribute map"
+    },
+    {
+      "name": "null for missing attributes",
+      "max_score": 10,
+      "description": "Attributes absent for a given product are represented as null in that product's attribute map (not omitted/undefined)"
+    },
+    {
+      "name": "N/A rendered for null",
+      "max_score": 10,
+      "description": "The component or data layer renders \"N/A\" (or equivalent fallback text) for null attribute values rather than leaving the cell empty or skipping it"
+    },
+    {
+      "name": "overflow-x auto on wrapper",
+      "max_score": 9,
+      "description": "The CSS applies overflow-x: auto to the table wrapper element (and optionally -webkit-overflow-scrolling: touch)"
+    },
+    {
+      "name": "Sticky first column with position:sticky",
+      "max_score": 11,
+      "description": "The CSS makes the attribute label column sticky using position: sticky and left: 0 — NOT position: fixed"
+    },
+    {
+      "name": "Sticky column background and z-index",
+      "max_score": 7,
+      "description": "The sticky attribute label column has an explicit background-color and a z-index set (to prevent content showing through when scrolling)"
+    },
+    {
+      "name": "Table min-width",
+      "max_score": 7,
+      "description": "The comparison table element has min-width: 600px (or a similar minimum that prevents premature column collapse)"
+    },
+    {
+      "name": "border-collapse: collapse",
+      "max_score": 6,
+      "description": "The comparison table CSS includes border-collapse: collapse"
+    },
+    {
+      "name": "Architecture doc documents replaceState reason",
+      "max_score": 6,
+      "description": "ARCHITECTURE.md mentions the reason for using replaceState over pushState (back-button history / navigation behaviour)"
+    },
+    {
+      "name": "Architecture doc documents null handling",
+      "max_score": 6,
+      "description": "ARCHITECTURE.md mentions the approach for handling missing attributes (null value, N/A display, column alignment rationale)"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/catalog-import-export",
+  "version": "0.1.0",
+  "summary": "Bulk product import/export via CSV, JSON, XML with validation and error handling",
+  "skills": {
+    "catalog-import-export": {
+      "path": "SKILL.md"
+    }
+  }
+}

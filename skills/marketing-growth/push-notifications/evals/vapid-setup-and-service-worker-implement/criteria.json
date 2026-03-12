@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly sets up the web-push VAPID infrastructure, implements the service worker with proper push and notificationclick handlers, and writes the client-side subscription code with required safety checks and helper functions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "web-push package",
+      "max_score": 8,
+      "description": "server/push-config.ts imports or references the 'web-push' package (not an alternative like 'push.js' or 'pushpad')"
+    },
+    {
+      "name": "VAPID key generation CLI",
+      "max_score": 8,
+      "description": "README.md or push-config.ts includes the command 'npx web-push generate-vapid-keys' (or equivalent reference to this specific command)"
+    },
+    {
+      "name": "setVapidDetails call",
+      "max_score": 8,
+      "description": "server/push-config.ts calls webpush.setVapidDetails() with three arguments: a mailto: email string, a public key env var, and a private key env var"
+    },
+    {
+      "name": "VAPID keys from env vars",
+      "max_score": 8,
+      "description": "The VAPID public and private keys in server/push-config.ts are read from environment variables (e.g., process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY), not hardcoded"
+    },
+    {
+      "name": "SW path at /sw.js",
+      "max_score": 8,
+      "description": "client/subscribe.ts registers the service worker using the path '/sw.js' (not '/service-worker.js' or any other path)"
+    },
+    {
+      "name": "Browser compatibility check",
+      "max_score": 8,
+      "description": "client/subscribe.ts checks for both 'serviceWorker' in navigator AND 'PushManager' in window before proceeding"
+    },
+    {
+      "name": "userVisibleOnly flag",
+      "max_score": 8,
+      "description": "client/subscribe.ts passes userVisibleOnly: true in the pushManager.subscribe() options object"
+    },
+    {
+      "name": "urlBase64ToUint8Array helper",
+      "max_score": 8,
+      "description": "client/subscribe.ts includes or uses a helper function to convert the base64 VAPID public key to a Uint8Array for applicationServerKey"
+    },
+    {
+      "name": "SW push event handler",
+      "max_score": 8,
+      "description": "public/sw.js contains a 'push' event listener that calls self.registration.showNotification() with at least title, body, icon, and data fields"
+    },
+    {
+      "name": "SW badge path",
+      "max_score": 6,
+      "description": "public/sw.js sets the badge property to '/icons/badge-72.png' in the showNotification() options"
+    },
+    {
+      "name": "SW notificationclick handler",
+      "max_score": 8,
+      "description": "public/sw.js contains a 'notificationclick' event listener that calls event.notification.close() and opens the URL from notification data using clients.openWindow()"
+    },
+    {
+      "name": "iOS platform limitation",
+      "max_score": 8,
+      "description": "README.md mentions that iOS Safari requires iOS 16.4+ AND that the site must be added to the Home Screen (PWA install) for push to work"
+    },
+    {
+      "name": "Subscription sent to server",
+      "max_score": 6,
+      "description": "client/subscribe.ts sends the subscription to the server (e.g., via fetch POST) including subscription.toJSON() or equivalent serialization"
+    }
+  ]
+}

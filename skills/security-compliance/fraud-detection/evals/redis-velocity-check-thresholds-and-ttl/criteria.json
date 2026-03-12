@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements Redis velocity checks using ioredis with the correct per-dimension thresholds, time windows, Redis key naming conventions, and proper TTL/EXPIRE handling to avoid keys that never expire.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses ioredis",
+      "max_score": 8,
+      "description": "Imports and uses 'ioredis' (not 'redis', 'node-redis', or another package) for Redis access"
+    },
+    {
+      "name": "IP key naming",
+      "max_score": 7,
+      "description": "Uses the key pattern 'velocity:ip:<ip>' (colon-separated, with 'velocity:ip:' prefix) for IP tracking"
+    },
+    {
+      "name": "Email key naming",
+      "max_score": 7,
+      "description": "Uses the key pattern 'velocity:email:<email>' for email tracking"
+    },
+    {
+      "name": "Card key naming",
+      "max_score": 7,
+      "description": "Uses the key pattern 'velocity:card:<fingerprint>' for card fingerprint tracking"
+    },
+    {
+      "name": "Spend key naming",
+      "max_score": 7,
+      "description": "Uses the key pattern 'velocity:spend:<fingerprint>' for daily spend tracking"
+    },
+    {
+      "name": "IP threshold and window",
+      "max_score": 8,
+      "description": "Blocks when IP order count exceeds 10 within a 1-hour window (3600 seconds)"
+    },
+    {
+      "name": "Email threshold and window",
+      "max_score": 8,
+      "description": "Blocks when email order count exceeds 5 within a 24-hour window (86400 seconds)"
+    },
+    {
+      "name": "Card threshold and window",
+      "max_score": 8,
+      "description": "Blocks when card fingerprint usage exceeds 3 within a 24-hour window"
+    },
+    {
+      "name": "Daily spend limit",
+      "max_score": 8,
+      "description": "Blocks when cumulative spend for a card fingerprint exceeds 50000 cents ($500) within a day"
+    },
+    {
+      "name": "EXPIRE on new keys",
+      "max_score": 12,
+      "description": "Calls EXPIRE (or equivalent TTL method) on a Redis key immediately after it is first created (i.e., when the counter was previously zero or absent), not just when it is incremented"
+    },
+    {
+      "name": "Reason codes returned",
+      "max_score": 10,
+      "description": "Returns distinct reason strings for each type of violation: 'ip_velocity_exceeded', 'email_velocity_exceeded', 'card_velocity_exceeded', 'daily_spend_exceeded'"
+    },
+    {
+      "name": "recordSuccessfulTransaction updates spend",
+      "max_score": 10,
+      "description": "The recordSuccessfulTransaction function increments the spend key and sets a TTL if the key is new (ttl < 0 check or equivalent)"
+    }
+  ]
+}

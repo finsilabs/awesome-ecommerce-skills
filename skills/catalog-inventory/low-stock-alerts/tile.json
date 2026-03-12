@@ -1,0 +1,10 @@
+{
+  "name": "finsi/low-stock-alerts",
+  "version": "0.1.0",
+  "summary": "Automated reorder point monitoring with supplier notifications and demand forecasting",
+  "skills": {
+    "low-stock-alerts": {
+      "path": "SKILL.md"
+    }
+  }
+}

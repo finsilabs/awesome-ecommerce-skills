@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct WooCommerce Subscriptions filter for proration, implements proper daily-rate proration calculation, enforces a non-negative floor, and uses the correct programmatic plan-switch sequence with calculate_totals and save.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct proration filter",
+      "max_score": 10,
+      "description": "Uses the woocommerce_subscriptions_switch_proration filter (not a custom hook or direct function override)"
+    },
+    {
+      "name": "Filter parameter count",
+      "max_score": 8,
+      "description": "The proration filter callback accepts all 5 parameters: $proration_amount, $subscription, $new_order, $product, $switch_cart_item with priority 10"
+    },
+    {
+      "name": "Next payment date used",
+      "max_score": 8,
+      "description": "Uses $subscription->get_next_payment_date() to determine the end of the billing period"
+    },
+    {
+      "name": "Last payment date used",
+      "max_score": 8,
+      "description": "Uses $subscription->get_date('last_payment') to determine the start of the billing period"
+    },
+    {
+      "name": "Daily rate calculation",
+      "max_score": 8,
+      "description": "Calculates both old and new daily rates by dividing plan price by the number of days in the billing period"
+    },
+    {
+      "name": "Days remaining used",
+      "max_score": 8,
+      "description": "Multiplies the rate difference by remaining days (not total days) to produce the proration amount"
+    },
+    {
+      "name": "Non-negative floor",
+      "max_score": 10,
+      "description": "Ensures the returned proration amount is never less than 0.00 (uses max(), a conditional, or similar guard)"
+    },
+    {
+      "name": "Rounded result",
+      "max_score": 6,
+      "description": "Returns the proration amount rounded to 2 decimal places using round()"
+    },
+    {
+      "name": "wcs_get_subscription null-check",
+      "max_score": 8,
+      "description": "The plan-switch function calls wcs_get_subscription() and returns early (false/null) if the result is falsy"
+    },
+    {
+      "name": "Remove existing items",
+      "max_score": 8,
+      "description": "Iterates over subscription items and calls remove_item() on each before adding the new product"
+    },
+    {
+      "name": "WC_Order_Item_Product used",
+      "max_score": 8,
+      "description": "Creates a WC_Order_Item_Product instance and uses set_product() and set_quantity() to configure it"
+    },
+    {
+      "name": "calculate_totals and save",
+      "max_score": 10,
+      "description": "Calls $subscription->calculate_totals() followed by $subscription->save() after adding the new item"
+    }
+  ]
+}

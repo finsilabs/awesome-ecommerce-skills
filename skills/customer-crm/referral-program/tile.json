@@ -1,0 +1,10 @@
+{
+  "name": "finsi/referral-program",
+  "version": "0.1.0",
+  "summary": "Refer-a-friend flows with unique links, reward tiers, and fraud prevention",
+  "skills": {
+    "referral-program": {
+      "path": "SKILL.md"
+    }
+  }
+}

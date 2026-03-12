@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent uses the correct scraping library (playwright/chromium), implements the parsePriceCents helper correctly, filters stale competitor data, uses the correct cron schedule pattern and timezone, structures the price_history table schema correctly, and applies price changes inside a database transaction while also updating the search index.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses playwright chromium",
+      "max_score": 8,
+      "description": "The competitor monitor imports from 'playwright' and uses chromium.launch() — NOT puppeteer, selenium, or any other browser automation library"
+    },
+    {
+      "name": "Headless browser mode",
+      "max_score": 5,
+      "description": "chromium.launch() is called with { headless: true }"
+    },
+    {
+      "name": "Page navigation timeout",
+      "max_score": 5,
+      "description": "page.goto() is called with a timeout of exactly 15000 milliseconds"
+    },
+    {
+      "name": "parsePriceCents: strips currency symbols",
+      "max_score": 8,
+      "description": "The price parsing function removes dollar signs and commas (via replace or similar) before extracting the numeric value"
+    },
+    {
+      "name": "parsePriceCents: converts to integer cents",
+      "max_score": 8,
+      "description": "The price parsing function multiplies the parsed float by 100 and rounds to an integer (not stored as dollars or float cents)"
+    },
+    {
+      "name": "Staleness filter: 4-hour cutoff",
+      "max_score": 10,
+      "description": "Competitor prices with a fetchedAt timestamp older than 4 hours are excluded from the returned results"
+    },
+    {
+      "name": "Cron pattern: every 30 minutes during business hours",
+      "max_score": 8,
+      "description": "The cron expression '*/30 6-22 * * *' (or functionally equivalent) is used for the pricing job schedule"
+    },
+    {
+      "name": "Cron timezone: America/New_York",
+      "max_score": 5,
+      "description": "The cron job is configured with timezone 'America/New_York'"
+    },
+    {
+      "name": "price_history table: correct field types",
+      "max_score": 8,
+      "description": "The price_history SQL table has old_price and new_price as INTEGER type (not DECIMAL or FLOAT), and changed_at as TIMESTAMPTZ"
+    },
+    {
+      "name": "price_history table: audit fields",
+      "max_score": 8,
+      "description": "The price_history table includes a reason column (TEXT) and a changed_by column with a default value identifying the pricing engine"
+    },
+    {
+      "name": "price_history index",
+      "max_score": 8,
+      "description": "An index is created on price_history for (product_id, changed_at DESC) to support efficient per-product history lookups"
+    },
+    {
+      "name": "Price change in transaction",
+      "max_score": 10,
+      "description": "The price history data-access function wraps both the product price update AND the price_history insert inside a single database transaction"
+    },
+    {
+      "name": "Search index update after transaction",
+      "max_score": 9,
+      "description": "After recording the price change, the code also updates the search index (e.g. calls a searchIndex.updatePrice or equivalent) in the same applyPriceChange flow"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "context": "Tests whether the agent correctly places express checkout buttons (Apple Pay, Google Pay, PayPal Express) at the top of the checkout page above the form, includes a divider, shows them on the cart page as well, sizes them correctly, and conditionally renders Apple Pay based on device support.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Express buttons above form",
+      "max_score": 15,
+      "description": "Express checkout buttons are rendered before (above) the regular card/form section, not after it or beside it at the same level"
+    },
+    {
+      "name": "Divider present",
+      "max_score": 10,
+      "description": "A divider element with text 'or pay with card' (or equivalent) separates the express buttons from the regular payment form"
+    },
+    {
+      "name": "All three providers",
+      "max_score": 10,
+      "description": "The express checkout section includes Apple Pay, Google Pay, and PayPal Express buttons (or placeholder components for each)"
+    },
+    {
+      "name": "Buttons on cart page",
+      "max_score": 12,
+      "description": "Express checkout buttons are rendered on the cart page in addition to the checkout page (component used or referenced in both places)"
+    },
+    {
+      "name": "Minimum button height",
+      "max_score": 10,
+      "description": "Express checkout buttons have a minimum height of 44px applied via CSS or inline styles"
+    },
+    {
+      "name": "Dynamic Apple Pay detection",
+      "max_score": 15,
+      "description": "Apple Pay button is conditionally rendered based on a runtime availability check using ApplePaySession.canMakePayments() (or equivalent guard)"
+    },
+    {
+      "name": "Express section label",
+      "max_score": 8,
+      "description": "The express checkout section has a visible label such as 'Express checkout' above the buttons"
+    },
+    {
+      "name": "No Apple Pay without HTTPS guard",
+      "max_score": 10,
+      "description": "Code or comments acknowledge that Apple Pay requires HTTPS (either a note, a canMakePayments check, or an HTTPS requirement comment)"
+    },
+    {
+      "name": "Trust signals near payment",
+      "max_score": 10,
+      "description": "The regular card/form section includes trust signals near payment fields: at least one of SSL badge, accepted card logos, or a return policy reference"
+    }
+  ]
+}

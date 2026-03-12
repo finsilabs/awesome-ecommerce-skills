@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses the Fulfillment Orders API (not the legacy Fulfillments API) to fulfill orders, correctly handles userErrors on mutations, uses GID format for IDs, and initializes the Shopify client properly for a custom app.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses @shopify/shopify-api",
+      "max_score": 7,
+      "description": "Code imports and uses the `@shopify/shopify-api` package (not raw HTTP fetch/axios alone), visible in imports or package.json"
+    },
+    {
+      "name": "Imports node adapter",
+      "max_score": 7,
+      "description": "Code includes `import '@shopify/shopify-api/adapters/node'` or `require('@shopify/shopify-api/adapters/node')`"
+    },
+    {
+      "name": "Fetches fulfillmentOrders first",
+      "max_score": 12,
+      "description": "Code queries `fulfillmentOrders` on the order before attempting to create a fulfillment (two-step process: look up fulfillment order ID, then fulfill)"
+    },
+    {
+      "name": "Uses fulfillmentCreate mutation",
+      "max_score": 12,
+      "description": "Fulfillment is created using the `fulfillmentCreate` GraphQL mutation (NOT `fulfillmentOrderFulfill` or legacy `POST /fulfillments` REST endpoint)"
+    },
+    {
+      "name": "Does NOT use legacy REST fulfillment",
+      "max_score": 8,
+      "description": "Code does NOT call the REST `/orders/{id}/fulfillments` endpoint or `restClient.post` for creating fulfillments"
+    },
+    {
+      "name": "Checks userErrors on mutation",
+      "max_score": 12,
+      "description": "Code checks the `userErrors` array from the `fulfillmentCreate` response and throws or returns an error if `userErrors.length > 0`"
+    },
+    {
+      "name": "GID format for order ID",
+      "max_score": 10,
+      "description": "When a numeric order ID is received, code converts it to GID format (`gid://shopify/Order/${id}`) before using it in GraphQL queries/mutations"
+    },
+    {
+      "name": "Offline session",
+      "max_score": 7,
+      "description": "Session is created with `isOnline: false` for the custom app with static token"
+    },
+    {
+      "name": "Uses January25 API version",
+      "max_score": 7,
+      "description": "Code sets the API version to `ApiVersion.January25` or the string `'2025-01'`"
+    },
+    {
+      "name": "notifyCustomer included",
+      "max_score": 8,
+      "description": "The `fulfillmentCreate` call includes `notifyCustomer: true` in the fulfillment input"
+    },
+    {
+      "name": "Tracking info passed",
+      "max_score": 10,
+      "description": "The fulfillment input includes `trackingInfo` with `number` and `company` fields"
+    }
+  ]
+}

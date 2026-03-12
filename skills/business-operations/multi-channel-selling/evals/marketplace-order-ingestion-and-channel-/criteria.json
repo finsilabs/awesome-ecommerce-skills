@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements per-channel adapter classes that normalize marketplace orders to a shared interface, resolves channel SKUs to master product IDs via channel_listings, implements idempotency, avoids exposing master SKUs in channel-facing code, and describes a retry strategy with exponential backoff.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Shared NormalizedOrder interface",
+      "max_score": 10,
+      "description": "types.ts (or equivalent) defines a shared interface/type for normalized orders containing at minimum: a channel order ID, channel ID, order lines (with channel SKU, quantity, price), shipping address, and customer email"
+    },
+    {
+      "name": "Per-channel adapter separation",
+      "max_score": 12,
+      "description": "Amazon and Walmart adapters are implemented as separate modules/files — marketplace-specific parsing logic is NOT mixed into the core order-ingestion.ts file"
+    },
+    {
+      "name": "Channel SKU to master product resolution",
+      "max_score": 12,
+      "description": "order-ingestion.ts resolves channel SKUs to internal product IDs by looking up channel_listings (or equivalent mapping table) — it does NOT look up products directly by the channel SKU"
+    },
+    {
+      "name": "Master SKUs not exposed externally",
+      "max_score": 8,
+      "description": "Adapter outputs and normalized order types use channel SKUs (not master/internal SKUs) as the line-item identifier passed across the channel boundary"
+    },
+    {
+      "name": "Idempotency check on ingestion",
+      "max_score": 12,
+      "description": "order-ingestion.ts checks whether an order with the same channelId + channelOrderId already exists and returns early (without re-inserting) if it does"
+    },
+    {
+      "name": "Error on unknown channel SKU",
+      "max_score": 8,
+      "description": "order-ingestion.ts throws an error (or rejects/returns an error) when a channel SKU cannot be found in the listings table"
+    },
+    {
+      "name": "Inventory reservation in transaction",
+      "max_score": 8,
+      "description": "The ingestion function calls inventory reservation inside (or wrapped in) a database transaction alongside order creation"
+    },
+    {
+      "name": "Exponential backoff in retry strategy",
+      "max_score": 10,
+      "description": "retry-strategy.md describes using exponential backoff (not fixed-interval retries) for outbound marketplace API call failures"
+    },
+    {
+      "name": "Queue-based retry",
+      "max_score": 10,
+      "description": "retry-strategy.md describes using a queue (job queue, message queue, or task queue) to persist and retry failed sync operations, rather than retrying inline"
+    },
+    {
+      "name": "Failure logging",
+      "max_score": 10,
+      "description": "retry-strategy.md mentions logging sync failures with enough detail to diagnose and replay them"
+    }
+  ]
+}

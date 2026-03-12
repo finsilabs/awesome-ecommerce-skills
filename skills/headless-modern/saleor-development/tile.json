@@ -1,0 +1,10 @@
+{
+  "name": "finsi/saleor-development",
+  "version": "0.1.0",
+  "summary": "Saleor GraphQL API, app development, and dashboard customization",
+  "skills": {
+    "saleor-development": {
+      "path": "SKILL.md"
+    }
+  }
+}

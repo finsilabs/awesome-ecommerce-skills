@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements server-side abandonment detection correctly, uses BullMQ for job scheduling with deterministic job IDs, generates cryptographically secure recovery tokens with the right expiry, and prevents duplicate sequences.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "No beforeunload detection",
+      "max_score": 10,
+      "description": "Implementation does NOT use `beforeunload` events for abandonment detection — relies solely on server-side timer/cron logic"
+    },
+    {
+      "name": "lastActiveAt stamping",
+      "max_score": 8,
+      "description": "onCartUpdated sets `lastActiveAt` to current timestamp on every cart mutation"
+    },
+    {
+      "name": "recoveryTriggered reset",
+      "max_score": 7,
+      "description": "onCartUpdated resets `recoveryTriggered` to false on every cart mutation"
+    },
+    {
+      "name": "Cron-based detection",
+      "max_score": 8,
+      "description": "findAbandonedCarts is designed to be run on a recurring schedule (documented as cron, interval, or equivalent), not triggered by user events"
+    },
+    {
+      "name": "1-hour inactivity cutoff",
+      "max_score": 7,
+      "description": "Abandonment is declared after 1 hour (60 minutes) of inactivity, not a shorter or longer window"
+    },
+    {
+      "name": "recoveryTriggered guard",
+      "max_score": 8,
+      "description": "findAbandonedCarts filters for carts where `recoveryTriggered` is false, and sets it to true before starting the sequence"
+    },
+    {
+      "name": "BullMQ queue",
+      "max_score": 10,
+      "description": "startRecoverySequence uses BullMQ (Queue from 'bullmq') to schedule recovery jobs, not setTimeout or direct invocation"
+    },
+    {
+      "name": "Deterministic job IDs",
+      "max_score": 10,
+      "description": "Each recovery job is added with a deterministic jobId in the format `recovery-${cartId}-step${N}` (or equivalent pattern using cart ID and step index)"
+    },
+    {
+      "name": "randomBytes token",
+      "max_score": 8,
+      "description": "Recovery token is generated using Node's `crypto.randomBytes` (20 bytes or similar), not Math.random or UUID"
+    },
+    {
+      "name": "7-day token expiry",
+      "max_score": 7,
+      "description": "Recovery token is stored with an expiry of 7 days from creation"
+    },
+    {
+      "name": "Job cancellation on conversion",
+      "max_score": 9,
+      "description": "onOrderCompleted retrieves and removes all pending recovery jobs by their deterministic jobIds when an order is placed"
+    },
+    {
+      "name": "Cart status update",
+      "max_score": 8,
+      "description": "onOrderCompleted updates the cart status to 'converted' (or equivalent) after cancelling recovery jobs"
+    }
+  ]
+}

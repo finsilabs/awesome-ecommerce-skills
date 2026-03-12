@@ -1,0 +1,10 @@
+{
+  "name": "finsi/email-service-integration",
+  "version": "0.1.0",
+  "summary": "Transactional email setup (SendGrid, SES, Postmark) with template management",
+  "skills": {
+    "email-service-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

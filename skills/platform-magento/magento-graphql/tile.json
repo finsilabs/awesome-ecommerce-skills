@@ -1,0 +1,10 @@
+{
+  "name": "finsi/magento-graphql",
+  "version": "0.1.0",
+  "summary": "Magento GraphQL API for headless storefronts and PWA Studio",
+  "skills": {
+    "magento-graphql": {
+      "path": "SKILL.md"
+    }
+  }
+}

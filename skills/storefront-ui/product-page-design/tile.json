@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-page-design",
+  "version": "0.1.0",
+  "summary": "High-converting product page layouts with image galleries, variant selectors, and social proof",
+  "skills": {
+    "product-page-design": {
+      "path": "SKILL.md"
+    }
+  }
+}

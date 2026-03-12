@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent implements the correct four RBAC admin roles with appropriate permission scopes, the PCI-specific password policy values, MFA requirements for admin access, and logging of both authentication failures and access-denied events.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "VIEWER role defined",
+      "max_score": 5,
+      "description": "rbac.ts defines a VIEWER role (or equivalent name) with read-only permissions that does NOT include access to payment configuration"
+    },
+    {
+      "name": "OPERATOR role defined",
+      "max_score": 5,
+      "description": "rbac.ts defines an OPERATOR role (or equivalent) with permissions covering orders and inventory management"
+    },
+    {
+      "name": "ADMIN role defined",
+      "max_score": 5,
+      "description": "rbac.ts defines an ADMIN role with full/wildcard access including user management"
+    },
+    {
+      "name": "PAYMENT_ADMIN role defined",
+      "max_score": 5,
+      "description": "rbac.ts defines a PAYMENT_ADMIN role (or equivalent) with access to payment and refund operations but scoped away from general admin functions"
+    },
+    {
+      "name": "Auth failure logged",
+      "max_score": 10,
+      "description": "Middleware logs an authentication failure event (unauthenticated request) via audit logger before returning 401"
+    },
+    {
+      "name": "Access denied logged",
+      "max_score": 10,
+      "description": "Middleware logs an access-denied event (authenticated but unauthorised request) via audit logger before returning 403"
+    },
+    {
+      "name": "Password min length 12",
+      "max_score": 8,
+      "description": "Password policy object sets minimum length to 12 characters"
+    },
+    {
+      "name": "Password complexity all four",
+      "max_score": 8,
+      "description": "Password policy requires all four character classes: uppercase letters, lowercase letters, numbers, and special characters"
+    },
+    {
+      "name": "Password max age 90 days",
+      "max_score": 7,
+      "description": "Password policy sets maximum password age to 90 days"
+    },
+    {
+      "name": "Password history count 4",
+      "max_score": 7,
+      "description": "Password policy prevents reuse of the last 4 passwords"
+    },
+    {
+      "name": "Lockout after 6 attempts",
+      "max_score": 7,
+      "description": "Password policy sets account lockout after 6 failed authentication attempts"
+    },
+    {
+      "name": "Lockout duration 30 minutes",
+      "max_score": 7,
+      "description": "Password policy sets account lockout duration to 30 minutes"
+    },
+    {
+      "name": "MFA requirement documented",
+      "max_score": 8,
+      "description": "security-notes.md states that MFA is required for all admin access to the CDE (admin panel)"
+    },
+    {
+      "name": "Quarterly access review documented",
+      "max_score": 8,
+      "description": "security-notes.md describes the requirement to review and revoke user access on a quarterly basis"
+    }
+  ]
+}

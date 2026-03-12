@@ -1,0 +1,10 @@
+{
+  "name": "finsi/fraud-detection",
+  "version": "0.1.0",
+  "summary": "Rule-based and ML fraud scoring with 3DS, velocity checks, and manual review",
+  "skills": {
+    "fraud-detection": {
+      "path": "SKILL.md"
+    }
+  }
+}

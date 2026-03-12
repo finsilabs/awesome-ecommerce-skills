@@ -1,0 +1,10 @@
+{
+  "name": "finsi/ab-testing-ecommerce",
+  "version": "0.1.0",
+  "summary": "Experimentation platform for product pages, checkout, and pricing tests",
+  "skills": {
+    "ab-testing-ecommerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

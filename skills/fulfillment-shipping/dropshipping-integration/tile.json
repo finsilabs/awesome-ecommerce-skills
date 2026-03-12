@@ -1,0 +1,10 @@
+{
+  "name": "finsi/dropshipping-integration",
+  "version": "0.1.0",
+  "summary": "Supplier order routing, inventory sync, and margin calculation for dropship",
+  "skills": {
+    "dropshipping-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

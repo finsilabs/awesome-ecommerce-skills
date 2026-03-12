@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements EU VAT logic including B2B reverse charge with VIES validation, correct fallback to B2C when VAT number is invalid, proper EU country detection, and awareness of OSS/IOSS thresholds and economic nexus rules.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "EU country list used",
+      "max_score": 8,
+      "description": "Code includes a list of EU country codes (at minimum: AT, BE, DE, FR, IT, ES, NL, PL, SE) used to determine if the destination is within the EU"
+    },
+    {
+      "name": "B2B cross-border reverse charge",
+      "max_score": 10,
+      "description": "When buyer provides a VAT number AND the destination country differs from the seller's country, reverse charge logic is applied (totalVAT = 0, vatType = 'reverse_charge' or equivalent)"
+    },
+    {
+      "name": "VIES validation before reverse charge",
+      "max_score": 10,
+      "description": "VAT number is validated via an external API call BEFORE applying reverse charge — reverse charge is NOT applied without validation"
+    },
+    {
+      "name": "VIES REST API URL",
+      "max_score": 10,
+      "description": "VIES validation uses the EC REST endpoint (ec.europa.eu/taxation_customs/vies/rest-api/ms/...) not a SOAP endpoint or third-party library"
+    },
+    {
+      "name": "Invalid VAT falls back to B2C",
+      "max_score": 10,
+      "description": "If VIES returns isValid=false (or the call fails), the code does NOT apply reverse charge but instead charges VAT at the destination country rate (B2C path)"
+    },
+    {
+      "name": "VAT rate by destination country",
+      "max_score": 8,
+      "description": "B2C VAT is charged at the destination country's rate (not a single flat rate for all EU countries)"
+    },
+    {
+      "name": "No VAT outside EU",
+      "max_score": 8,
+      "description": "Orders shipping to non-EU countries return zero VAT (vatType = 'none' or equivalent), not a default rate"
+    },
+    {
+      "name": "OSS/IOSS threshold documented",
+      "max_score": 8,
+      "description": "Code or comments mention the €10,000/year EU sales threshold above which OSS/IOSS registration is required for non-EU sellers"
+    },
+    {
+      "name": "US nexus thresholds documented",
+      "max_score": 8,
+      "description": "Code or comments include the economic nexus thresholds ($100,000/year OR 200 transactions/year for most US states)"
+    },
+    {
+      "name": "Real-time display emphasized",
+      "max_score": 8,
+      "description": "Integration notes or comments specify that tax must be calculated and displayed before the customer confirms payment (not deferred to post-payment)"
+    },
+    {
+      "name": "No hardcoded rates as primary",
+      "max_score": 6,
+      "description": "Does NOT use hardcoded VAT rates as the sole authoritative source — either calls a tax API or clearly documents rates as a simplified local fallback with a comment to use a maintained database in production"
+    },
+    {
+      "name": "Validated VAT number returned",
+      "max_score": 6,
+      "description": "When reverse charge applies, the validated VAT number is included in the return value (for audit/display purposes)"
+    }
+  ]
+}

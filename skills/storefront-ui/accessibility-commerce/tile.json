@@ -1,0 +1,10 @@
+{
+  "name": "finsi/accessibility-commerce",
+  "version": "0.1.0",
+  "summary": "WCAG 2.1 AA compliance for e-commerce — screen readers, keyboard nav, ARIA for carts",
+  "skills": {
+    "accessibility-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

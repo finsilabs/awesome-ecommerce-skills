@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent follows Medusa v2 module architecture patterns: using MedusaService with model-based CRUD generation, defining data models with the model DSL, registering the module with Module(), and wiring it into medusa-config.ts. Also checks correct TypeScript import paths and module encapsulation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "MedusaService extension",
+      "max_score": 12,
+      "description": "Service class extends MedusaService() (called with a model map) rather than a plain class or other base class"
+    },
+    {
+      "name": "Correct service import",
+      "max_score": 8,
+      "description": "MedusaService is imported from '@medusajs/framework/utils'"
+    },
+    {
+      "name": "model.define() usage",
+      "max_score": 10,
+      "description": "Data model is defined using model.define() rather than a TypeORM entity class or other ORM decorator approach"
+    },
+    {
+      "name": "model DSL field types",
+      "max_score": 8,
+      "description": "Model fields use model.id().primaryKey(), model.text(), model.number(), or model.enum() — not raw TypeScript type annotations or decorators"
+    },
+    {
+      "name": "model import path",
+      "max_score": 6,
+      "description": "model is imported from '@medusajs/framework/utils'"
+    },
+    {
+      "name": "Module() registration",
+      "max_score": 10,
+      "description": "Module's index.ts exports a default created with Module() from '@medusajs/framework/utils' and specifies the service"
+    },
+    {
+      "name": "Module identifier constant",
+      "max_score": 8,
+      "description": "A named string constant (e.g. WARRANTY_MODULE) is exported from the module index and used as the module key"
+    },
+    {
+      "name": "medusa-config.ts registration",
+      "max_score": 10,
+      "description": "The custom module is listed in the modules array inside medusa-config.ts (or a comment/instruction notes it must be added there)"
+    },
+    {
+      "name": "defineConfig usage",
+      "max_score": 8,
+      "description": "medusa-config.ts uses defineConfig (and optionally loadEnv) imported from '@medusajs/framework/utils'"
+    },
+    {
+      "name": "Module encapsulation",
+      "max_score": 10,
+      "description": "The new domain is implemented as its own module directory (e.g. src/modules/<name>/) containing the service, models, and index rather than scattered files"
+    },
+    {
+      "name": "db:migrate instruction",
+      "max_score": 6,
+      "description": "Output includes mention of running 'npx medusa db:migrate' or equivalent migration step to apply the new model"
+    },
+    {
+      "name": "container.resolve() pattern",
+      "max_score": 4,
+      "description": "Any usage of the module service (e.g. in a route or subscriber) uses container.resolve() rather than a direct import of the service class"
+    }
+  ]
+}

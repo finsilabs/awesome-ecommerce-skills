@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly configures nginx for Magento multi-store routing, using map directives for MAGE_RUN_CODE and MAGE_RUN_TYPE, placing fastcgi_param directives inside the PHP location block, selecting the correct run type (store vs website) based on customer base separation, and keeping routing config at the infrastructure layer.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "map directive for MAGE_RUN_CODE",
+      "max_score": 10,
+      "description": "Uses an nginx 'map' block (map $http_host $MAGE_RUN_CODE) to map hostnames to Magento store/website codes, rather than hardcoding per server block or setting in application code"
+    },
+    {
+      "name": "map directive for MAGE_RUN_TYPE",
+      "max_score": 10,
+      "description": "Uses a separate nginx 'map' block (map $http_host $MAGE_RUN_TYPE) to map hostnames to the routing type"
+    },
+    {
+      "name": "fastcgi_param inside PHP location block",
+      "max_score": 13,
+      "description": "Both fastcgi_param MAGE_RUN_CODE and fastcgi_param MAGE_RUN_TYPE directives are placed inside the 'location ~ \\.php$' block, not outside it at the server level"
+    },
+    {
+      "name": "Language storefronts use store routing",
+      "max_score": 10,
+      "description": "UK and German storefronts are mapped to MAGE_RUN_TYPE 'store', not 'website'"
+    },
+    {
+      "name": "B2B portal uses website routing",
+      "max_score": 10,
+      "description": "B2B portal is mapped to MAGE_RUN_TYPE 'website'"
+    },
+    {
+      "name": "hostnames keyword in map blocks",
+      "max_score": 6,
+      "description": "map blocks include the 'hostnames' keyword to enable hostname-based matching"
+    },
+    {
+      "name": "Notes explain store vs website distinction",
+      "max_score": 10,
+      "description": "Documentation explains that 'store' routing is chosen for language variants that share a customer base, while 'website' routing is chosen for the B2B portal because it requires a separate customer base"
+    },
+    {
+      "name": "Default empty values in map",
+      "max_score": 7,
+      "description": "map blocks include a 'default' entry mapping to an empty string for unrecognized hosts"
+    },
+    {
+      "name": "No MAGE_RUN_CODE in index.php",
+      "max_score": 12,
+      "description": "The configuration does NOT set MAGE_RUN_CODE or MAGE_RUN_TYPE inside a PHP file (index.php or similar) — routing is handled entirely at the nginx level"
+    },
+    {
+      "name": "MAGE_RUN_CODE uses store view codes for store-type routes",
+      "max_score": 12,
+      "description": "For domains mapped to MAGE_RUN_TYPE 'store', the corresponding MAGE_RUN_CODE value is a store view code (not a website code)"
+    }
+  ]
+}

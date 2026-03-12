@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a canonical, GTM-compatible e-commerce data layer with correct event patterns — including stale-data prevention, GA4-standard field naming, server-side transaction ID usage, and purchase deduplication via sessionStorage.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "dataLayer initialization",
+      "max_score": 5,
+      "description": "Uses `window.dataLayer = window.dataLayer || []` to initialize the dataLayer (not just assigning an empty array unconditionally)"
+    },
+    {
+      "name": "ecommerce null before view_item_list",
+      "max_score": 8,
+      "description": "Pushes `{ ecommerce: null }` to dataLayer immediately before the view_item_list event push"
+    },
+    {
+      "name": "ecommerce null before view_item",
+      "max_score": 8,
+      "description": "Pushes `{ ecommerce: null }` to dataLayer immediately before the view_item event push"
+    },
+    {
+      "name": "ecommerce null before add_to_cart",
+      "max_score": 8,
+      "description": "Pushes `{ ecommerce: null }` to dataLayer immediately before the add_to_cart event push"
+    },
+    {
+      "name": "ecommerce null before purchase",
+      "max_score": 8,
+      "description": "Pushes `{ ecommerce: null }` to dataLayer immediately before the purchase event push"
+    },
+    {
+      "name": "GA4 item field names",
+      "max_score": 10,
+      "description": "Uses GA4-standard field names in items arrays: item_id, item_name, item_brand, item_category (not custom names like productId, productName, etc.)"
+    },
+    {
+      "name": "currency field present",
+      "max_score": 5,
+      "description": "Includes a currency field in the ecommerce object for each event"
+    },
+    {
+      "name": "transaction_id from server",
+      "max_score": 10,
+      "description": "purchase event uses order.id (the server-generated order ID) as transaction_id — does NOT compute or generate a transaction ID on the client side"
+    },
+    {
+      "name": "sessionStorage read before purchase",
+      "max_score": 14,
+      "description": "trackPurchase checks sessionStorage (e.g., sessionStorage.getItem(...)) for a key based on the order ID before pushing the purchase event"
+    },
+    {
+      "name": "sessionStorage write after purchase",
+      "max_score": 14,
+      "description": "trackPurchase sets a sessionStorage entry (e.g., sessionStorage.setItem(...)) after pushing the purchase event to prevent re-firing"
+    },
+    {
+      "name": "vendor-neutral dataLayer",
+      "max_score": 10,
+      "description": "The dataLayer pushes use GA4 naming conventions (event names like view_item, add_to_cart, purchase and item fields like item_id). Does NOT include vendor-specific transforms (e.g., Meta pixel field names) inside the dataLayer push"
+    }
+  ]
+}

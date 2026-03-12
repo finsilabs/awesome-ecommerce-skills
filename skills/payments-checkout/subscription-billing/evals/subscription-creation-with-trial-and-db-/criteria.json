@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements a Stripe subscription creation endpoint using default_incomplete payment behavior, expands the payment intent for 3DS, saves the default payment method, stores metadata, syncs subscription data to the local database including trialEnd, and returns the client secret to the frontend.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "default_incomplete behavior",
+      "max_score": 12,
+      "description": "Sets `payment_behavior: 'default_incomplete'` when calling `stripe.subscriptions.create`"
+    },
+    {
+      "name": "save_default_payment_method",
+      "max_score": 8,
+      "description": "Includes `payment_settings: { save_default_payment_method: 'on_subscription' }` in the subscription creation params"
+    },
+    {
+      "name": "Expand payment intent",
+      "max_score": 12,
+      "description": "Includes `expand: ['latest_invoice.payment_intent']` in the subscription creation params"
+    },
+    {
+      "name": "Returns client secret",
+      "max_score": 8,
+      "description": "Extracts and returns the `client_secret` from `subscription.latest_invoice.payment_intent` in the response"
+    },
+    {
+      "name": "Subscription metadata",
+      "max_score": 5,
+      "description": "Sets `metadata` on the subscription containing a customer identifier (e.g., `customer_id`)"
+    },
+    {
+      "name": "Trial period support",
+      "max_score": 8,
+      "description": "Uses `trial_period_days` parameter on the subscription when `trialDays > 0`"
+    },
+    {
+      "name": "DB record: core fields",
+      "max_score": 12,
+      "description": "Persists subscription to local DB with at minimum: stripeSubscriptionId, stripeCustomerId, planId, and status"
+    },
+    {
+      "name": "DB record: period dates",
+      "max_score": 8,
+      "description": "Stores `currentPeriodStart` and `currentPeriodEnd` converted from Stripe Unix timestamps to Date objects (multiplied by 1000)"
+    },
+    {
+      "name": "DB record: trialEnd",
+      "max_score": 8,
+      "description": "Stores `trialEnd` in the DB record (null when no trial, Date when trial exists)"
+    },
+    {
+      "name": "DB upsert pattern",
+      "max_score": 7,
+      "description": "Uses an upsert operation (not a plain insert) keyed on `stripeSubscriptionId` to prevent duplicate records"
+    },
+    {
+      "name": "IMPLEMENTATION_NOTES present",
+      "max_score": 12,
+      "description": "File `IMPLEMENTATION_NOTES.md` exists and mentions at least two of: payment_behavior, client_secret/3DS, database sync, trial handling"
+    }
+  ]
+}

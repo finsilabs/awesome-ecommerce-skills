@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly sets up the WooCommerce client, creates orders with the right default fields (status, payment_method, set_paid), properly includes variation_id in line_items for variable products, and separates order note creation from order status updates using the correct endpoint.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct npm package",
+      "max_score": 8,
+      "description": "package.json dependencies include @woocommerce/woocommerce-rest-api"
+    },
+    {
+      "name": "Credentials via env vars",
+      "max_score": 7,
+      "description": "WooCommerceRestApi is initialized with process.env references for URL, consumer key, and consumer secret — no hardcoded strings"
+    },
+    {
+      "name": "Client version wc/v3",
+      "max_score": 6,
+      "description": "WooCommerceRestApi is initialized with version: \"wc/v3\""
+    },
+    {
+      "name": "Axios timeout configured",
+      "max_score": 6,
+      "description": "The client is initialized with axiosConfig: { timeout: 15000 } or a numeric timeout value"
+    },
+    {
+      "name": "Order default status pending",
+      "max_score": 10,
+      "description": "New orders are created with status: \"pending\" (not \"processing\" or omitted)"
+    },
+    {
+      "name": "Default payment method stripe",
+      "max_score": 8,
+      "description": "createOrder sets payment_method to \"stripe\" when no payment method is specified"
+    },
+    {
+      "name": "Payment method title set",
+      "max_score": 7,
+      "description": "createOrder sets payment_method_title: \"Credit Card\""
+    },
+    {
+      "name": "set_paid false on creation",
+      "max_score": 8,
+      "description": "createOrder sets set_paid: false"
+    },
+    {
+      "name": "variation_id in line_items",
+      "max_score": 15,
+      "description": "The example order or createOrder interface includes variation_id as a field in line_items and the example-usage passes variation_id 312 for the variable product"
+    },
+    {
+      "name": "Order note via separate POST",
+      "max_score": 12,
+      "description": "When a note is provided to updateOrderStatus, it is posted to orders/{id}/notes endpoint separately (not merged into the PUT status update body)"
+    },
+    {
+      "name": "Error code handling",
+      "max_score": 8,
+      "description": "Code references response.data.code or catches WooCommerce-specific error codes (rest_invalid_param, woocommerce_rest_cannot_create, or similar) in error handling"
+    },
+    {
+      "name": "Order listing default status",
+      "max_score": 5,
+      "description": "getOrders defaults to fetching orders with status: \"processing\" when no status is specified"
+    }
+  ]
+}

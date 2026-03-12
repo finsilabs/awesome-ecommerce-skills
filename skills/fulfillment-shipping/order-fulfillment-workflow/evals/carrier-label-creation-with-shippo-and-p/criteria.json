@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the Shippo SDK correctly for carrier label creation, including proper SDK initialization, synchronous shipment creation, correct unit specification for package dimensions, rate selection by service level token, PDF label format, storing only the label URL (not binary), transitioning to the correct post-label status, and triggering customer notification at the right moment.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses Shippo SDK",
+      "max_score": 10,
+      "description": "shipping-label.ts imports and uses the 'shippo' package (e.g. import Shippo from 'shippo' or require('shippo')), not a generic HTTP client or a different carrier SDK"
+    },
+    {
+      "name": "Shippo initialized with API key",
+      "max_score": 8,
+      "description": "Shippo client is initialized with process.env.SHIPPO_API_KEY (not a hardcoded string)"
+    },
+    {
+      "name": "async: false on shipment create",
+      "max_score": 10,
+      "description": "The shippo.shipment.create() call includes async: false so rates are returned synchronously in the same response"
+    },
+    {
+      "name": "Dimensions in inches",
+      "max_score": 8,
+      "description": "Parcel dimensions are specified with distance_unit: 'in' (inches), not 'cm' or 'mm'"
+    },
+    {
+      "name": "Weight in ounces",
+      "max_score": 8,
+      "description": "Parcel weight is specified with mass_unit: 'oz' (ounces), not 'lb', 'g', or 'kg'"
+    },
+    {
+      "name": "Rate selected by servicelevel.token",
+      "max_score": 10,
+      "description": "Rate selection uses r.servicelevel.token === order.shipping_service (or equivalent) to match the order's preferred service level"
+    },
+    {
+      "name": "Rate fallback to rates[0]",
+      "max_score": 7,
+      "description": "If no rate matches the order's shipping_service, the code falls back to rates[0] rather than throwing an error"
+    },
+    {
+      "name": "Label file type is PDF",
+      "max_score": 7,
+      "description": "shippo.transaction.create() is called with label_file_type: 'PDF'"
+    },
+    {
+      "name": "Stores label URL not binary",
+      "max_score": 10,
+      "description": "The code stores transaction.label_url (the URL string) in the database, not the raw label bytes or a downloaded file"
+    },
+    {
+      "name": "Stores tracking_number and carrier",
+      "max_score": 8,
+      "description": "The fulfillment record is updated with both tracking_number (from transaction.tracking_number) and carrier (from rate.provider)"
+    },
+    {
+      "name": "Transitions to label_created",
+      "max_score": 7,
+      "description": "After label creation, the fulfillment status is updated to 'label_created', not 'shipped' or any other status"
+    },
+    {
+      "name": "Tracking notification at label_created",
+      "max_score": 7,
+      "description": "Customer tracking notification is sent/triggered at 'label_created' status (immediately after label creation), not at a later 'shipped' or carrier-scan event"
+    }
+  ]
+}

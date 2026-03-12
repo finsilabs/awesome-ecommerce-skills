@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements duplicate-safe license key import, uses a database transaction to prevent concurrent double-assignment of keys, properly updates all fields on assignment, and implements inventory monitoring with the correct low-stock threshold and groupBy pattern.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Duplicate key check on import",
+      "max_score": 10,
+      "description": "importLicenseKeys queries the database for existing keys matching those in the incoming batch before inserting"
+    },
+    {
+      "name": "Duplicate rejection response",
+      "max_score": 10,
+      "description": "importLicenseKeys returns an HTTP 400 response with an error field and a 'duplicates' array listing the conflicting keys when duplicates are found"
+    },
+    {
+      "name": "Transaction for assignment",
+      "max_score": 14,
+      "description": "assignLicenseKey wraps the findFirst + update in a single database transaction (e.g., db.$transaction or equivalent)"
+    },
+    {
+      "name": "Status filter on findFirst",
+      "max_score": 10,
+      "description": "assignLicenseKey queries for a license with status: 'available' (not all licenses for the product)"
+    },
+    {
+      "name": "Status updated to 'sold'",
+      "max_score": 8,
+      "description": "The update inside assignLicenseKey sets status to 'sold'"
+    },
+    {
+      "name": "orderId set on assignment",
+      "max_score": 8,
+      "description": "The update inside assignLicenseKey sets orderId to the provided orderId"
+    },
+    {
+      "name": "soldAt set on assignment",
+      "max_score": 8,
+      "description": "The update inside assignLicenseKey sets soldAt to the current timestamp (new Date() or equivalent)"
+    },
+    {
+      "name": "Low stock threshold of 10",
+      "max_score": 10,
+      "description": "checkLicenseKeyStockLevels uses a threshold of exactly 10 remaining keys to determine low stock"
+    },
+    {
+      "name": "groupBy with having clause",
+      "max_score": 12,
+      "description": "checkLicenseKeyStockLevels uses a groupBy query on productId with a having/_count condition to find low-stock products, rather than loading all keys and filtering in application code"
+    },
+    {
+      "name": "Admin notification sent",
+      "max_score": 10,
+      "description": "checkLicenseKeyStockLevels calls notifyAdmin (or equivalent) for each low-stock product found"
+    }
+  ]
+}

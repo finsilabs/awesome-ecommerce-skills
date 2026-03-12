@@ -1,0 +1,10 @@
+{
+  "name": "finsi/influencer-tracking",
+  "version": "0.1.0",
+  "summary": "Influencer campaign attribution, UTM management, and ROI measurement",
+  "skills": {
+    "influencer-tracking": {
+      "path": "SKILL.md"
+    }
+  }
+}

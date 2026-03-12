@@ -1,0 +1,10 @@
+{
+  "name": "finsi/sms-marketing",
+  "version": "0.1.0",
+  "summary": "SMS campaigns with opt-in, segmentation, and compliance (TCPA/GDPR)",
+  "skills": {
+    "sms-marketing": {
+      "path": "SKILL.md"
+    }
+  }
+}

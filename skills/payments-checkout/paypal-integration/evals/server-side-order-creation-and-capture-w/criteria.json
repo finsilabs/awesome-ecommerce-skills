@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the PayPal order creation and capture server endpoints correctly: using the Orders API v2, including a breakdown in the order amount, using PayPal-Request-Id for idempotency, capturing server-side, checking capture completion status, extracting the capture ID from the correct path, and supporting both sandbox and production environments via environment variable.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Orders API v2 endpoint",
+      "max_score": 8,
+      "description": "The create-order call uses POST /v2/checkout/orders (not v1 or another path)"
+    },
+    {
+      "name": "intent CAPTURE",
+      "max_score": 8,
+      "description": "The order payload includes intent: 'CAPTURE'"
+    },
+    {
+      "name": "Amount breakdown",
+      "max_score": 10,
+      "description": "The order's purchase_units amount includes a breakdown object with at minimum item_total (and optionally shipping and tax_total fields)"
+    },
+    {
+      "name": "Create-order idempotency key",
+      "max_score": 10,
+      "description": "The create-order POST request includes a PayPal-Request-Id header"
+    },
+    {
+      "name": "Capture-order idempotency key",
+      "max_score": 8,
+      "description": "The capture-order POST request also includes a distinct PayPal-Request-Id header (e.g. prefixed differently from the create-order key)"
+    },
+    {
+      "name": "Server-side capture",
+      "max_score": 10,
+      "description": "Capturing the payment is done via a server-side API call to /v2/checkout/orders/{id}/capture, NOT by the client calling PayPal directly"
+    },
+    {
+      "name": "Capture status check",
+      "max_score": 10,
+      "description": "After the capture call, the code checks that capture.status === 'COMPLETED' before treating the payment as successful"
+    },
+    {
+      "name": "Capture ID extraction path",
+      "max_score": 10,
+      "description": "The captureId is extracted from capture.purchase_units[0].payments.captures[0].id (correct nested path)"
+    },
+    {
+      "name": "Environment variable for API base",
+      "max_score": 10,
+      "description": "The PayPal API base URL is read from an environment variable (e.g. PAYPAL_API_BASE or PAYPAL_ENVIRONMENT) rather than hardcoded, enabling sandbox/production toggling"
+    },
+    {
+      "name": "PayPal order ID stored",
+      "max_score": 8,
+      "description": "After creating the PayPal order, the PayPal order ID is stored on the cart or order record (e.g. paypalOrderId field) for reconciliation"
+    },
+    {
+      "name": "OAuth token via client credentials",
+      "max_score": 8,
+      "description": "The server fetches a PayPal access token using Basic auth with client credentials (POST /v1/oauth2/token with grant_type=client_credentials)"
+    }
+  ]
+}

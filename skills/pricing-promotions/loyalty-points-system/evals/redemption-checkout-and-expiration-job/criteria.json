@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements redemption and expiration logic with the correct conversion rate, idempotency check, redemption cap, validation guards, expiration query filters, and safe expiration capping — all per the skill's specific values and patterns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Conversion rate 100:1",
+      "max_score": 10,
+      "description": "Uses a redemption rate of 100 points = $1 (i.e., POINTS_TO_DOLLARS_RATE = 0.01 or equivalent calculation producing discountCents = floor(pointsToRedeem * 0.01 * 100))"
+    },
+    {
+      "name": "Redemption transaction: negative points",
+      "max_score": 8,
+      "description": "Inserts redemption transaction with negative points value (e.g., points: -pointsToRedeem)"
+    },
+    {
+      "name": "Redemption transaction: type='redemption'",
+      "max_score": 6,
+      "description": "Redemption transaction uses type='redemption' (not 'debit', 'spend', or other)"
+    },
+    {
+      "name": "Redemption transaction: expires_at null",
+      "max_score": 6,
+      "description": "Redemption transaction is inserted with expires_at: null"
+    },
+    {
+      "name": "Idempotency check",
+      "max_score": 12,
+      "description": "Checks for an existing redemption transaction with the same account_id + orderId (reference_id) + type='redemption' before deducting points, and returns early or skips if found"
+    },
+    {
+      "name": "50% redemption cap",
+      "max_score": 10,
+      "description": "Enforces a maximum redemption of 50% of the order value (e.g., caps pointsToRedeem so discountCents <= orderSubtotalCents * 0.5)"
+    },
+    {
+      "name": "Validation guards",
+      "max_score": 8,
+      "description": "Validates that: (1) loyalty account exists, (2) pointsToRedeem <= available balance, (3) pointsToRedeem > 0 — throwing errors for each violation"
+    },
+    {
+      "name": "Expiration query filters",
+      "max_score": 10,
+      "description": "expirePoints() query filters transactions with: expires_at <= NOW() AND type != 'expiration' AND points > 0"
+    },
+    {
+      "name": "Expiration balance cap",
+      "max_score": 12,
+      "description": "In expirePoints(), caps the amount to expire as Math.min(totalExpiring, currentBalance) to avoid expiring more than available"
+    },
+    {
+      "name": "Expiration transaction: type='expiration'",
+      "max_score": 8,
+      "description": "Inserts expiration records with type='expiration' and negative points and expires_at: null"
+    },
+    {
+      "name": "Notes comment block",
+      "max_score": 10,
+      "description": "The file includes a comment block explaining design decisions (idempotency, expiration logic, redemption cap, and conversion rate)"
+    }
+  ]
+}

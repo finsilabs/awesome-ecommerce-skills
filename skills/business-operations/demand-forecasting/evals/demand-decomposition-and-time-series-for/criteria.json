@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the correct demand decomposition algorithm: 7-day moving average smoothing, linear regression on MA values for trend, day-of-week seasonal indices normalized to overall mean, residual std dev, and a forward forecast combining baseline + trend + seasonality.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "7-day moving average",
+      "max_score": 10,
+      "description": "Smoothing uses a window of exactly 7 days (not 5, not 14); the window shrinks at the start of the series rather than being skipped"
+    },
+    {
+      "name": "Trend via linear regression on MA",
+      "max_score": 12,
+      "description": "Trend (slope) is derived from linear regression applied to the 7-day moving average values — NOT raw sales values"
+    },
+    {
+      "name": "Day-of-week seasonal indices",
+      "max_score": 12,
+      "description": "Seasonality is computed as 7 day-of-week indices (not weekly buckets or monthly) normalized so that the overall mean equals 1.0"
+    },
+    {
+      "name": "Residual std dev computed",
+      "max_score": 8,
+      "description": "residualStdDev is computed as sqrt(mean squared residuals) where residuals = actual - (trend * seasonal_index)"
+    },
+    {
+      "name": "364-day history window",
+      "max_score": 8,
+      "description": "Historical data for decomposition uses exactly 364 days (52 weeks) of history, with missing days filled as zero demand"
+    },
+    {
+      "name": "26-week history guard",
+      "max_score": 8,
+      "description": "System detects or documents when fewer than 26 weeks of data exist and refuses / warns rather than producing unreliable seasonal indices"
+    },
+    {
+      "name": "Forecast clamps to zero",
+      "max_score": 8,
+      "description": "Forecasted daily demand is clamped to a minimum of 0 (Math.max(0, ...)) — negative predictions are not emitted"
+    },
+    {
+      "name": "Forecast rounding",
+      "max_score": 6,
+      "description": "Each forecasted value is rounded to 1 decimal place (e.g. Math.round(x * 10) / 10), not left as a raw float"
+    },
+    {
+      "name": "30-day baseline average",
+      "max_score": 8,
+      "description": "The baseline used in the forecast is the average daily demand over the most recent 30 days, not a longer or shorter window"
+    },
+    {
+      "name": "Forecast combines all three components",
+      "max_score": 10,
+      "description": "Each forecasted day = (baseline + trend * d) * seasonal_index[dow], i.e. baseline + trend adjustment multiplied by seasonality"
+    },
+    {
+      "name": "Output covers 30 days",
+      "max_score": 5,
+      "description": "The forecast output array covers 30 future days (default forecastDays = 30)"
+    },
+    {
+      "name": "Default forecast window",
+      "max_score": 5,
+      "description": "The forecast function defaults to 30 days when no forecastDays argument is provided"
+    }
+  ]
+}

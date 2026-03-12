@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the search API with correct disjunctive facet logic, separate price range handling, and a price range component that uses a dual-thumb range input committing only on mouseup/touchend with thumb clamping.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Products and facets together",
+      "max_score": 10,
+      "description": "The searchProducts function returns both products (hits) AND facet counts in a single response object — not as two separate calls"
+    },
+    {
+      "name": "Disjunctive OR within facet",
+      "max_score": 12,
+      "description": "The facet filter builder groups values within the same facet key together as OR alternatives (e.g., [[brand:Nike, brand:Adidas], [color:black]]) rather than AND conditions"
+    },
+    {
+      "name": "AND between facets",
+      "max_score": 10,
+      "description": "Filters from different facet keys are combined with AND logic (each facet group is a separate element in the filter array)"
+    },
+    {
+      "name": "Price as numeric filter",
+      "max_score": 10,
+      "description": "Price min/max are applied as numeric comparison strings (e.g., 'price >= 50', 'price <= 150') NOT as facetFilters entries"
+    },
+    {
+      "name": "Price excluded from facetFilters",
+      "max_score": 8,
+      "description": "price_min and price_max keys are excluded from the facetFilters array used for checkbox facets"
+    },
+    {
+      "name": "Correct hits-per-page",
+      "max_score": 6,
+      "description": "The search query uses hitsPerPage of 24 (from the config constant or hardcoded as 24)"
+    },
+    {
+      "name": "Dual-thumb range inputs",
+      "max_score": 10,
+      "description": "PriceRangeFacet renders two separate <input type='range'> elements (one for min, one for max), not a single range or checkboxes"
+    },
+    {
+      "name": "Commit on mouseup/touchend",
+      "max_score": 12,
+      "description": "The price range component fires its callback (or commits the value) in onMouseUp and onTouchEnd handlers, NOT in onChange"
+    },
+    {
+      "name": "Thumb clamping",
+      "max_score": 12,
+      "description": "The price range component clamps the min thumb's maximum to current max value and the max thumb's minimum to current min value to prevent the thumbs from crossing/overlapping"
+    },
+    {
+      "name": "Design notes document",
+      "max_score": 10,
+      "description": "DESIGN_NOTES.md explains the OR-within AND-between facet logic, price range separate handling, and mouseup/touchend debounce strategy"
+    }
+  ]
+}

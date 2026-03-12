@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements edge-layer rate limiting for a commerce application using the recommended packages, algorithms, and per-route limits — and whether the 429 response includes proper headers.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct rate limit package",
+      "max_score": 10,
+      "description": "Uses @upstash/ratelimit (not express-rate-limit, rate-limiter-flexible, or other alternatives)"
+    },
+    {
+      "name": "Correct Redis package",
+      "max_score": 8,
+      "description": "Uses @upstash/redis (not ioredis, redis, or other Redis clients)"
+    },
+    {
+      "name": "Redis.fromEnv() initialization",
+      "max_score": 7,
+      "description": "Initializes the Redis client using Redis.fromEnv() rather than constructor arguments or connection strings"
+    },
+    {
+      "name": "Edge middleware placement",
+      "max_score": 8,
+      "description": "Rate limiting logic is placed in middleware.ts (Next.js Edge Middleware), not inside individual API route handlers"
+    },
+    {
+      "name": "Sliding window algorithm",
+      "max_score": 8,
+      "description": "Uses Ratelimit.slidingWindow() rather than fixedWindow, tokenBucket, or other algorithms"
+    },
+    {
+      "name": "Catalog route limit",
+      "max_score": 7,
+      "description": "Applies a limit of 100 requests per minute for catalog/product routes (/api/products or /products)"
+    },
+    {
+      "name": "Checkout route limit",
+      "max_score": 7,
+      "description": "Applies a limit of 10 requests per minute for checkout routes (/api/checkout or /checkout)"
+    },
+    {
+      "name": "Search route limit",
+      "max_score": 7,
+      "description": "Applies a limit of 30 requests per minute for search routes (/api/search or /search)"
+    },
+    {
+      "name": "429 status code",
+      "max_score": 7,
+      "description": "Returns HTTP 429 status code when rate limit is exceeded"
+    },
+    {
+      "name": "X-RateLimit headers",
+      "max_score": 8,
+      "description": "429 response includes X-RateLimit-Limit and X-RateLimit-Remaining headers"
+    },
+    {
+      "name": "Retry-After header",
+      "max_score": 8,
+      "description": "429 response includes a Retry-After header with value computed from reset timestamp"
+    },
+    {
+      "name": "Authenticated user exemption",
+      "max_score": 8,
+      "description": "Code or comments indicate that stricter limits apply to unauthenticated requests, or that authenticated users with purchase history receive higher limits"
+    },
+    {
+      "name": "IP-based rate limiting",
+      "max_score": 7,
+      "description": "Rate limit key is derived from the client IP (req.ip or x-forwarded-for header), not from a static value"
+    }
+  ]
+}

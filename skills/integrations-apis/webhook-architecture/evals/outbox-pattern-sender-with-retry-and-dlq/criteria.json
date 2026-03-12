@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent implements a webhook sender using the Outbox Pattern with correct retry delays, DLQ promotion with alerting, delivery signing, required headers, correct payload structure, timeout handling, delivery attempt logging, and a replay mechanism for dead-letter events.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Outbox written in transaction",
+      "max_score": 8,
+      "description": "The publishEvent (or equivalent) function inserts the outbox record inside the same database transaction passed in as a parameter, not as a separate connection/call"
+    },
+    {
+      "name": "Outbox poller batch limit",
+      "max_score": 6,
+      "description": "The poller fetches pending events with a batch limit of 100 (or specifies limit: 100 or equivalent)"
+    },
+    {
+      "name": "SKIP LOCKED for poller",
+      "max_score": 8,
+      "description": "The README or schema.sql or outbox code references FOR UPDATE SKIP LOCKED (PostgreSQL) to avoid poller contention, or explicitly documents the equivalent approach"
+    },
+    {
+      "name": "AbortSignal.timeout used",
+      "max_score": 8,
+      "description": "Outbound fetch calls include signal: AbortSignal.timeout(...) rather than no timeout or a manual setTimeout approach"
+    },
+    {
+      "name": "10-second fetch timeout",
+      "max_score": 6,
+      "description": "The AbortSignal.timeout value is 10000 ms (10 seconds) for outbound webhook delivery"
+    },
+    {
+      "name": "Correct retry delay schedule",
+      "max_score": 8,
+      "description": "The retry delay array contains exactly [60000, 300000, 1800000, 7200000, 28800000] ms (1m, 5m, 30m, 2h, 8h) or an equivalent representation of these 5 values"
+    },
+    {
+      "name": "DLQ after 5 attempts",
+      "max_score": 8,
+      "description": "Events are moved to the dead-letter queue after the 5th failed attempt (RETRY_DELAYS_MS.length or equivalent threshold of 5)"
+    },
+    {
+      "name": "DLQ alert sent",
+      "max_score": 6,
+      "description": "A notification (Slack, PagerDuty, or generic alert function) is called when an event is moved to the dead-letter queue"
+    },
+    {
+      "name": "Payload signed with sha256",
+      "max_score": 8,
+      "description": "Outbound payloads are signed using HMAC-SHA256, with the signature included in the X-Webhook-Signature header as 'sha256=<hex>'"
+    },
+    {
+      "name": "Required delivery headers",
+      "max_score": 8,
+      "description": "Outbound requests include all three of: X-Webhook-Signature, X-Webhook-Event, and X-Webhook-Delivery headers"
+    },
+    {
+      "name": "Payload structure {id, type, created, data}",
+      "max_score": 8,
+      "description": "The outbound JSON payload is structured as an object with fields: id (event ID), type (event type), created (ISO string timestamp), and data (the event payload object)"
+    },
+    {
+      "name": "Delivery attempts logged",
+      "max_score": 6,
+      "description": "Each delivery attempt (both successful and failed) is stored/inserted into a deliveries table or log with at minimum: delivery ID, event ID, subscription ID, status, and response status or error"
+    },
+    {
+      "name": "Replay resets attempts to 0",
+      "max_score": 6,
+      "description": "The DLQ replay function resets the event's attempts counter to 0 and sets nextRetryAt to now (or immediately), not preserving the previous attempt count"
+    },
+    {
+      "name": "Replay records admin audit",
+      "max_score": 6,
+      "description": "The replay function records replayedBy (admin identifier) and replayedAt on both the outbox record and/or the dead-letter record"
+    }
+  ]
+}

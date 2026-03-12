@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements an EasyPost webhook receiver with proper HMAC signature verification using the raw request body, immediately acknowledges the webhook with 200, and offloads processing to an async queue rather than doing it inline.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Raw body middleware",
+      "max_score": 12,
+      "description": "Uses express.raw() (not express.json()) as the body parser middleware on the webhook route — the middleware call includes express.raw or bodyParser.raw, NOT express.json"
+    },
+    {
+      "name": "HMAC SHA-256 verification",
+      "max_score": 10,
+      "description": "Constructs an HMAC using the 'sha256' algorithm (crypto.createHmac('sha256', ...)) to verify the incoming signature"
+    },
+    {
+      "name": "Signature header check",
+      "max_score": 10,
+      "description": "Reads the signature from the 'x-hmac-signature' request header and compares it to the computed HMAC digest"
+    },
+    {
+      "name": "401 on invalid signature",
+      "max_score": 8,
+      "description": "Returns a 401 status code (or equivalent rejection) when the computed signature does NOT match the received signature"
+    },
+    {
+      "name": "Webhook secret from env",
+      "max_score": 8,
+      "description": "Reads the webhook secret from an environment variable (e.g. process.env.EASYPOST_WEBHOOK_SECRET or similar) rather than hardcoding it"
+    },
+    {
+      "name": "Filter tracker.updated events",
+      "max_score": 10,
+      "description": "Checks event.description === 'tracker.updated' (or equivalent) before processing, to ignore non-tracker event types"
+    },
+    {
+      "name": "Immediate 200 response",
+      "max_score": 12,
+      "description": "Sends a 200 response (e.g. res.json({ received: true }) or similar) BEFORE or without waiting for the async queue/processing to complete"
+    },
+    {
+      "name": "Async queue offload",
+      "max_score": 12,
+      "description": "Calls a queue (queue.add, worker.enqueue, or any background job mechanism) to process the event asynchronously, rather than processing inline in the request handler"
+    },
+    {
+      "name": "Notes mention async rationale",
+      "max_score": 9,
+      "description": "implementation-notes.md explains that the 200 is returned immediately to prevent webhook timeouts or missed events (or equivalent rationale)"
+    },
+    {
+      "name": "Notes mention signature rationale",
+      "max_score": 9,
+      "description": "implementation-notes.md mentions that raw body parsing is required for HMAC verification (or equivalent note about why express.json cannot be used)"
+    }
+  ]
+}

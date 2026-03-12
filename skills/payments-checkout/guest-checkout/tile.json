@@ -1,0 +1,10 @@
+{
+  "name": "finsi/guest-checkout",
+  "version": "0.1.0",
+  "summary": "Frictionless guest checkout with optional account creation post-purchase",
+  "skills": {
+    "guest-checkout": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/customer-segmentation",
+  "version": "0.1.0",
+  "summary": "RFM analysis, behavioral segments, and cohort-based targeting",
+  "skills": {
+    "customer-segmentation": {
+      "path": "SKILL.md"
+    }
+  }
+}

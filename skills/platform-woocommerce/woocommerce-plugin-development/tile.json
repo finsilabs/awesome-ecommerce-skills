@@ -1,0 +1,10 @@
+{
+  "name": "finsi/woocommerce-plugin-development",
+  "version": "0.1.0",
+  "summary": "Custom WooCommerce plugins with hooks, filters, and settings API",
+  "skills": {
+    "woocommerce-plugin-development": {
+      "path": "SKILL.md"
+    }
+  }
+}

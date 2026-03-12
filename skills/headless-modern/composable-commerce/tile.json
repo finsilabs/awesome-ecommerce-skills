@@ -1,0 +1,10 @@
+{
+  "name": "finsi/composable-commerce",
+  "version": "0.1.0",
+  "summary": "MACH architecture — microservices, API-first, cloud-native, headless patterns",
+  "skills": {
+    "composable-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

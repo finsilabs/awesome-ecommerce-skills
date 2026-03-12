@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the return processing workflow with the right status transitions, routes high-value returns to manual review regardless of auto_approve flag, logs eligibility evaluation calls, and proactively communicates restocking fees.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Rejected status on ineligible",
+      "max_score": 8,
+      "description": "When a return request is not eligible, the system sets its status to 'rejected' and triggers a rejection notification (email or equivalent)"
+    },
+    {
+      "name": "Restocking fee stored before routing",
+      "max_score": 8,
+      "description": "The calculated restocking fee is persisted on the return request record before the request is routed to either auto-approval or manual review"
+    },
+    {
+      "name": "Manual review status 'requested'",
+      "max_score": 8,
+      "description": "When requiresManualReview is true, the return request status is set to 'requested' (not 'approved') and a notification is sent to the customer service team"
+    },
+    {
+      "name": "Auto-approved status 'approved'",
+      "max_score": 7,
+      "description": "When auto_approve is true (and the value cap doesn't trigger), the return request status is set to 'approved' and a shipping label is issued"
+    },
+    {
+      "name": "High-value cap routes to manual review",
+      "max_score": 12,
+      "description": "Return requests where the total item value exceeds a high-value threshold (e.g., $500 / 50000 cents) are routed to manual review even when the policy has auto_approve = true"
+    },
+    {
+      "name": "High-value cap does NOT reject",
+      "max_score": 9,
+      "description": "High-value returns that exceed the cap are routed to manual review (status 'requested'), NOT automatically rejected"
+    },
+    {
+      "name": "Eligibility call logging",
+      "max_score": 10,
+      "description": "Every call to the eligibility evaluation function is logged/stored with at minimum the input parameters (orderId, productIds, returnReason, customerId) and the resulting eligibility decision"
+    },
+    {
+      "name": "Restocking fee shown before confirmation",
+      "max_score": 9,
+      "description": "The return initiation flow returns or displays the calculated restocking fee amount to the customer before they confirm the return — the fee is not applied silently after confirmation"
+    },
+    {
+      "name": "Restocking fee policy source communicated",
+      "max_score": 8,
+      "description": "The restocking fee notification or confirmation includes the name or identifier of the policy from which the fee was derived"
+    },
+    {
+      "name": "Return window expiry notification",
+      "max_score": 9,
+      "description": "The implementation includes a mechanism (function, job, or script) to identify orders whose return window is expiring soon (within 7 days) and send a proactive notification"
+    },
+    {
+      "name": "Log includes policy result",
+      "max_score": 7,
+      "description": "The eligibility call log captures not just the input but also the outcome: which policy was matched and whether the return was approved, rejected, or routed to manual review"
+    },
+    {
+      "name": "Delivery date as return clock start",
+      "max_score": 5,
+      "description": "The return window calculation uses the delivery date (delivered_at) as day zero of the return window, not the order creation date or shipment date"
+    }
+  ]
+}

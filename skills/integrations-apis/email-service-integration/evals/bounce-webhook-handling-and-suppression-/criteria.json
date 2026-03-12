@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements SendGrid webhook event handling with proper suppression storage, and builds a pre-send suppression check that applies the correct blocking rules for transactional vs marketing emails.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "bounce event handled",
+      "max_score": 8,
+      "description": "Webhook handler has a case/branch for 'bounce' events that stores the email address as suppressed"
+    },
+    {
+      "name": "spamreport event handled",
+      "max_score": 8,
+      "description": "Webhook handler has a case/branch for 'spamreport' events that stores the email address as suppressed"
+    },
+    {
+      "name": "unsubscribe event handled",
+      "max_score": 7,
+      "description": "Webhook handler has a case/branch for 'unsubscribe' events that updates email/marketing consent"
+    },
+    {
+      "name": "delivered event handled",
+      "max_score": 7,
+      "description": "Webhook handler has a case/branch for 'delivered' events that updates the delivery record status"
+    },
+    {
+      "name": "hard_bounce suppression type",
+      "max_score": 8,
+      "description": "Bounce events are stored with a suppression type of 'hard_bounce' (not 'bounce' or other variant)"
+    },
+    {
+      "name": "spam_complaint suppression type",
+      "max_score": 8,
+      "description": "Spam report events are stored with a suppression type of 'spam_complaint' (not 'spam' or other variant)"
+    },
+    {
+      "name": "Email lowercased on storage",
+      "max_score": 6,
+      "description": "Email addresses are normalized to lowercase (e.g. email.toLowerCase()) before being stored in the suppression record"
+    },
+    {
+      "name": "Hard bounce blocks all email",
+      "max_score": 10,
+      "description": "The pre-send suppression check returns false (blocks sending) for hard_bounce regardless of whether the email type is transactional or marketing"
+    },
+    {
+      "name": "Spam/unsubscribe blocks only marketing",
+      "max_score": 10,
+      "description": "The pre-send suppression check allows transactional email through for spam_complaint or unsubscribe suppressions, but blocks marketing email"
+    },
+    {
+      "name": "No suppression allows all",
+      "max_score": 7,
+      "description": "The pre-send check returns true (allows sending) when no suppression record exists for the email address"
+    },
+    {
+      "name": "CAN-SPAM/GDPR unsubscribe in marketing",
+      "max_score": 8,
+      "description": "Code or documentation notes that marketing emails must include an unsubscribe link (referencing CAN-SPAM and/or GDPR)"
+    },
+    {
+      "name": "No click tracking in transactional",
+      "max_score": 7,
+      "description": "Any send function for transactional emails in the implementation disables click tracking (e.g. TrackLinks: 'None' or clickTracking.enable: false)"
+    },
+    {
+      "name": "Webhook returns received response",
+      "max_score": 6,
+      "description": "Webhook POST handler returns a success response (e.g. {received: true} or HTTP 200) after processing events"
+    }
+  ]
+}

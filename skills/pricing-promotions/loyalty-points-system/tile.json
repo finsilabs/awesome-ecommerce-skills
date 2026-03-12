@@ -1,0 +1,10 @@
+{
+  "name": "finsi/loyalty-points-system",
+  "version": "0.1.0",
+  "summary": "Points earning, redemption rules, tier progression, and expiration policies",
+  "skills": {
+    "loyalty-points-system": {
+      "path": "SKILL.md"
+    }
+  }
+}

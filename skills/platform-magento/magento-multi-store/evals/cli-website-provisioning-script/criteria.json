@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses Magento CLI commands to create the website/store/store-view hierarchy, applies scoped configuration with correct scope flags, enables website-scoped pricing with the required reindex step, flushes the config cache after config changes, and references stores by code rather than numeric ID.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "store:website:create used",
+      "max_score": 8,
+      "description": "Script calls 'bin/magento store:website:create' (not a PHP script or admin UI instructions) to create the website"
+    },
+    {
+      "name": "store:group:create used",
+      "max_score": 8,
+      "description": "Script calls 'bin/magento store:group:create' to create the store group"
+    },
+    {
+      "name": "store:store:create used",
+      "max_score": 8,
+      "description": "Script calls 'bin/magento store:store:create' to create the store view"
+    },
+    {
+      "name": "Website-scope config flags",
+      "max_score": 8,
+      "description": "config:set commands for website-level settings use '--scope=websites' and '--scope-code=<website_code>' flags"
+    },
+    {
+      "name": "Store-scope config flags",
+      "max_score": 8,
+      "description": "config:set commands for store-view-level settings (locale, timezone) use '--scope=stores' and '--scope-code=<store_view_code>' flags"
+    },
+    {
+      "name": "Cache flush after config changes",
+      "max_score": 12,
+      "description": "Script runs 'bin/magento cache:clean config' (or equivalent cache flush) after setting configuration values"
+    },
+    {
+      "name": "Website-scoped pricing enabled",
+      "max_score": 12,
+      "description": "Script sets 'catalog/price/scope' to 1 (e.g., 'bin/magento config:set catalog/price/scope 1') to enable website-level pricing"
+    },
+    {
+      "name": "Price index reindex after pricing scope change",
+      "max_score": 10,
+      "description": "Script runs 'bin/magento indexer:reindex catalog_product_price' after enabling website-scoped pricing"
+    },
+    {
+      "name": "String codes used throughout",
+      "max_score": 8,
+      "description": "All config:set scope references and store creation commands use string codes (e.g., uk_site, uk_en) rather than numeric IDs for website/store/store-view references"
+    },
+    {
+      "name": "Base URLs set per website",
+      "max_score": 8,
+      "description": "Script sets both web/secure/base_url and web/unsecure/base_url at website scope"
+    },
+    {
+      "name": "Currency configured at website scope",
+      "max_score": 10,
+      "description": "Script sets currency/options/base and/or currency/options/default at website scope (--scope=websites)"
+    }
+  ]
+}

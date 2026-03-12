@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly configures a Hydrogen project including proper .env variable names, createHydrogenContext usage in server.ts, Oxygen deployment via GitHub Actions, Remix defer+Suspense for streaming, @inContext directive for localization, and pinned API version.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct .env variable names",
+      "max_score": 8,
+      "description": "The .env.example file contains all four required variables: SESSION_SECRET, PUBLIC_STOREFRONT_API_TOKEN, PUBLIC_STORE_DOMAIN, and PUBLIC_STOREFRONT_API_VERSION"
+    },
+    {
+      "name": "API version pinned",
+      "max_score": 7,
+      "description": "PUBLIC_STOREFRONT_API_VERSION is set to a specific dated version (e.g. '2025-01') in .env.example, not a dynamic or 'latest' value"
+    },
+    {
+      "name": "createHydrogenContext import",
+      "max_score": 8,
+      "description": "server.ts imports `createHydrogenContext` from '@shopify/hydrogen'"
+    },
+    {
+      "name": "createHydrogenContext storefront config",
+      "max_score": 10,
+      "description": "server.ts calls `createHydrogenContext` with a `storefront` object containing apiVersion, publicStorefrontToken (or privateStorefrontToken), and storeDomain fields sourced from env variables"
+    },
+    {
+      "name": "Session initialization in context",
+      "max_score": 7,
+      "description": "server.ts includes session configuration (e.g. `HydrogenSession.init(request, [env.SESSION_SECRET])`) within the createHydrogenContext call"
+    },
+    {
+      "name": "CacheLong for collections",
+      "max_score": 8,
+      "description": "The homepage loader applies `storefront.CacheLong()` to the featured collections query"
+    },
+    {
+      "name": "Remix defer for non-critical data",
+      "max_score": 10,
+      "description": "The homepage loader uses `defer()` (not `json()`) to return at least one non-critical data promise for streaming, and the component uses `<Suspense>` or `<Await>` to render it"
+    },
+    {
+      "name": "@inContext directive in query",
+      "max_score": 10,
+      "description": "At least one GraphQL query in the homepage route uses the `@inContext` directive with `language` and/or `country` parameters"
+    },
+    {
+      "name": "Oxygen GitHub Action",
+      "max_score": 10,
+      "description": "The oxygen.yml workflow uses `Shopify/hydrogen-action@v1` (not a generic deploy action or custom script)"
+    },
+    {
+      "name": "GitHub Action secrets reference",
+      "max_score": 7,
+      "description": "The oxygen.yml workflow references secrets for shop domain and CLI token (e.g. `${{ secrets.SHOPIFY_SHOP_DOMAIN }}` and `${{ secrets.SHOPIFY_CLI_TOKEN }}`)"
+    },
+    {
+      "name": "Oxygen env vars beyond .env",
+      "max_score": 15,
+      "description": "SETUP_NOTES.md or equivalent documentation mentions that environment variables must be configured in Shopify admin (not only in .env) for Oxygen production deployments"
+    }
+  ]
+}

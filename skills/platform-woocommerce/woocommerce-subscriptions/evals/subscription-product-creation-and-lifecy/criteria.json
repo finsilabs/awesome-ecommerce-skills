@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent uses the correct WooCommerce Subscriptions classes, meta keys, and lifecycle action hooks when building a subscription product plugin. Covers programmatic product creation with correct meta, lifecycle hook registration, and failed payment dunning logic.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "WC_Product_Subscription class",
+      "max_score": 8,
+      "description": "Uses WC_Product_Subscription (not WC_Product or another product class) to instantiate the subscription product"
+    },
+    {
+      "name": "Subscription price meta",
+      "max_score": 8,
+      "description": "Sets _subscription_price meta via update_post_meta (not only set_regular_price)"
+    },
+    {
+      "name": "Subscription period meta",
+      "max_score": 8,
+      "description": "Sets _subscription_period meta (e.g., 'month') via update_post_meta"
+    },
+    {
+      "name": "Period interval meta",
+      "max_score": 6,
+      "description": "Sets _subscription_period_interval meta via update_post_meta"
+    },
+    {
+      "name": "Subscription length meta",
+      "max_score": 6,
+      "description": "Sets _subscription_length meta via update_post_meta (0 for forever)"
+    },
+    {
+      "name": "Trial meta keys",
+      "max_score": 8,
+      "description": "Sets both _subscription_trial_length AND _subscription_trial_period meta via update_post_meta"
+    },
+    {
+      "name": "Sign-up fee meta",
+      "max_score": 6,
+      "description": "Sets _subscription_sign_up_fee meta via update_post_meta"
+    },
+    {
+      "name": "Activation hook",
+      "max_score": 8,
+      "description": "Uses woocommerce_subscription_status_active action hook to handle new subscription activation"
+    },
+    {
+      "name": "Renewal success hook",
+      "max_score": 8,
+      "description": "Uses woocommerce_subscription_renewal_payment_complete action hook to handle successful renewals"
+    },
+    {
+      "name": "Payment failed hook",
+      "max_score": 8,
+      "description": "Uses woocommerce_subscription_payment_failed action hook to handle renewal failures"
+    },
+    {
+      "name": "Cancellation hook",
+      "max_score": 8,
+      "description": "Uses woocommerce_subscription_status_cancelled action hook to handle cancellations"
+    },
+    {
+      "name": "Failure count check",
+      "max_score": 8,
+      "description": "Calls get_failed_payment_count() on the subscription to determine number of failures before taking additional action"
+    },
+    {
+      "name": "On-hold on repeated failure",
+      "max_score": 10,
+      "description": "Calls WC_Subscriptions_Manager::put_subscription_on_hold_for_user() when failure count reaches 2 or more"
+    }
+  ]
+}

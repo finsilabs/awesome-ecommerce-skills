@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent builds a REST BFF using Fastify with correct resilience patterns: Promise.allSettled for parallel calls, graceful fallbacks for non-critical services, JWT RS256 auth on protected routes, RateLimiterRedis with correct config, and @fastify/caching for response caching.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Fastify framework",
+      "max_score": 8,
+      "description": "Uses Fastify as the HTTP framework (imports from 'fastify', not express, hapi, koa, or other frameworks)"
+    },
+    {
+      "name": "Promise.allSettled for parallel calls",
+      "max_score": 10,
+      "description": "Uses Promise.allSettled (not Promise.all or sequential awaits) to call multiple upstream services in parallel on the PDP endpoint"
+    },
+    {
+      "name": "Graceful inventory fallback",
+      "max_score": 8,
+      "description": "When inventory service fails/rejects, returns a fallback object with `available: true` and `quantity: null` instead of erroring"
+    },
+    {
+      "name": "Graceful CMS fallback",
+      "max_score": 7,
+      "description": "When CMS/content service fails/rejects, returns null (not an error) for the content field"
+    },
+    {
+      "name": "Auth on cart route only",
+      "max_score": 8,
+      "description": "Authentication middleware is applied via preHandler on the cart route (not globally to all routes, not missing from cart)"
+    },
+    {
+      "name": "RS256 JWT algorithm",
+      "max_score": 8,
+      "description": "JWT verification specifies RS256 algorithm (e.g. `algorithms: ['RS256']` in the verify options), not HS256 or omitted"
+    },
+    {
+      "name": "RateLimiterRedis package",
+      "max_score": 9,
+      "description": "Rate limiting uses RateLimiterRedis from the 'rate-limiter-flexible' package (not express-rate-limit, fastify-rate-limit, or custom logic)"
+    },
+    {
+      "name": "Rate limiter config values",
+      "max_score": 9,
+      "description": "RateLimiterRedis is configured with keyPrefix 'rl_gateway', points: 100, duration: 60, and blockDuration: 60"
+    },
+    {
+      "name": "Rate limit key strategy",
+      "max_score": 8,
+      "description": "Rate limit key uses `request.user?.id ?? request.ip` (user ID for authenticated requests, IP for anonymous)"
+    },
+    {
+      "name": "Retry-After header on 429",
+      "max_score": 8,
+      "description": "When rate limit is exceeded, sets `Retry-After: 60` header before responding with 429"
+    },
+    {
+      "name": "@fastify/caching plugin",
+      "max_score": 8,
+      "description": "Uses @fastify/caching plugin (not a custom cache or different caching library) registered via app.register()"
+    },
+    {
+      "name": "Caching config: PUBLIC privacy",
+      "max_score": 7,
+      "description": "@fastify/caching is configured with privacy set to PUBLIC (fastifyCaching.privacy.PUBLIC or equivalent string)"
+    },
+    {
+      "name": "Fastify logger enabled",
+      "max_score": 2,
+      "description": "Fastify is instantiated with logger: true (not false or omitted)"
+    }
+  ]
+}

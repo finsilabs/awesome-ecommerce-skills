@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements order-placement persistence (inserting rule applications and incrementing usage_count within the same transaction), the buy_x_get_y discount applied to cheapest items first, fixed_off applied at cart level rather than per line, and the rule versioning pattern (deactivate old, create new) when modifying a live promotion.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Applications inserted with order_id",
+      "max_score": 8,
+      "description": "The persistence function inserts a record into the rule-applications table that includes the order_id linking it to the specific order"
+    },
+    {
+      "name": "Applications inserted with rule_id",
+      "max_score": 8,
+      "description": "Each inserted application record includes the rule_id identifying which rule generated the discount"
+    },
+    {
+      "name": "discount_amount in cents",
+      "max_score": 8,
+      "description": "The discount_amount stored in the applications table is an integer representing cents (not a decimal dollar amount)"
+    },
+    {
+      "name": "usage_count incremented atomically",
+      "max_score": 10,
+      "description": "The usage_count increment on price_rules is performed in the same database transaction as the application insert (not in a separate query outside the transaction)"
+    },
+    {
+      "name": "B2G1 cheapest items first",
+      "max_score": 12,
+      "description": "For buy_x_get_y, the free-item discount is applied to the cheapest eligible units (prices sorted ascending, free units taken from the front of the sorted list)"
+    },
+    {
+      "name": "Free unit count formula",
+      "max_score": 10,
+      "description": "The number of free units in buy_x_get_y is calculated as floor(totalUnits / (BUY_X + GET_Y)) * GET_Y"
+    },
+    {
+      "name": "fixed_off at cart level",
+      "max_score": 10,
+      "description": "A fixed_off rule calculates its discount once against the cart subtotal, not by summing a per-line calculation"
+    },
+    {
+      "name": "fixed_off capped at subtotal",
+      "max_score": 8,
+      "description": "The fixed_off discount is capped at the cart subtotal so it cannot produce a negative total"
+    },
+    {
+      "name": "Old rule deactivated on update",
+      "max_score": 10,
+      "description": "When a live rule is changed, the existing rule record is set to inactive (is_active = false) rather than mutated in place"
+    },
+    {
+      "name": "New rule version created",
+      "max_score": 10,
+      "description": "A new price_rules record is created with the updated values rather than overwriting the old rule"
+    },
+    {
+      "name": "Historical order references preserved",
+      "max_score": 6,
+      "description": "The old (deactivated) rule record is retained so that historical order applications still reference a valid rule_id"
+    }
+  ]
+}

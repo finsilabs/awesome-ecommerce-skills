@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements SKU generation following the prescribed naming conventions (uppercase, hyphens, max 20 chars, standard abbreviations), uses the correct cartesian product algorithm, normalizes special characters in option values, and structures variant objects with the expected fields.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cartesian product via reduce/flatMap",
+      "max_score": 10,
+      "description": "The cartesian product function uses arrays.reduce() with flatMap() internally — not nested for-loops or a recursive approach"
+    },
+    {
+      "name": "SKU all uppercase",
+      "max_score": 8,
+      "description": "All generated SKU strings in output/variants.json are fully uppercase (no lowercase letters)"
+    },
+    {
+      "name": "SKU uses hyphens only",
+      "max_score": 8,
+      "description": "SKU strings in output/variants.json use hyphens as separators — no spaces, underscores, or other separators between segments"
+    },
+    {
+      "name": "SKU max 20 chars",
+      "max_score": 8,
+      "description": "Every SKU string in output/variants.json is at most 20 characters long"
+    },
+    {
+      "name": "Special chars normalized",
+      "max_score": 10,
+      "description": "Option values containing spaces or non-alphanumeric characters (e.g. 'Navy Blue', 'Light Grey') are normalized before being included in the SKU — the raw space or special character does NOT appear in any SKU in output/variants.json"
+    },
+    {
+      "name": "Normalization regex pattern",
+      "max_score": 8,
+      "description": "The code applies .toUpperCase().trim().replace(/[^A-Z0-9]/g, '-') (or equivalent) to each option value segment before joining into the SKU"
+    },
+    {
+      "name": "SKU format structure",
+      "max_score": 8,
+      "description": "SKUs follow the [PRODUCT-CODE]-[OPTION1]-[OPTION2] pattern: base code first, then option value segments, joined with hyphens"
+    },
+    {
+      "name": "Variant options object",
+      "max_score": 8,
+      "description": "Each variant object in output/variants.json includes an 'options' field that is an object mapping option axis names (e.g. 'Size', 'Color') to their values"
+    },
+    {
+      "name": "Full combination coverage",
+      "max_score": 10,
+      "description": "The number of variants in output/variants.json equals the product of the counts of all option value arrays (all combinations are represented)"
+    },
+    {
+      "name": "generateVariants export",
+      "max_score": 8,
+      "description": "lib/variantMatrix.js exports a named function (generateVariants or similar) that accepts baseSku, option names, and option value arrays as parameters"
+    },
+    {
+      "name": "cartesianProduct export",
+      "max_score": 8,
+      "description": "lib/variantMatrix.js exports a separate named cartesianProduct (or equivalent) function distinct from the variant-generation function"
+    },
+    {
+      "name": "Size abbreviations",
+      "max_score": 6,
+      "description": "If size option values are present, standard abbreviations are used (S, M, L, XL, XS, etc.) rather than spelled-out words like 'Small' or 'Large' in the SKU segments"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/user-generated-content",
+  "version": "0.1.0",
+  "summary": "Customer photos, Q&A sections, and social proof widgets",
+  "skills": {
+    "user-generated-content": {
+      "path": "SKILL.md"
+    }
+  }
+}

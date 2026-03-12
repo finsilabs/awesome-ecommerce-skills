@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly upgrades a Shopify app from development-only defaults to production-ready configuration, including persistent session storage, pinned API versioning, and proper App Bridge initialization in the root layout.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Prisma session storage import",
+      "max_score": 10,
+      "description": "app/shopify.server.ts imports PrismaSessionStorage from @shopify/shopify-app-session-storage-prisma (not the SQLite variant)"
+    },
+    {
+      "name": "PrismaClient instantiation",
+      "max_score": 10,
+      "description": "app/shopify.server.ts creates a PrismaClient instance and passes it to PrismaSessionStorage"
+    },
+    {
+      "name": "SQLite removed",
+      "max_score": 10,
+      "description": "app/shopify.server.ts does NOT import or use SQLiteSessionStorage"
+    },
+    {
+      "name": "Pinned API version",
+      "max_score": 12,
+      "description": "app/shopify.server.ts uses a specific version string (e.g. \"2025-01\" or similar date-based version) instead of LATEST_API_VERSION for the apiVersion field"
+    },
+    {
+      "name": "LATEST_API_VERSION not in production config",
+      "max_score": 8,
+      "description": "app/shopify.server.ts does NOT pass LATEST_API_VERSION as the apiVersion value"
+    },
+    {
+      "name": "AppProvider in root layout",
+      "max_score": 12,
+      "description": "app/root.tsx imports and renders AppProvider (from @shopify/shopify-app-remix/react or equivalent Shopify provider)"
+    },
+    {
+      "name": "Root layout wraps Outlet",
+      "max_score": 8,
+      "description": "app/root.tsx wraps <Outlet /> inside the AppProvider component"
+    },
+    {
+      "name": "Deployment notes: session storage reason",
+      "max_score": 10,
+      "description": "DEPLOYMENT_NOTES.md explains why SQLite is unsuitable for multi-instance deployments (e.g., sessions not shared across instances, file-based storage)"
+    },
+    {
+      "name": "Deployment notes: API version reason",
+      "max_score": 10,
+      "description": "DEPLOYMENT_NOTES.md explains why LATEST_API_VERSION is not safe for production (e.g., may introduce breaking changes without notice)"
+    },
+    {
+      "name": "Deployment notes: AppProvider reason",
+      "max_score": 10,
+      "description": "DEPLOYMENT_NOTES.md mentions that AppProvider is required for App Bridge context (e.g., useAppBridge returning null without it)"
+    }
+  ]
+}

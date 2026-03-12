@@ -1,0 +1,10 @@
+{
+  "name": "finsi/sfcc-ocapi-scapi",
+  "version": "0.1.0",
+  "summary": "OCAPI and Shopper APIs for headless Salesforce Commerce",
+  "skills": {
+    "sfcc-ocapi-scapi": {
+      "path": "SKILL.md"
+    }
+  }
+}

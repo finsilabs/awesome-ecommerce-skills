@@ -1,0 +1,51 @@
+{
+  "context": "Tests whether the agent correctly deduplicates purchase events using sessionStorage, implements proper SPA page view tracking via route change detection, and extracts the GA4 client ID from the _ga cookie for server-side Measurement Protocol calls.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "sessionStorage read before purchase",
+      "max_score": 14,
+      "description": "purchase-tracking.js reads from sessionStorage (e.g., sessionStorage.getItem(...)) using a key that includes the order ID before pushing the purchase event"
+    },
+    {
+      "name": "sessionStorage write after purchase",
+      "max_score": 14,
+      "description": "purchase-tracking.js calls sessionStorage.setItem(...) with an order-specific key after pushing the purchase event to prevent re-firing on reload"
+    },
+    {
+      "name": "ecommerce null before purchase",
+      "max_score": 8,
+      "description": "purchase-tracking.js pushes { ecommerce: null } to window.dataLayer before pushing the purchase event"
+    },
+    {
+      "name": "route change detection",
+      "max_score": 14,
+      "description": "spa-pageview.js listens for client-side navigation events (e.g., popstate, hashchange, or Next.js router events) rather than only firing on the initial script load"
+    },
+    {
+      "name": "page_view fires on navigation",
+      "max_score": 10,
+      "description": "spa-pageview.js pushes a page_view (or equivalent) event to dataLayer on each route change, not only once when the script first loads"
+    },
+    {
+      "name": "History Change GTM note",
+      "max_score": 10,
+      "description": "spa-pageview.js includes a comment explaining that a History Change trigger (or equivalent) must be configured in GTM, and that the default All Pages trigger alone is insufficient for SPA navigation"
+    },
+    {
+      "name": "_ga cookie parsing",
+      "max_score": 15,
+      "description": "ga4-server.js extracts client_id from the _ga cookie by splitting on '.' and taking the last two segments (e.g., cookies._ga.split('.').slice(2).join('.') or equivalent)"
+    },
+    {
+      "name": "client_id in Measurement Protocol payload",
+      "max_score": 10,
+      "description": "ga4-server.js includes the extracted client_id value in the request body sent to the GA4 Measurement Protocol endpoint"
+    },
+    {
+      "name": "GA4 Measurement Protocol endpoint",
+      "max_score": 5,
+      "description": "ga4-server.js sends a POST request to https://www.google-analytics.com/mp/collect (not the debug endpoint) with measurement_id and api_secret from environment variables"
+    }
+  ]
+}

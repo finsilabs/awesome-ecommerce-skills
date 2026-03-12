@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-analytics",
+  "version": "0.1.0",
+  "summary": "Product performance metrics, sell-through rates, and dead stock identification",
+  "skills": {
+    "product-analytics": {
+      "path": "SKILL.md"
+    }
+  }
+}

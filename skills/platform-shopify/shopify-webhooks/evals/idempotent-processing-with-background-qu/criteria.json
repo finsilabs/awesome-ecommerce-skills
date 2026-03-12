@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent sends a 200 response immediately (before heavy processing), uses X-Shopify-Webhook-Id as an idempotency key in both the database store and as the Bull jobId, configures retries with exponential backoff, and uses a queue to offload processing.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Immediate 200 response",
+      "max_score": 12,
+      "description": "The route handler calls `res.status(200).json(...)` or equivalent BEFORE awaiting any downstream processing (ERP sync, inventory update, queue operations that do actual work)"
+    },
+    {
+      "name": "X-Shopify-Webhook-Id header used",
+      "max_score": 8,
+      "description": "The handler reads the `x-shopify-webhook-id` request header to obtain the webhook ID"
+    },
+    {
+      "name": "Idempotency check before processing",
+      "max_score": 12,
+      "description": "The handler checks whether the webhook ID has already been processed (via the processed-webhooks store or equivalent) and skips processing if it has"
+    },
+    {
+      "name": "webhookId as Bull jobId",
+      "max_score": 12,
+      "description": "The Bull `queue.add(...)` call includes `jobId: webhookId` (or equivalent) to prevent duplicate job entries for the same webhook"
+    },
+    {
+      "name": "Bull queue used for async processing",
+      "max_score": 10,
+      "description": "Processing (ERP sync, inventory, notifications) happens inside a Bull `queue.process(...)` worker, not inline in the HTTP handler"
+    },
+    {
+      "name": "Retry attempts configured",
+      "max_score": 8,
+      "description": "The Bull job is added with `attempts` set to a value greater than 1"
+    },
+    {
+      "name": "Exponential backoff configured",
+      "max_score": 8,
+      "description": "The Bull job specifies `backoff: { type: 'exponential', ... }` for retry delays"
+    },
+    {
+      "name": "shop domain captured",
+      "max_score": 8,
+      "description": "The handler reads the `x-shopify-shop-domain` header to identify the shop"
+    },
+    {
+      "name": "Processed record stored",
+      "max_score": 10,
+      "description": "After deciding to process a webhook, the handler records the webhookId and shop in the processed-webhooks store before or during processing (not just checking)"
+    },
+    {
+      "name": "README addresses timing",
+      "max_score": 6,
+      "description": "The README explains that the 200 response is sent before processing to meet Shopify's response timeout requirement"
+    },
+    {
+      "name": "README addresses duplicates",
+      "max_score": 6,
+      "description": "The README explains that duplicate deliveries are handled via the idempotency key (webhookId)"
+    }
+  ]
+}

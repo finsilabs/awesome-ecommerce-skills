@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent designs a category database schema and utility functions using materialized paths (not recursive CTEs), with correct field choices, slug conventions, and uniqueness constraints. The agent is asked to scaffold a category system for a new e-commerce store.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Materialized path field",
+      "max_score": 12,
+      "description": "The category schema includes a 'path' field that stores ancestor slugs joined by '/' (e.g. 'clothing/women/dresses'), NOT a closure table or adjacency-list-only design"
+    },
+    {
+      "name": "path_ids array field",
+      "max_score": 10,
+      "description": "The category schema includes a 'path_ids' (or pathIds) field that stores an ordered array of ancestor IDs"
+    },
+    {
+      "name": "depth field present",
+      "max_score": 6,
+      "description": "The schema includes a 'depth' numeric field representing the level of the category in the hierarchy"
+    },
+    {
+      "name": "position field present",
+      "max_score": 6,
+      "description": "The schema includes a 'position' field for ordering siblings"
+    },
+    {
+      "name": "published field present",
+      "max_score": 6,
+      "description": "The schema includes a boolean 'published' field on categories"
+    },
+    {
+      "name": "SEO fields present",
+      "max_score": 8,
+      "description": "The schema includes both seo_title (or seoTitle) and seo_description (or seoDescription) fields"
+    },
+    {
+      "name": "Hyphens in slugs",
+      "max_score": 8,
+      "description": "Slug examples or generation code uses hyphens as word separators (e.g. 'evening-dresses'), NOT underscores"
+    },
+    {
+      "name": "No stop words in slugs",
+      "max_score": 6,
+      "description": "Slug generation or examples avoid stop words (e.g. uses 'womens-dresses' not 'for-women-dresses')"
+    },
+    {
+      "name": "Unique constraint on (parent_id, slug)",
+      "max_score": 12,
+      "description": "The schema or migration includes a unique constraint specifically on the combination of (parent_id, slug), not a global uniqueness constraint on slug alone"
+    },
+    {
+      "name": "Max depth enforcement",
+      "max_score": 8,
+      "description": "Code or documentation mentions or enforces a maximum category depth of 3-4 levels"
+    },
+    {
+      "name": "No recursive CTEs",
+      "max_score": 10,
+      "description": "The breadcrumb or ancestry retrieval logic does NOT use a recursive SQL CTE or recursive query — uses the path_ids array instead"
+    },
+    {
+      "name": "image_url field present",
+      "max_score": 8,
+      "description": "The schema includes an image_url (or imageUrl) field for category images"
+    }
+  ]
+}

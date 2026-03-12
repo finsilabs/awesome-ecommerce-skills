@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements frequency capping with localStorage, targeting rules (login check, checkout exclusion, time-on-page, already-subscribed), and GDPR-compliant popup UI with correct aria attributes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "localStorage frequency key format",
+      "max_score": 8,
+      "description": "Frequency capping uses localStorage with key format popup_seen_${popupId} (template literal with popup ID)"
+    },
+    {
+      "name": "Dismiss sets dismissed flag",
+      "max_score": 8,
+      "description": "On explicit dismiss, also writes popup_dismissed_${popupId} key to localStorage (separate from the seen key)"
+    },
+    {
+      "name": "Frequency cap duration",
+      "max_score": 8,
+      "description": "Frequency cap suppresses the popup for at least 14 days (not less)"
+    },
+    {
+      "name": "Logged-in customer exclusion",
+      "max_score": 8,
+      "description": "Checks document.cookie for 'customer_id=' to exclude already logged-in customers"
+    },
+    {
+      "name": "Checkout page exclusion",
+      "max_score": 8,
+      "description": "Excludes pages where window.location.pathname starts with '/checkout'"
+    },
+    {
+      "name": "Time on page minimum",
+      "max_score": 8,
+      "description": "Requires at least 30000ms (30 seconds) time on page before showing the popup"
+    },
+    {
+      "name": "Existing subscriber exclusion",
+      "max_score": 8,
+      "description": "Checks for a subscriber_id cookie or localStorage flag to exclude already-subscribed visitors"
+    },
+    {
+      "name": "Popup dialog role",
+      "max_score": 8,
+      "description": "Popup container element has role='dialog' and aria-modal='true'"
+    },
+    {
+      "name": "Close button aria-label",
+      "max_score": 8,
+      "description": "Close button has aria-label='Close'"
+    },
+    {
+      "name": "Consent checkbox not pre-checked",
+      "max_score": 10,
+      "description": "The email consent checkbox does NOT have defaultChecked or checked={true} — it starts unchecked"
+    },
+    {
+      "name": "Consent checkbox required",
+      "max_score": 10,
+      "description": "The consent checkbox has the 'required' attribute so the form cannot be submitted without checking it"
+    },
+    {
+      "name": "Offer type support",
+      "max_score": 8,
+      "description": "The popup component handles at least two of: 'percent_off', 'free_shipping', 'free_gift' offer types"
+    }
+  ]
+}

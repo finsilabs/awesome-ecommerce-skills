@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses the correct Meta Graph API version, schedules HOURLY feed sync, uses the Catalog Batch API (items_batch endpoint) for real-time updates, correctly identifies the 60-day token expiry and sets up refresh, and uses retailer_id (SKU) in batch update requests.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Graph API v18.0",
+      "max_score": 10,
+      "description": "All Meta API URLs in the code use 'graph.facebook.com/v18.0/' (not an older or newer version like v17.0 or v19.0)"
+    },
+    {
+      "name": "HOURLY feed interval",
+      "max_score": 10,
+      "description": "The feed schedule sets interval to 'HOURLY' when calling the product_feeds endpoint (not 'DAILY' or 'WEEKLY')"
+    },
+    {
+      "name": "items_batch endpoint for updates",
+      "max_score": 12,
+      "description": "Real-time product updates use the '/items_batch' endpoint with POST method (not re-uploading the full feed or using a different update mechanism)"
+    },
+    {
+      "name": "UPDATE method in batch request",
+      "max_score": 8,
+      "description": "The batch request body includes 'method: UPDATE' within the requests array item"
+    },
+    {
+      "name": "retailer_id uses SKU",
+      "max_score": 10,
+      "description": "The items_batch request identifies the product via 'retailer_id' set to the variant's SKU value"
+    },
+    {
+      "name": "Batch updates price and availability",
+      "max_score": 8,
+      "description": "The data object in the batch update request includes both the updated price (formatted as decimal + ' USD') and availability ('in stock' / 'out of stock')"
+    },
+    {
+      "name": "60-day token expiry mentioned",
+      "max_score": 10,
+      "description": "ARCHITECTURE.md or token-management.ts contains a comment or explanation noting that Meta long-lived tokens expire after 60 days"
+    },
+    {
+      "name": "Token refresh automation",
+      "max_score": 8,
+      "description": "scheduleTokenRefresh() sets up an automated recurring process (cron, setInterval, or similar) to refresh the token before it expires — not a manual reminder"
+    },
+    {
+      "name": "owned_product_catalogs endpoint used",
+      "max_score": 8,
+      "description": "createMetaCatalog() POSTs to the '{META_BUSINESS_ID}/owned_product_catalogs' endpoint to create the catalog"
+    },
+    {
+      "name": "product_feeds endpoint for feed registration",
+      "max_score": 8,
+      "description": "addFeedToCatalog() POSTs to '{catalogId}/product_feeds' endpoint to register the feed URL"
+    },
+    {
+      "name": "item_type PRODUCT_ITEM in batch",
+      "max_score": 8,
+      "description": "The items_batch request body includes 'item_type: PRODUCT_ITEM'"
+    }
+  ]
+}

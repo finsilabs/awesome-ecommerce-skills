@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the full Magento cart lifecycle: creating a guest cart, adding both simple and configurable products (with parent_sku), persisting the cart ID in a cookie, authenticating customers, using the correct query for the authenticated cart, and merging the guest cart after login.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "createEmptyCart mutation",
+      "max_score": 8,
+      "description": "Guest cart creation uses the `createEmptyCart` mutation (not a REST endpoint or other method)"
+    },
+    {
+      "name": "addSimpleProductsToCart mutation",
+      "max_score": 8,
+      "description": "Adding a simple product uses the `addSimpleProductsToCart` mutation"
+    },
+    {
+      "name": "addConfigurableProductsToCart mutation",
+      "max_score": 10,
+      "description": "Adding a configurable product uses the `addConfigurableProductsToCart` mutation (not `addSimpleProductsToCart`)"
+    },
+    {
+      "name": "parent_sku in configurable add",
+      "max_score": 10,
+      "description": "The `addConfigurableProductsToCart` call includes both `parent_sku` (the parent configurable SKU) AND the variant `sku` in `data`"
+    },
+    {
+      "name": "Cart ID in cookie",
+      "max_score": 9,
+      "description": "The guest cart ID (UUID) is stored and retrieved from a cookie — NOT from localStorage or a JavaScript variable only"
+    },
+    {
+      "name": "generateCustomerToken mutation",
+      "max_score": 8,
+      "description": "Customer login uses the `generateCustomerToken` mutation to obtain a bearer token"
+    },
+    {
+      "name": "customerCart query for auth cart",
+      "max_score": 10,
+      "description": "Fetching the authenticated customer's cart uses the `customerCart` query (not `cart(cart_id: ...)` with a cart ID parameter)"
+    },
+    {
+      "name": "mergeCarts mutation",
+      "max_score": 10,
+      "description": "After login, the guest cart is merged into the customer cart using the `mergeCarts` mutation with `source_cart_id` and `destination_cart_id`"
+    },
+    {
+      "name": "Guest cart cookie cleared after merge",
+      "max_score": 7,
+      "description": "After `mergeCarts`, the guest cart ID cookie is deleted/cleared"
+    },
+    {
+      "name": "Cart prices in response",
+      "max_score": 5,
+      "description": "Cart query responses include `prices` with `grand_total` or `subtotal_excluding_tax` fields"
+    },
+    {
+      "name": "Customer orders sort",
+      "max_score": 7,
+      "description": "If order history is fetched, it uses `sort: { sort_field: CREATED_AT, sort_direction: DESC }`"
+    },
+    {
+      "name": "Bearer token passed for auth requests",
+      "max_score": 8,
+      "description": "Authenticated requests (customerCart, orders) pass the bearer token in the Authorization header"
+    }
+  ]
+}

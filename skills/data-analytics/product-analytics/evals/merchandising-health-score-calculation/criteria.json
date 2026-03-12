@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the merchandising health score with the prescribed dimension weights, correct normalisation formulas for each dimension, and handles edge cases like out-of-stock products and high returns correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "sellThrough weight",
+      "max_score": 7,
+      "description": "sellThrough dimension uses weight 0.25 in the final score calculation"
+    },
+    {
+      "name": "pdpConversion weight",
+      "max_score": 7,
+      "description": "pdpConversion dimension uses weight 0.25 in the final score calculation"
+    },
+    {
+      "name": "revenueRank weight",
+      "max_score": 7,
+      "description": "revenueRank dimension uses weight 0.20 in the final score calculation"
+    },
+    {
+      "name": "reviews weight",
+      "max_score": 7,
+      "description": "reviews dimension uses weight 0.15 in the final score calculation"
+    },
+    {
+      "name": "stockHealth weight",
+      "max_score": 7,
+      "description": "stockHealth dimension uses weight 0.10 in the final score calculation"
+    },
+    {
+      "name": "returns weight",
+      "max_score": 6,
+      "description": "returns dimension uses weight 0.05 in the final score calculation"
+    },
+    {
+      "name": "pdpConversion normalisation",
+      "max_score": 10,
+      "description": "pdpConversionPct is normalised by multiplying by 20 (so 5% CVR maps to 100), capped at 100 — A002 (pdpConversionPct=6.2) normalises to 100, not 124"
+    },
+    {
+      "name": "revenueRank normalisation",
+      "max_score": 10,
+      "description": "revenueRank is normalised as max(0, 100 - (rank - 1) * 2), floored at 0 — rank 1 maps to 100, rank 7 maps to 88"
+    },
+    {
+      "name": "reviews normalisation",
+      "max_score": 10,
+      "description": "reviewScore is normalised as ((reviewScore - 1) / 4) * 100 — a score of 1.0 maps to 0, 5.0 maps to 100"
+    },
+    {
+      "name": "stockHealth OOS handling",
+      "max_score": 10,
+      "description": "stockHealth is 0 when daysOnHand is 0 or negative (out of stock) — A003 (daysOnHand=-5) and A006 (daysOnHand=0) must both get stockHealth score of 0"
+    },
+    {
+      "name": "stockHealth cap",
+      "max_score": 7,
+      "description": "stockHealth is capped at 100 even when daysOnHand exceeds 100 — A008 (daysOnHand=110) normalises to stockHealth of 100, not 110"
+    },
+    {
+      "name": "returns normalisation",
+      "max_score": 12,
+      "description": "returnsRate is normalised as max(0, 100 - returnsRate * 5), floored at 0 — A006 (returnsRate=30) maps to 0 (not negative), A003 (returnsRate=22) also maps to 0"
+    }
+  ]
+}

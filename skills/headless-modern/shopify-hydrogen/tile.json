@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shopify-hydrogen",
+  "version": "0.1.0",
+  "summary": "Hydrogen + Remix storefront with Oxygen deployment and Storefront API",
+  "skills": {
+    "shopify-hydrogen": {
+      "path": "SKILL.md"
+    }
+  }
+}

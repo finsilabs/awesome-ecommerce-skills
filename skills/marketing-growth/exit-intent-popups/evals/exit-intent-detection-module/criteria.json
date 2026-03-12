@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements the exit-intent detection module using the prescribed mouse tracking logic, mobile fallback, delay pattern, and cleanup function structure.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "mousemove threshold check",
+      "max_score": 10,
+      "description": "Checks e.clientY against a threshold (default 20) — the condition is e.clientY < threshold"
+    },
+    {
+      "name": "movementY direction check",
+      "max_score": 10,
+      "description": "Also checks e.movementY < 0 on the mousemove handler (upward movement toward top of viewport)"
+    },
+    {
+      "name": "mouseleave clientY check",
+      "max_score": 10,
+      "description": "Registers a mouseleave listener that fires when e.clientY <= 0 (cursor left through top of viewport)"
+    },
+    {
+      "name": "Activation delay",
+      "max_score": 10,
+      "description": "Both the mouseleave and mousemove listeners are registered inside a setTimeout with a delay (default 3000ms), not immediately"
+    },
+    {
+      "name": "Default delay value",
+      "max_score": 8,
+      "description": "The default delay value is 3000 (milliseconds) when not specified by the caller"
+    },
+    {
+      "name": "Default threshold value",
+      "max_score": 8,
+      "description": "The default threshold value is 20 (pixels) when not specified by the caller"
+    },
+    {
+      "name": "Mobile visibilitychange",
+      "max_score": 12,
+      "description": "Registers a visibilitychange listener that triggers when document.visibilityState === 'hidden' for mobile support"
+    },
+    {
+      "name": "Single activation guard",
+      "max_score": 8,
+      "description": "Uses an 'activated' boolean flag to ensure onExitIntent is called at most once"
+    },
+    {
+      "name": "Cleanup function returned",
+      "max_score": 12,
+      "description": "The init function returns a cleanup function that calls clearTimeout and removes the mousemove event listener"
+    },
+    {
+      "name": "TypeScript interface exported",
+      "max_score": 12,
+      "description": "Exports a TypeScript interface or type for the configuration options (threshold, delay, onExitIntent)"
+    }
+  ]
+}

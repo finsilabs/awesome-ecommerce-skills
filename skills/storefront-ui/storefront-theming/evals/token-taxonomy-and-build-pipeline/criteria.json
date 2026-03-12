@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly structures a three-tier design token system in JSON, uses Style Dictionary with appropriate configuration (prefix, output paths, file formats), and names semantic tokens based on meaning rather than visual appearance.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Global token file",
+      "max_score": 8,
+      "description": "A global token JSON file exists (e.g., tokens/global.json) containing raw values for color, font-size, spacing, radius, or shadow categories"
+    },
+    {
+      "name": "Semantic token file",
+      "max_score": 8,
+      "description": "A semantic token JSON file exists (e.g., tokens/semantic.json) containing meaning-bearing aliases that reference global tokens"
+    },
+    {
+      "name": "Value object structure",
+      "max_score": 8,
+      "description": "Token entries in all JSON files use the `{ \"value\": \"...\" }` object format (not bare strings or other shapes)"
+    },
+    {
+      "name": "Cross-reference syntax",
+      "max_score": 10,
+      "description": "Semantic token JSON uses curly-brace reference syntax (e.g., `{color.blue-600}`) to point to global tokens, not hard-coded hex values"
+    },
+    {
+      "name": "Style Dictionary package",
+      "max_score": 10,
+      "description": "The build script imports and uses the `style-dictionary` (or `StyleDictionary`) package, not a hand-rolled JSON-to-CSS converter"
+    },
+    {
+      "name": "Store prefix configured",
+      "max_score": 10,
+      "description": "Style Dictionary configuration includes `prefix: 'store'` so generated variables are prefixed `--store-`"
+    },
+    {
+      "name": "CSS output path and file",
+      "max_score": 8,
+      "description": "Style Dictionary CSS platform targets `src/styles/generated/` as buildPath and produces `tokens.css`"
+    },
+    {
+      "name": "CSS root selector",
+      "max_score": 8,
+      "description": "Style Dictionary CSS file config uses `format: 'css/variables'` with `options: { selector: ':root' }`"
+    },
+    {
+      "name": "JS token output",
+      "max_score": 8,
+      "description": "Style Dictionary JS platform produces a `tokens.js` file using `format: 'javascript/es6'`"
+    },
+    {
+      "name": "Meaning-based semantic names",
+      "max_score": 12,
+      "description": "Semantic token names describe purpose or role (e.g., `brand-primary`, `surface`, `on-surface`, `price-sale`) rather than the color value they currently hold (e.g., `blue-600`, `gray-50`)"
+    },
+    {
+      "name": "No raw values in semantics",
+      "max_score": 10,
+      "description": "Semantic token JSON entries do NOT contain raw hex, rgb, or hard-coded rem values — they reference global tokens via the curly-brace syntax"
+    }
+  ]
+}

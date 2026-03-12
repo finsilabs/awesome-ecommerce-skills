@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements duties estimation using EasyPost, defines the correct DutyEstimation interface, uses accurate de minimis thresholds per country, suppresses estimates for below-threshold orders, and implements a graceful fallback to DDU rather than throwing on API failure.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "EasyPost package",
+      "max_score": 8,
+      "description": "Imports and uses '@easypost/api' package (not an alternative duties/tax API like taxjar, avalara, stripe, or a generic HTTP client)"
+    },
+    {
+      "name": "DutyEstimation method type",
+      "max_score": 8,
+      "description": "DutyEstimation interface declares 'method' as the union type 'DDP' | 'DDU' (not just string)"
+    },
+    {
+      "name": "Fallback returns DDU",
+      "max_score": 10,
+      "description": "When the EasyPost API call fails (catch block), the function returns a result with method set to 'DDU' rather than throwing or returning DDP"
+    },
+    {
+      "name": "Fallback GB VAT rate",
+      "max_score": 8,
+      "description": "Fallback VAT rate for GB is exactly 0.20 (20%)"
+    },
+    {
+      "name": "Fallback DE VAT rate",
+      "max_score": 8,
+      "description": "Fallback VAT rate for DE is exactly 0.19 (19%)"
+    },
+    {
+      "name": "US de minimis threshold",
+      "max_score": 8,
+      "description": "DE_MINIMIS_CENTS includes US mapped to 80000 (representing $800 USD)"
+    },
+    {
+      "name": "GB de minimis threshold",
+      "max_score": 8,
+      "description": "DE_MINIMIS_CENTS includes GB mapped to 13500 (representing £135)"
+    },
+    {
+      "name": "EU de minimis threshold",
+      "max_score": 8,
+      "description": "DE_MINIMIS_CENTS includes EU mapped to 15000 (representing €150)"
+    },
+    {
+      "name": "De minimis suppression",
+      "max_score": 10,
+      "description": "checkout-integration.md or code shows that duty estimate is suppressed (not shown / set to zero) when the order total is at or below the destination country de minimis threshold"
+    },
+    {
+      "name": "Monetary values in cents",
+      "max_score": 8,
+      "description": "DutyEstimation interface uses integer cents for duties, taxes, and total fields (not floats/dollars)"
+    },
+    {
+      "name": "EasyPost API key from env",
+      "max_score": 8,
+      "description": "EasyPost client is instantiated using process.env.EASYPOST_API_KEY (not a hardcoded key)"
+    },
+    {
+      "name": "Fallback no-throw",
+      "max_score": 8,
+      "description": "The catch block does NOT re-throw the error — execution continues to return a fallback DDU estimate"
+    }
+  ]
+}

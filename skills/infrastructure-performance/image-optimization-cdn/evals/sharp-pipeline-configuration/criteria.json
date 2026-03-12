@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly configures a Sharp-based image processing pipeline with proper quality settings, metadata handling, resize options, standard size definitions, and correct dependency placement in package.json.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Sharp in dependencies",
+      "max_score": 8,
+      "description": "package.json places 'sharp' in 'dependencies' (not 'devDependencies')"
+    },
+    {
+      "name": "Types in devDependencies",
+      "max_score": 5,
+      "description": "package.json places '@types/sharp' in 'devDependencies' (not 'dependencies')"
+    },
+    {
+      "name": "Auto-rotate EXIF",
+      "max_score": 10,
+      "description": "Pipeline calls .rotate() on the Sharp instance to auto-rotate based on EXIF orientation"
+    },
+    {
+      "name": "Strip EXIF metadata",
+      "max_score": 10,
+      "description": "Pipeline calls .withMetadata({exif: {}}) or equivalent to strip EXIF data"
+    },
+    {
+      "name": "withoutEnlargement flag",
+      "max_score": 10,
+      "description": "Resize call includes withoutEnlargement: true to prevent upscaling"
+    },
+    {
+      "name": "WebP quality and effort",
+      "max_score": 9,
+      "description": "WebP output uses quality of 80 and effort of 4 (e.g., .webp({quality: 80, effort: 4}))"
+    },
+    {
+      "name": "mozjpeg JPEG compression",
+      "max_score": 9,
+      "description": "JPEG output uses mozjpeg: true (e.g., .jpeg({quality: 80, mozjpeg: true}))"
+    },
+    {
+      "name": "PNG compression level",
+      "max_score": 7,
+      "description": "PNG output uses compressionLevel: 9 (e.g., .png({compressionLevel: 9}))"
+    },
+    {
+      "name": "Standard size constants",
+      "max_score": 10,
+      "description": "Code defines or uses the standard product size set including at least: 240x240, 400x400, 800x800, and 1600x1600"
+    },
+    {
+      "name": "OG size defined",
+      "max_score": 7,
+      "description": "Standard sizes include an Open Graph variant at 1200x630 with fit: 'contain'"
+    },
+    {
+      "name": "AVIF effort setting",
+      "max_score": 7,
+      "description": "If AVIF output is generated, uses effort: 4 (e.g., .avif({quality: 80, effort: 4}))"
+    },
+    {
+      "name": "Filters non-image files",
+      "max_score": 8,
+      "description": "Batch script filters input files to only process image extensions (jpg, jpeg, png, bmp, tiff)"
+    }
+  ]
+}

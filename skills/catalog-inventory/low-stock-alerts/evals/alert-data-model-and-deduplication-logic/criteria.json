@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly designs the reorder configuration and stock alert data models with all required fields, computes available inventory correctly, applies the right alert type logic, and implements deduplication to prevent re-firing resolved alerts.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "reorder_configs fields",
+      "max_score": 10,
+      "description": "reorder_configs model/table includes ALL of: variant_id (or variantId), location_id (or locationId), reorder_point (or reorderPoint), reorder_quantity (or reorderQuantity), supplier_id (or supplierId), lead_time_days (or leadTimeDays), use_dynamic_reorder_point (or useDynamicReorderPoint), created_at (or createdAt)"
+    },
+    {
+      "name": "stock_alerts fields",
+      "max_score": 10,
+      "description": "stock_alerts model/table includes ALL of: variant_id, location_id, alert_type, triggered_at, available_at_trigger, reorder_point_at_trigger, resolved_at, notification_sent, acknowledged_by"
+    },
+    {
+      "name": "alert_type enum",
+      "max_score": 10,
+      "description": "alert_type field accepts exactly three values: 'low_stock', 'out_of_stock', and 'overstock' (or equivalent enum)"
+    },
+    {
+      "name": "available calculation",
+      "max_score": 10,
+      "description": "Available stock is computed as onHand minus reserved (e.g. level.onHand - level.reserved or on_hand - reserved), NOT just using onHand alone"
+    },
+    {
+      "name": "out_of_stock condition",
+      "max_score": 10,
+      "description": "alert_type is set to 'out_of_stock' specifically when available equals 0 (not just <= reorderPoint)"
+    },
+    {
+      "name": "low_stock condition",
+      "max_score": 10,
+      "description": "alert_type is set to 'low_stock' when available is greater than 0 AND less than or equal to the reorder point"
+    },
+    {
+      "name": "deduplication check",
+      "max_score": 15,
+      "description": "Before creating a new alert, the code queries for an existing unresolved alert for the same variantId + locationId + alertType combination (where resolvedAt is null)"
+    },
+    {
+      "name": "resolvedAt guard",
+      "max_score": 10,
+      "description": "The deduplication check specifically filters on resolvedAt being null (not just any existing alert), so resolved alerts do not block new ones"
+    },
+    {
+      "name": "dynamic reorder support",
+      "max_score": 10,
+      "description": "The job code checks use_dynamic_reorder_point / useDynamicReorderPoint flag and computes a different reorder point when it is true"
+    },
+    {
+      "name": "20% safety buffer",
+      "max_score": 5,
+      "description": "When computing the dynamic reorder point in the job, the formula uses a 1.2 multiplier (20% safety stock buffer): Math.ceil(velocity * leadTimeDays * 1.2) or equivalent"
+    }
+  ]
+}

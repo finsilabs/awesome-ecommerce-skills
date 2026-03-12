@@ -1,0 +1,10 @@
+{
+  "name": "finsi/bot-protection",
+  "version": "0.1.0",
+  "summary": "Anti-scraping, anti-scalping, and CAPTCHA strategies for commerce",
+  "skills": {
+    "bot-protection": {
+      "path": "SKILL.md"
+    }
+  }
+}

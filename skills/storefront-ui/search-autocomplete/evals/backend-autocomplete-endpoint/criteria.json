@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent builds the server-side autocomplete endpoint with multi-index search, correct Algolia query parameters, merchandising boosts, query result caching, and no-results tracking.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Multi-index parallel search",
+      "max_score": 10,
+      "description": "The endpoint queries both 'products' and 'categories' indices (not just products), using Promise.all or equivalent concurrent execution"
+    },
+    {
+      "name": "Products limit 5",
+      "max_score": 8,
+      "description": "The products index query requests at most 5 hits (hitsPerPage or equivalent parameter set to 5)"
+    },
+    {
+      "name": "Categories limit 3",
+      "max_score": 8,
+      "description": "The categories index query requests at most 3 hits (hitsPerPage or equivalent parameter set to 3)"
+    },
+    {
+      "name": "Products attributesToRetrieve",
+      "max_score": 10,
+      "description": "The products query specifies attributesToRetrieve containing all of: objectID, name, image, price, url, category"
+    },
+    {
+      "name": "Categories attributesToRetrieve",
+      "max_score": 8,
+      "description": "The categories query specifies attributesToRetrieve containing all of: name, url, product_count"
+    },
+    {
+      "name": "Merchandising optionalFilters",
+      "max_score": 14,
+      "description": "The products query includes optionalFilters boosting is_featured:true and in_stock:true using score notation (e.g., 'is_featured:true<score=2>')"
+    },
+    {
+      "name": "LRU cache implementation",
+      "max_score": 14,
+      "description": "A cache (LRU or equivalent bounded cache) is implemented to serve repeated identical queries without hitting Algolia again"
+    },
+    {
+      "name": "No-results query logging",
+      "max_score": 14,
+      "description": "When all result arrays are empty (zero products and zero categories), the query is logged or recorded for analytics/monitoring purposes"
+    },
+    {
+      "name": "Min chars guard",
+      "max_score": 8,
+      "description": "The endpoint returns an empty result set (without querying Algolia) when the query parameter is absent or shorter than 2 characters"
+    },
+    {
+      "name": "attributesToHighlight for names",
+      "max_score": 6,
+      "description": "The products query includes attributesToHighlight for 'name' so that highlight markup is returned in the response"
+    }
+  ]
+}

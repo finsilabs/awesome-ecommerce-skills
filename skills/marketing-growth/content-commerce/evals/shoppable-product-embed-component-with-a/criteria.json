@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent builds a ProductEmbed React component that follows content-commerce best practices: render-time data fetching (not static), correct attribution via articleId prop, click tracking to the analytics endpoint, correct product URL format, out-of-stock handling, loading skeleton, and CSS class naming conventions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "articleId prop present",
+      "max_score": 10,
+      "description": "The component accepts an 'articleId' prop (the interface/props type includes 'articleId: string')"
+    },
+    {
+      "name": "Render-time data fetch",
+      "max_score": 12,
+      "description": "Product data is fetched inside a useEffect (or equivalent async hook) — NOT hardcoded or passed as a static prop from the server at build/publish time"
+    },
+    {
+      "name": "Loading skeleton state",
+      "max_score": 7,
+      "description": "When product data has not loaded, the component renders a loading placeholder (e.g. a div with class 'product-embed-skeleton' or equivalent skeleton element)"
+    },
+    {
+      "name": "Click tracking endpoint",
+      "max_score": 12,
+      "description": "On CTA click, a POST request is sent to '/api/analytics/content-click' (exact path)"
+    },
+    {
+      "name": "Click tracking payload",
+      "max_score": 9,
+      "description": "The analytics POST body includes all three of: articleId, productId, and ctaText"
+    },
+    {
+      "name": "Product link includes ref params",
+      "max_score": 10,
+      "description": "The CTA anchor href includes both 'ref=article' and 'article_id={articleId}' as query parameters in the product URL"
+    },
+    {
+      "name": "displayStyle CSS class",
+      "max_score": 8,
+      "description": "The root container element has a CSS class matching the pattern 'product-embed--{displayStyle}' (e.g. 'product-embed--card')"
+    },
+    {
+      "name": "data-product-id attribute",
+      "max_score": 7,
+      "description": "The root container element has a 'data-product-id' attribute set to the productId value"
+    },
+    {
+      "name": "displayStyle options typed",
+      "max_score": 7,
+      "description": "The displayStyle prop is typed as a union: 'card' | 'inline' | 'full'"
+    },
+    {
+      "name": "Out-of-stock handling",
+      "max_score": 11,
+      "description": "When product.inStock is false (or equivalent), the component shows an indicator (e.g. 'Out of stock' text, notify-me button, or alternative products) rather than showing a broken card"
+    },
+    {
+      "name": "Fetch fields param",
+      "max_score": 7,
+      "description": "The product fetch URL includes a 'fields' query parameter specifying which fields to retrieve"
+    }
+  ]
+}

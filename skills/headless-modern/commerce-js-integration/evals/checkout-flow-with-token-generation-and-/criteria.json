@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements the Commerce.js checkout flow: generating tokens (not using cart IDs directly), calling getLive for shipping options, capturing orders with required fields, refreshing the cart post-purchase, handling errors, and using the secret key server-side.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "generateToken with cart type",
+      "max_score": 12,
+      "description": "Calls `commerce.checkout.generateToken(cartId, {type: 'cart'})` — uses the cart ID with the `{type: 'cart'}` parameter to generate the checkout token"
+    },
+    {
+      "name": "getLive for shipping options",
+      "max_score": 10,
+      "description": "Calls `commerce.checkout.getLive(checkoutTokenId)` to retrieve live checkout data including available shipping options"
+    },
+    {
+      "name": "capture uses token not cart ID",
+      "max_score": 10,
+      "description": "Passes the checkout token ID (not the cart ID) to `commerce.checkout.capture()`"
+    },
+    {
+      "name": "Shipping method from getLive options",
+      "max_score": 8,
+      "description": "Uses a shipping method ID sourced from `checkoutData.shipping.available_options` when constructing the capture payload"
+    },
+    {
+      "name": "Capture payload structure",
+      "max_score": 8,
+      "description": "The capture call includes all required top-level fields: `customer`, `shipping`, `fulfillment`, and `payment`"
+    },
+    {
+      "name": "Stripe payment gateway",
+      "max_score": 8,
+      "description": "Specifies `gateway: 'stripe'` in the payment object and includes `stripe.payment_method_id` from the Stripe.js token"
+    },
+    {
+      "name": "cart.refresh() after order",
+      "max_score": 10,
+      "description": "Calls `commerce.cart.refresh()` after a successful order capture to reset the cart to a fresh empty state"
+    },
+    {
+      "name": "try/catch error handling",
+      "max_score": 8,
+      "description": "Wraps `commerce.checkout.capture()` in a try/catch block and handles errors (does not let unhandled promise rejections propagate)"
+    },
+    {
+      "name": "Secret key server-side only",
+      "max_score": 10,
+      "description": "The Next.js API route (orders.ts) uses the Chec secret key (e.g. `CHEC_SECRET_KEY`) while client-side code uses the public key"
+    },
+    {
+      "name": "customer.login for orders",
+      "max_score": 8,
+      "description": "The orders API route calls `commerce.customer.login(email, password)` to get a customer token before calling `commerce.orders.getAllForCustomer()`"
+    },
+    {
+      "name": "customer_token passed to orders",
+      "max_score": 8,
+      "description": "Passes `{customer_token: token}` to `commerce.orders.getAllForCustomer()` (not a raw session ID or header)"
+    }
+  ]
+}

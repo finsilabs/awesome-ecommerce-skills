@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements a complete Subject Access Request (SAR) data export API, a GDPR request intake system with identity verification and deadlines, and a marketing email function that enforces consent and includes unsubscribe mechanics.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "All data types exported",
+      "max_score": 10,
+      "description": "The SAR export includes all of: customer profile, orders (with line items), addresses, reviews, consent history, and login sessions in the response"
+    },
+    {
+      "name": "Export audit log entry",
+      "max_score": 8,
+      "description": "After generating the export, an audit record is inserted into a GDPR/requests log table with at least customerId, type='export', and requestedAt timestamp"
+    },
+    {
+      "name": "Content-Disposition attachment header",
+      "max_score": 8,
+      "description": "The export API response sets the Content-Disposition header to 'attachment' with a filename (e.g. my-data-{timestamp}.json)"
+    },
+    {
+      "name": "Content-Type application/json",
+      "max_score": 6,
+      "description": "The export API response explicitly sets Content-Type to 'application/json'"
+    },
+    {
+      "name": "Identity verification before processing",
+      "max_score": 10,
+      "description": "The GDPR request intake endpoint does NOT immediately process the request; it first sends a verification email/token and creates the request with a 'pending_verification' status"
+    },
+    {
+      "name": "30-day deadline set",
+      "max_score": 8,
+      "description": "A deadline field on the GDPR request record is set to 30 days from the time of request (requestedAt + 30 days)"
+    },
+    {
+      "name": "Multiple request types supported",
+      "max_score": 6,
+      "description": "The GDPR request intake accepts at minimum export, erasure, correction, and objection as request types"
+    },
+    {
+      "name": "Marketing email consent gate",
+      "max_score": 8,
+      "description": "The marketing email function checks that the customer's marketing consent is explicitly true before sending; if not, the send is skipped"
+    },
+    {
+      "name": "Unsubscribe URL in every email",
+      "max_score": 8,
+      "description": "Every marketing email sent includes an unsubscribeUrl field generated using a secure per-customer token"
+    },
+    {
+      "name": "One-click unsubscribe sets marketing false",
+      "max_score": 8,
+      "description": "The unsubscribe handler sets the customer's marketing consent to false and records an unsubscribedAt timestamp"
+    },
+    {
+      "name": "Consent opt-in metadata stored",
+      "max_score": 10,
+      "description": "When capturing a marketing opt-in, the code stores at minimum the IP address, timestamp, and either the consent text version or the source method (e.g. checkbox, form)"
+    },
+    {
+      "name": "exportedAt timestamp in export",
+      "max_score": 10,
+      "description": "The exported JSON object includes an exportedAt field with an ISO 8601 timestamp indicating when the export was generated"
+    }
+  ]
+}

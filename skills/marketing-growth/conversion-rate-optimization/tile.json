@@ -1,0 +1,10 @@
+{
+  "name": "finsi/conversion-rate-optimization",
+  "version": "0.1.0",
+  "summary": "CRO audit frameworks, heatmap analysis, and checkout funnel optimization",
+  "skills": {
+    "conversion-rate-optimization": {
+      "path": "SKILL.md"
+    }
+  }
+}

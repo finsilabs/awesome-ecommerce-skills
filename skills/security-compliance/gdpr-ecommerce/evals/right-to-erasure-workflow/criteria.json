@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements a GDPR right-to-erasure pipeline that checks legal blockers, anonymizes rather than deletes tax-relevant records, uses correct anonymization patterns, logs compliance records, and notifies third-party processors.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Pending orders check",
+      "max_score": 10,
+      "description": "The erasure function checks for pending/open orders before proceeding and throws an error or returns an error response if any pending orders are found"
+    },
+    {
+      "name": "Orders anonymized not deleted",
+      "max_score": 10,
+      "description": "Order records are anonymized (UPDATE, not DELETE) — the order row is retained while personal fields are overwritten"
+    },
+    {
+      "name": "PII replaced with [DELETED] or equivalent",
+      "max_score": 8,
+      "description": "Order anonymization replaces customer name, email, and phone with a placeholder string such as '[DELETED]' or 'Deleted User', not with NULL or empty string"
+    },
+    {
+      "name": "City/country retained in orders",
+      "max_score": 8,
+      "description": "The shipping address anonymization keeps the city and country fields intact while nulling the street address"
+    },
+    {
+      "name": "Customer record uses placeholder email",
+      "max_score": 8,
+      "description": "The customer's email is replaced with a unique placeholder pattern containing the customer's ID (e.g. deleted_{id}@deleted.invalid), not simply blanked or set to NULL"
+    },
+    {
+      "name": "Reviews text preserved",
+      "max_score": 8,
+      "description": "Review records are anonymized by removing the author association, not deleted — the review body/text is kept"
+    },
+    {
+      "name": "Audit log with completedAt",
+      "max_score": 10,
+      "description": "A record is inserted into a GDPR/erasure log table with both requestedAt and completedAt timestamps after the erasure completes"
+    },
+    {
+      "name": "Third-party notification",
+      "max_score": 10,
+      "description": "After local deletion/anonymization, the code notifies third-party processors (marketing, support, or loyalty tools) to delete their copy of the customer's data"
+    },
+    {
+      "name": "Promise.allSettled for third parties",
+      "max_score": 8,
+      "description": "Third-party processor deletion calls are made with Promise.allSettled (not Promise.all), so one failure does not prevent others from being notified"
+    },
+    {
+      "name": "Search index deletion mentioned",
+      "max_score": 8,
+      "description": "The implementation or accompanying documentation explicitly addresses deleting the customer from search indexes (e.g. Elasticsearch, Algolia) or analytics warehouses"
+    },
+    {
+      "name": "Marketing data deleted",
+      "max_score": 6,
+      "description": "The erasure pipeline includes a step to delete or unsubscribe the customer from email marketing lists"
+    },
+    {
+      "name": "Sessions deleted",
+      "max_score": 6,
+      "description": "Login sessions for the customer are deleted as part of the erasure process"
+    }
+  ]
+}

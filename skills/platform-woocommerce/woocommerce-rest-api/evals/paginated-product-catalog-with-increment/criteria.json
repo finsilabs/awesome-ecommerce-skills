@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly initializes the WooCommerce client (correct package, version, timeout, no trailing slash warning), reads pagination metadata from the correct response headers, uses the _fields parameter to reduce payload, and implements incremental sync using the 'after' date filter with ISO 8601 timestamps.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct npm package",
+      "max_score": 8,
+      "description": "package.json dependencies include @woocommerce/woocommerce-rest-api"
+    },
+    {
+      "name": "Credentials via env vars",
+      "max_score": 7,
+      "description": "WooCommerceRestApi is initialized using process.env for WOOCOMMERCE_URL, consumer key, and consumer secret"
+    },
+    {
+      "name": "Client version wc/v3",
+      "max_score": 6,
+      "description": "WooCommerceRestApi is initialized with version: \"wc/v3\""
+    },
+    {
+      "name": "Axios timeout configured",
+      "max_score": 7,
+      "description": "The WooCommerceRestApi client is configured with axiosConfig: { timeout: 15000 } or equivalent"
+    },
+    {
+      "name": "No trailing slash note",
+      "max_score": 6,
+      "description": "README or code comments mention that the WooCommerce URL must NOT end with a trailing slash, OR the code trims it"
+    },
+    {
+      "name": "Pagination from headers",
+      "max_score": 12,
+      "description": "Total pages is read from response.headers[\"x-wp-totalpages\"] and total products from response.headers[\"x-wp-total\"] (not from response body)"
+    },
+    {
+      "name": "_fields parameter used",
+      "max_score": 12,
+      "description": "Product listing requests include a _fields parameter (e.g., _fields: \"id,name,price,stock_status\" or similar subset) to reduce payload"
+    },
+    {
+      "name": "Default status publish",
+      "max_score": 6,
+      "description": "getProducts defaults to fetching products with status: \"publish\" when no status is provided"
+    },
+    {
+      "name": "Default per_page 20",
+      "max_score": 6,
+      "description": "getProducts defaults per_page to 20 when no perPage is specified"
+    },
+    {
+      "name": "Incremental sync with after filter",
+      "max_score": 15,
+      "description": "getProductsSince (or equivalent) passes the timestamp as the 'after' parameter to the WooCommerce products endpoint"
+    },
+    {
+      "name": "ISO 8601 timestamp",
+      "max_score": 8,
+      "description": "The after parameter is documented or used as an ISO 8601 date string (e.g., new Date().toISOString() or similar)"
+    },
+    {
+      "name": "Variations endpoint correct",
+      "max_score": 7,
+      "description": "getProductVariations calls woo.get(\"products/{id}/variations\", ...) — uses the nested variations path"
+    }
+  ]
+}

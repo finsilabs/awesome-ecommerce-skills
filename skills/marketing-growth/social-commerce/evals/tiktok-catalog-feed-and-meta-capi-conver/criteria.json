@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent generates a TikTok CSV catalog feed with the correct required fields, keeps descriptions under 500 characters, uses the facebook-nodejs-business-sdk for CAPI, enables server-side tracking to complement the Pixel, sends event_id for deduplication, and correctly populates contentIds from SKUs.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "TikTok feed is CSV",
+      "max_score": 8,
+      "description": "generateTikTokCatalogFeed sets Content-Type to 'text/csv' and returns comma-separated rows (not XML or JSON)"
+    },
+    {
+      "name": "TikTok CSV header fields",
+      "max_score": 10,
+      "description": "The CSV header row contains exactly these fields (in any order): sku_id, title, description, availability, condition, price, link, image_link, brand"
+    },
+    {
+      "name": "TikTok sku_id from SKU",
+      "max_score": 8,
+      "description": "The 'sku_id' column in the TikTok feed is populated from the variant's SKU value (not an internal numeric ID)"
+    },
+    {
+      "name": "TikTok description under 500 chars",
+      "max_score": 10,
+      "description": "Descriptions in the TikTok feed are truncated to 500 characters or fewer (e.g. .slice(0, 500) or .substring(0, 500))"
+    },
+    {
+      "name": "facebook-nodejs-business-sdk used",
+      "max_score": 12,
+      "description": "meta-capi.ts imports from 'facebook-nodejs-business-sdk' (specifically ServerEvent, EventRequest, UserData, and/or CustomData classes) — not a raw fetch() call to the CAPI endpoint"
+    },
+    {
+      "name": "CAPI + Pixel rationale documented",
+      "max_score": 8,
+      "description": "INTEGRATION_GUIDE.md explains that server-side CAPI is used alongside the browser Pixel to recover events lost to ad blockers (mentions the ~20-40% gap or similar reasoning)"
+    },
+    {
+      "name": "event_id deduplication",
+      "max_score": 10,
+      "description": "sendMetaPurchaseEvent includes an event_id in the ServerEvent (or INTEGRATION_GUIDE.md explains that the same event_id must be sent in both Pixel and CAPI calls for deduplication)"
+    },
+    {
+      "name": "contentType set to product",
+      "max_score": 8,
+      "description": "CustomData in sendMetaPurchaseEvent sets content_type (or calls .setContentType()) to 'product'"
+    },
+    {
+      "name": "contentIds from SKUs",
+      "max_score": 8,
+      "description": "CustomData sets content_ids (or calls .setContentIds()) using the SKU values from order.lineItems (not product IDs or order IDs)"
+    },
+    {
+      "name": "actionSource website",
+      "max_score": 6,
+      "description": "ServerEvent sets action_source (or calls .setActionSource()) to 'website'"
+    },
+    {
+      "name": "TikTok shop prerequisites noted",
+      "max_score": 12,
+      "description": "INTEGRATION_GUIDE.md mentions that TikTok requires a separate seller account approval and/or shop connection — catalog sync alone is not sufficient to appear in TikTok Shop"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct Salsify API authentication pattern, maps Salsify's plain-English property names to normalized internal fields including Digital Assets filtering, and builds a data quality report that sorts by lowest completeness first.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Salsify Bearer token auth",
+      "max_score": 10,
+      "description": "Salsify API requests use 'Authorization: Bearer <token>' header with the API key (from environment variable SALSIFY_API_KEY or similar)"
+    },
+    {
+      "name": "Product ID mapping",
+      "max_score": 9,
+      "description": "The mapper uses p['Product ID'] ?? p.id (or equivalent fallback) for the sku field — not just p.id alone"
+    },
+    {
+      "name": "Name and description mapping",
+      "max_score": 8,
+      "description": "Mapper maps 'Product Name' to the name field and 'Long Description' to the description field"
+    },
+    {
+      "name": "Brand mapping",
+      "max_score": 6,
+      "description": "Mapper maps 'Brand' to a brand field in the normalized output"
+    },
+    {
+      "name": "Image filter on Digital Assets",
+      "max_score": 10,
+      "description": "Images are extracted from 'Digital Assets' by filtering for items where type === 'Image' (not all assets, not Documents)"
+    },
+    {
+      "name": "Non-core attributes preserved",
+      "max_score": 8,
+      "description": "Remaining properties not in the explicitly mapped fields (Product Name, Long Description, Brand, Digital Assets) are preserved in an 'attributes' object"
+    },
+    {
+      "name": "Quality report per attribute",
+      "max_score": 9,
+      "description": "Data quality report includes an entry for each required attribute in the family showing count of products with that attribute filled vs. total"
+    },
+    {
+      "name": "Completeness percentage",
+      "max_score": 8,
+      "description": "Report includes a completeness percentage for each attribute (filled/total * 100)"
+    },
+    {
+      "name": "Sorted lowest first",
+      "max_score": 10,
+      "description": "Quality report results are sorted with lowest completeness attributes first (ascending by filled count or completeness percentage)"
+    },
+    {
+      "name": "quality-report.json generated",
+      "max_score": 8,
+      "description": "A quality-report.json file is produced with the report results based on the provided sample data"
+    },
+    {
+      "name": "Migration notes auth section",
+      "max_score": 7,
+      "description": "migration-notes.md (or equivalent documentation) includes a section explaining how Salsify authentication works"
+    },
+    {
+      "name": "Migration notes sorting explanation",
+      "max_score": 7,
+      "description": "migration-notes.md explains that the quality report is sorted to show worst gaps (lowest completeness) first"
+    }
+  ]
+}

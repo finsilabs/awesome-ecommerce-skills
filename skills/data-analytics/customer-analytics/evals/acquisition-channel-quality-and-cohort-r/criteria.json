@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses correct SQL patterns for acquisition channel quality analysis (COALESCE for direct fallback, LATERAL join for 12-month CLV, 18-month customer filter, first-touch attribution join) and cohort retention (DATE_TRUNC month grouping, HAVING filter for mature cohorts), plus correct documentation of attribution model and second-purchase rate as a leading indicator.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "COALESCE for direct",
+      "max_score": 8,
+      "description": "channel_quality.sql uses COALESCE(oa.source, 'direct') or equivalent to label customers with no attribution record as 'direct'"
+    },
+    {
+      "name": "LATERAL join for CLV",
+      "max_score": 9,
+      "description": "channel_quality.sql uses a LATERAL join (or equivalent correlated subquery) to compute per-customer 12-month revenue"
+    },
+    {
+      "name": "18-month customer filter",
+      "max_score": 9,
+      "description": "channel_quality.sql restricts the analysis to customers acquired in the last 18 months (NOT all-time customers)"
+    },
+    {
+      "name": "12-month CLV window",
+      "max_score": 8,
+      "description": "The 12-month CLV computation counts only orders within 12 months of the customer's acquisition date (not all orders ever)"
+    },
+    {
+      "name": "Repeat purchase rate",
+      "max_score": 7,
+      "description": "channel_quality.sql includes a metric for the percentage of customers who ordered more than once (repeat purchase rate)"
+    },
+    {
+      "name": "First-touch attribution join",
+      "max_score": 8,
+      "description": "channel_quality.sql attributes each customer to the channel of their FIRST order (not last or any order)"
+    },
+    {
+      "name": "Attribution model labeled",
+      "max_score": 7,
+      "description": "analysis_notes.md explicitly states which attribution model (first-touch or last-touch) is used"
+    },
+    {
+      "name": "Excludes cancelled/refunded",
+      "max_score": 10,
+      "description": "Both SQL files exclude orders with status 'cancelled' and 'refunded'"
+    },
+    {
+      "name": "DATE_TRUNC cohort month",
+      "max_score": 7,
+      "description": "cohort_retention.sql uses DATE_TRUNC('month', ...) to group customers into monthly cohorts"
+    },
+    {
+      "name": "HAVING mature cohorts only",
+      "max_score": 9,
+      "description": "cohort_retention.sql uses a HAVING clause or WHERE filter to exclude cohorts that haven't had enough months to measure retention at the period being reported (e.g. HAVING cohort_month <= NOW() - INTERVAL 'N months')"
+    },
+    {
+      "name": "Second-purchase rate as leading indicator",
+      "max_score": 9,
+      "description": "analysis_notes.md identifies second-purchase rate (or repeat purchase rate / one-time-to-repeat conversion) as a key leading indicator of customer lifetime value"
+    },
+    {
+      "name": "Cohort analysis by cohort month",
+      "max_score": 9,
+      "description": "analysis_notes.md or channel_quality.sql notes that channel performance should be compared by cohort month (not across all-time customers) to avoid comparing different time periods"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly initializes the Commerce.js client (package, import style, single instance, correct key usage), uses the right API methods for fetching products, handles product data fields correctly, and sanitizes HTML descriptions before rendering.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct package name",
+      "max_score": 8,
+      "description": "Uses `@chec/commerce.js` as the package name (not `commercejs`, `commerce.js`, or any other variant)"
+    },
+    {
+      "name": "Default import style",
+      "max_score": 10,
+      "description": "Imports Commerce as a default import: `import Commerce from '@chec/commerce.js'` (not a named import like `import { Commerce }`)"
+    },
+    {
+      "name": "Module-level client instance",
+      "max_score": 10,
+      "description": "The Commerce client is created once at module level (not inside a function, hook, or component body)"
+    },
+    {
+      "name": "Public key env var",
+      "max_score": 8,
+      "description": "Uses an environment variable for the public API key (e.g. `NEXT_PUBLIC_CHEC_PUBLIC_KEY` or similar) rather than a hardcoded string"
+    },
+    {
+      "name": "products.list() method",
+      "max_score": 8,
+      "description": "Calls `commerce.products.list()` to fetch all products"
+    },
+    {
+      "name": "products.retrieve() with permalink type",
+      "max_score": 10,
+      "description": "Calls `commerce.products.retrieve(permalink, {type: 'permalink'})` to fetch a single product by its slug/permalink"
+    },
+    {
+      "name": "Price formatted with symbol",
+      "max_score": 10,
+      "description": "Uses `product.price.formatted_with_symbol` to display price (not `product.price.raw` or `product.price.formatted`)"
+    },
+    {
+      "name": "Optional image access",
+      "max_score": 8,
+      "description": "Accesses the product image URL with optional chaining (`product.image?.url`) or includes a null check before accessing"
+    },
+    {
+      "name": "DOMPurify for HTML sanitization",
+      "max_score": 14,
+      "description": "Uses DOMPurify (specifically `isomorphic-dompurify`) to sanitize product description HTML before rendering it"
+    },
+    {
+      "name": "dangerouslySetInnerHTML after sanitization",
+      "max_score": 8,
+      "description": "Renders the sanitized description with `dangerouslySetInnerHTML` (not as raw text, and NOT without sanitizing first)"
+    },
+    {
+      "name": "Public key not secret key",
+      "max_score": 6,
+      "description": "Client-side code uses the public key (NOT the secret key); no usage of `CHEC_SECRET_KEY` in browser/component code"
+    }
+  ]
+}

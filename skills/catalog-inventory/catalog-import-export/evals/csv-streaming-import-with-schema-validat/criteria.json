@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements streaming CSV parsing with zod schema validation, correct field types and constraints, row-level error reporting, and a dry-run preview mode for a catalog import pipeline.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Streaming parser",
+      "max_score": 10,
+      "description": "Uses createReadStream piped to csv-parse (or equivalent streaming API) with async iteration rather than loading the whole file into memory (no fs.readFileSync or fs.readFile on the uploaded CSV)"
+    },
+    {
+      "name": "csv-parse options: columns",
+      "max_score": 8,
+      "description": "Passes columns: true to csv-parse so the first row is treated as headers"
+    },
+    {
+      "name": "csv-parse options: skip_empty_lines and trim",
+      "max_score": 7,
+      "description": "Passes both skip_empty_lines: true and trim: true to csv-parse"
+    },
+    {
+      "name": "Zod schema used",
+      "max_score": 8,
+      "description": "Uses the zod library (import from 'zod') to define the product row schema rather than manual validation"
+    },
+    {
+      "name": "Handle regex constraint",
+      "max_score": 8,
+      "description": "The handle field is validated with a regex that enforces lowercase alphanumeric and hyphens only (e.g., /^[a-z0-9-]+/)"
+    },
+    {
+      "name": "Published field as enum+transform",
+      "max_score": 7,
+      "description": "The published field accepts 'true', 'false', '1', '0' and is transformed to a boolean"
+    },
+    {
+      "name": "Row numbering starts at 2",
+      "max_score": 7,
+      "description": "Row error reporting starts at index 2 (not 0 or 1), since row 1 is the header"
+    },
+    {
+      "name": "Structured error output",
+      "max_score": 8,
+      "description": "Validation errors include both the field name and a message (not just a generic error string)"
+    },
+    {
+      "name": "Generator/async iterable parser",
+      "max_score": 7,
+      "description": "The CSV parser is implemented as an async generator (async function*) that yields results row by row"
+    },
+    {
+      "name": "Dry-run mode exists",
+      "max_score": 8,
+      "description": "A dry-run or preview function is implemented that validates without writing to any database or store"
+    },
+    {
+      "name": "Dry-run return shape",
+      "max_score": 7,
+      "description": "Dry-run returns validRows count, errorRows count, and an errors array (with at most 100 errors)"
+    },
+    {
+      "name": "inventory_quantity default",
+      "max_score": 7,
+      "description": "The inventory_quantity field defaults to 0 when not present in the CSV row"
+    },
+    {
+      "name": "Price coercion",
+      "max_score": 8,
+      "description": "The price field is coerced to a number (not kept as string) and validated as positive"
+    }
+  ]
+}

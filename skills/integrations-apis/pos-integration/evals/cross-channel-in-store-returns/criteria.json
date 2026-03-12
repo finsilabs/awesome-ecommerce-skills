@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements cross-channel return processing correctly: routing refunds to the original payment gateway, validating returnable quantities, restocking at the correct location only when physically received, and using idempotency keys.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Original gateway routing",
+      "max_score": 12,
+      "description": "Refund is issued through the same payment gateway that processed the original order (e.g. Stripe if order.paymentGateway === 'stripe', Square if 'square') — not a single hardcoded gateway"
+    },
+    {
+      "name": "Returnable quantity check",
+      "max_score": 10,
+      "description": "Validates that the requested return quantity does not exceed the returnable/eligible quantity on the order line before processing the refund"
+    },
+    {
+      "name": "Already-refunded guard",
+      "max_score": 8,
+      "description": "Checks that the order has not already been fully refunded before initiating a new return"
+    },
+    {
+      "name": "Restock on receipt only",
+      "max_score": 14,
+      "description": "Inventory is incremented only when the return status is 'received' (physically received in-store) — NOT immediately on return initiation"
+    },
+    {
+      "name": "Location-specific restock",
+      "max_score": 10,
+      "description": "Inventory is restocked at the specific locationId where the return was physically processed, not at a global or default location"
+    },
+    {
+      "name": "Online inventory resync after restock",
+      "max_score": 8,
+      "description": "After incrementing location inventory, the updated total available quantity is synced to the online store (e.g. calls syncInventoryAcrossChannels or equivalent)"
+    },
+    {
+      "name": "Idempotency key for refund",
+      "max_score": 8,
+      "description": "Passes an idempotencyKey when calling the Square refund API (paymentsApi.createPaymentRefund or equivalent)"
+    },
+    {
+      "name": "Refund amount calculation",
+      "max_score": 8,
+      "description": "Calculates the refund amount in minor currency units (cents) based on unit price times quantity for each returned line item"
+    },
+    {
+      "name": "Return record persisted",
+      "max_score": 8,
+      "description": "Saves a return/refund record to the database that includes the line items returned, refunded amount, gateway refund ID, and the location where it was processed"
+    },
+    {
+      "name": "Line item validation",
+      "max_score": 6,
+      "description": "Verifies that each line item being returned actually exists on the original order before processing"
+    },
+    {
+      "name": "Order not-found error",
+      "max_score": 8,
+      "description": "Throws or returns an error when the order is not found in the database"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the guest wishlist store following the skill's specific localStorage key, try/catch safety, deduplication logic, timestamp on add, 90-day expiry, and the correct merge-then-clear post-login flow.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "localStorage key",
+      "max_score": 10,
+      "description": "Uses the string 'guest_wishlist' as the localStorage key (not a different name like 'wishlist' or 'guestWishlist')"
+    },
+    {
+      "name": "try/catch on localStorage read",
+      "max_score": 10,
+      "description": "The function that reads from localStorage is wrapped in a try/catch block and returns an empty array (or equivalent empty state) in the catch branch"
+    },
+    {
+      "name": "Deduplication by variantId",
+      "max_score": 10,
+      "description": "addToGuestWishlist (or equivalent add function) checks whether an item with the same variantId already exists before adding it, and does NOT add a duplicate"
+    },
+    {
+      "name": "addedAt timestamp on add",
+      "max_score": 8,
+      "description": "When adding a new item, the function stores an addedAt timestamp (e.g. Date.now() or new Date()) on the item object"
+    },
+    {
+      "name": "90-day expiry logic",
+      "max_score": 10,
+      "description": "The store includes logic to remove or ignore wishlist items whose addedAt value is older than 90 days (approximately 90 * 24 * 60 * 60 * 1000 ms)"
+    },
+    {
+      "name": "Merge posts to server",
+      "max_score": 10,
+      "description": "mergeGuestWishlistOnLogin (or equivalent merge function) sends the locally-stored items to a server endpoint via a POST request with the items in the request body"
+    },
+    {
+      "name": "Merge clears local state",
+      "max_score": 10,
+      "description": "After a successful merge POST, the merge function clears the guest wishlist (saves an empty array to localStorage), not merely deleting the key"
+    },
+    {
+      "name": "Merge skips when empty",
+      "max_score": 8,
+      "description": "The merge function returns early (no fetch call) when the guest wishlist contains zero items"
+    },
+    {
+      "name": "removeFromGuestWishlist by variantId",
+      "max_score": 8,
+      "description": "The store exports a function to remove an item identified by variantId (filters the array by variantId)"
+    },
+    {
+      "name": "Test covers dedup and error",
+      "max_score": 16,
+      "description": "The test file includes at least one test that verifies duplicate items are NOT added, and at least one test that simulates a localStorage failure (e.g. by stubbing/mocking localStorage) without throwing"
+    }
+  ]
+}

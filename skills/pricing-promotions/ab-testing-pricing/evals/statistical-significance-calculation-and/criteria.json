@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the two-proportion z-test correctly using a polynomial normal CDF approximation, applies the correct significance threshold and minimum sample size requirements, and reports revenue-per-impression alongside conversion rate.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Two-proportion z-test",
+      "max_score": 12,
+      "description": "calculateSignificance uses a two-proportion z-test: computes pooled proportion, standard error, and z-score from control and treatment conversion rates"
+    },
+    {
+      "name": "Polynomial normalCDF",
+      "max_score": 10,
+      "description": "normalCDF is implemented via a polynomial approximation (Horner's method or explicit coefficients) — NOT using an external statistics library or a simple lookup table"
+    },
+    {
+      "name": "Two-tailed p-value",
+      "max_score": 8,
+      "description": "p-value is computed as 2 * (1 - normalCDF(|zScore|)), making it a two-tailed test"
+    },
+    {
+      "name": "Significance threshold",
+      "max_score": 8,
+      "description": "The 'significant' flag is set to true when pValue < 0.05 (not 0.1 or any other threshold)"
+    },
+    {
+      "name": "Zero-impressions guard",
+      "max_score": 6,
+      "description": "calculateSignificance handles the edge case of zero impressions in either group by returning { zScore: 0, pValue: 1, significant: false }"
+    },
+    {
+      "name": "Revenue per impression",
+      "max_score": 10,
+      "description": "getExperimentResults computes and returns a revenue-per-impression (RPV) metric for each variant (revenue / impressions), not just conversion rate"
+    },
+    {
+      "name": "Conversion rate metric",
+      "max_score": 8,
+      "description": "getExperimentResults computes and returns a conversion rate (purchases / impressions) for each variant"
+    },
+    {
+      "name": "Minimum conversions gate",
+      "max_score": 10,
+      "description": "isReadyToConclude returns false if either variant has fewer than 100 purchases, regardless of p-value"
+    },
+    {
+      "name": "Peeking prevention",
+      "max_score": 10,
+      "description": "isReadyToConclude requires BOTH statistical significance (p < 0.05) AND minimum sample size — it does NOT allow concluding on significance alone"
+    },
+    {
+      "name": "Control baseline comparison",
+      "max_score": 8,
+      "description": "getExperimentResults identifies the 'control' variant and only applies statistical comparison to treatment variants (not control vs control)"
+    },
+    {
+      "name": "Test cases present",
+      "max_score": 10,
+      "description": "analysis.test.ts contains at least one scenario expected to be significant and at least one expected to be not significant"
+    }
+  ]
+}

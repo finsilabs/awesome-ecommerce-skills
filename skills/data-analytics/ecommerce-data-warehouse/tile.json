@@ -1,0 +1,10 @@
+{
+  "name": "finsi/ecommerce-data-warehouse",
+  "version": "0.1.0",
+  "summary": "Data warehouse design for commerce — star schema, ETL pipelines, dbt models",
+  "skills": {
+    "ecommerce-data-warehouse": {
+      "path": "SKILL.md"
+    }
+  }
+}

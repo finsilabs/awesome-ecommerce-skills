@@ -1,0 +1,10 @@
+{
+  "name": "finsi/discount-engine",
+  "version": "0.1.0",
+  "summary": "Rule-based discount system — percentage, fixed, BOGO, tiered, conditional",
+  "skills": {
+    "discount-engine": {
+      "path": "SKILL.md"
+    }
+  }
+}

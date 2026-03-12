@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements a product scoring engine following the prescribed default weights, normalization approach, score rounding, recency inversion, and inventory capping logic.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Default salesVelocity weight",
+      "max_score": 8,
+      "description": "Default weight for salesVelocity (or equivalent recent-sales metric) is 0.30"
+    },
+    {
+      "name": "Default revenue weight",
+      "max_score": 8,
+      "description": "Default weight for revenue is 0.20"
+    },
+    {
+      "name": "Default conversionRate weight",
+      "max_score": 8,
+      "description": "Default weight for conversion rate is 0.20"
+    },
+    {
+      "name": "Default margin weight",
+      "max_score": 8,
+      "description": "Default weight for margin (profit) is 0.15"
+    },
+    {
+      "name": "Default recency weight",
+      "max_score": 6,
+      "description": "Default weight for recency (newness) is 0.10"
+    },
+    {
+      "name": "Default inventory weight",
+      "max_score": 6,
+      "description": "Default weight for inventory level is 0.05"
+    },
+    {
+      "name": "Min-max normalization",
+      "max_score": 10,
+      "description": "Each metric is normalized to 0-1 range using min-max normalization across the product set before computing scores"
+    },
+    {
+      "name": "Equal-range handling",
+      "max_score": 8,
+      "description": "When all products have the same value for a metric (range min == max), the normalized value is 0.5 rather than causing a divide-by-zero error"
+    },
+    {
+      "name": "Recency inversion",
+      "max_score": 12,
+      "description": "Recency is inverted so newer products (fewer days since creation) receive a higher score component (e.g. 1 - normalized_days_since_created)"
+    },
+    {
+      "name": "Inventory cap at 0.8",
+      "max_score": 10,
+      "description": "Inventory score is capped at a maximum of 0.8 (not rewarding overstock)"
+    },
+    {
+      "name": "Zero inventory yields 0",
+      "max_score": 8,
+      "description": "Products with zero inventory quantity receive an inventory score of 0 (not just a low score)"
+    },
+    {
+      "name": "Score rounding",
+      "max_score": 8,
+      "description": "Final scores are rounded to 3 decimal places (e.g. using Math.round(score * 1000) / 1000 or equivalent)"
+    }
+  ]
+}

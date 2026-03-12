@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements a two-column PDP layout (gallery left, info right), accessible variant selectors with disabled-not-hidden unavailable options, a sticky add-to-cart bar using IntersectionObserver, compare-at price strikethrough display, and URL variant state via replaceState.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Two-column CSS grid",
+      "max_score": 7,
+      "description": "The page layout uses CSS grid with grid-template-columns: 1fr 1fr (or equivalent equal-width two columns) for desktop"
+    },
+    {
+      "name": "Gallery left, info right",
+      "max_score": 7,
+      "description": "The gallery/image section appears as the first column (left) and the product info section as the second column (right) in the desktop layout"
+    },
+    {
+      "name": "Mobile single column",
+      "max_score": 6,
+      "description": "A media query at max-width: 768px (or similar breakpoint) collapses the layout to a single column"
+    },
+    {
+      "name": "Unavailable variants disabled",
+      "max_score": 10,
+      "description": "Out-of-stock variant option buttons are rendered with the disabled attribute (or aria-disabled), NOT removed from the DOM"
+    },
+    {
+      "name": "Variant fieldset/legend",
+      "max_score": 8,
+      "description": "Each option group (Color, Size) is wrapped in a <fieldset> with a <legend> element"
+    },
+    {
+      "name": "Variant radiogroup role",
+      "max_score": 8,
+      "description": "The container of variant option buttons has role=\"radiogroup\" and each button has role=\"radio\" with aria-checked"
+    },
+    {
+      "name": "IntersectionObserver sticky ATC",
+      "max_score": 10,
+      "description": "StickyAddToCart uses IntersectionObserver to watch the main add-to-cart button and shows only when that button is NOT intersecting the viewport"
+    },
+    {
+      "name": "Sticky ATC hidden on desktop",
+      "max_score": 8,
+      "description": "The sticky add-to-cart bar is hidden on desktop screens via a CSS media query (min-width: 769px or similar) with display: none"
+    },
+    {
+      "name": "Compare-at price strikethrough",
+      "max_score": 8,
+      "description": "The original/compare-at price ($249.00) is rendered with a text-decoration: line-through style alongside the sale price ($189.00)"
+    },
+    {
+      "name": "URL variant replaceState",
+      "max_score": 10,
+      "description": "When a variant option is changed, history.replaceState (or equivalent) is called to update the URL with the selected variant identifier"
+    },
+    {
+      "name": "Max-width constraint",
+      "max_score": 8,
+      "description": "The page grid container has a max-width set (e.g., 1280px or similar) to prevent excessive stretching on very wide screens"
+    },
+    {
+      "name": "Sticky ATC fixed position",
+      "max_score": 10,
+      "description": "The sticky add-to-cart bar uses position: fixed with bottom: 0 and spans the full viewport width"
+    }
+  ]
+}

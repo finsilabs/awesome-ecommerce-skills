@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the composite fraud scoring function with the correct signal weights, decision thresholds, and risk-score-based 3DS enforcement using Stripe PaymentIntent options.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Stripe score at 40%",
+      "max_score": 10,
+      "description": "The Stripe Radar risk score is multiplied by 0.4 (weighted at 40%) as the base of the composite score"
+    },
+    {
+      "name": "Velocity violation weight",
+      "max_score": 8,
+      "description": "Each velocity violation adds 15 points to the score (velocityViolations * 15)"
+    },
+    {
+      "name": "Address mismatch weight",
+      "max_score": 8,
+      "description": "Address mismatch (billing ≠ shipping country) adds exactly 10 points"
+    },
+    {
+      "name": "Proxy/VPN weight",
+      "max_score": 8,
+      "description": "Proxy or VPN detection adds exactly 20 points"
+    },
+    {
+      "name": "Email age weight",
+      "max_score": 8,
+      "description": "Email age less than 24 hours adds exactly 15 points"
+    },
+    {
+      "name": "First order + high amount weight",
+      "max_score": 8,
+      "description": "First order combined with order amount over 30000 cents adds exactly 10 points"
+    },
+    {
+      "name": "Unknown device weight",
+      "max_score": 6,
+      "description": "Device fingerprint not previously seen adds exactly 5 points"
+    },
+    {
+      "name": "Score capped at 100",
+      "max_score": 4,
+      "description": "The returned score is capped at a maximum of 100 (Math.min(100, ...) or equivalent)"
+    },
+    {
+      "name": "Block threshold",
+      "max_score": 8,
+      "description": "getFraudDecision returns 'block' for scores >= 80"
+    },
+    {
+      "name": "Review threshold",
+      "max_score": 8,
+      "description": "getFraudDecision returns 'review' for scores >= 50 and < 80"
+    },
+    {
+      "name": "3DS challenge for high risk",
+      "max_score": 12,
+      "description": "Sets request_three_d_secure to 'challenge' when risk score is above 70"
+    },
+    {
+      "name": "3DS automatic for normal risk",
+      "max_score": 12,
+      "description": "Sets request_three_d_secure to 'automatic' for risk scores at or below 70 (not omitting the field, and not always using 'challenge')"
+    }
+  ]
+}

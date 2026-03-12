@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements coupon validation with the correct TypeScript interface, all five error codes, code normalization, discount-cap logic, and validation logging as specified in the coupon-management skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CouponValidationResult interface",
+      "max_score": 8,
+      "description": "A TypeScript interface named CouponValidationResult is exported with fields: valid (boolean), discountAmount (number), and an optional errorCode"
+    },
+    {
+      "name": "All five error codes",
+      "max_score": 10,
+      "description": "errorCode type includes all five values: 'EXPIRED', 'USAGE_LIMIT_REACHED', 'MIN_ORDER_NOT_MET', 'NOT_FOUND', 'CUSTOMER_LIMIT_REACHED' (no others substituted)"
+    },
+    {
+      "name": "Code normalization on lookup",
+      "max_score": 8,
+      "description": "The code is passed through toUpperCase() and trim() before the database lookup (not just in the response)"
+    },
+    {
+      "name": "Unreleased code returns NOT_FOUND",
+      "max_score": 10,
+      "description": "When starts_at is in the future, the function returns errorCode 'NOT_FOUND' (not a custom 'NOT_STARTED' or similar code)"
+    },
+    {
+      "name": "Usage limit check",
+      "max_score": 8,
+      "description": "Checks usage_count >= usage_limit (only when usage_limit is not null) and returns USAGE_LIMIT_REACHED"
+    },
+    {
+      "name": "Per-customer limit check",
+      "max_score": 8,
+      "description": "Queries a redemptions table/store to count how many times the customer has used this coupon, returning CUSTOMER_LIMIT_REACHED when exceeded"
+    },
+    {
+      "name": "Percentage cap respected",
+      "max_score": 10,
+      "description": "calculateDiscount applies Math.min(raw, max_discount_amount) when max_discount_amount is set for percentage coupons"
+    },
+    {
+      "name": "Free-shipping returns zero",
+      "max_score": 8,
+      "description": "calculateDiscount returns 0 for 'free_shipping' type coupons (not an error — zero subtotal discount)"
+    },
+    {
+      "name": "Fixed-amount capped at subtotal",
+      "max_score": 8,
+      "description": "calculateDiscount for fixed_amount returns Math.min(coupon.value, subtotal) — does NOT allow discount to exceed the order total"
+    },
+    {
+      "name": "Validation attempts logged",
+      "max_score": 8,
+      "description": "The code records or logs each validation attempt including failures (e.g. inserts a record, logs with reason code, or persists to a store)"
+    },
+    {
+      "name": "validateCoupon function signature",
+      "max_score": 6,
+      "description": "validateCoupon accepts at minimum: code (string), customerId (string), orderSubtotal (number), and itemIds (array)"
+    },
+    {
+      "name": "validateCoupon return type",
+      "max_score": 8,
+      "description": "validateCoupon is async and returns Promise<CouponValidationResult>"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly anonymizes order PII while preserving financial data and tax-jurisdiction fields, uses a database transaction for atomicity, stamps a pii_anonymized_at field to prevent re-processing, and uses the correct email anonymization format.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Email anonymization format",
+      "max_score": 12,
+      "description": "Anonymized email is set to 'anon_' + order.id + '@deleted.invalid' (exact format)"
+    },
+    {
+      "name": "Customer name cleared",
+      "max_score": 8,
+      "description": "customer_name (or customerName) is set to 'Anonymous Customer' (exact string)"
+    },
+    {
+      "name": "Shipping street nulled",
+      "max_score": 8,
+      "description": "shipping_street (or shippingStreet/shippingAddress) is set to null, not an empty string or placeholder"
+    },
+    {
+      "name": "City and country preserved",
+      "max_score": 10,
+      "description": "shipping_city and shipping_country are NOT overwritten — they retain the original values (code does not assign null/anonymous to these fields)"
+    },
+    {
+      "name": "Financial data untouched",
+      "max_score": 10,
+      "description": "Code does NOT overwrite total_amount, tax_amount, payment_method_brand, or payment_method_last4 (these fields are absent from the update payload or explicitly commented as preserved)"
+    },
+    {
+      "name": "Transaction used",
+      "max_score": 10,
+      "description": "Anonymization updates are wrapped in a database transaction (db.transaction or trx equivalent)"
+    },
+    {
+      "name": "pii_anonymized_at stamp",
+      "max_score": 10,
+      "description": "Each updated record has pii_anonymized_at set to the current date/time"
+    },
+    {
+      "name": "Filter already-anonymized",
+      "max_score": 12,
+      "description": "Query filters out records where pii_anonymized_at is NOT NULL (i.e. skips already-anonymized records)"
+    },
+    {
+      "name": "Batch size limit",
+      "max_score": 10,
+      "description": "Query uses a LIMIT (e.g. 500) to process records in bounded batches rather than fetching all rows at once"
+    },
+    {
+      "name": "Billing fields cleared",
+      "max_score": 10,
+      "description": "billing_name (or billingName) is set to 'Anonymous' AND billing_street (or billingStreet) is set to null"
+    }
+  ]
+}

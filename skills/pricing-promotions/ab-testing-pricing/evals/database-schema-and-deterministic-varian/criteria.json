@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the correct three-table schema with proper constraints, stores monetary values in cents, uses deterministic SHA-256 hashing with prefixed keys for assignment, and implements sticky bucketing to ensure session consistency.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Three tables present",
+      "max_score": 8,
+      "description": "Schema defines exactly three tables: one for experiments, one for variants, one for assignments"
+    },
+    {
+      "name": "Status constraint",
+      "max_score": 8,
+      "description": "Experiments table has a CHECK constraint limiting status to the lifecycle values ('draft', 'running', 'paused', 'concluded')"
+    },
+    {
+      "name": "Prices in cents",
+      "max_score": 8,
+      "description": "Variant price column is stored as INTEGER (not DECIMAL or FLOAT), and revenue column is BIGINT — both representing cents"
+    },
+    {
+      "name": "Assignments composite PK",
+      "max_score": 8,
+      "description": "Assignments table uses a composite PRIMARY KEY on (session_id, experiment_id), not a separate surrogate key"
+    },
+    {
+      "name": "Traffic split constraint",
+      "max_score": 6,
+      "description": "Schema or code comments indicate that variant traffic_split values must sum to 100 for an experiment"
+    },
+    {
+      "name": "SHA-256 for traffic hash",
+      "max_score": 10,
+      "description": "assignVariant uses crypto.createHash('sha256') to compute the traffic bucket hash (not Math.random or other methods)"
+    },
+    {
+      "name": "Prefixed hash keys",
+      "max_score": 10,
+      "description": "Uses distinct prefixed strings for traffic hash ('traffic:...') and variant selection hash ('variant:...') to produce independent random values"
+    },
+    {
+      "name": "Sticky bucketing check",
+      "max_score": 10,
+      "description": "assignVariant checks for an existing assignment record before computing any hash, and returns the previously assigned variant if found"
+    },
+    {
+      "name": "Assignment persisted",
+      "max_score": 8,
+      "description": "After selecting a new variant, the assignment is inserted into the assignments table before returning"
+    },
+    {
+      "name": "Running status guard",
+      "max_score": 8,
+      "description": "assignVariant returns null (no assignment) if the experiment status is not 'running'"
+    },
+    {
+      "name": "Traffic pct guard",
+      "max_score": 8,
+      "description": "Sessions whose traffic hash falls at or above traffic_pct are excluded from the experiment (return null)"
+    },
+    {
+      "name": "Impression tracking",
+      "max_score": 8,
+      "description": "getExperimentPrice increments the impression counter atomically using a SQL UPDATE with += 1, not a read-modify-write"
+    }
+  ]
+}

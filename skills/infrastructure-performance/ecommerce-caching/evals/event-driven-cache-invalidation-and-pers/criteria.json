@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds event-driven cache invalidation (not TTL-only), correctly purges collections on price changes, only invalidates page cache when stock status transitions (not on every quantity update), stores inventory in Redis with the correct TTL, uses client-side hydration for personalized content rather than embedding it in cached HTML, implements the personalization endpoint with no-store headers and parallel Redis reads, and uses a PostgreSQL materialized view with CONCURRENTLY refresh for collection listing data.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Event-driven invalidation",
+      "max_score": 8,
+      "description": "Cache invalidation is triggered by named events (product updated, price changed, inventory changed) rather than relying solely on TTL expiry"
+    },
+    {
+      "name": "Price change purges collections",
+      "max_score": 9,
+      "description": "When a price changes, cache invalidation purges BOTH the product cache AND the related collection page caches (not just the product)"
+    },
+    {
+      "name": "Inventory stock-status gating",
+      "max_score": 10,
+      "description": "On inventory quantity change, page cache purge only fires when the stock STATUS changes (in-stock to out-of-stock or vice versa) — a quantity change between two non-zero values does NOT trigger a cache purge"
+    },
+    {
+      "name": "Inventory stored in Redis",
+      "max_score": 8,
+      "description": "Inventory quantity is written to Redis using a key pattern like `inventory:{productId}` (or similar) after inventory change events"
+    },
+    {
+      "name": "Inventory Redis TTL is 1 hour",
+      "max_score": 8,
+      "description": "The Redis inventory key is set with a TTL of 3600 seconds (1 hour)"
+    },
+    {
+      "name": "Personalized content not in cached HTML",
+      "max_score": 9,
+      "description": "The server-rendered product page HTML does NOT embed real cart count or live inventory data directly — instead it uses placeholders or a loading state for those elements"
+    },
+    {
+      "name": "Client-side hydration script",
+      "max_score": 8,
+      "description": "The rendered product page includes a client-side script that fetches personalization data (cart count, inventory) from a separate API endpoint after page load"
+    },
+    {
+      "name": "Personalization API no-store",
+      "max_score": 9,
+      "description": "The personalization API endpoint sets Cache-Control: private, no-store (preventing it from being cached at CDN or browser)"
+    },
+    {
+      "name": "Parallel Redis reads in personalization API",
+      "max_score": 8,
+      "description": "The personalization API fetches cart count and inventory from Redis using Promise.all (or equivalent parallel execution) rather than sequentially"
+    },
+    {
+      "name": "Materialized view for collection listings",
+      "max_score": 8,
+      "description": "A PostgreSQL materialized view is defined (CREATE MATERIALIZED VIEW) for collection product listing data rather than a regular table or live query"
+    },
+    {
+      "name": "Unique index on materialized view",
+      "max_score": 8,
+      "description": "A unique index is created on the materialized view (required for CONCURRENTLY refresh)"
+    },
+    {
+      "name": "CONCURRENTLY refresh",
+      "max_score": 7,
+      "description": "The materialized view is refreshed using REFRESH MATERIALIZED VIEW CONCURRENTLY (not a plain REFRESH without CONCURRENTLY)"
+    }
+  ]
+}

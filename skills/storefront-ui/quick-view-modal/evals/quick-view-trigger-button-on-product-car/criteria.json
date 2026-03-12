@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements a quick view trigger button on a product card component, including hover/touch visibility, accessibility attributes, and CSS animation conventions from the skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Button added to image wrapper",
+      "max_score": 8,
+      "description": "ProductCard.jsx contains a button element inside or overlaying the product image wrapper area"
+    },
+    {
+      "name": "onClick calls onQuickView with product ID",
+      "max_score": 8,
+      "description": "The button's onClick handler calls onQuickView (or equivalent prop) passing the product's ID"
+    },
+    {
+      "name": "Descriptive aria-label on button",
+      "max_score": 10,
+      "description": "The quick view button has an aria-label that includes the product name (e.g. aria-label containing both 'quick view' and the product name, case-insensitive)"
+    },
+    {
+      "name": "Image wrapper is position: relative",
+      "max_score": 8,
+      "description": "ProductCard.css sets position: relative on the image wrapper element so the absolutely-positioned button can overlay it"
+    },
+    {
+      "name": "Button positioned absolutely over image",
+      "max_score": 8,
+      "description": "ProductCard.css positions the quick view button absolutely (position: absolute) within the image wrapper"
+    },
+    {
+      "name": "Button hidden by default (opacity: 0)",
+      "max_score": 8,
+      "description": "ProductCard.css sets the button's default opacity to 0 so it is hidden when the card is not hovered"
+    },
+    {
+      "name": "Hover reveals button",
+      "max_score": 8,
+      "description": "ProductCard.css sets opacity: 1 on the quick view button when the product card (or image wrapper) is hovered or has focus-within"
+    },
+    {
+      "name": "Hover slide-up animation",
+      "max_score": 10,
+      "description": "ProductCard.css uses a translateY transition (e.g. from translateY(8px) to translateY(0)) as part of the hover reveal animation"
+    },
+    {
+      "name": "Always visible on touch devices",
+      "max_score": 12,
+      "description": "ProductCard.css includes a @media (hover: none) rule that sets the quick view button to opacity: 1 and its full visible transform, making it permanently visible on touch/no-hover devices"
+    },
+    {
+      "name": "Opacity + transform transition declared",
+      "max_score": 10,
+      "description": "ProductCard.css declares a CSS transition on the quick view button covering both opacity and transform properties"
+    },
+    {
+      "name": "Image anchor aria-hidden",
+      "max_score": 10,
+      "description": "ProductCard.jsx sets aria-hidden=\"true\" and/or tabIndex={-1} on the image anchor element to avoid redundant navigation links for screen readers"
+    }
+  ]
+}

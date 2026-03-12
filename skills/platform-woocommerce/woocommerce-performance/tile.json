@@ -1,0 +1,10 @@
+{
+  "name": "finsi/woocommerce-performance",
+  "version": "0.1.0",
+  "summary": "WooCommerce optimization — query tuning, caching, and database cleanup",
+  "skills": {
+    "woocommerce-performance": {
+      "path": "SKILL.md"
+    }
+  }
+}

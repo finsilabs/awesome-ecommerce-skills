@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements sessionStorage-based tracking for GDPR compliance, a cookie fallback with correct attributes, and hydration-safe integration of recordView in a Next.js-style component.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "sessionStorage in session module",
+      "max_score": 12,
+      "description": "lib/recentlyViewedSession.js uses sessionStorage (not localStorage) for all read and write operations"
+    },
+    {
+      "name": "Session module silent failure",
+      "max_score": 8,
+      "description": "lib/recentlyViewedSession.js wraps sessionStorage calls in try/catch and does not throw on error"
+    },
+    {
+      "name": "Cookie name correct",
+      "max_score": 10,
+      "description": "lib/recentlyViewedCookie.js uses the cookie name 'rv_products' (exact string) when reading and writing the cookie"
+    },
+    {
+      "name": "Cookie SameSite=Lax attribute",
+      "max_score": 8,
+      "description": "The Set-Cookie string returned by buildRecentlyViewedCookie includes 'SameSite=Lax'"
+    },
+    {
+      "name": "Cookie Secure attribute",
+      "max_score": 8,
+      "description": "The Set-Cookie string returned by buildRecentlyViewedCookie includes 'Secure'"
+    },
+    {
+      "name": "Cookie 30-day Max-Age",
+      "max_score": 8,
+      "description": "The Set-Cookie string returned by buildRecentlyViewedCookie sets Max-Age to 2592000 (30 * 24 * 60 * 60 seconds)"
+    },
+    {
+      "name": "Cookie deduplication",
+      "max_score": 8,
+      "description": "buildRecentlyViewedCookie removes any existing occurrence of newProductId from currentIds before prepending it"
+    },
+    {
+      "name": "Cookie ID cap",
+      "max_score": 8,
+      "description": "buildRecentlyViewedCookie slices the updated array to a maximum of 12 entries"
+    },
+    {
+      "name": "useEffect for recordView",
+      "max_score": 12,
+      "description": "ProductDetailPage calls recordView inside a useEffect hook, NOT during the render function body or at the component's top level"
+    },
+    {
+      "name": "README distinguishes modes",
+      "max_score": 8,
+      "description": "README.md explains that the session module (sessionStorage) is used for pre-consent/GDPR environments and the cookie module is for server-side/incognito fallback"
+    },
+    {
+      "name": "Cookie Path attribute",
+      "max_score": 10,
+      "description": "The Set-Cookie string returned by buildRecentlyViewedCookie includes 'Path=/'"
+    }
+  ]
+}

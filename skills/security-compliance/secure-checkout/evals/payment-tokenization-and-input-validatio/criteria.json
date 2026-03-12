@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent avoids collecting raw card data by using Stripe Elements, sanitizes HTML rendered from external sources using DOMPurify with an allowlist, validates server-side checkout form submissions using zod, and avoids dangerous patterns like logging card details or storing CVV.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "No raw card input fields",
+      "max_score": 10,
+      "description": "The checkout form does NOT use <input> elements to collect card numbers, expiry, or CVV directly — delegates to Stripe Elements or equivalent iframe-based approach"
+    },
+    {
+      "name": "Stripe Elements pattern",
+      "max_score": 10,
+      "description": "Uses Stripe Elements (loadStripe, elements.create, cardElement.mount) to collect card data, resulting in a paymentMethodId token sent to the server instead of card details"
+    },
+    {
+      "name": "No card data logged",
+      "max_score": 8,
+      "description": "Code does NOT log or print card numbers, CVV, or full payment method details anywhere (no console.log, logger calls with card fields)"
+    },
+    {
+      "name": "No CVV storage",
+      "max_score": 8,
+      "description": "Code does NOT store CVV/CVC in a database, session, or any persistent store"
+    },
+    {
+      "name": "DOMPurify for HTML content",
+      "max_score": 10,
+      "description": "HTML content from the CMS/database is sanitized using DOMPurify (isomorphic-dompurify) before rendering, rather than using dangerouslySetInnerHTML unsanitized"
+    },
+    {
+      "name": "DOMPurify ALLOWED_TAGS",
+      "max_score": 8,
+      "description": "DOMPurify.sanitize() is called with an explicit ALLOWED_TAGS array limiting permitted HTML elements (e.g., p, b, i, em, strong, ul, ol, li, br)"
+    },
+    {
+      "name": "DOMPurify ALLOWED_ATTR empty",
+      "max_score": 8,
+      "description": "DOMPurify.sanitize() is called with ALLOWED_ATTR: [] (or equivalent) to strip all HTML attributes"
+    },
+    {
+      "name": "Zod server-side validation",
+      "max_score": 10,
+      "description": "The checkout API route validates the request body using a zod schema (z.object with field definitions) rather than manual checks or no validation"
+    },
+    {
+      "name": "Zod email field",
+      "max_score": 6,
+      "description": "Zod schema includes email field validated with z.string().email() and a max length constraint"
+    },
+    {
+      "name": "Zod name regex",
+      "max_score": 6,
+      "description": "Zod schema validates the name field with a regex that restricts to valid name characters (letters, spaces, hyphens, apostrophes)"
+    },
+    {
+      "name": "Zod country ISO code",
+      "max_score": 6,
+      "description": "Zod schema validates country as exactly 2 characters (ISO 3166-1 alpha-2)"
+    },
+    {
+      "name": "JSX for dynamic content",
+      "max_score": 10,
+      "description": "Dynamic user-supplied content is rendered through JSX (e.g., {variable}) rather than string template literals interpolated into HTML"
+    }
+  ]
+}

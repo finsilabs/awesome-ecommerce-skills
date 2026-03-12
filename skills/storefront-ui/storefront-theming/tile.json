@@ -1,0 +1,10 @@
+{
+  "name": "finsi/storefront-theming",
+  "version": "0.1.0",
+  "summary": "Theme architecture with design tokens, CSS custom properties, and white-labeling",
+  "skills": {
+    "storefront-theming": {
+      "path": "SKILL.md"
+    }
+  }
+}

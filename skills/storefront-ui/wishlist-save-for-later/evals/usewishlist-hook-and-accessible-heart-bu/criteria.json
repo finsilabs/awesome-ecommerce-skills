@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent builds the useWishlist hook following the skill's patterns for dual auth/guest paths, optimistic UI with error revert, accessible button markup, correct SVG heart states, and context/store-level state management.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "userId param branching",
+      "max_score": 8,
+      "description": "useWishlist accepts a userId parameter and, when userId is truthy, fetches from the server (/api/wishlist or similar); when userId is falsy, reads from getGuestWishlist()"
+    },
+    {
+      "name": "DELETE for authenticated removal",
+      "max_score": 8,
+      "description": "When an authenticated user removes an item, the hook sends a DELETE request (not POST or PUT) to the items endpoint"
+    },
+    {
+      "name": "POST for authenticated add",
+      "max_score": 8,
+      "description": "When an authenticated user adds an item, the hook sends a POST request with the item in the request body"
+    },
+    {
+      "name": "Optimistic state update",
+      "max_score": 12,
+      "description": "The toggle function updates local state (items array) BEFORE the async API call resolves — the state change happens immediately on click"
+    },
+    {
+      "name": "Error revert",
+      "max_score": 12,
+      "description": "If the API call fails (catch block or error response), the hook reverts the state to its pre-toggle value"
+    },
+    {
+      "name": "aria-label with product name",
+      "max_score": 8,
+      "description": "WishlistButton sets aria-label dynamically to include the product name AND indicates the action ('Add ... to wishlist' or 'Remove ... from wishlist')"
+    },
+    {
+      "name": "aria-pressed attribute",
+      "max_score": 8,
+      "description": "WishlistButton includes aria-pressed={true} when the item is wishlisted and aria-pressed={false} (or aria-pressed={wishlisted}) when not"
+    },
+    {
+      "name": "SVG fill state",
+      "max_score": 8,
+      "description": "The SVG heart element uses fill=\"currentColor\" when wishlisted and fill=\"none\" (plus a stroke) when not wishlisted"
+    },
+    {
+      "name": "Context or store provider",
+      "max_score": 12,
+      "description": "Wishlist state is managed in a React Context Provider or a Zustand store — NOT stored as local state inside WishlistButton or individual product card components"
+    },
+    {
+      "name": "isWishlisted helper",
+      "max_score": 8,
+      "description": "The hook (or store) exposes an isWishlisted function or selector that accepts a variantId and returns a boolean"
+    },
+    {
+      "name": "loading state exposed",
+      "max_score": 8,
+      "description": "The hook exposes a loading boolean (or equivalent) as part of its return value"
+    }
+  ]
+}

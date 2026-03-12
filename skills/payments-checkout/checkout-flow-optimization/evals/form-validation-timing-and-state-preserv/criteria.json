@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent validates checkout form fields on blur (not on every keystroke), clears errors when the user starts correcting a field, never wipes non-payment fields on a card failure, uses IP geolocation to pre-select country, adds trust signals near the payment section, and preserves form data using beforeunload and sessionStorage.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Blur-triggered validation",
+      "max_score": 12,
+      "description": "Form field validation is triggered on the blur event, NOT on change or input events for fresh (untouched) fields"
+    },
+    {
+      "name": "Error clears on change",
+      "max_score": 12,
+      "description": "When a user types into a field that was already touched and already has an error, the error is cleared (i.e., error is reset to null/undefined on change when touched[field] && errors[field])"
+    },
+    {
+      "name": "VALIDATORS map pattern",
+      "max_score": 8,
+      "description": "Validation logic is defined as a keyed map/object (e.g. VALIDATORS = { email: ..., phone: ..., zip: ... }) rather than scattered if/else or switch statements"
+    },
+    {
+      "name": "Payment error preserves other fields",
+      "max_score": 12,
+      "description": "On a simulated payment/card error, only the payment section state is reset; contact and shipping field values are NOT cleared"
+    },
+    {
+      "name": "IP geolocation for country",
+      "max_score": 10,
+      "description": "Country (and/or currency) is pre-selected via an IP-based geolocation API call or library, not left as a blank default or hard-coded to a single country"
+    },
+    {
+      "name": "Trust signals near payment",
+      "max_score": 10,
+      "description": "The payment section includes at least one trust signal element: SSL/security badge, accepted card logos, or a return/refund policy reference"
+    },
+    {
+      "name": "beforeunload warning",
+      "max_score": 10,
+      "description": "A beforeunload (or equivalent navigation-guard) event listener is registered to warn the user before leaving a partially filled checkout form"
+    },
+    {
+      "name": "sessionStorage persistence",
+      "max_score": 10,
+      "description": "Form state (contact and/or shipping field values) is saved to sessionStorage so it can be restored if the user navigates away and returns"
+    },
+    {
+      "name": "State restoration from sessionStorage",
+      "max_score": 8,
+      "description": "On component mount the form attempts to read and restore previously saved values from sessionStorage"
+    },
+    {
+      "name": "touched state tracking",
+      "max_score": 8,
+      "description": "A touched state object tracks which fields the user has interacted with, used to gate when errors are shown or re-checked"
+    }
+  ]
+}

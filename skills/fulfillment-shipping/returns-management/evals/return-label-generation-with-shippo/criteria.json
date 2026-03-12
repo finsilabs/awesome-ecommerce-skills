@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses the Shippo library for label generation with the correct configuration (is_return: true, PDF format, USPS Priority preference), requires system-generated labels rather than customer-supplied ones, and sends the correct email notification upon label issuance.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Shippo package used",
+      "max_score": 12,
+      "description": "The implementation imports and uses the 'shippo' npm package (not a different carrier SDK or a generic HTTP client calling Shippo's REST API directly)"
+    },
+    {
+      "name": "Shippo API key from env",
+      "max_score": 6,
+      "description": "Shippo client is initialized with process.env.SHIPPO_API_KEY"
+    },
+    {
+      "name": "is_return: true",
+      "max_score": 12,
+      "description": "The shipment.create call includes is_return: true in the shipment parameters"
+    },
+    {
+      "name": "USPS Priority preference",
+      "max_score": 12,
+      "description": "Rate selection code attempts to find a rate with servicelevel.token === 'usps_priority' first, before falling back to another rate"
+    },
+    {
+      "name": "PDF label format",
+      "max_score": 10,
+      "description": "The transaction.create call specifies label_file_type: 'PDF'"
+    },
+    {
+      "name": "Warehouse env vars used",
+      "max_score": 8,
+      "description": "The address_to (destination/warehouse) in the shipment uses environment variables for warehouse name, street, city, state, and zip"
+    },
+    {
+      "name": "Shipment record persisted",
+      "max_score": 8,
+      "description": "tracking_number, carrier, and label_url are saved to the database after the Shippo transaction completes"
+    },
+    {
+      "name": "Status updated to label_issued",
+      "max_score": 8,
+      "description": "The return request status is updated to 'label_issued' after the label is generated"
+    },
+    {
+      "name": "Email sent with label URL",
+      "max_score": 8,
+      "description": "An email is sent to the customer after the label is generated, and includes the label URL in the email data payload"
+    },
+    {
+      "name": "Email uses return-label template",
+      "max_score": 8,
+      "description": "The email is sent using a template named 'return-label' (not a plain-text email or a different template name)"
+    },
+    {
+      "name": "shippo in package.json",
+      "max_score": 8,
+      "description": "package.json lists 'shippo' as a dependency"
+    }
+  ]
+}

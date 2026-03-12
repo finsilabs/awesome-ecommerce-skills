@@ -1,0 +1,10 @@
+{
+  "name": "finsi/multi-channel-selling",
+  "version": "0.1.0",
+  "summary": "Unified catalog and inventory across DTC, wholesale, marketplace channels",
+  "skills": {
+    "multi-channel-selling": {
+      "path": "SKILL.md"
+    }
+  }
+}

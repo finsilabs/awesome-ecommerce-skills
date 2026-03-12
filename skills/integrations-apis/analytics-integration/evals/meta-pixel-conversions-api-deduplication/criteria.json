@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements Meta Pixel and Conversions API with correct deduplication via matching event IDs, uses the official facebook-nodejs-business-sdk for server-side sending, keeps PII out of browser-side events, and routes the server call through a webhook for reliability.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "facebook-nodejs-business-sdk import",
+      "max_score": 12,
+      "description": "server-handler.js imports from 'facebook-nodejs-business-sdk' (e.g., ServerEvent, EventRequest, UserData, CustomData) — does NOT use a raw fetch/axios call to the Conversions API endpoint directly"
+    },
+    {
+      "name": "browser eventID passed to fbq",
+      "max_score": 12,
+      "description": "browser-tracking.js passes an eventID as the fourth argument to fbq('track', 'Purchase', ..., { eventID: <value> })"
+    },
+    {
+      "name": "server setEventId called",
+      "max_score": 12,
+      "description": "server-handler.js calls .setEventId(...) on the ServerEvent instance"
+    },
+    {
+      "name": "matching event IDs",
+      "max_score": 10,
+      "description": "The eventID in browser-tracking.js and the value passed to .setEventId() in server-handler.js are derived from the same source (e.g., both based on order.id), ensuring they will match for the same purchase"
+    },
+    {
+      "name": "UserData SDK for PII",
+      "max_score": 10,
+      "description": "server-handler.js uses new UserData().setEmail(order.customerEmail) (or equivalent SDK method) rather than manually hashing and passing raw values"
+    },
+    {
+      "name": "no raw PII in browser call",
+      "max_score": 10,
+      "description": "browser-tracking.js does NOT include raw email, phone number, first name, or last name in the data object passed to fbq()"
+    },
+    {
+      "name": "webhook rationale documented",
+      "max_score": 12,
+      "description": "ARCHITECTURE.md (or code comments) explains that the server-side Conversions API call is made from a webhook handler rather than directly from the purchase API response, with reasoning about reliability"
+    },
+    {
+      "name": "action_source set",
+      "max_score": 6,
+      "description": "server-handler.js calls .setActionSource('website') on the ServerEvent"
+    },
+    {
+      "name": "event_time set",
+      "max_score": 6,
+      "description": "server-handler.js sets event time as a Unix timestamp (e.g., Math.floor(Date.now() / 1000))"
+    },
+    {
+      "name": "credentials from environment",
+      "max_score": 5,
+      "description": "server-handler.js reads Meta access token and pixel ID from environment variables (process.env.META_ACCESS_TOKEN and process.env.META_PIXEL_ID or equivalent), not hardcoded"
+    },
+    {
+      "name": "content_ids in CustomData",
+      "max_score": 5,
+      "description": "server-handler.js includes content_ids (SKUs from order.lineItems) in the CustomData sent to Meta"
+    }
+  ]
+}

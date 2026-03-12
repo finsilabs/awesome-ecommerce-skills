@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent structures a dbt project with the prescribed layer materialization settings, filters, macros, incremental strategy, and documentation patterns for e-commerce Shopify data.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Staging materialized as view",
+      "max_score": 8,
+      "description": "dbt_project.yml configures the staging layer with +materialized: view"
+    },
+    {
+      "name": "Intermediate materialized as ephemeral",
+      "max_score": 8,
+      "description": "dbt_project.yml configures the intermediate layer with +materialized: ephemeral"
+    },
+    {
+      "name": "Marts materialized as table",
+      "max_score": 8,
+      "description": "dbt_project.yml configures the marts layer with +materialized: table"
+    },
+    {
+      "name": "Staging schema separation",
+      "max_score": 7,
+      "description": "dbt_project.yml sets +schema: staging for the staging layer and +schema: analytics (or similar) for the marts layer"
+    },
+    {
+      "name": "Fivetran deleted filter",
+      "max_score": 8,
+      "description": "The staging orders model filters out soft-deleted records using the _fivetran_deleted column (e.g. WHERE _fivetran_deleted = false)"
+    },
+    {
+      "name": "Voided/pending order filter",
+      "max_score": 8,
+      "description": "The final fact model (fct_order_items) excludes orders with financial_status in ('voided', 'pending')"
+    },
+    {
+      "name": "UTM parameter extraction",
+      "max_score": 9,
+      "description": "The staging orders model extracts utm_source, utm_medium, and utm_campaign from the landing_site column (via macro, regex, or parsing function)"
+    },
+    {
+      "name": "Incremental fact model",
+      "max_score": 9,
+      "description": "The fct_order_items model uses incremental materialization (materialized='incremental' or config block) with a unique_key specified"
+    },
+    {
+      "name": "is_current join pattern",
+      "max_score": 7,
+      "description": "The fact model joins to dimension tables filtering on is_current = true"
+    },
+    {
+      "name": "Not_null and unique tests",
+      "max_score": 8,
+      "description": "schema.yml includes both unique and not_null tests on the primary key column of fct_order_items"
+    },
+    {
+      "name": "Referential integrity test",
+      "max_score": 8,
+      "description": "schema.yml includes a relationships test on a foreign key column (e.g. customer_key referencing dim_customers)"
+    },
+    {
+      "name": "Accepted range test on revenue",
+      "max_score": 8,
+      "description": "schema.yml includes a dbt_utils.accepted_range or accepted_values test with min_value: 0 on a revenue column"
+    },
+    {
+      "name": "Model descriptions documented",
+      "max_score": 4,
+      "description": "schema.yml includes description fields for at least the fct_order_items model and two or more of its columns"
+    }
+  ]
+}

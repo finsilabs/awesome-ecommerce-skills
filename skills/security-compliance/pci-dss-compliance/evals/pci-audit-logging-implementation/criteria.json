@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent produces an audit logging module that matches PCI-DSS Requirement 10 specifics: the correct AuditLogEntry fields, all required event types from Requirement 10.2, immutable/tamper-proof log storage rationale, and correct retention figures.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Timestamp field ISO 8601",
+      "max_score": 7,
+      "description": "AuditLogEntry type/interface includes a timestamp field that is described as ISO 8601 format (with timezone)"
+    },
+    {
+      "name": "UserId field",
+      "max_score": 5,
+      "description": "AuditLogEntry includes a userId field identifying who performed the action"
+    },
+    {
+      "name": "UserIp field",
+      "max_score": 5,
+      "description": "AuditLogEntry includes a field capturing the source IP address of the actor"
+    },
+    {
+      "name": "Outcome field",
+      "max_score": 6,
+      "description": "AuditLogEntry includes an outcome field with success/failure values (not just a boolean)"
+    },
+    {
+      "name": "Resource field",
+      "max_score": 5,
+      "description": "AuditLogEntry includes a resource (or equivalent) field identifying what was affected"
+    },
+    {
+      "name": "Log authentication events",
+      "max_score": 8,
+      "description": "AuditLogger includes a method to log authentication events (both successful and failed login attempts)"
+    },
+    {
+      "name": "Log cardholder data access",
+      "max_score": 7,
+      "description": "AuditLogger includes a method to log access to cardholder data"
+    },
+    {
+      "name": "Log admin actions",
+      "max_score": 7,
+      "description": "AuditLogger includes a method to log administrative actions"
+    },
+    {
+      "name": "Log privilege escalation",
+      "max_score": 7,
+      "description": "AuditLogger includes a method to log privilege or role changes"
+    },
+    {
+      "name": "Log access denied",
+      "max_score": 7,
+      "description": "AuditLogger logs access-denied events (failed authorisation attempts) with outcome: 'failure'"
+    },
+    {
+      "name": "Immutable transport rationale",
+      "max_score": 12,
+      "description": "log-transport.ts includes a comment or description explaining that the chosen transport is append-only or tamper-proof (e.g. S3 Object Lock, CloudWatch Logs, or equivalent)"
+    },
+    {
+      "name": "Retention 12 months",
+      "max_score": 10,
+      "description": "retention-policy.md states that logs must be retained for a minimum of 12 months"
+    },
+    {
+      "name": "Retention 3 months accessible",
+      "max_score": 10,
+      "description": "retention-policy.md states that at least 3 months of logs must be immediately accessible (online/queryable)"
+    },
+    {
+      "name": "Tamper-proof principle",
+      "max_score": 4,
+      "description": "Either retention-policy.md or log-transport.ts notes that log files must not be modifiable after writing (tamper-evident or immutable storage)"
+    }
+  ]
+}

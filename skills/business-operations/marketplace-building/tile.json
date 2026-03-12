@@ -1,0 +1,10 @@
+{
+  "name": "finsi/marketplace-building",
+  "version": "0.1.0",
+  "summary": "Multi-vendor marketplace architecture — seller onboarding, commissions, payouts",
+  "skills": {
+    "marketplace-building": {
+      "path": "SKILL.md"
+    }
+  }
+}

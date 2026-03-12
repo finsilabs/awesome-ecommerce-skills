@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements all three commission types correctly, enforces the 30-day return window hold, triggers earning recording from the right Stripe event, caps commission on shipping, and logs calculation inputs alongside results.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Percentage commission formula",
+      "max_score": 8,
+      "description": "Percentage commission is calculated as Math.round(grossAmountCents * (rate / 100)) — uses Math.round and divides rate by 100"
+    },
+    {
+      "name": "Fixed commission in cents",
+      "max_score": 8,
+      "description": "Fixed commission is calculated as commission_rate * 100 (converting dollars to cents), not just commission_rate"
+    },
+    {
+      "name": "Tiered commission boundaries",
+      "max_score": 10,
+      "description": "Tiered commission uses three tiers: 20% on first $1,000 (100000 cents), 15% on $1,000-$10,000, 10% above $10,000"
+    },
+    {
+      "name": "Tiered cumulative calculation",
+      "max_score": 8,
+      "description": "Tiered commission applies each rate only to the portion of gross amount within that tier (cumulative/bracket-style), not a flat rate on the whole amount"
+    },
+    {
+      "name": "Shipping excluded from gross",
+      "max_score": 10,
+      "description": "The gross_amount passed to commission calculation is the item amount only (itemAmountCents), NOT including shippingAmountCents"
+    },
+    {
+      "name": "30-day availability hold",
+      "max_score": 10,
+      "description": "available_at is set to 30 days in the future from the current date (using setDate(getDate() + 30) or equivalent)"
+    },
+    {
+      "name": "Initial status is held",
+      "max_score": 8,
+      "description": "New seller_earnings records are inserted with status 'held' (not 'pending' or 'available')"
+    },
+    {
+      "name": "payment_intent.succeeded trigger",
+      "max_score": 12,
+      "description": "The webhook handler calls recordSellerEarning only for 'payment_intent.succeeded' events, NOT for checkout.session.completed or other earlier events"
+    },
+    {
+      "name": "Commission inputs logged",
+      "max_score": 10,
+      "description": "The earning record stores the commission_type and commission_rate (the inputs) alongside the computed commission amount"
+    },
+    {
+      "name": "Atomic transaction",
+      "max_score": 8,
+      "description": "recordSellerEarning wraps the earning insert inside a database transaction (using db.transaction or equivalent)"
+    },
+    {
+      "name": "Net amount derived correctly",
+      "max_score": 8,
+      "description": "net_amount is stored as gross_amount minus commission (not gross including shipping)"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements a Server-Sent Events endpoint (not polling or WebSocket) with correct headers, sends authoritative server time to avoid drift, formats the countdown as HH:MM:SS with zero-padded components, cleans up the interval on client disconnect and when the sale ends, and conditionally shows stock counts only when low.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SSE content-type header",
+      "max_score": 7,
+      "description": "The endpoint sets the response header Content-Type to 'text/event-stream'"
+    },
+    {
+      "name": "SSE cache-control header",
+      "max_score": 6,
+      "description": "The endpoint sets Cache-Control to 'no-cache'"
+    },
+    {
+      "name": "SSE connection header",
+      "max_score": 6,
+      "description": "The endpoint sets Connection to 'keep-alive'"
+    },
+    {
+      "name": "1-second interval",
+      "max_score": 7,
+      "description": "The server uses setInterval with a 1000ms (1 second) interval to push updates to the client"
+    },
+    {
+      "name": "Remaining payload field",
+      "max_score": 8,
+      "description": "Each SSE data message includes a 'remaining' field representing milliseconds left, computed as Math.max(0, ends_at - now)"
+    },
+    {
+      "name": "stockLeft payload field",
+      "max_score": 7,
+      "description": "Each SSE data message includes a 'stockLeft' field computed from sale_quantity minus sold_count"
+    },
+    {
+      "name": "Cleanup on client disconnect",
+      "max_score": 8,
+      "description": "The endpoint clears the interval when the client disconnects (req.on('close', ...) or equivalent)"
+    },
+    {
+      "name": "Cleanup when time expires",
+      "max_score": 8,
+      "description": "The endpoint clears the interval and ends the response when remaining reaches 0"
+    },
+    {
+      "name": "Server-authoritative time",
+      "max_score": 9,
+      "description": "The client-side component does NOT set its own end time; it derives 'remaining' from the server-sent value on each message tick rather than computing it from a locally stored end timestamp"
+    },
+    {
+      "name": "HH:MM:SS format",
+      "max_score": 9,
+      "description": "The countdown is displayed in HH:MM:SS format, with each of hours, minutes, and seconds zero-padded to two digits using padStart(2, '0') or equivalent"
+    },
+    {
+      "name": "EventSource in React",
+      "max_score": 8,
+      "description": "The React component uses EventSource (not fetch polling or WebSocket) to connect to the timer endpoint"
+    },
+    {
+      "name": "Conditional stock display",
+      "max_score": 9,
+      "description": "The stock availability message is only shown (or shows exact numbers) when stock is low — not displayed unconditionally for all stock levels with large exact counts"
+    },
+    {
+      "name": "EventSource cleanup",
+      "max_score": 8,
+      "description": "The React component closes the EventSource connection on component unmount (es.close() in useEffect cleanup or equivalent)"
+    }
+  ]
+}

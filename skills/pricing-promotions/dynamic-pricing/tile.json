@@ -1,0 +1,10 @@
+{
+  "name": "finsi/dynamic-pricing",
+  "version": "0.1.0",
+  "summary": "Demand-based pricing, competitor monitoring, and algorithmic price optimization",
+  "skills": {
+    "dynamic-pricing": {
+      "path": "SKILL.md"
+    }
+  }
+}

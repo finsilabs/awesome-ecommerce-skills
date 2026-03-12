@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the recovery link endpoint with correct redirect handling for expired/converted states, marks tokens as used, fires the correct analytics event, adds attribution parameters to recovery links, and captures a price snapshot at abandonment time.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Expired token redirect",
+      "max_score": 9,
+      "description": "Handler redirects to `/cart?expired=true` (or equivalent path containing 'expired') when the token is not found or has passed its expiry date"
+    },
+    {
+      "name": "Converted cart redirect",
+      "max_score": 9,
+      "description": "Handler redirects to `/account/orders` (or equivalent order history path) when the cart status is already 'converted'"
+    },
+    {
+      "name": "Session cart restoration",
+      "max_score": 8,
+      "description": "Handler restores the cart to the user's session (e.g. sets `req.session.cartId`) before redirecting"
+    },
+    {
+      "name": "Token marked used",
+      "max_score": 8,
+      "description": "Handler calls a markUsed (or equivalent) method on the token record after a successful recovery"
+    },
+    {
+      "name": "Analytics event fired",
+      "max_score": 9,
+      "description": "Handler fires an analytics tracking event named 'Cart Recovery Link Clicked' (or similar) including cartId and customerId"
+    },
+    {
+      "name": "Checkout redirect",
+      "max_score": 8,
+      "description": "After restoring the session, handler redirects to `/checkout` (not homepage or cart page)"
+    },
+    {
+      "name": "UTM parameters on recovery URL",
+      "max_score": 9,
+      "description": "Recovery URL (used in emails/messages) includes UTM parameters (utm_source, utm_medium, utm_campaign or similar) to track recovery traffic"
+    },
+    {
+      "name": "recovered flag",
+      "max_score": 9,
+      "description": "Recovery URL or redirect destination includes a `recovered=true` query parameter (or equivalent flag) to distinguish recovery conversions"
+    },
+    {
+      "name": "Snapshot price capture",
+      "max_score": 9,
+      "description": "snapshotCart captures item prices from the product at abandonment time (not a live/current lookup), storing them in the snapshot"
+    },
+    {
+      "name": "Snapshot image capture",
+      "max_score": 7,
+      "description": "snapshotCart captures at least one product image URL per item in the snapshot"
+    },
+    {
+      "name": "Snapshot total value",
+      "max_score": 7,
+      "description": "snapshotCart stores the cart's total value at time of snapshot"
+    },
+    {
+      "name": "Snapshot persistence",
+      "max_score": 8,
+      "description": "snapshotCart persists the snapshot to the database (upsert or create on a snapshots table/collection)"
+    }
+  ]
+}

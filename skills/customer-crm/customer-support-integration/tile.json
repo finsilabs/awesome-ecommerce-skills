@@ -1,0 +1,10 @@
+{
+  "name": "finsi/customer-support-integration",
+  "version": "0.1.0",
+  "summary": "Helpdesk integration (Zendesk, Intercom) with order context injection",
+  "skills": {
+    "customer-support-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

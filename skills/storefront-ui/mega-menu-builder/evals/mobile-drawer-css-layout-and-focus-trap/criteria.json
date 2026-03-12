@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds the mobile drawer with correct ARIA dialog semantics, implements accordion expansion with flattened column links, traps focus within the drawer, prevents body scroll while the drawer is open, and writes responsive CSS that hides the desktop mega panel at the mobile breakpoint.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Drawer role dialog",
+      "max_score": 8,
+      "description": "The mobile drawer container element has role=\"dialog\""
+    },
+    {
+      "name": "Drawer aria-label",
+      "max_score": 8,
+      "description": "The mobile drawer container has an aria-label attribute (e.g. aria-label=\"Navigation menu\")"
+    },
+    {
+      "name": "Drawer aria-modal",
+      "max_score": 8,
+      "description": "The mobile drawer container has aria-modal=\"true\""
+    },
+    {
+      "name": "Hamburger aria-expanded",
+      "max_score": 8,
+      "description": "The hamburger toggle button has an aria-expanded attribute that reflects the open/closed state"
+    },
+    {
+      "name": "Hamburger aria-controls",
+      "max_score": 8,
+      "description": "The hamburger button has an aria-controls attribute pointing to the drawer element's id"
+    },
+    {
+      "name": "Hamburger aria-label",
+      "max_score": 7,
+      "description": "The hamburger button has an aria-label that changes based on the open state (e.g. 'Open menu' / 'Close menu')"
+    },
+    {
+      "name": "Accordion flattens columns",
+      "max_score": 9,
+      "description": "When a category with a megaMenu is expanded in the drawer, links from ALL columns are rendered together in a single flat list (using flatMap or equivalent)"
+    },
+    {
+      "name": "Focus trap in drawer",
+      "max_score": 9,
+      "description": "The implementation-notes.md describes focus trapping (Tab cycling within drawer) OR the MobileNav.jsx implements a focus trap mechanism"
+    },
+    {
+      "name": "Escape closes drawer",
+      "max_score": 8,
+      "description": "Pressing Escape while the drawer is open closes it (either via a keydown handler or noted in implementation-notes.md)"
+    },
+    {
+      "name": "Body overflow hidden",
+      "max_score": 9,
+      "description": "overflow:hidden is applied to the <body> when the drawer is open and removed/restored when it closes"
+    },
+    {
+      "name": "Mega panel hidden on mobile",
+      "max_score": 9,
+      "description": "mega-panel.css includes a media query at max-width:768px (or similar) that sets display:none on the .mega-panel"
+    },
+    {
+      "name": "Panel full-width positioning",
+      "max_score": 9,
+      "description": "mega-panel.css positions the mega panel with position:absolute, left:0, and width:100vw so it spans the full viewport"
+    }
+  ]
+}

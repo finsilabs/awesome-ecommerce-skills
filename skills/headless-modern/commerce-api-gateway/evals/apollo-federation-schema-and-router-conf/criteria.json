@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent uses Apollo Router with Rover CLI for federation setup, writes correct federated schemas with @key/@extends/@external, configures JWKS auth, sets explicit CORS origins (no wildcard), applies correct traffic shaping timeouts and retries, and configures header propagation for subgraphs.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Rover CLI install command",
+      "max_score": 5,
+      "description": "SETUP.md or documentation includes `npm install -g @apollo/rover` to install the Rover CLI"
+    },
+    {
+      "name": "Apollo Router install command",
+      "max_score": 5,
+      "description": "SETUP.md or documentation includes the curl-based install command for Apollo Router (referencing router.apollo.dev)"
+    },
+    {
+      "name": "federation_version in supergraph.yaml",
+      "max_score": 10,
+      "description": "supergraph.yaml specifies federation_version as =2.5.0 (with the = prefix, not just 2.5.0)"
+    },
+    {
+      "name": "@key directive on Product",
+      "max_score": 10,
+      "description": "The catalog subgraph schema defines `type Product @key(fields: \"id\")` (entity key directive present)"
+    },
+    {
+      "name": "@extends on inventory Product",
+      "max_score": 8,
+      "description": "The inventory subgraph schema uses `type Product @key(fields: \"id\") @extends` to extend the Product type from catalog"
+    },
+    {
+      "name": "@external on id field",
+      "max_score": 8,
+      "description": "The inventory subgraph marks the `id` field as `@external` since it is owned by the catalog subgraph"
+    },
+    {
+      "name": "JWKS auth configuration",
+      "max_score": 8,
+      "description": "router.yaml configures authentication.router.jwt.jwks with a URL pointing to a /.well-known/jwks.json endpoint"
+    },
+    {
+      "name": "require_authentication: false",
+      "max_score": 7,
+      "description": "router.yaml sets authorization.require_authentication: false to allow public queries"
+    },
+    {
+      "name": "No wildcard CORS",
+      "max_score": 8,
+      "description": "router.yaml CORS configuration does NOT use wildcard '*'; instead lists specific origin URLs"
+    },
+    {
+      "name": "Router timeout 30s",
+      "max_score": 6,
+      "description": "traffic_shaping.router.timeout is set to 30s in router.yaml"
+    },
+    {
+      "name": "Subgraph timeout 10s",
+      "max_score": 6,
+      "description": "traffic_shaping.all.timeout is set to 10s in router.yaml"
+    },
+    {
+      "name": "Retry on 5xx statuses",
+      "max_score": 7,
+      "description": "traffic_shaping retries are enabled with retry_on_http_statuses including [500, 502, 503]"
+    },
+    {
+      "name": "Header propagation config",
+      "max_score": 8,
+      "description": "router.yaml includes headers configuration to propagate Authorization and/or x-customer-id to all subgraphs"
+    },
+    {
+      "name": "Rover compose command",
+      "max_score": 4,
+      "description": "SETUP.md or documentation includes the `rover supergraph compose --config supergraph.yaml` command to build the supergraph"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the price resolution function with the correct priority ordering (price list beats tiers), correct percentage_off formula, and highest-priority tier selection for overlapping tiers.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Price list checked first",
+      "max_score": 12,
+      "description": "The resolveUnitPrice implementation checks price list entries BEFORE checking volume tiers (price list has higher priority)"
+    },
+    {
+      "name": "Price list returns early",
+      "max_score": 8,
+      "description": "When a matching price list item is found, the function returns immediately without evaluating volume tiers"
+    },
+    {
+      "name": "tierApplied = 'price_list'",
+      "max_score": 7,
+      "description": "When a price list item is used, the returned tierApplied value is 'price_list'"
+    },
+    {
+      "name": "Percentage_off formula",
+      "max_score": 12,
+      "description": "For percentage_off tiers, unit price is calculated as Math.round(basePrice * (1 - price_value / 100))"
+    },
+    {
+      "name": "Highest priority tier wins",
+      "max_score": 12,
+      "description": "When multiple tiers match a quantity, the tier with the highest priority value is selected (not the one with highest min_quantity or biggest discount)"
+    },
+    {
+      "name": "max_quantity boundary check",
+      "max_score": 8,
+      "description": "Tiers are filtered by both min_quantity (inclusive) and max_quantity (inclusive, null = unlimited) before priority sort"
+    },
+    {
+      "name": "No match returns base price",
+      "max_score": 7,
+      "description": "When no tier and no price list item matches, unitPrice equals basePrice and tierApplied is null"
+    },
+    {
+      "name": "customerGroup null safety",
+      "max_score": 7,
+      "description": "When customerGroup is null, price list lookup is skipped entirely (no null-dereference errors)"
+    },
+    {
+      "name": "Test: price list override",
+      "max_score": 7,
+      "description": "Test case verifies a B2B customer gets the price list price instead of the tier price"
+    },
+    {
+      "name": "Test: overlapping tier priority",
+      "max_score": 10,
+      "description": "Test case verifies that when two tiers overlap in quantity range, the higher-priority one is applied"
+    },
+    {
+      "name": "Prices stored as integers (cents)",
+      "max_score": 5,
+      "description": "Fixed prices and price list prices are handled as integer cent values in the implementation"
+    },
+    {
+      "name": "Priority ordering comment",
+      "max_score": 5,
+      "description": "Code includes a comment documenting the resolution priority order (price list > tiers > base price)"
+    }
+  ]
+}

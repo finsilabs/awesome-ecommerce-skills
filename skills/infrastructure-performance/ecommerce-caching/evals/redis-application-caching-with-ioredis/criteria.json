@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses ioredis for Redis caching, configures the client with correct resilience settings, applies proper key naming conventions, uses fire-and-forget cache writes, and leverages Redis pipelines for bulk operations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses ioredis package",
+      "max_score": 10,
+      "description": "Imports from 'ioredis' (not 'redis', 'node-redis', or another Redis client library)"
+    },
+    {
+      "name": "maxRetriesPerRequest setting",
+      "max_score": 8,
+      "description": "Redis client is constructed with maxRetriesPerRequest: 3"
+    },
+    {
+      "name": "enableReadyCheck setting",
+      "max_score": 8,
+      "description": "Redis client is constructed with enableReadyCheck: true"
+    },
+    {
+      "name": "Retry strategy with cap",
+      "max_score": 8,
+      "description": "retryStrategy function uses Math.min with a 2000ms cap (e.g., Math.min(times * 50, 2000))"
+    },
+    {
+      "name": "Key prefix pattern",
+      "max_score": 8,
+      "description": "Product cache keys use a consistent prefix pattern (e.g., 'product:' followed by the product ID)"
+    },
+    {
+      "name": "Slug index key",
+      "max_score": 8,
+      "description": "Products are also indexed by slug using a separate Redis key (e.g., 'product:slug:{slug}' or similar) that stores the product ID"
+    },
+    {
+      "name": "Fire-and-forget cache write",
+      "max_score": 10,
+      "description": "In the getOrFetch / cache-aside method, the cache write is NOT awaited — it is fired with .catch() for error handling rather than awaited before returning the response"
+    },
+    {
+      "name": "Pipeline for bulk operations",
+      "max_score": 10,
+      "description": "When warming the cache for multiple products, redis.pipeline() is used and a single pipeline.exec() call is made rather than individual setex calls per product"
+    },
+    {
+      "name": "setex for TTL",
+      "max_score": 8,
+      "description": "Cache entries are stored with setex (or set with EX option) rather than plain set with no expiry"
+    },
+    {
+      "name": "Slug key cleanup on invalidation",
+      "max_score": 8,
+      "description": "When invalidating a product, both the product ID key AND the slug key are deleted together"
+    },
+    {
+      "name": "Product TTL value",
+      "max_score": 7,
+      "description": "Product cache TTL is set to 300 seconds (5 minutes) by default"
+    },
+    {
+      "name": "maxmemory-policy mentioned",
+      "max_score": 7,
+      "description": "Redis configuration or comments include mention of maxmemory and/or maxmemory-policy allkeys-lru to prevent unbounded memory growth"
+    }
+  ]
+}

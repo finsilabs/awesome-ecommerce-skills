@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements consolidated supplier email notifications (batched per supplier rather than per SKU), marks alerts after notification, and builds the admin alert management API with proper filtering, ordering, acknowledgement, and alert resolution.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Group by supplier",
+      "max_score": 10,
+      "description": "Before sending emails, alerts are grouped by supplierId so that all alerts for the same supplier are collected into one batch (not sent individually per alert)"
+    },
+    {
+      "name": "Single email per supplier",
+      "max_score": 10,
+      "description": "Only ONE email is sent per supplier per invocation — multiple low-stock SKUs from the same supplier appear in a single email, not separate emails"
+    },
+    {
+      "name": "Merchant template name",
+      "max_score": 10,
+      "description": "The merchant notification email uses the template identifier 'low-stock-merchant' (not a generic name or different string)"
+    },
+    {
+      "name": "Supplier template name",
+      "max_score": 10,
+      "description": "Supplier reorder emails use the template identifier 'low-stock-supplier-reorder' (not a generic name or different string)"
+    },
+    {
+      "name": "Supplier reorder lines",
+      "max_score": 10,
+      "description": "Each item in the supplier email's reorderLines array includes ALL of: sku, productName, currentStock, reorderQuantity, location"
+    },
+    {
+      "name": "notificationSent flag",
+      "max_score": 10,
+      "description": "After sending the supplier email, the code updates the corresponding stock alert records setting notificationSent to true"
+    },
+    {
+      "name": "GET unresolved only",
+      "max_score": 10,
+      "description": "The GET /api/admin/stock-alerts endpoint filters to only return alerts where resolvedAt is null (unresolved alerts only)"
+    },
+    {
+      "name": "GET ordered by triggeredAt desc",
+      "max_score": 10,
+      "description": "The GET endpoint orders results by triggeredAt descending (newest alerts first)"
+    },
+    {
+      "name": "Acknowledge sets user",
+      "max_score": 10,
+      "description": "The POST acknowledge endpoint sets acknowledgedBy to the current user's ID (from session, auth token, or request context) — does NOT set it to a hardcoded value or boolean"
+    },
+    {
+      "name": "resolveStockAlerts implementation",
+      "max_score": 10,
+      "description": "resolveStockAlerts(variantId, locationId) performs a bulk update (updateMany or equivalent) setting resolvedAt to the current date/time on all unresolved alerts for that variant+location"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds channel drill-down, category revenue share, revenue waterfall, and top products queries following the skill's specific patterns: COALESCE for attribution defaults, is_first_order for customer type, window function for revenue share, waterfall structure, CTEs with RANK() for top products, outlier filtering for AOV, and schema optimisation recommendations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Channel COALESCE source",
+      "max_score": 8,
+      "description": "Channel drill-down SQL uses COALESCE(oa.source, 'direct') (or equivalent) to default NULL source values to 'direct'"
+    },
+    {
+      "name": "Channel COALESCE medium",
+      "max_score": 8,
+      "description": "Channel drill-down SQL uses COALESCE(oa.medium, 'none') (or equivalent) to default NULL medium values to 'none'"
+    },
+    {
+      "name": "New customer orders flag",
+      "max_score": 8,
+      "description": "Channel drill-down SQL counts new customer orders using o.is_first_order (or a CASE WHEN on is_first_order)"
+    },
+    {
+      "name": "Revenue share window function",
+      "max_score": 10,
+      "description": "Category revenue SQL computes revenue share using a window function (SUM(...) OVER ()) rather than a correlated subquery or application-side division"
+    },
+    {
+      "name": "Waterfall components",
+      "max_score": 10,
+      "description": "Revenue waterfall includes all four components: gross revenue (subtotal), discounts, refunds, AND shipping revenue"
+    },
+    {
+      "name": "Waterfall net calculation",
+      "max_score": 8,
+      "description": "Waterfall net revenue is computed as gross - discounts - refunds + shipping (shipping is additive, not a deduction)"
+    },
+    {
+      "name": "Top products uses two CTEs",
+      "max_score": 8,
+      "description": "Top products SQL uses two CTEs (one for current period, one for prior period) rather than a single query or subqueries"
+    },
+    {
+      "name": "RANK() window function",
+      "max_score": 8,
+      "description": "Both CTEs in the top products query use RANK() OVER (ORDER BY revenue DESC) to assign a rank to each product"
+    },
+    {
+      "name": "Rank improvement column",
+      "max_score": 8,
+      "description": "Top products query includes a rank_improvement (or rank_change) column computed as prior_rank minus current_rank"
+    },
+    {
+      "name": "LIMIT 20 on top products",
+      "max_score": 6,
+      "description": "Top products query has LIMIT 20 (returning exactly the top 20 products)"
+    },
+    {
+      "name": "Index recommendation",
+      "max_score": 8,
+      "description": "schema-notes.md recommends adding an index on (status, created_at) on the orders table"
+    },
+    {
+      "name": "Materialized view recommendation",
+      "max_score": 10,
+      "description": "schema-notes.md recommends using a view or materialized view for the complex revenue+attribution join, OR recommends a daily rollup table for long date ranges"
+    }
+  ]
+}

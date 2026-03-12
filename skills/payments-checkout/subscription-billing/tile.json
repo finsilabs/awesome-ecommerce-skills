@@ -1,0 +1,10 @@
+{
+  "name": "finsi/subscription-billing",
+  "version": "0.1.0",
+  "summary": "Recurring payment flows with dunning, plan changes, prorations, and cancellation",
+  "skills": {
+    "subscription-billing": {
+      "path": "SKILL.md"
+    }
+  }
+}

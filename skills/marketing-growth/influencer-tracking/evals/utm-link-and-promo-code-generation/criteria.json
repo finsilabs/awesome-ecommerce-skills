@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent generates UTM tracking links and promo codes following the skill's conventions: correct UTM parameter naming, promo code format, promo code settings (per-customer limits, expiry), and metadata storage.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "utm_medium value",
+      "max_score": 10,
+      "description": "The tracking link contains utm_medium=influencer (exact string, not 'social' or 'paid' or similar)"
+    },
+    {
+      "name": "utm_source is platform",
+      "max_score": 8,
+      "description": "utm_source is set to the influencer's platform (e.g. 'instagram'), not a generic value"
+    },
+    {
+      "name": "utm_campaign normalized",
+      "max_score": 8,
+      "description": "utm_campaign is the campaign name lowercased with spaces replaced by hyphens (e.g. 'spring-glow')"
+    },
+    {
+      "name": "utm_content is handle",
+      "max_score": 10,
+      "description": "utm_content is the influencer handle with the '@' symbol removed (e.g. 'glowwithsophie'), not the full handle or any other identifier"
+    },
+    {
+      "name": "Promo code format",
+      "max_score": 12,
+      "description": "Each promo code is formed from the first 6 characters of the handle (uppercased, '@' removed) followed by the discount percentage as a number (e.g. GLOWWI15)"
+    },
+    {
+      "name": "Per-customer limit",
+      "max_score": 10,
+      "description": "The promo code configuration sets perCustomerLimit to 1 (one use per customer)"
+    },
+    {
+      "name": "Unlimited total usage",
+      "max_score": 8,
+      "description": "The promo code configuration sets usageLimit to null (not a finite number)"
+    },
+    {
+      "name": "Promo code expiry",
+      "max_score": 8,
+      "description": "The promo code's validUntil (or equivalent expiry field) is set to the campaign end date"
+    },
+    {
+      "name": "Promo metadata",
+      "max_score": 8,
+      "description": "The promo code configuration includes a metadata object containing both campaignId and influencerId"
+    },
+    {
+      "name": "Both artifacts per influencer",
+      "max_score": 8,
+      "description": "output.json contains both a trackingLink and a promoCode for each of the three influencers"
+    },
+    {
+      "name": "Promo details file",
+      "max_score": 10,
+      "description": "promo-details.json exists and contains full promo code configuration objects for each influencer"
+    }
+  ]
+}

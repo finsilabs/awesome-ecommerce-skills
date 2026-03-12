@@ -1,0 +1,10 @@
+{
+  "name": "finsi/customer-analytics",
+  "version": "0.1.0",
+  "summary": "RFM scoring, purchase frequency, churn prediction, and segment analysis",
+  "skills": {
+    "customer-analytics": {
+      "path": "SKILL.md"
+    }
+  }
+}

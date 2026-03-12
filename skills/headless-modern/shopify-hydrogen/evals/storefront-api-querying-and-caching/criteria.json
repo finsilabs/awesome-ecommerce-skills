@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly uses Hydrogen's storefront.query with appropriate caching strategies, proper import paths, TypeScript-tagged GraphQL queries, Hydrogen-specific components, and localization directives when building Hydrogen route files.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct import for json/LoaderFunctionArgs",
+      "max_score": 10,
+      "description": "Imports `json` and/or `LoaderFunctionArgs` from '@shopify/remix-oxygen' (not from '@remix-run/node' or '@remix-run/server-runtime')"
+    },
+    {
+      "name": "Correct import for useLoaderData",
+      "max_score": 5,
+      "description": "Imports `useLoaderData` from '@remix-run/react'"
+    },
+    {
+      "name": "storefront.query usage",
+      "max_score": 10,
+      "description": "Uses `storefront.query(QUERY, { variables, cache })` to fetch data from the Storefront API (not a raw fetch or GraphQL client)"
+    },
+    {
+      "name": "CacheLong for catalog data",
+      "max_score": 10,
+      "description": "Applies `storefront.CacheLong()` to at least one query for catalog/collection data (product lists or collection metadata)"
+    },
+    {
+      "name": "CacheShort for inventory data",
+      "max_score": 10,
+      "description": "Applies `storefront.CacheShort()` to a query involving product availability or inventory-sensitive fields"
+    },
+    {
+      "name": "CacheNone for personalized data",
+      "max_score": 5,
+      "description": "Uses `storefront.CacheNone()` for any customer-specific or personalized query (if present)"
+    },
+    {
+      "name": "GraphQL queries tagged as const",
+      "max_score": 10,
+      "description": "All GraphQL query template literals are suffixed with `as const`"
+    },
+    {
+      "name": "Queries colocated with routes",
+      "max_score": 5,
+      "description": "GraphQL query strings are defined in the same file as their loader (not imported from a separate queries file)"
+    },
+    {
+      "name": "404 handling via Response throw",
+      "max_score": 5,
+      "description": "Throws `new Response('Not Found', { status: 404 })` (or equivalent) when a product/collection is not found, rather than returning null"
+    },
+    {
+      "name": "Hydrogen Image component",
+      "max_score": 10,
+      "description": "Uses Hydrogen's `<Image>` component (from '@shopify/hydrogen') for rendering product or collection images, not a plain `<img>` tag"
+    },
+    {
+      "name": "Hydrogen Money component",
+      "max_score": 10,
+      "description": "Uses Hydrogen's `<Money>` component (from '@shopify/hydrogen') for rendering prices, not manual string formatting"
+    },
+    {
+      "name": "@inContext directive for localization",
+      "max_score": 10,
+      "description": "At least one GraphQL query uses the `@inContext` directive with `language` and/or `country` variables for localized prices or content"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the correct canonical URL strategy for e-commerce pages (stripping variant params on product pages, keeping only allowed filter params on collection pages, sorting params alphabetically), generates correct robots.txt directives, and applies correct meta robots noindex rules.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Product canonical strips variants",
+      "max_score": 9,
+      "description": "Canonical URL for a product page always points to the base product URL — query parameters including variant selectors are stripped"
+    },
+    {
+      "name": "Collection allowed filter params",
+      "max_score": 9,
+      "description": "Canonical URL for collection pages retains only these filter params: color, size, brand, material, price — other params (sort, page, tracking) are stripped"
+    },
+    {
+      "name": "Canonical params sorted alphabetically",
+      "max_score": 8,
+      "description": "The retained filter query parameters in the collection canonical URL are sorted alphabetically (e.g. brand before color before size)"
+    },
+    {
+      "name": "Paginated prev/next links",
+      "max_score": 9,
+      "description": "Paginated collection pages include rel='prev' and/or rel='next' link tags; the first page has no prev; the prev link for page 2 points to the base path without any page parameter"
+    },
+    {
+      "name": "robots.txt sort param disallow",
+      "max_score": 7,
+      "description": "robots.txt contains a Disallow rule for /collections/*?sort= to block sort-parameter URLs"
+    },
+    {
+      "name": "robots.txt page param disallow",
+      "max_score": 7,
+      "description": "robots.txt contains a Disallow rule for /collections/*?page= to block paginated collection URLs"
+    },
+    {
+      "name": "robots.txt transactional disallows",
+      "max_score": 7,
+      "description": "robots.txt disallows /cart, /checkout, /account, and /api/ paths"
+    },
+    {
+      "name": "robots.txt search disallow",
+      "max_score": 7,
+      "description": "robots.txt contains a Disallow rule for /search? to block search result pages"
+    },
+    {
+      "name": "Heavy filter noindex",
+      "max_score": 9,
+      "description": "Collection pages with more than 2 active filters receive a 'noindex, follow' meta robots value; pages with 2 or fewer active filters are indexable"
+    },
+    {
+      "name": "Search results noindex",
+      "max_score": 7,
+      "description": "Search result pages receive 'noindex, follow' meta robots"
+    },
+    {
+      "name": "Default pages indexable",
+      "max_score": 7,
+      "description": "Product pages and standard collection pages (with 0-2 filters) return 'index, follow' meta robots"
+    },
+    {
+      "name": "Self-referencing canonical on all pages",
+      "max_score": 7,
+      "description": "Every generated page context includes a canonical tag, including pages with no special filter/variant logic"
+    },
+    {
+      "name": "Sitemap reference in robots.txt",
+      "max_score": 7,
+      "description": "robots.txt includes a Sitemap directive pointing to the sitemap URL"
+    }
+  ]
+}

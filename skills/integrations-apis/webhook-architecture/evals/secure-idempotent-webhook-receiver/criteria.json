@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a Stripe webhook receiver with correct timing-safe HMAC verification, replay attack protection via timestamp validation, and idempotent processing using event IDs marked before processing begins.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "timingSafeEqual used",
+      "max_score": 12,
+      "description": "The HMAC comparison uses timingSafeEqual (from node:crypto) rather than a plain string/buffer equality check (=== or Buffer.compare)"
+    },
+    {
+      "name": "Stripe timestamp extraction",
+      "max_score": 8,
+      "description": "Extracts the t= timestamp value from the Stripe-Signature header by splitting on ',' and finding the part starting with 't='"
+    },
+    {
+      "name": "Replay attack protection",
+      "max_score": 12,
+      "description": "Rejects events where the absolute difference between now and the t= timestamp exceeds 300 seconds (5 minutes)"
+    },
+    {
+      "name": "Signed payload format",
+      "max_score": 8,
+      "description": "Constructs the signed payload as timestamp + '.' + rawBody (string), matching Stripe's format, before computing the HMAC"
+    },
+    {
+      "name": "Idempotency check before processing",
+      "max_score": 10,
+      "description": "Checks whether the event ID has already been processed (query against a stored table/set) before attempting to handle it"
+    },
+    {
+      "name": "Mark received before processing",
+      "max_score": 12,
+      "description": "Records/marks the event ID as received BEFORE executing the business logic (not after), to prevent duplicate processing under concurrent delivery"
+    },
+    {
+      "name": "30-day retention noted",
+      "max_score": 6,
+      "description": "The schema or README notes that processed webhook IDs should be retained for 30 days (e.g., via TTL index or cleanup job), not indefinitely or a shorter window"
+    },
+    {
+      "name": "Return 200 on processing error",
+      "max_score": 12,
+      "description": "When internal processing fails (catch block), the handler still returns a 2xx status code rather than 4xx/5xx, to prevent Stripe from retrying"
+    },
+    {
+      "name": "Invalid signature returns 401",
+      "max_score": 8,
+      "description": "Returns HTTP 401 (or 400) when signature verification fails, not 200 or 500"
+    },
+    {
+      "name": "node:crypto import",
+      "max_score": 6,
+      "description": "Imports createHmac and timingSafeEqual from 'node:crypto' (not a third-party crypto library)"
+    },
+    {
+      "name": "Length check before timingSafeEqual",
+      "max_score": 6,
+      "description": "Handles or guards the case where the two buffers differ in length before calling timingSafeEqual (which throws on mismatched lengths), either via explicit length check or try/catch"
+    }
+  ]
+}

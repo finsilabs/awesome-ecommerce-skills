@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses the Shopify Bulk Operations API for large-scale product exports rather than paginating manually, correctly polls for completion, and uses the proper library and GID-format IDs.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses @shopify/shopify-api",
+      "max_score": 8,
+      "description": "Script imports and uses the `@shopify/shopify-api` package (not raw fetch/axios/got alone), visible in imports or package.json dependencies"
+    },
+    {
+      "name": "Imports node adapter",
+      "max_score": 8,
+      "description": "Code includes `import '@shopify/shopify-api/adapters/node'` or `require('@shopify/shopify-api/adapters/node')`"
+    },
+    {
+      "name": "Uses bulkOperationRunQuery",
+      "max_score": 12,
+      "description": "Script triggers a bulk export using the `bulkOperationRunQuery` GraphQL mutation rather than paginated queries"
+    },
+    {
+      "name": "Polls currentBulkOperation",
+      "max_score": 10,
+      "description": "Script polls for completion using the `currentBulkOperation` GraphQL query (checking `status` field)"
+    },
+    {
+      "name": "Downloads URL on COMPLETED",
+      "max_score": 10,
+      "description": "Script only fetches the JSONL download URL after the bulk operation status is COMPLETED (not before or with a long delay)"
+    },
+    {
+      "name": "Writes JSONL output",
+      "max_score": 8,
+      "description": "The script writes or is clearly intended to write results to a `.jsonl` file (one JSON object per line)"
+    },
+    {
+      "name": "Uses January25 API version",
+      "max_score": 8,
+      "description": "Code sets the API version to `ApiVersion.January25` or the string `'2025-01'`"
+    },
+    {
+      "name": "Offline session for custom app",
+      "max_score": 8,
+      "description": "Session is created with `isOnline: false` for a custom app with static token"
+    },
+    {
+      "name": "GraphQL client for bulk op",
+      "max_score": 8,
+      "description": "The bulk operation mutation is issued via a GraphQL client (not a REST client)"
+    },
+    {
+      "name": "No manual pagination",
+      "max_score": 10,
+      "description": "Code does NOT use cursor-based pagination (no looping over `pageInfo.hasNextPage` / `endCursor`) as the primary export mechanism for the full catalog"
+    },
+    {
+      "name": "Product fields requested",
+      "max_score": 10,
+      "description": "Bulk operation query requests at least: product id, title, status and variant fields (id, sku, price, inventoryQuantity)"
+    }
+  ]
+}

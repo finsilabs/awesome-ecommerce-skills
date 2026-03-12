@@ -1,0 +1,81 @@
+{
+  "context": "Tests whether the agent integrates Hotjar behavioral event tracking using the correct window.hj API, instruments scroll depth at the four standard milestones with deduplication, tracks required field abandonment on blur, and implements the CRO audit checklist using the correct interface and standard check IDs.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "window.hj event API",
+      "max_score": 12,
+      "description": "Sends behavioral events using window.hj?.('event', ...) or window.hj('event', ...) syntax — not a different Hotjar API method or a custom abstraction that omits the hj call"
+    },
+    {
+      "name": "Scroll depth milestones",
+      "max_score": 8,
+      "description": "Fires scroll depth events at exactly 25%, 50%, 75%, and 100% scroll milestones (all four must be present)"
+    },
+    {
+      "name": "Scroll deduplication",
+      "max_score": 9,
+      "description": "Uses a Set (or equivalent deduplication mechanism) so each scroll milestone fires only once per page load, not on every scroll event"
+    },
+    {
+      "name": "Field abandonment on blur",
+      "max_score": 10,
+      "description": "Detects required field abandonment by listening to the 'blur' event on form inputs (not submit or change) and checks that the field is both empty and marked required"
+    },
+    {
+      "name": "Field abandonment hj event",
+      "max_score": 6,
+      "description": "Fires a Hotjar event (via window.hj) when a required field is abandoned, not just a console log or internal counter"
+    },
+    {
+      "name": "AuditCheck interface",
+      "max_score": 9,
+      "description": "Defines a typed audit check data structure with at minimum: an id (string), a description, an impact level, and a check function"
+    },
+    {
+      "name": "Impact levels high/medium/low",
+      "max_score": 6,
+      "description": "The audit check impact field uses exactly three levels: 'high', 'medium', and 'low' (not numeric scores or other labels)"
+    },
+    {
+      "name": "guest-checkout check",
+      "max_score": 5,
+      "description": "The audit checklist includes a check with id 'guest-checkout' (or very close variant) that verifies guest checkout availability"
+    },
+    {
+      "name": "trust-badges check",
+      "max_score": 5,
+      "description": "The audit checklist includes a check with id 'trust-badges' (or very close variant) that verifies security/trust signals near the payment step"
+    },
+    {
+      "name": "error-messages-inline check",
+      "max_score": 5,
+      "description": "The audit checklist includes a check with id 'error-messages-inline' (or very close variant) that verifies inline (not toast/alert) form validation errors"
+    },
+    {
+      "name": "autofill-support check",
+      "max_score": 5,
+      "description": "The audit checklist includes a check with id 'autofill-support' (or very close variant) that verifies autocomplete attributes on address fields"
+    },
+    {
+      "name": "cta-above-fold check",
+      "max_score": 5,
+      "description": "The audit checklist includes a check with id 'cta-above-fold' (or very close variant) that verifies the primary CTA is visible without scrolling on mobile"
+    },
+    {
+      "name": "Audit findings: guest checkout",
+      "max_score": 8,
+      "description": "audit-findings.md identifies forced account registration (no guest checkout) as a failing check and cites it as a top recommendation, noting its outsized impact on abandonment"
+    },
+    {
+      "name": "Audit findings: trust signals",
+      "max_score": 4,
+      "description": "audit-findings.md identifies the absence of trust badges/security indicators near the payment form as a failing check"
+    },
+    {
+      "name": "Audit findings: inline validation",
+      "max_score": 3,
+      "description": "audit-findings.md identifies the banner/non-inline error messages as a failing check and recommends per-field inline validation"
+    }
+  ]
+}

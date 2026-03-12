@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the correct conversation context endpoint structure, uses parallel data fetching, exposes the right product search shape, renders the product card component with proper loading state and accessibility, enforces agent concurrency limits, and handles data freshness and widget persistence correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Context endpoint path",
+      "max_score": 8,
+      "description": "The agent context API is served at the path /api/chat/agent/conversation/:id/context (or equivalent parameterized route with that shape)"
+    },
+    {
+      "name": "Parallel data fetch",
+      "max_score": 8,
+      "description": "Uses Promise.all (or equivalent concurrent fetch) to retrieve cart, recent orders, and browsing history in parallel rather than sequentially"
+    },
+    {
+      "name": "Orders limit 3, browsing limit 5",
+      "max_score": 6,
+      "description": "Recent orders are fetched with a limit of 3 and browsing history with a limit of 5"
+    },
+    {
+      "name": "Cart refresh per message",
+      "max_score": 10,
+      "description": "The design notes or code indicates that cart context is re-fetched on each incoming customer message (not cached from conversation start)"
+    },
+    {
+      "name": "Product search endpoint path",
+      "max_score": 8,
+      "description": "Agent product search endpoint is at /api/chat/agent/products/search with a 'q' query parameter and default limit of 8"
+    },
+    {
+      "name": "Product search response shape",
+      "max_score": 7,
+      "description": "Product search results include: id, name, price (in dollars/decimal), image URL, product URL, and inStock boolean"
+    },
+    {
+      "name": "ProductCard skeleton state",
+      "max_score": 6,
+      "description": "ProductCard component renders a loading/skeleton state (element with 'skeleton' in class name or equivalent) while product data is being fetched"
+    },
+    {
+      "name": "ProductCard fields",
+      "max_score": 6,
+      "description": "Fetches product with fields including name, price, images, slug, inStock (all five present in the API request)"
+    },
+    {
+      "name": "target=_blank on product link",
+      "max_score": 7,
+      "description": "The 'View Product' or product link in ProductCard uses target=\"_blank\" (and ideally rel=\"noreferrer\")"
+    },
+    {
+      "name": "44px tap target",
+      "max_score": 7,
+      "description": "The product card CSS or inline styles sets a minimum tap/click target of at least 44px (height, min-height, padding, or equivalent) for interactive elements"
+    },
+    {
+      "name": "Typing indicator",
+      "max_score": 8,
+      "description": "Implementation includes a typing indicator — either a 'typing' WebSocket event emitted when agent is composing, or documentation of this pattern in design-notes.md"
+    },
+    {
+      "name": "Agent concurrency cap",
+      "max_score": 10,
+      "description": "The design notes or code enforces a maximum of 3 or 4 simultaneous conversations per agent"
+    },
+    {
+      "name": "Persistent floating widget",
+      "max_score": 9,
+      "description": "The design notes or code mentions using a persistent floating chat widget stored in global context or service worker so it survives page navigation"
+    }
+  ]
+}

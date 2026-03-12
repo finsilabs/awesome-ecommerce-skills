@@ -1,0 +1,10 @@
+{
+  "name": "finsi/sfcc-cartridge-development",
+  "version": "0.1.0",
+  "summary": "SFRA cartridge architecture, controllers, and ISML templates",
+  "skills": {
+    "sfcc-cartridge-development": {
+      "path": "SKILL.md"
+    }
+  }
+}

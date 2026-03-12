@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct Postmark package and API patterns, applies the right MessageStream and tracking settings for transactional vs marketing sending, uses the template API correctly, and separates sending domains for transactional and marketing emails. Also covers DNS record configuration for deliverability.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Postmark npm package",
+      "max_score": 8,
+      "description": "Uses the 'postmark' npm package (importing ServerClient from 'postmark'), not an unofficial or generic HTTP client"
+    },
+    {
+      "name": "API token from env",
+      "max_score": 7,
+      "description": "Instantiates ServerClient with the token sourced from an environment variable (e.g. process.env.POSTMARK_API_TOKEN)"
+    },
+    {
+      "name": "Transactional MessageStream",
+      "max_score": 9,
+      "description": "Sets MessageStream to 'outbound' for transactional email sends"
+    },
+    {
+      "name": "Marketing MessageStream",
+      "max_score": 9,
+      "description": "Sets MessageStream to 'broadcasts' for marketing/promotional email sends"
+    },
+    {
+      "name": "TrackLinks None",
+      "max_score": 8,
+      "description": "Sets TrackLinks to 'None' for transactional email sends (link tracking disabled)"
+    },
+    {
+      "name": "TrackOpens true",
+      "max_score": 8,
+      "description": "Sets TrackOpens to true for email sends"
+    },
+    {
+      "name": "Template API used",
+      "max_score": 9,
+      "description": "Uses postmark.sendEmailWithTemplate() with TemplateAlias and TemplateModel for at least one template-based send"
+    },
+    {
+      "name": "Separate sending domains",
+      "max_score": 9,
+      "description": "Uses distinct From addresses or domains for transactional and marketing emails (e.g. noreply@mystore.com vs newsletters@mail.mystore.com or equivalent domain separation)"
+    },
+    {
+      "name": "SPF record documented",
+      "max_score": 10,
+      "description": "Includes or documents an SPF TXT record in the DNS setup section using v=spf1 syntax"
+    },
+    {
+      "name": "DKIM records documented",
+      "max_score": 9,
+      "description": "Includes or documents DKIM CNAME records provided by the email provider in the DNS setup section"
+    },
+    {
+      "name": "DMARC record documented",
+      "max_score": 9,
+      "description": "Includes or documents a DMARC TXT record (_dmarc.) in the DNS setup section"
+    },
+    {
+      "name": "DMARC escalation policy",
+      "max_score": 5,
+      "description": "Documents the DMARC policy escalation approach: starting with p=none before moving to p=quarantine and then p=reject"
+    }
+  ]
+}

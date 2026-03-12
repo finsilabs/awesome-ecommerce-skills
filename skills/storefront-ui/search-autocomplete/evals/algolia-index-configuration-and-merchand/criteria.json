@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly configures an Algolia products index with the skill-specified searchable attribute priorities, custom ranking fields, typo tolerance settings, synonyms, and merchandising rules using the correct anchoring type.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "searchableAttributes order",
+      "max_score": 10,
+      "description": "searchableAttributes lists 'name' first and 'description' last (lowest priority), with 'brand' and 'category' appearing in between in that order"
+    },
+    {
+      "name": "customRanking popularity",
+      "max_score": 8,
+      "description": "customRanking includes 'desc(popularity_score)' as one of its entries"
+    },
+    {
+      "name": "customRanking conversion",
+      "max_score": 8,
+      "description": "customRanking includes 'desc(conversion_rate)' as one of its entries"
+    },
+    {
+      "name": "typoTolerance: min",
+      "max_score": 10,
+      "description": "typoTolerance is set to the string value 'min' (not true, false, or 'strict')"
+    },
+    {
+      "name": "minWordSizefor1Typo: 5",
+      "max_score": 10,
+      "description": "minWordSizefor1Typo is set to exactly 5"
+    },
+    {
+      "name": "minWordSizefor2Typos: 9",
+      "max_score": 10,
+      "description": "minWordSizefor2Typos is set to exactly 9"
+    },
+    {
+      "name": "Synonyms configured",
+      "max_score": 8,
+      "description": "At least one synonym group is defined with type: 'synonym' and a synonyms array containing multiple equivalent terms"
+    },
+    {
+      "name": "Rule anchoring: contains",
+      "max_score": 14,
+      "description": "The merchandising rule condition uses anchoring: 'contains' (NOT anchoring: 'is') so it matches partial queries"
+    },
+    {
+      "name": "filterPromotes: true",
+      "max_score": 12,
+      "description": "The rule consequence includes filterPromotes: true alongside the promote array"
+    },
+    {
+      "name": "Rule promotes correct collection",
+      "max_score": 10,
+      "description": "The rule's promote array includes the objectID 'collection-summer-sale' at position 0"
+    }
+  ]
+}

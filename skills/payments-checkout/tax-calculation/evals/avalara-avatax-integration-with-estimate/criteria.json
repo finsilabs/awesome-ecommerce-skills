@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly integrates Avalara AvaTax including proper client initialization, SalesOrder vs SalesInvoice transaction types, correct line item tax codes, the two-phase estimate-then-commit workflow, transaction code storage, and order cancellation voiding.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct package",
+      "max_score": 8,
+      "description": "Uses the 'avatax' npm package (import/require from 'avatax'), not a generic HTTP client"
+    },
+    {
+      "name": "Client initialization fields",
+      "max_score": 8,
+      "description": "Avalara client is initialized with all four fields: appName, appVersion, environment, and machineName"
+    },
+    {
+      "name": "Sandbox vs production env",
+      "max_score": 8,
+      "description": "The 'environment' field is set to 'production' when AVALARA_ENV equals 'production', and 'sandbox' otherwise — not hardcoded to either"
+    },
+    {
+      "name": "withSecurity() for credentials",
+      "max_score": 8,
+      "description": "Credentials (username and password) are passed via .withSecurity({ username, password }), not via constructor or other methods"
+    },
+    {
+      "name": "SalesOrder for estimates",
+      "max_score": 8,
+      "description": "Tax estimate calls use transaction type 'SalesOrder' (commit=false), not 'SalesInvoice'"
+    },
+    {
+      "name": "SalesInvoice for commits",
+      "max_score": 8,
+      "description": "Tax commit calls use transaction type 'SalesInvoice' (commit=true), not 'SalesOrder'"
+    },
+    {
+      "name": "Shipping line FR010000",
+      "max_score": 8,
+      "description": "A separate shipping line item is included in Avalara transactions with taxCode 'FR010000'"
+    },
+    {
+      "name": "Default tax code P0000000",
+      "max_score": 8,
+      "description": "Product lines without a specific tax code fall back to 'P0000000' (not null, empty, or a different code)"
+    },
+    {
+      "name": "Transaction code persisted",
+      "max_score": 9,
+      "description": "The Avalara transaction code (result.code) is saved on the order record after calculation or commit"
+    },
+    {
+      "name": "Commit on order confirmed",
+      "max_score": 9,
+      "description": "The commit step is triggered after order/payment confirmation (e.g., in an order.confirmed handler, post-payment webhook, or commit step), not during estimate/checkout"
+    },
+    {
+      "name": "Void on cancellation",
+      "max_score": 9,
+      "description": "Order cancellation logic calls a void or cancel operation on the Avalara transaction (references commitTransaction or voidTransaction on the committed code)"
+    },
+    {
+      "name": "Consistent estimate/commit params",
+      "max_score": 9,
+      "description": "The same address, line item, and shipping parameters are used for both the estimate and the final commit — no parameters differ between the two calls"
+    }
+  ]
+}

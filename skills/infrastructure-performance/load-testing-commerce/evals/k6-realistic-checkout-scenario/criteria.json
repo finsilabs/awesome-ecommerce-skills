@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent writes a k6 load test that follows the skill's guidance on realistic traffic distribution, executor choice, think time simulation, payment token safety, test data cleanup strategy, request tagging, and scenario thresholds.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Catalog browse weight",
+      "max_score": 9,
+      "description": "The catalog/browsing scenario is assigned a weight of 60 (or 60% of traffic)"
+    },
+    {
+      "name": "Checkout weight",
+      "max_score": 9,
+      "description": "The checkout scenario is assigned a weight of 5 (or approximately 5% of traffic)"
+    },
+    {
+      "name": "ramping-arrival-rate executor",
+      "max_score": 10,
+      "description": "Uses 'ramping-arrival-rate' as the executor (not 'ramping-vus' or 'constant-vus')"
+    },
+    {
+      "name": "Checkout p95 threshold",
+      "max_score": 9,
+      "description": "Defines a threshold for checkout p(95) latency at or below 3000ms (e.g., 'p(95)<3000')"
+    },
+    {
+      "name": "Catalog p95 threshold",
+      "max_score": 9,
+      "description": "Defines a threshold for catalog/browsing p(95) latency at or below 1000ms (e.g., 'p(95)<1000')"
+    },
+    {
+      "name": "Checkout error rate threshold",
+      "max_score": 8,
+      "description": "Defines a threshold for checkout error rate below 1% (e.g., 'rate<0.01')"
+    },
+    {
+      "name": "SharedArray usage",
+      "max_score": 9,
+      "description": "Uses SharedArray (from 'k6/data') to load test product data from a JSON file"
+    },
+    {
+      "name": "Think time present",
+      "max_score": 9,
+      "description": "Includes sleep() calls between request steps in at least the checkout flow (not zero sleep)"
+    },
+    {
+      "name": "Test payment token",
+      "max_score": 9,
+      "description": "Uses 'tok_visa' (or another Stripe test token) as the payment token in checkout — does NOT use a real card number or empty token"
+    },
+    {
+      "name": "Test email domain",
+      "max_score": 9,
+      "description": "Test user emails use a non-production domain (e.g., '@test.invalid', '@test-load.invalid', or similar .invalid TLD) to enable cleanup"
+    },
+    {
+      "name": "Step tagging",
+      "max_score": 10,
+      "description": "At least one HTTP request in the checkout flow uses a 'tags' object with a 'step' property (e.g., {step: 'view_product'})"
+    }
+  ]
+}

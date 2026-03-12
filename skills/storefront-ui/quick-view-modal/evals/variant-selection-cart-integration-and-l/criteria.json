@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements variant selection with per-variant image updates, disables out-of-stock variants, closes the modal after add-to-cart, includes a full details link, and prevents body scroll when the modal is open.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Variant image updates on selection",
+      "max_score": 10,
+      "description": "QuickViewBody.jsx renders the selected variant's image (e.g. selectedVariant?.image) and falls back to the first product image when no variant image is available"
+    },
+    {
+      "name": "Variant state not position-indexed",
+      "max_score": 8,
+      "description": "QuickViewBody.jsx stores the full selected variant object (or variant ID) in state — NOT a numeric index into the variants array"
+    },
+    {
+      "name": "Out-of-stock variants disabled",
+      "max_score": 10,
+      "description": "QuickViewBody.jsx disables variant option inputs (radio buttons, buttons, or similar) when the matching variant has inventory === 0"
+    },
+    {
+      "name": "Add to cart passes variantId and quantity",
+      "max_score": 8,
+      "description": "QuickViewBody.jsx calls onAddToCart (or addToCart) with an object containing at least variantId and quantity"
+    },
+    {
+      "name": "Modal closes after add to cart",
+      "max_score": 10,
+      "description": "QuickViewBody.jsx calls onClose() (or equivalent) after awaiting the add-to-cart operation, causing the modal to close automatically"
+    },
+    {
+      "name": "View full details link present",
+      "max_score": 10,
+      "description": "QuickViewBody.jsx renders a link (anchor element) pointing to product.url that allows the user to navigate to the full product page"
+    },
+    {
+      "name": "Body scroll prevented when modal open",
+      "max_score": 10,
+      "description": "QuickViewBody.css or QuickViewPage.jsx applies overflow: hidden on body or overscroll-behavior: contain on the dialog/modal when it is open, preventing background scroll"
+    },
+    {
+      "name": "Lazy fetch — product data not embedded in card HTML",
+      "max_score": 8,
+      "description": "QuickViewPage.jsx does NOT pre-embed full product detail objects in the product card markup; product data is fetched on demand when the modal is opened"
+    },
+    {
+      "name": "Variant selector uses fieldset/legend or radio group",
+      "max_score": 8,
+      "description": "QuickViewBody.jsx groups variant options using a <fieldset> with <legend> (or an equivalent accessible grouping) for each option axis"
+    },
+    {
+      "name": "Add-to-cart button disabled when no variant or out of stock",
+      "max_score": 8,
+      "description": "The Add to Cart button in QuickViewBody.jsx is disabled when selectedVariant is null/undefined or when selectedVariant.inventory === 0"
+    },
+    {
+      "name": "Add-to-cart button shows feedback state",
+      "max_score": 10,
+      "description": "The Add to Cart button renders different label text while the cart request is in-flight (e.g. 'Adding...' or similar) and shows 'Sold Out' when the selected variant has inventory === 0"
+    }
+  ]
+}

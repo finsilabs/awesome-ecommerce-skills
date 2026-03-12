@@ -1,0 +1,10 @@
+{
+  "name": "finsi/load-testing-commerce",
+  "version": "0.1.0",
+  "summary": "Load testing checkout and catalog with realistic shopping behavior simulation",
+  "skills": {
+    "load-testing-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

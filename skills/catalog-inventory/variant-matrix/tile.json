@@ -1,0 +1,10 @@
+{
+  "name": "finsi/variant-matrix",
+  "version": "0.1.0",
+  "summary": "Generate and manage variant combinations (size x color x material) with SKU strategies",
+  "skills": {
+    "variant-matrix": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/commerce-js-integration",
+  "version": "0.1.0",
+  "summary": "Commerce.js (Chec) SDK integration for lightweight headless stores",
+  "skills": {
+    "commerce-js-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

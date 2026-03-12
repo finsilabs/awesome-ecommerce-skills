@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements custom Medusa v2 API routes, including TypeScript type imports, file path to URL mapping, named HTTP method exports, service resolution via req.scope, authenticated customer ID access, and Zod schema validation for request bodies.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "MedusaRequest/MedusaResponse types",
+      "max_score": 8,
+      "description": "Route handler functions use MedusaRequest and MedusaResponse type annotations imported from '@medusajs/framework/http'"
+    },
+    {
+      "name": "Correct import path",
+      "max_score": 6,
+      "description": "MedusaRequest and MedusaResponse are imported specifically from '@medusajs/framework/http' (not from '@medusajs/framework' or '@medusajs/medusa')"
+    },
+    {
+      "name": "Named method exports",
+      "max_score": 10,
+      "description": "HTTP handlers are exported as named exports matching the HTTP verb (e.g. export async function GET, export async function POST) rather than a default export router"
+    },
+    {
+      "name": "URL-matching file paths",
+      "max_score": 10,
+      "description": "Route files are placed at src/api/<scope>/<resource>/route.ts so that the file path directly maps to the intended URL (e.g. src/api/store/wishlist/route.ts for /store/wishlist)"
+    },
+    {
+      "name": "req.scope.resolve() for services",
+      "max_score": 10,
+      "description": "Services inside route handlers are obtained with req.scope.resolve() rather than imported directly or obtained via container.resolve()"
+    },
+    {
+      "name": "req.auth_context for customer ID",
+      "max_score": 10,
+      "description": "The authenticated customer's ID is read from req.auth_context?.actor_id rather than from request body, query params, or a JWT decode"
+    },
+    {
+      "name": "401 on missing auth",
+      "max_score": 6,
+      "description": "Route handler returns a 401 response when req.auth_context?.actor_id is not present (unauthenticated request)"
+    },
+    {
+      "name": "Zod schema defined",
+      "max_score": 12,
+      "description": "At least one request body is validated using a Zod schema (z.object(...)) rather than relying on TypeScript types alone or manual if-checks"
+    },
+    {
+      "name": "Zod validation before handler logic",
+      "max_score": 8,
+      "description": "The Zod schema is parsed/validated before the main handler logic executes (either via middleware or an explicit parse/safeParse call at the top of the handler)"
+    },
+    {
+      "name": "400 on validation failure",
+      "max_score": 6,
+      "description": "The handler returns a 400 response with an error message when Zod validation fails"
+    },
+    {
+      "name": "Store scope route",
+      "max_score": 6,
+      "description": "At least one route is placed under src/api/store/ (not under src/api/admin/) for customer-facing access"
+    },
+    {
+      "name": "No direct service imports",
+      "max_score": 8,
+      "description": "Service classes are NOT imported and instantiated directly in route files — they are always resolved from req.scope"
+    }
+  ]
+}

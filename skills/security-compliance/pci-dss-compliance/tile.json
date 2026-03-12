@@ -1,0 +1,10 @@
+{
+  "name": "finsi/pci-dss-compliance",
+  "version": "0.1.0",
+  "summary": "PCI-DSS requirements mapping, SAQ selection, and implementation checklist",
+  "skills": {
+    "pci-dss-compliance": {
+      "path": "SKILL.md"
+    }
+  }
+}

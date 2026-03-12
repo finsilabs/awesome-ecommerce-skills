@@ -1,0 +1,10 @@
+{
+  "name": "finsi/buy-now-pay-later",
+  "version": "0.1.0",
+  "summary": "Integrate BNPL providers (Klarna, Afterpay, Affirm) with eligibility checks",
+  "skills": {
+    "buy-now-pay-later": {
+      "path": "SKILL.md"
+    }
+  }
+}

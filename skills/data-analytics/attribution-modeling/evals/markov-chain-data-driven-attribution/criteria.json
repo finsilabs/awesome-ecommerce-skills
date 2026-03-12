@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the Markov chain attribution model with correct start/conversion terminal states, normalized transition matrix, removal effect formula, multi-model comparison, revenue integrity benchmarking, and correct documentation of when the model is appropriate.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Start/conversion terminal states",
+      "max_score": 12,
+      "description": "The Markov transition matrix builder uses 'start' and 'conversion' as special terminal state labels in the channel sequence (not arbitrary labels like 'begin'/'end')"
+    },
+    {
+      "name": "Channel nodes as source/medium",
+      "max_score": 8,
+      "description": "Channel nodes in the transition matrix are represented as 'source/medium' strings (e.g., 'google/cpc'), matching the format used throughout the skill"
+    },
+    {
+      "name": "Transition matrix normalization",
+      "max_score": 12,
+      "description": "Transition counts are normalized to probabilities by dividing each from-state's row by its row total before being used for attribution"
+    },
+    {
+      "name": "Removal effect formula",
+      "max_score": 12,
+      "description": "Channel credit is computed as (overall_CVR - CVR_without_channel) / overall_CVR — the removal effect approach, not direct path probability"
+    },
+    {
+      "name": "Revenue integrity check",
+      "max_score": 10,
+      "description": "The report.json or comparison output includes a check that verifies the sum of attributed revenue equals (or approximates) total actual revenue"
+    },
+    {
+      "name": "Multi-model comparison in output",
+      "max_score": 10,
+      "description": "report.json includes channel revenue figures from both the Markov model and at least one rule-based model side-by-side"
+    },
+    {
+      "name": "Volume threshold documented",
+      "max_score": 10,
+      "description": "README.md states that the Markov model is appropriate for stores with 10,000+ conversion paths (or similar threshold), not for low-volume stores"
+    },
+    {
+      "name": "Email credit difference highlighted",
+      "max_score": 8,
+      "description": "The output or README notes that last-click typically undercredits email (or awareness channels) compared to the probabilistic model"
+    },
+    {
+      "name": "Paths ordered chronologically",
+      "max_score": 8,
+      "description": "Touchpoints within each conversion path are processed in chronological order (ascending touchedAt) when building transitions"
+    },
+    {
+      "name": "CVR definition is path-based",
+      "max_score": 10,
+      "description": "The overall conversion rate is computed as paths-with-touchpoints / total-paths (not a random number or constant)"
+    }
+  ]
+}

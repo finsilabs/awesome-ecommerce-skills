@@ -1,0 +1,10 @@
+{
+  "name": "finsi/woocommerce-subscriptions",
+  "version": "0.1.0",
+  "summary": "Recurring payments and subscription product types in WooCommerce",
+  "skills": {
+    "woocommerce-subscriptions": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/live-chat-commerce",
+  "version": "0.1.0",
+  "summary": "Real-time chat with product sharing, cart assistance, and agent tools",
+  "skills": {
+    "live-chat-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent designs the correct inventory data model (including version, backorder_limit, reorder_point, and the transactions audit table), implements fulfillment correctly, aggregates multi-warehouse availability properly, and includes schema-level guards against data corruption.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "version column present",
+      "max_score": 8,
+      "description": "The inventory_levels table definition includes a 'version' column (integer/bigint) used as an optimistic lock counter"
+    },
+    {
+      "name": "backorder_limit column present",
+      "max_score": 8,
+      "description": "The inventory_levels table includes a 'backorder_limit' column (with 0 meaning unlimited or a sensible default)"
+    },
+    {
+      "name": "reorder_point column present",
+      "max_score": 8,
+      "description": "The inventory_levels table includes a 'reorder_point' column per variant-location"
+    },
+    {
+      "name": "Transactions table type enum",
+      "max_score": 8,
+      "description": "The inventory_transactions table (or equivalent audit log) defines a 'type' field restricted to the values: reserve, release, fulfill, receive, adjust"
+    },
+    {
+      "name": "Transactions quantity sign convention",
+      "max_score": 7,
+      "description": "The inventory_transactions table documentation or code comments explicitly states that negative quantity = decrease and positive quantity = increase (or the implementation consistently applies this convention)"
+    },
+    {
+      "name": "available derived from on_hand minus reserved",
+      "max_score": 10,
+      "description": "available is either stored as on_hand - reserved or computed on read as on_hand - reserved — it is NOT stored as an independent value that diverges from these two fields"
+    },
+    {
+      "name": "CHECK constraint reserved >= 0",
+      "max_score": 10,
+      "description": "The schema includes a database-level CHECK constraint (or equivalent) ensuring reserved cannot go below 0"
+    },
+    {
+      "name": "fulfillInventory decrements both fields",
+      "max_score": 12,
+      "description": "The fulfillInventory function (or equivalent) decrements BOTH on_hand AND reserved in the same atomic operation — not only on_hand"
+    },
+    {
+      "name": "Multi-warehouse uses Math.max(0, available)",
+      "max_score": 12,
+      "description": "The multi-warehouse availability aggregation clamps each location's contribution to Math.max(0, available) before summing — preventing locations with negative available from reducing the total"
+    },
+    {
+      "name": "Multi-warehouse returns byLocation",
+      "max_score": 10,
+      "description": "The availability function returns a per-location breakdown (byLocation map or equivalent) in addition to the total"
+    },
+    {
+      "name": "backorder_limit enforced in reservation",
+      "max_score": 7,
+      "description": "The reserveInventory function (or equivalent) checks backorder_limit when backorder is allowed and rejects reservations that would exceed this limit (when backorder_limit > 0)"
+    }
+  ]
+}

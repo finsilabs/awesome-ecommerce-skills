@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shipping-rate-calculator",
+  "version": "0.1.0",
+  "summary": "Real-time rate calculation with carrier APIs (UPS, FedEx, USPS, DHL)",
+  "skills": {
+    "shipping-rate-calculator": {
+      "path": "SKILL.md"
+    }
+  }
+}

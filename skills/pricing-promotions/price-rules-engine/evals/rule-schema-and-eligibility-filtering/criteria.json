@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent defines the correct SQL schema for price rules (correct column types, valid rule type constraints, audit table) and implements eligible line filtering that respects exclusions over inclusions, NULL-means-all semantics, customer segment gating, and correct monetary comparisons in cents.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Rule type constraint",
+      "max_score": 10,
+      "description": "The price_rules table includes a CHECK constraint (or equivalent validation) limiting type to: 'percentage_off', 'fixed_off', 'free_shipping', 'buy_x_get_y', 'fixed_price'"
+    },
+    {
+      "name": "Priority column present",
+      "max_score": 6,
+      "description": "The schema includes a priority column (INTEGER type) on the price_rules table"
+    },
+    {
+      "name": "is_stackable column present",
+      "max_score": 6,
+      "description": "The schema includes an is_stackable BOOLEAN column on the price_rules table"
+    },
+    {
+      "name": "Monetary amounts as integers",
+      "max_score": 8,
+      "description": "min_cart_value and discount_amount are defined as INTEGER (not DECIMAL/FLOAT/NUMERIC with scale), representing cents"
+    },
+    {
+      "name": "Audit table created",
+      "max_score": 10,
+      "description": "A separate price_rule_applications (or equivalent) table is created with at minimum order_id, rule_id, and discount_amount columns"
+    },
+    {
+      "name": "coupon_code nullable",
+      "max_score": 6,
+      "description": "coupon_code column is nullable (NULL = automatic, no code required)"
+    },
+    {
+      "name": "Exclusions checked first",
+      "max_score": 10,
+      "description": "In the eligibility filter, excluded_products and excluded_categories are evaluated BEFORE applicable_products and applicable_categories"
+    },
+    {
+      "name": "Exclusion wins over inclusion",
+      "max_score": 10,
+      "description": "A product that matches both an exclusion list and an applicable list is treated as ineligible (excluded)"
+    },
+    {
+      "name": "NULL scope means all products",
+      "max_score": 8,
+      "description": "When applicable_products and applicable_categories are both null/empty, all products are treated as eligible (no inclusion restriction)"
+    },
+    {
+      "name": "Customer segment gating",
+      "max_score": 8,
+      "description": "A rule with a non-empty customer_segments list only applies when the cart's customer segments include at least one matching segment"
+    },
+    {
+      "name": "Min cart value in cents",
+      "max_score": 8,
+      "description": "The min_cart_value condition compares against the cart subtotal in the same integer cents unit (not converted to dollars)"
+    },
+    {
+      "name": "NULL customer_segments means all",
+      "max_score": 10,
+      "description": "When customer_segments is null or empty on a rule, the rule applies to all customers regardless of their segment"
+    }
+  ]
+}

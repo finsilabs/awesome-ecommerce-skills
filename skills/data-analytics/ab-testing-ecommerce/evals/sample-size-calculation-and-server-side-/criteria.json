@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent calculates sample size using the correct statistical formula with specific z-score magic numbers, implements server-side variant assignment using MD5 hashing of experimentId:userId with the correct bucketing formula, and wires up the middleware with proper user ID resolution fallback chain.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Sample size function exists",
+      "max_score": 5,
+      "description": "A function named calculateRequiredSampleSize (or equivalent) is defined and accepts parameters for baseline conversion rate, minimum detectable effect, statistical power, and significance level"
+    },
+    {
+      "name": "zAlpha value",
+      "max_score": 10,
+      "description": "Uses zAlpha = 1.96 (not 1.645 or 2.0) as the z-score for the alpha/significance level in the sample size formula"
+    },
+    {
+      "name": "zBeta for 80% power",
+      "max_score": 10,
+      "description": "Uses zBeta = 0.842 when statistical power is 0.80"
+    },
+    {
+      "name": "MD5 hash for assignment",
+      "max_score": 10,
+      "description": "Uses MD5 (createHash('md5') or equivalent) — not SHA256, SHA1, or another algorithm — for variant bucketing"
+    },
+    {
+      "name": "Hash input format",
+      "max_score": 10,
+      "description": "Hashes the combined string of experimentId and userId in the format 'experimentId:userId' (colon-separated, experiment first)"
+    },
+    {
+      "name": "Bucket normalization divisor",
+      "max_score": 10,
+      "description": "Divides the parsed integer from the first 8 hex characters of the hash by 0xffffffff (not 0xffffffff + 1, not 2^32) to produce the bucket value"
+    },
+    {
+      "name": "First 8 hex chars",
+      "max_score": 10,
+      "description": "Uses only the first 8 hexadecimal characters of the MD5 hash digest for bucket calculation (not more, not fewer)"
+    },
+    {
+      "name": "Server-side middleware",
+      "max_score": 10,
+      "description": "Implements an Express-style middleware function that populates req.experiments with variant assignments for all active experiments"
+    },
+    {
+      "name": "User ID fallback chain",
+      "max_score": 10,
+      "description": "Resolves user identity using a fallback chain: customerId first, then anonymousId, then a getOrCreateAnonymousId function — NOT session ID alone"
+    },
+    {
+      "name": "README example output",
+      "max_score": 5,
+      "description": "README.md contains a numeric result for the sample size calculation with baseline=0.031, MDE=0.004, power=0.80, significance=0.05"
+    },
+    {
+      "name": "TypeScript types",
+      "max_score": 5,
+      "description": "Uses TypeScript interfaces or type definitions for the sample size parameters and the Experiment object"
+    },
+    {
+      "name": "Weights sum to 1.0",
+      "max_score": 5,
+      "description": "Experiment variant weights (if demonstrated) are documented or shown to sum to 1.0"
+    }
+  ]
+}

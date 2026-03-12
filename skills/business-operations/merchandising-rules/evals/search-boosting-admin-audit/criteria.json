@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds an Elasticsearch function_score query following the prescribed structure, score modes, default boosts, field weights, and fuzziness, plus whether audit logging captures the required fields.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "function_score structure",
+      "max_score": 8,
+      "description": "The query uses an Elasticsearch function_score query structure (top-level key is 'function_score')"
+    },
+    {
+      "name": "score_mode multiply",
+      "max_score": 8,
+      "description": "The function_score query sets score_mode to 'multiply'"
+    },
+    {
+      "name": "boost_mode multiply",
+      "max_score": 8,
+      "description": "The function_score query sets boost_mode to 'multiply'"
+    },
+    {
+      "name": "Weight multiplier formula",
+      "max_score": 12,
+      "description": "Merchandising boost percentages are converted to weight multipliers using 1 + (value / 100) — e.g. a +60 boost becomes weight 1.6"
+    },
+    {
+      "name": "multi_match base query",
+      "max_score": 6,
+      "description": "The base query inside function_score is a multi_match query"
+    },
+    {
+      "name": "Field boosts title^3 tags^2",
+      "max_score": 8,
+      "description": "multi_match includes title with boost ^3 and tags with boost ^2 (i.e. 'title^3' and 'tags^2' in the fields array)"
+    },
+    {
+      "name": "fuzziness AUTO",
+      "max_score": 6,
+      "description": "multi_match uses fuzziness: 'AUTO'"
+    },
+    {
+      "name": "Default in-stock boost",
+      "max_score": 10,
+      "description": "A default function is always added that boosts in-stock products (inventory_quantity > 0) with weight 1.5"
+    },
+    {
+      "name": "Default image boost",
+      "max_score": 8,
+      "description": "A default function is always added that boosts products with a featured_image field with weight 1.1"
+    },
+    {
+      "name": "Audit userId",
+      "max_score": 6,
+      "description": "Audit log entry includes the admin user ID (userId or equivalent field)"
+    },
+    {
+      "name": "Audit action and resource",
+      "max_score": 10,
+      "description": "Audit log entry includes both an action name (e.g. 'merchandising_rule_created') and a resource identifier referencing the rule (e.g. 'rule:<id>')"
+    },
+    {
+      "name": "Audit rule details",
+      "max_score": 10,
+      "description": "Audit log entry includes rule details such as rule name and rule type"
+    }
+  ]
+}

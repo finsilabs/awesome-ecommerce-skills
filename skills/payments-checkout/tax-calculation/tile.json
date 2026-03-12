@@ -1,0 +1,10 @@
+{
+  "name": "finsi/tax-calculation",
+  "version": "0.1.0",
+  "summary": "Tax engine integration (TaxJar, Avalara) with nexus rules and VAT handling",
+  "skills": {
+    "tax-calculation": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a PayPal webhook handler that correctly verifies webhook signatures, uses the appropriate event types for fulfillment (PAYMENT.CAPTURE.COMPLETED rather than CHECKOUT.ORDER.APPROVED), handles refund and chargeback events, and implements idempotency based on the PayPal capture ID to prevent duplicate order creation on webhook retries.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Signature verification call",
+      "max_score": 12,
+      "description": "The webhook handler calls PayPal's /v1/notifications/verify-webhook-signature endpoint to verify the incoming request before processing"
+    },
+    {
+      "name": "Signature headers forwarded",
+      "max_score": 10,
+      "description": "The signature verification request includes the PayPal transmission headers: paypal-transmission-id, paypal-transmission-time, paypal-cert-url, paypal-auth-algo, paypal-transmission-sig"
+    },
+    {
+      "name": "webhook_id included",
+      "max_score": 8,
+      "description": "The webhook verification payload includes webhook_id (read from an environment variable such as PAYPAL_WEBHOOK_ID)"
+    },
+    {
+      "name": "Reject invalid signature",
+      "max_score": 10,
+      "description": "The handler returns a 401 or 400 error (does NOT process the event) when verification_status is not 'SUCCESS'"
+    },
+    {
+      "name": "PAYMENT.CAPTURE.COMPLETED handled",
+      "max_score": 10,
+      "description": "The handler contains a case or branch for the PAYMENT.CAPTURE.COMPLETED event type to trigger order fulfillment"
+    },
+    {
+      "name": "CHECKOUT.ORDER.APPROVED NOT used for fulfillment",
+      "max_score": 10,
+      "description": "The handler does NOT use CHECKOUT.ORDER.APPROVED as the trigger for creating orders or fulfilling payments"
+    },
+    {
+      "name": "PAYMENT.CAPTURE.REFUNDED handled",
+      "max_score": 8,
+      "description": "The handler contains a case or branch for the PAYMENT.CAPTURE.REFUNDED event"
+    },
+    {
+      "name": "PAYMENT.CAPTURE.REVERSED handled",
+      "max_score": 8,
+      "description": "The handler contains a case or branch for the PAYMENT.CAPTURE.REVERSED event (chargeback)"
+    },
+    {
+      "name": "Capture ID idempotency check",
+      "max_score": 12,
+      "description": "Before creating or fulfilling an order in response to a webhook, the code checks whether an order with the given PayPal capture_id already exists (to prevent duplicate processing on retries)"
+    },
+    {
+      "name": "200 response on success",
+      "max_score": 8,
+      "description": "The handler returns a 200 response after successfully processing (or safely ignoring) a webhook event"
+    },
+    {
+      "name": "Capture ID sourced correctly",
+      "max_score": 4,
+      "description": "The capture ID used for idempotency is read from the webhook resource payload (e.g. resource.id), not fabricated or read from a URL parameter"
+    }
+  ]
+}

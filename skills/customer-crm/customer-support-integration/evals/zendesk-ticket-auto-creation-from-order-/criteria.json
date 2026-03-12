@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements automated Zendesk ticket creation from order events, using proper authentication, attaching the order ID as a custom field, applying the correct tags, and normalizing customer emails before lookup.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Basic auth format",
+      "max_score": 10,
+      "description": "Uses Basic authentication with Buffer.from(`${email}/token:${token}`).toString('base64') pattern (i.e., email/token: prefix in the base64-encoded credentials)"
+    },
+    {
+      "name": "Order ID custom field",
+      "max_score": 12,
+      "description": "Attaches the order ID to the ticket via a custom_fields array entry using a configurable field ID (environment variable), not as a tag or body text alone"
+    },
+    {
+      "name": "auto-created tag",
+      "max_score": 8,
+      "description": "Includes 'auto-created' tag on every programmatically created ticket"
+    },
+    {
+      "name": "Event-specific tag",
+      "max_score": 8,
+      "description": "Includes an event-specific tag (e.g., 'delivery-failure') on the ticket, distinct from 'auto-created'"
+    },
+    {
+      "name": "order-ID tag",
+      "max_score": 8,
+      "description": "Includes a tag in the format 'order-{orderId}' on the ticket"
+    },
+    {
+      "name": "Email normalization",
+      "max_score": 10,
+      "description": "Normalizes the customer email to lowercase before any database lookup (e.g., .toLowerCase() or equivalent)"
+    },
+    {
+      "name": "Zendesk API endpoint",
+      "max_score": 8,
+      "description": "Uses the correct Zendesk REST API URL pattern: https://{subdomain}.zendesk.com/api/v2/tickets.json with POST method"
+    },
+    {
+      "name": "Ticket priority field",
+      "max_score": 7,
+      "description": "Sets a priority field on the ticket (one of: urgent, high, normal, low)"
+    },
+    {
+      "name": "Requester by email",
+      "max_score": 7,
+      "description": "Sets the ticket requester using the customer's email address (requester: { email: ... })"
+    },
+    {
+      "name": "Server-side token",
+      "max_score": 8,
+      "description": "API token is used only server-side (no client-side exposure); the implementation is an HTTP handler/endpoint, not client-side JavaScript"
+    },
+    {
+      "name": "Includes order detail in body",
+      "max_score": 7,
+      "description": "The ticket body/comment includes relevant order information (order number, carrier, tracking number, or failure date)"
+    },
+    {
+      "name": "No new customer on webhook",
+      "max_score": 7,
+      "description": "Does NOT create a new customer record when processing the event — looks up existing customer by email only"
+    }
+  ]
+}

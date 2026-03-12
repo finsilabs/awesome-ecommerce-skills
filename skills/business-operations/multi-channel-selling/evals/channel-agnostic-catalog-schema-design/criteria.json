@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent designs a channel-agnostic catalog schema with the correct column types, constraints, and table structure, including UUID keys, integer pricing in cents, JSONB for dimensions, TIMESTAMPTZ for timestamps, the correct channel type enum check, and proper uniqueness constraints on channel_listings and orders.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "UUID with gen_random_uuid()",
+      "max_score": 8,
+      "description": "Product (and other entity) primary keys use UUID type with DEFAULT gen_random_uuid()"
+    },
+    {
+      "name": "master_sku unique",
+      "max_score": 8,
+      "description": "Products table has a master_sku column declared as NOT NULL UNIQUE (VARCHAR or TEXT)"
+    },
+    {
+      "name": "Price stored in integer cents",
+      "max_score": 10,
+      "description": "Price in channel_listings (or equivalent) is stored as INTEGER, not DECIMAL/FLOAT/NUMERIC, with cents as the unit"
+    },
+    {
+      "name": "JSONB dimensions",
+      "max_score": 8,
+      "description": "Product dimensions are stored in a JSONB column (not separate columns or TEXT)"
+    },
+    {
+      "name": "TIMESTAMPTZ timestamps",
+      "max_score": 8,
+      "description": "All timestamp columns use TIMESTAMPTZ (not TIMESTAMP without timezone)"
+    },
+    {
+      "name": "Channel type CHECK constraint",
+      "max_score": 10,
+      "description": "Channels table has a CHECK constraint limiting type to 'dtc', 'wholesale', 'marketplace', and 'pos'"
+    },
+    {
+      "name": "Unique channel SKU per channel",
+      "max_score": 10,
+      "description": "channel_listings table has a UNIQUE constraint on (channel_id, channel_sku) combination"
+    },
+    {
+      "name": "Single shared inventory pool",
+      "max_score": 10,
+      "description": "Inventory is stored in a single table with a shared reserved count (not split per channel), and notes.md or comments explain that reserved spans all channels"
+    },
+    {
+      "name": "Non-negative inventory constraint",
+      "max_score": 8,
+      "description": "Inventory table has a CHECK constraint ensuring quantity_on_hand >= 0"
+    },
+    {
+      "name": "Channel inventory allocations table",
+      "max_score": 10,
+      "description": "Schema includes a channel_inventory_allocations (or equivalent) table for optional per-channel buffers, with allocated_qty defaulting to 0"
+    },
+    {
+      "name": "Unique channel order ID constraint",
+      "max_score": 10,
+      "description": "Orders table (if included) has a UNIQUE constraint on (channel_id, channel_order_id) to prevent duplicate imports"
+    }
+  ]
+}

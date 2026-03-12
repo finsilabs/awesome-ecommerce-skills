@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shopify-metafields",
+  "version": "0.1.0",
+  "summary": "Custom data with metafield definitions, validation, and storefront access",
+  "skills": {
+    "shopify-metafields": {
+      "path": "SKILL.md"
+    }
+  }
+}

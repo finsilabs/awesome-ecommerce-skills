@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements cohort retention SQL using monthly truncation with the correct milestone periods, builds a behavioral rules engine with all three rule types and correct operator semantics, uses parallel rule evaluation, and recommends the correct index strategy.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "DATE_TRUNC for cohort month",
+      "max_score": 10,
+      "description": "cohort_analysis.sql uses DATE_TRUNC('month', ...) to define the cohort month (not EXTRACT, not date casting alone)"
+    },
+    {
+      "name": "Four retention milestones",
+      "max_score": 10,
+      "description": "The SQL tracks retention at exactly periods 1, 3, 6, and 12 months (all four must be present as separate output columns)"
+    },
+    {
+      "name": "Exclude invalid orders",
+      "max_score": 8,
+      "description": "The cohort SQL excludes orders with status 'cancelled' AND 'refunded' (both statuses must be filtered out)"
+    },
+    {
+      "name": "Event rule type",
+      "max_score": 10,
+      "description": "The TypeScript segment rule type includes an 'event' variant with at least an event name, a count comparison (op + value), and a time window in days"
+    },
+    {
+      "name": "Property rule type",
+      "max_score": 8,
+      "description": "The TypeScript segment rule type includes a 'property' variant with a field name, comparison operator, and value"
+    },
+    {
+      "name": "Segment membership rule type",
+      "max_score": 8,
+      "description": "The TypeScript segment rule type includes a 'segment' variant that checks whether a customer is (or is not) in another segment"
+    },
+    {
+      "name": "AND/OR operator support",
+      "max_score": 8,
+      "description": "The BehavioralSegment type includes an 'operator' field accepting both 'AND' and 'OR' values"
+    },
+    {
+      "name": "Promise.all parallel evaluation",
+      "max_score": 10,
+      "description": "evaluateBehavioralSegment uses Promise.all (not sequential awaits) to evaluate all rules concurrently"
+    },
+    {
+      "name": "Correct operator semantics",
+      "max_score": 8,
+      "description": "The AND operator uses .every(Boolean) and the OR operator uses .some(Boolean) on the results array"
+    },
+    {
+      "name": "Composite index recommendation",
+      "max_score": 10,
+      "description": "db_recommendations.md recommends a composite index on the customer_events table covering customer_id, event, and created_at (all three columns)"
+    },
+    {
+      "name": "Pre-materialization recommendation",
+      "max_score": 8,
+      "description": "db_recommendations.md recommends pre-materializing segment membership (e.g. in a nightly job or materialized view) as a performance strategy"
+    },
+    {
+      "name": "AGE() for period calculation",
+      "max_score": 2,
+      "description": "cohort_analysis.sql uses AGE() or DATE_PART('month', AGE(...)) to compute the period number (months since cohort), not a simple date subtraction"
+    }
+  ]
+}

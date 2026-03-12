@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shopify-checkout-extensions",
+  "version": "0.1.0",
+  "summary": "Checkout UI extensions and Shopify Functions for custom logic",
+  "skills": {
+    "shopify-checkout-extensions": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements correct supplier selection logic (cheapest in-stock), groups order lines by supplier before creating dropship orders, handles both API and non-API submission methods, uses proper authentication, correctly manages order status transitions and supplier references, and prevents duplicate submissions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cheapest supplier selection",
+      "max_score": 10,
+      "description": "The supplier selection logic orders by cost_price ascending (cheapest first) when multiple suppliers can fulfill a product"
+    },
+    {
+      "name": "Stock quantity filter",
+      "max_score": 8,
+      "description": "The supplier selection filters by stock_qty >= required quantity (not just stock_qty > 0) to ensure enough units are available"
+    },
+    {
+      "name": "Active supplier filter",
+      "max_score": 7,
+      "description": "The supplier selection filters by is_active = true to exclude inactive suppliers"
+    },
+    {
+      "name": "Group lines by supplier",
+      "max_score": 10,
+      "description": "Order lines for the same supplier are grouped together and result in a single dropship order per supplier (not one dropship order per order line)"
+    },
+    {
+      "name": "Bearer token authentication",
+      "max_score": 10,
+      "description": "API submissions use Bearer token authentication with the supplier's api_key passed through a decrypt function (e.g., decryptApiKey) rather than storing or using plaintext credentials directly"
+    },
+    {
+      "name": "Non-API method handling",
+      "max_score": 8,
+      "description": "When supplier.order_method is not 'api', the code branches to a different submission path (e.g., email/EDI/CSV) rather than attempting an API call"
+    },
+    {
+      "name": "Failed status on error",
+      "max_score": 8,
+      "description": "When the supplier API returns an error response, the dropship order status is updated to 'failed' before or alongside throwing/returning the error"
+    },
+    {
+      "name": "supplier_order_ref persisted",
+      "max_score": 10,
+      "description": "After a successful submission, the supplier's returned order reference/ID is saved to the supplier_order_ref field on the dropship order"
+    },
+    {
+      "name": "Status transition to submitted",
+      "max_score": 8,
+      "description": "After successful API submission, the dropship order status is updated to 'submitted' (not left as 'pending')"
+    },
+    {
+      "name": "Idempotency / duplicate prevention",
+      "max_score": 8,
+      "description": "The code includes a check for an existing supplier_order_ref or uses idempotency keys to prevent duplicate submission when retrying a timed-out request"
+    },
+    {
+      "name": "submitted_at timestamp",
+      "max_score": 7,
+      "description": "The submitted_at field is set to the current timestamp when a dropship order is successfully submitted"
+    },
+    {
+      "name": "total_cost calculated from lines",
+      "max_score": 6,
+      "description": "The total_cost for each dropship order is computed by summing costPrice * quantity across all order lines assigned to that supplier"
+    }
+  ]
+}

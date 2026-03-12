@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent applies composable commerce API versioning patterns (additive versioning, Tolerant Reader, URL versioning, feature flags) and implements distributed tracing using OpenTelemetry with trace ID propagation across service calls.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "URL versioning",
+      "max_score": 10,
+      "description": "Route handlers use URL versioning (e.g. /api/v1/products and /api/v2/products) or content negotiation headers to distinguish API versions"
+    },
+    {
+      "name": "V2 extends V1 additively",
+      "max_score": 12,
+      "description": "ProductV2 type extends ProductV1 (or includes all V1 fields) and only adds new optional fields — does NOT remove or change the type of any V1 field"
+    },
+    {
+      "name": "New V2 fields are optional",
+      "max_score": 10,
+      "description": "New fields added in V2 (such as categories, attributes, brand) are defined as optional (?) so consumers not sending them are unaffected"
+    },
+    {
+      "name": "Feature flag for breaking changes",
+      "max_score": 10,
+      "description": "Code includes a feature flag, API version parameter, or conditional check that controls whether V2 fields are returned, rather than always returning them"
+    },
+    {
+      "name": "OpenTelemetry import",
+      "max_score": 12,
+      "description": "Imports from '@opentelemetry/...' packages (NOT a custom trace implementation or a different tracing library like jaeger-client or dd-trace as the primary mechanism)"
+    },
+    {
+      "name": "Trace ID propagation",
+      "max_score": 12,
+      "description": "Tracing setup propagates a trace/span context to outbound HTTP calls so downstream services can be correlated (e.g. using a propagator or context injection into request headers)"
+    },
+    {
+      "name": "Single trace ID per request",
+      "max_score": 8,
+      "description": "Documentation, comments, or code demonstrates that all service calls for a single user request share one trace ID (not a new trace per service hop)"
+    },
+    {
+      "name": "Data ownership — one system of record",
+      "max_score": 10,
+      "description": "Code or architectural comments establish that the Product Service is the sole owner of product data — other services read via API and do not write directly to this service's data store"
+    },
+    {
+      "name": "No shared database pattern",
+      "max_score": 8,
+      "description": "Code or documentation does NOT show or suggest other services sharing the product service's database directly (no shared connection strings, no cross-service ORM models)"
+    },
+    {
+      "name": "Modular monolith recommendation",
+      "max_score": 8,
+      "description": "Code comments, README, or architectural notes recommend or acknowledge starting with a modular monolith before full microservice decomposition, or cite the risk of premature decomposition"
+    }
+  ]
+}

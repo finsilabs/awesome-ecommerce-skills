@@ -1,0 +1,10 @@
+{
+  "name": "finsi/inventory-tracking",
+  "version": "0.1.0",
+  "summary": "Real-time stock tracking across warehouses with reservation and backorder logic",
+  "skills": {
+    "inventory-tracking": {
+      "path": "SKILL.md"
+    }
+  }
+}

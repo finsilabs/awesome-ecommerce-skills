@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements company-scoped catalog retrieval (with fallback to all products and custom price overlay), server-side approval enforcement (not just client-side), net-terms invoice generation with pdfkit including correct due date calculation and PO number, and credit release when orders are paid or cancelled.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "catalog empty fallback",
+      "max_score": 10,
+      "description": "getCatalogForCompany returns ALL active products (not an empty list or error) when the company has no custom catalog entries"
+    },
+    {
+      "name": "custom price overlay",
+      "max_score": 8,
+      "description": "getCatalogForCompany overrides the standard product price with custom_price from company_catalogs when a catalog entry exists"
+    },
+    {
+      "name": "catalog scoped by company_id",
+      "max_score": 8,
+      "description": "getCatalogForCompany queries company_catalogs with a company_id filter (not returning catalog data for all companies)"
+    },
+    {
+      "name": "is_visible filter",
+      "max_score": 5,
+      "description": "getCatalogForCompany filters catalog entries where is_visible = true"
+    },
+    {
+      "name": "approval: buyer role triggers approval",
+      "max_score": 8,
+      "description": "checkOrderApprovalRequired returns true when the user's role is 'buyer' (regardless of order total)"
+    },
+    {
+      "name": "approval: spending_limit check",
+      "max_score": 8,
+      "description": "checkOrderApprovalRequired returns true when orderTotal exceeds the user's spending_limit (when spending_limit is not null)"
+    },
+    {
+      "name": "approval enforced server-side",
+      "max_score": 8,
+      "description": "The checkout/order-placement API endpoint calls checkOrderApprovalRequired (or equivalent) on the server, not relying solely on a client-provided flag"
+    },
+    {
+      "name": "invoice due date calculation",
+      "max_score": 11,
+      "description": "generateInvoice calculates dueDate by parsing the numeric days from payment_terms (e.g. 'net30' → 30) and adding to order.created_at"
+    },
+    {
+      "name": "invoice number format",
+      "max_score": 6,
+      "description": "Invoice number follows the format INV-{order_number} (INV- prefix)"
+    },
+    {
+      "name": "invoice uses pdfkit",
+      "max_score": 8,
+      "description": "Invoice PDF is built using pdfkit (the package named 'pdfkit'), not a different PDF library"
+    },
+    {
+      "name": "PO number on invoice",
+      "max_score": 6,
+      "description": "Invoice includes the order's po_number field in the output"
+    },
+    {
+      "name": "credit release on payment",
+      "max_score": 7,
+      "description": "There is a handler (webhook or function) that decrements companies.credit_used when an order is paid"
+    },
+    {
+      "name": "credit release on cancellation",
+      "max_score": 7,
+      "description": "Order cancellation logic decrements companies.credit_used immediately when a credit-consuming order is cancelled"
+    }
+  ]
+}

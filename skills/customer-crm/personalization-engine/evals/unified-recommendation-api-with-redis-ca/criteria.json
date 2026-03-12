@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements a unified recommendation API: context-based routing with the right strategy per surface, Redis caching with the correct key format and TTL, fallback behavior when FBT results are sparse on the PDP, and appropriate product limits per context.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Redis cache lookup",
+      "max_score": 10,
+      "description": "The handler checks the Redis cache before computing recommendations and returns the cached result immediately if found."
+    },
+    {
+      "name": "Cache key format",
+      "max_score": 10,
+      "description": "The Redis cache key includes all three dimensions: context, productId (or a placeholder like 'none' when absent), and userId (or a placeholder like 'anon' when absent)."
+    },
+    {
+      "name": "Cache TTL 5-15 minutes",
+      "max_score": 10,
+      "description": "The Redis cache is set with an expiry between 300 and 900 seconds (5–15 minutes)."
+    },
+    {
+      "name": "PDP uses FBT",
+      "max_score": 8,
+      "description": "The PDP context calls getFrequentlyBoughtTogether (or equivalent) as the primary recommendation strategy."
+    },
+    {
+      "name": "PDP sparse backfill",
+      "max_score": 10,
+      "description": "When the PDP context returns fewer than 4 FBT products, the handler backfills the remaining slots using browsing-history recommendations."
+    },
+    {
+      "name": "Homepage logged-in vs anonymous",
+      "max_score": 10,
+      "description": "The homepage context uses browsing-history recommendations for logged-in users (userId present) and bestsellers for anonymous users (no userId)."
+    },
+    {
+      "name": "Cart limit of 4",
+      "max_score": 10,
+      "description": "The cart context calls the FBT function with a limit of 4 (not 6 or 8)."
+    },
+    {
+      "name": "Default bestsellers fallback",
+      "max_score": 8,
+      "description": "An unrecognized or missing context falls back to bestsellers (with a limit of 8)."
+    },
+    {
+      "name": "Carousel cap ≤ 8",
+      "max_score": 8,
+      "description": "No context returns more than 8 products (the maximum carousel size specified in the skill)."
+    },
+    {
+      "name": "Session browsing history",
+      "max_score": 8,
+      "description": "The handler retrieves the session browsing history (from cookie, session, or equivalent) and passes it to the browsing-history recommendation function."
+    },
+    {
+      "name": "Cache write after compute",
+      "max_score": 8,
+      "description": "After computing recommendations, the result is written to the Redis cache with the correct key and TTL before returning the response."
+    }
+  ]
+}

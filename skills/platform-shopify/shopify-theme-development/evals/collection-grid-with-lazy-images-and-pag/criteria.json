@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent builds a Shopify collection grid section using correct Online Store 2.0 JSON templates, native Liquid pagination tags, responsive lazy-loaded images via image_url/image_tag, native money filter, deferred JavaScript, and proper schema presets.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "JSON template for collection",
+      "max_score": 12,
+      "description": "A `templates/collection.json` file is produced that references the collection section by key with an `order` array, rather than a Liquid `.liquid` template"
+    },
+    {
+      "name": "paginate tag used",
+      "max_score": 10,
+      "description": "Product listing uses `{% paginate collection.products by N %}...{% endpaginate %}` Liquid tags rather than manual slicing"
+    },
+    {
+      "name": "default_pagination filter",
+      "max_score": 10,
+      "description": "Pagination navigation uses `{{ paginate | default_pagination }}` filter rather than manually constructing pagination links"
+    },
+    {
+      "name": "image_url not img_url",
+      "max_score": 10,
+      "description": "Product card images use `image_url` filter with an explicit `width` parameter — the deprecated `img_url` filter is NOT used anywhere"
+    },
+    {
+      "name": "image_tag lazy loading",
+      "max_score": 8,
+      "description": "Product card images use `image_tag` with `loading: 'lazy'`"
+    },
+    {
+      "name": "image_tag widths and sizes",
+      "max_score": 8,
+      "description": "Product card `image_tag` calls include both `widths` and `sizes` parameters for responsive images"
+    },
+    {
+      "name": "money filter for price",
+      "max_score": 8,
+      "description": "Product card prices use the `| money` Liquid filter, not manual cent division or string formatting"
+    },
+    {
+      "name": "Schema presets present",
+      "max_score": 10,
+      "description": "The section's `{% schema %}` includes a non-empty `presets` array"
+    },
+    {
+      "name": "block.shopify_attributes on blocks",
+      "max_score": 8,
+      "description": "If the section defines any blocks, every block wrapper element includes `{{ block.shopify_attributes }}`"
+    },
+    {
+      "name": "JS deferred or module",
+      "max_score": 8,
+      "description": "Any `<script>` tags in the section or included assets use `defer` attribute or `type=\"module\"` — no synchronous render-blocking script tags"
+    },
+    {
+      "name": "asset_url filter for assets",
+      "max_score": 8,
+      "description": "CSS and JS files are referenced using `| asset_url` filter rather than hardcoded paths"
+    }
+  ]
+}

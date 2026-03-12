@@ -1,0 +1,10 @@
+{
+  "name": "finsi/cart-abandonment-recovery",
+  "version": "0.1.0",
+  "summary": "Multi-channel abandonment recovery with timing sequences and incentive escalation",
+  "skills": {
+    "cart-abandonment-recovery": {
+      "path": "SKILL.md"
+    }
+  }
+}

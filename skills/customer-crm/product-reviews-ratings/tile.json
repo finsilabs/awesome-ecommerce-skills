@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-reviews-ratings",
+  "version": "0.1.0",
+  "summary": "Review collection, moderation, aggregate scoring, and display widgets",
+  "skills": {
+    "product-reviews-ratings": {
+      "path": "SKILL.md"
+    }
+  }
+}

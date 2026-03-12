@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly maps payment integration architectures to PCI SAQ types, applies the SAQ A preference for scope reduction, correctly distinguishes SAQ A from SAQ A-EP, and identifies the right number of controls for each SAQ type.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SAQ D identification",
+      "max_score": 8,
+      "description": "Correctly identifies that Approach C (card data passes through own server) requires SAQ D"
+    },
+    {
+      "name": "SAQ D control count",
+      "max_score": 6,
+      "description": "States that SAQ D involves approximately 330 controls"
+    },
+    {
+      "name": "SAQ A identification",
+      "max_score": 8,
+      "description": "Correctly identifies that Approach A (fully hosted redirect / Stripe Checkout) qualifies for SAQ A"
+    },
+    {
+      "name": "SAQ A control count",
+      "max_score": 6,
+      "description": "States that SAQ A involves approximately 22 controls"
+    },
+    {
+      "name": "SAQ A-EP identification",
+      "max_score": 10,
+      "description": "Correctly identifies that Approach B (JS tokenization on your own page / Stripe Elements) requires SAQ A-EP, NOT SAQ A"
+    },
+    {
+      "name": "SAQ A-EP control count",
+      "max_score": 6,
+      "description": "States that SAQ A-EP involves approximately 191 controls"
+    },
+    {
+      "name": "Hosted redirect recommendation",
+      "max_score": 12,
+      "description": "Recommends Approach A (fully hosted payment page / Stripe Checkout) as the preferred option for scope reduction"
+    },
+    {
+      "name": "Scope reduction rationale",
+      "max_score": 10,
+      "description": "Explains that the key reason for recommending the hosted redirect is that card data never reaches ShopFast's servers"
+    },
+    {
+      "name": "Server-side code sketch",
+      "max_score": 10,
+      "description": "Code sketch uses stripe.checkout.sessions.create() (or equivalent hosted session API) and redirects the customer to the session URL"
+    },
+    {
+      "name": "Correct SAQ A scope description",
+      "max_score": 8,
+      "description": "Correctly describes the residual SAQ A controls (e.g. protecting the redirect link, not storing card data, maintaining the website environment) rather than overstating them"
+    },
+    {
+      "name": "SAQ A-EP not conflated with SAQ A",
+      "max_score": 8,
+      "description": "Document does NOT incorrectly claim that Stripe Elements (JS on your own page) qualifies for SAQ A"
+    },
+    {
+      "name": "Tokenization principle",
+      "max_score": 8,
+      "description": "Notes that using the recommended approach means card numbers are never stored, processed, or transmitted through ShopFast's systems"
+    }
+  ]
+}

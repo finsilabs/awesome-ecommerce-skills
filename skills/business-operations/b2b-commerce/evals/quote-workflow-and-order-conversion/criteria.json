@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent correctly implements the B2B quote lifecycle: submitting a quote (status check, email notification), approving a quote (transaction wrapping, 30-day validity, both price fields updated), converting to an order (credit check inside transaction, quote locked to 'ordered', price frozen from approval), and auditing quote changes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "submitQuote status guard",
+      "max_score": 6,
+      "description": "submitQuote checks that quote.status === 'draft' and throws/returns an error if not"
+    },
+    {
+      "name": "submitQuote email template",
+      "max_score": 6,
+      "description": "submitQuote sends email using template named 'quote-submitted' with quoteId and companyName in the payload"
+    },
+    {
+      "name": "submitQuote notifies account manager",
+      "max_score": 5,
+      "description": "submitQuote sends the notification to the account manager (not the buyer) for the company"
+    },
+    {
+      "name": "approveQuote uses transaction",
+      "max_score": 8,
+      "description": "approveQuote wraps all database updates (quote lines and quote status) in a single database transaction"
+    },
+    {
+      "name": "approveQuote updates both price fields",
+      "max_score": 8,
+      "description": "approveQuote sets BOTH unit_price AND offered_price on each quote line (not just one of them)"
+    },
+    {
+      "name": "approveQuote 30-day validity",
+      "max_score": 8,
+      "description": "approveQuote sets valid_until to exactly 30 days from the current time (30 * 86400000 ms or equivalent)"
+    },
+    {
+      "name": "approveQuote buyer email",
+      "max_score": 6,
+      "description": "approveQuote sends email to the buyer using template 'quote-approved' with quoteId and validUntil"
+    },
+    {
+      "name": "placeOrderFromQuote approved check",
+      "max_score": 5,
+      "description": "placeOrderFromQuote checks quote.status === 'approved' and throws if not"
+    },
+    {
+      "name": "placeOrderFromQuote expiry check",
+      "max_score": 5,
+      "description": "placeOrderFromQuote checks that valid_until has not passed and throws an error if the quote is expired"
+    },
+    {
+      "name": "credit check inside transaction",
+      "max_score": 12,
+      "description": "placeOrderFromQuote checks credit_used + orderTotal against credit_limit INSIDE the same transaction as the order insert, not before entering the transaction"
+    },
+    {
+      "name": "PO number propagation",
+      "max_score": 5,
+      "description": "placeOrderFromQuote copies po_number from the function parameter (falling back to quote.po_number) onto the created order"
+    },
+    {
+      "name": "quote marked ordered",
+      "max_score": 6,
+      "description": "placeOrderFromQuote updates the quote's status to 'ordered' inside the transaction"
+    },
+    {
+      "name": "price not recalculated",
+      "max_score": 8,
+      "description": "placeOrderFromQuote uses unit_price from the quote_lines (frozen at approval time) without fetching current product prices"
+    },
+    {
+      "name": "audit logging",
+      "max_score": 12,
+      "description": "Implementation includes an audit log mechanism (table, event log, or similar) that records who changed a quote line price and when"
+    }
+  ]
+}

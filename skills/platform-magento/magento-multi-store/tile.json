@@ -1,0 +1,10 @@
+{
+  "name": "finsi/magento-multi-store",
+  "version": "0.1.0",
+  "summary": "Multi-website, multi-store setup with shared catalogs and scoped config",
+  "skills": {
+    "magento-multi-store": {
+      "path": "SKILL.md"
+    }
+  }
+}

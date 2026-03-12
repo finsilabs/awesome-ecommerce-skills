@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the three-tier referral reward system with correct dollar amounts, minimum order gating, store credit (not discount codes), dual-party reward issuance, 1-year store credit expiry, referrer email notification, and proper record updates.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Base tier values",
+      "max_score": 8,
+      "description": "Tier at 0+ referrals sets referrer reward to 1000 cents ($10) and referee reward to 1000 cents ($10)"
+    },
+    {
+      "name": "Mid tier values",
+      "max_score": 8,
+      "description": "Tier at 5+ referrals sets referrer reward to 1500 cents ($15) and referee reward to 1000 cents ($10)"
+    },
+    {
+      "name": "Top tier values",
+      "max_score": 8,
+      "description": "Tier at 10+ referrals sets referrer reward to 2500 cents ($25) and referee reward to 1500 cents ($15)"
+    },
+    {
+      "name": "Minimum order threshold",
+      "max_score": 12,
+      "description": "Reward is NOT granted when the order subtotal is below 2500 cents ($25); orders under $25 are skipped/returned early"
+    },
+    {
+      "name": "Store credit (not discount codes)",
+      "max_score": 10,
+      "description": "Rewards are issued as store credit — code does NOT use coupon codes, discount codes, or voucher codes as the reward mechanism"
+    },
+    {
+      "name": "Both parties rewarded",
+      "max_score": 10,
+      "description": "Both the referrer and the referee receive store credit on the same qualifying purchase event"
+    },
+    {
+      "name": "Referrer email notification",
+      "max_score": 8,
+      "description": "A notification email is sent to the referrer after rewards are issued (not the referee)"
+    },
+    {
+      "name": "Referral status updated",
+      "max_score": 8,
+      "description": "The referral record status is updated to 'rewarded' (or equivalent) after successful reward issuance"
+    },
+    {
+      "name": "totalReferrals incremented",
+      "max_score": 8,
+      "description": "The referrer's total successful referral count is incremented by 1 after a successful reward event"
+    },
+    {
+      "name": "1-year store credit expiry",
+      "max_score": 10,
+      "description": "Store credit is issued with an expiry of 365 days (1 year) from the issuance date"
+    },
+    {
+      "name": "Tier lookup uses highest eligible tier",
+      "max_score": 10,
+      "description": "getReferralReward (or equivalent) returns the highest tier for which minReferrals <= successfulReferrals, not just the first match"
+    }
+  ]
+}

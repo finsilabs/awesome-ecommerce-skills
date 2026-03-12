@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the three-phase transfer order lifecycle: draft creation with stock validation, shipping (reserve at source, status to in_transit), and receipt (decrement source on_hand+reserved, increment destination on_hand via upsert, status to received). Also checks atomic updates, partial receipt support, and correct module file placement.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "module file path",
+      "max_score": 5,
+      "description": "Transfer order logic is placed in api/admin/transfer-orders.js"
+    },
+    {
+      "name": "draft initial status",
+      "max_score": 8,
+      "description": "Newly created transfer orders have status 'draft' (not 'pending', 'open', or any other value)"
+    },
+    {
+      "name": "source stock validation",
+      "max_score": 9,
+      "description": "createTransferOrder checks that the source location's available quantity is >= the requested transfer quantity before creating the order"
+    },
+    {
+      "name": "validation error returned",
+      "max_score": 7,
+      "description": "When source stock is insufficient, a 400-equivalent error is returned (not a silent failure or exception swallowed)"
+    },
+    {
+      "name": "ship increments reserved",
+      "max_score": 10,
+      "description": "markTransferShipped increments the reserved count at the source location (does NOT decrement on_hand at this stage)"
+    },
+    {
+      "name": "in_transit status on ship",
+      "max_score": 7,
+      "description": "markTransferShipped updates the transfer order status to 'in_transit'"
+    },
+    {
+      "name": "receive decrements source",
+      "max_score": 10,
+      "description": "receiveTransferOrder decrements both on_hand and reserved at the source location for received quantities"
+    },
+    {
+      "name": "receive increments destination",
+      "max_score": 9,
+      "description": "receiveTransferOrder increments (or creates) on_hand at the destination location for received quantities"
+    },
+    {
+      "name": "received status on receipt",
+      "max_score": 7,
+      "description": "receiveTransferOrder updates the transfer order status to 'received'"
+    },
+    {
+      "name": "atomic update pattern",
+      "max_score": 9,
+      "description": "Ship and receive operations update inventory and order status together in a single transaction or equivalent atomic operation (not sequential independent writes)"
+    },
+    {
+      "name": "partial receipt support",
+      "max_score": 10,
+      "description": "receiveTransferOrder accepts a receivedItems parameter (or equivalent) that may contain quantities less than the original transfer, allowing partial receipt"
+    },
+    {
+      "name": "destination upsert",
+      "max_score": 9,
+      "description": "When receiving, the destination inventory row is created if it doesn't exist (upsert pattern — not just update)"
+    }
+  ]
+}

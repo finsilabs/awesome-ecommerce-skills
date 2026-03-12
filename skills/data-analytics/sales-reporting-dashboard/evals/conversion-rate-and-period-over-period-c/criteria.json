@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent builds conversion rate SQL and period-over-period TypeScript following the skill's specific join direction, CVR formula, visitor segmentation pattern, and prior-period calculation. Covers LEFT JOIN direction, ROUND/NULLIF in CVR, new/returning visitor segmentation, same-length prior period calculation, Promise.all concurrency, and null-safe change percentages.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "LEFT JOIN direction",
+      "max_score": 12,
+      "description": "SQL query starts from sessions and uses LEFT JOIN to orders (i.e. FROM sessions LEFT JOIN orders), not the other way around"
+    },
+    {
+      "name": "Cancelled orders excluded in join",
+      "max_score": 10,
+      "description": "The LEFT JOIN condition or WHERE clause excludes cancelled orders (e.g. AND o.status NOT IN ('cancelled'))"
+    },
+    {
+      "name": "CVR formula with ROUND",
+      "max_score": 10,
+      "description": "Conversion rate is computed as ROUND(100.0 * COUNT(DISTINCT orders) / ..., 2) — includes ROUND to 2 decimal places and multiplies by 100.0"
+    },
+    {
+      "name": "NULLIF in CVR denominator",
+      "max_score": 8,
+      "description": "CVR calculation wraps the session count denominator in NULLIF(..., 0) to prevent division by zero"
+    },
+    {
+      "name": "New visitor segmentation",
+      "max_score": 10,
+      "description": "SQL query includes a count of new visitor sessions using a conditional expression on is_new_visitor (CASE WHEN or FILTER WHERE)"
+    },
+    {
+      "name": "Returning visitor segmentation",
+      "max_score": 8,
+      "description": "SQL query includes a count of returning visitor sessions (NOT is_new_visitor or equivalent)"
+    },
+    {
+      "name": "Same-length prior period",
+      "max_score": 10,
+      "description": "Prior period is computed by subtracting the period duration from currentStart (i.e. prior covers the same number of days/ms immediately before the current start)"
+    },
+    {
+      "name": "Concurrent period fetch",
+      "max_score": 12,
+      "description": "Current and prior period queries are executed concurrently using Promise.all (or equivalent), not with sequential awaits"
+    },
+    {
+      "name": "Null-safe change percentage",
+      "max_score": 10,
+      "description": "Percentage change values are returned as null (not NaN, 0, or an error) when the prior period has no sessions or orders"
+    },
+    {
+      "name": "Period-over-period for all KPIs",
+      "max_score": 10,
+      "description": "The TypeScript function returns change percentages for at least three distinct metrics (e.g. sessions, orders/CVR, and new visitor count) — not just a single aggregate"
+    }
+  ]
+}

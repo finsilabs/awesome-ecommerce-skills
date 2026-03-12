@@ -1,0 +1,10 @@
+{
+  "name": "finsi/digital-products",
+  "version": "0.1.0",
+  "summary": "Manage downloadable goods — license keys, download limits, expiration, delivery",
+  "skills": {
+    "digital-products": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/image-zoom-360",
+  "version": "0.1.0",
+  "summary": "Product image zoom, 360-degree views, and video integration",
+  "skills": {
+    "image-zoom-360": {
+      "path": "SKILL.md"
+    }
+  }
+}

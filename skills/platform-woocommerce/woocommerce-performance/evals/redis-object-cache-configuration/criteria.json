@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly configures the Redis object cache for WooCommerce, including all required wp-config.php constants, proper TTL settings, and exclusion of volatile cache groups that would cause cache stampedes on checkout.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "WP_REDIS_HOST defined",
+      "max_score": 6,
+      "description": "redis-config.php defines WP_REDIS_HOST (e.g., '127.0.0.1')"
+    },
+    {
+      "name": "WP_REDIS_PORT defined",
+      "max_score": 6,
+      "description": "redis-config.php defines WP_REDIS_PORT (e.g., 6379)"
+    },
+    {
+      "name": "WP_REDIS_DATABASE defined",
+      "max_score": 6,
+      "description": "redis-config.php defines WP_REDIS_DATABASE"
+    },
+    {
+      "name": "WP_REDIS_TIMEOUT defined",
+      "max_score": 6,
+      "description": "redis-config.php defines WP_REDIS_TIMEOUT"
+    },
+    {
+      "name": "WP_REDIS_READ_TIMEOUT defined",
+      "max_score": 6,
+      "description": "redis-config.php defines WP_REDIS_READ_TIMEOUT"
+    },
+    {
+      "name": "MAXTTL set to 86400",
+      "max_score": 12,
+      "description": "WP_REDIS_MAXTTL is defined and set to 86400 (24 hours)"
+    },
+    {
+      "name": "wc_session_id excluded",
+      "max_score": 14,
+      "description": "WP_REDIS_IGNORED_GROUPS includes 'wc_session_id'"
+    },
+    {
+      "name": "counts excluded",
+      "max_score": 10,
+      "description": "WP_REDIS_IGNORED_GROUPS includes 'counts'"
+    },
+    {
+      "name": "plugins excluded",
+      "max_score": 10,
+      "description": "WP_REDIS_IGNORED_GROUPS includes 'plugins'"
+    },
+    {
+      "name": "Plugin install command",
+      "max_score": 8,
+      "description": "setup-notes.md includes 'wp plugin install redis-cache' (or equivalent WP-CLI command to install the Redis Object Cache plugin)"
+    },
+    {
+      "name": "wp redis enable command",
+      "max_score": 8,
+      "description": "setup-notes.md includes 'wp redis enable' to activate the object cache drop-in"
+    },
+    {
+      "name": "Volatile data exclusion rationale",
+      "max_score": 8,
+      "description": "setup-notes.md explains that session/cart data is excluded from Redis because it changes on every request (or equivalent: to prevent cache stampedes / stale session data on checkout)"
+    }
+  ]
+}

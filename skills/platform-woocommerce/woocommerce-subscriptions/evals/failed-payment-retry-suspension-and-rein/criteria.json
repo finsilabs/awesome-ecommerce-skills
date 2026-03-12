@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent uses the correct WooCommerce Subscriptions APIs for payment retry, subscription suspension with meta-logging, and reinstatement with safe next-payment date resetting. Covers wcs_create_renewal_order, payment gateway retrieval, meta data storage, and set_date for next payment.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "wcs_get_subscription with null-check (retry)",
+      "max_score": 6,
+      "description": "The retry function calls wcs_get_subscription() and checks for falsy result before proceeding"
+    },
+    {
+      "name": "On-hold status check before retry",
+      "max_score": 8,
+      "description": "The retry function verifies the subscription has 'on-hold' status (e.g., has_status('on-hold')) before attempting payment"
+    },
+    {
+      "name": "wcs_create_renewal_order",
+      "max_score": 10,
+      "description": "Uses wcs_create_renewal_order() to create the renewal order for retry (not manually creating a WC_Order)"
+    },
+    {
+      "name": "WP_Error check on renewal order",
+      "max_score": 8,
+      "description": "Checks is_wp_error($renewal_order) and returns early if the order creation failed"
+    },
+    {
+      "name": "Gateway retrieval",
+      "max_score": 8,
+      "description": "Uses wc_get_payment_gateway_by_order() to retrieve the payment gateway associated with the subscription"
+    },
+    {
+      "name": "scheduled_subscription_payment called",
+      "max_score": 8,
+      "description": "Calls $payment_gateway->scheduled_subscription_payment() with the renewal order total and order object"
+    },
+    {
+      "name": "method_exists check on gateway",
+      "max_score": 6,
+      "description": "Checks method_exists($payment_gateway, 'scheduled_subscription_payment') before calling it"
+    },
+    {
+      "name": "Suspension meta: reason",
+      "max_score": 8,
+      "description": "The suspend function stores the suspension reason as meta using update_meta_data('_suspension_reason', ...) before changing status"
+    },
+    {
+      "name": "Suspension meta: date",
+      "max_score": 8,
+      "description": "The suspend function stores the suspension timestamp as meta using update_meta_data('_suspension_date', ...) before changing status"
+    },
+    {
+      "name": "update_status to on-hold",
+      "max_score": 8,
+      "description": "The suspend function calls update_status('on-hold', ...) to put the subscription on hold (not a direct status property assignment)"
+    },
+    {
+      "name": "On-hold check before reinstatement",
+      "max_score": 6,
+      "description": "The reinstate function verifies the subscription has 'on-hold' status before proceeding"
+    },
+    {
+      "name": "set_date for next_payment",
+      "max_score": 10,
+      "description": "The reinstate function calls set_date('next_payment', ...) to push the next billing date forward before activating"
+    },
+    {
+      "name": "update_status to active on reinstatement",
+      "max_score": 6,
+      "description": "The reinstate function calls update_status('active', ...) to reactivate the subscription"
+    }
+  ]
+}

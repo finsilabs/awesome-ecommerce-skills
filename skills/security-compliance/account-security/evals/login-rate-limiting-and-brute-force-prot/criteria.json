@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent implements brute-force login protection using the correct Upstash/Redis packages with the exact rate limit thresholds, progressive delay values, email normalization, and user-enumeration-safe error handling as prescribed by the skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Upstash ratelimit package",
+      "max_score": 8,
+      "description": "Imports from '@upstash/ratelimit' (not a different rate-limit library)"
+    },
+    {
+      "name": "Upstash Redis package",
+      "max_score": 6,
+      "description": "Imports from '@upstash/redis' and uses Redis.fromEnv() to initialize the client"
+    },
+    {
+      "name": "Sliding window algorithm",
+      "max_score": 6,
+      "description": "Uses Ratelimit.slidingWindow() (not fixed window or token bucket) for both limiters"
+    },
+    {
+      "name": "Per-IP limit threshold",
+      "max_score": 8,
+      "description": "Per-IP limiter is configured with exactly 20 attempts per 15-minute window"
+    },
+    {
+      "name": "Per-account limit threshold",
+      "max_score": 8,
+      "description": "Per-account limiter is configured with exactly 5 attempts per 15-minute window"
+    },
+    {
+      "name": "Rate limiter prefixes",
+      "max_score": 6,
+      "description": "IP limiter uses prefix 'rl_login_ip' and email limiter uses prefix 'rl_login_email'"
+    },
+    {
+      "name": "Parallel limit checks",
+      "max_score": 6,
+      "description": "Both IP and account rate limit checks are executed concurrently (e.g. via Promise.all) rather than sequentially"
+    },
+    {
+      "name": "Progressive delay thresholds",
+      "max_score": 10,
+      "description": "Progressive delay returns 0ms for 0 failures, 1000ms for less than 3 failures, 3000ms for less than 5 failures, and 5000ms for 5 or more failures"
+    },
+    {
+      "name": "Failure TTL",
+      "max_score": 8,
+      "description": "Login failure counter is stored with a TTL/expiry of 900 seconds (15 minutes)"
+    },
+    {
+      "name": "Email normalization",
+      "max_score": 8,
+      "description": "Email address is lowercased before being used as a rate limit key or failure-tracking key"
+    },
+    {
+      "name": "User enumeration prevention",
+      "max_score": 10,
+      "description": "The same error message (e.g. 'Invalid credentials') is returned for both unknown-email and wrong-password cases — the response does NOT indicate which was wrong"
+    },
+    {
+      "name": "No localStorage usage",
+      "max_score": 6,
+      "description": "The implementation does NOT reference localStorage or sessionStorage for storing any authentication token"
+    },
+    {
+      "name": "Session fixation prevention mentioned",
+      "max_score": 4,
+      "description": "README or code comments mention session ID regeneration after successful login to prevent session fixation"
+    },
+    {
+      "name": "Distinct error types",
+      "max_score": 6,
+      "description": "Rate limit errors distinguish between IP-blocked and account-locked conditions (different error codes or messages)"
+    }
+  ]
+}

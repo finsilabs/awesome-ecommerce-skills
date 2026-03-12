@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements exchange rate caching with the correct TTL strategy, fetches from an appropriate API, applies psychological pricing rounding rules per the skill's specifications, and handles zero-decimal currencies and missing rate edge cases correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Redis cache key",
+      "max_score": 6,
+      "description": "The exchange rate cache uses the key 'exchange_rates' (not a different key name)"
+    },
+    {
+      "name": "24-hour TTL",
+      "max_score": 8,
+      "description": "The cache TTL for display rates is set to 86400 seconds (24 hours), expressed as 60 * 60 * 24 or equivalent"
+    },
+    {
+      "name": "Daily vs real-time distinction",
+      "max_score": 8,
+      "description": "Code or comments distinguish between daily cached rates for display and real-time rates for payment processing (e.g. a comment explaining this, or separate functions)"
+    },
+    {
+      "name": "OXR or Fixer API",
+      "max_score": 7,
+      "description": "Exchange rate API URL references openexchangerates.org, fixer.io, or a named equivalent (not just a placeholder example.com URL)"
+    },
+    {
+      "name": "Base currency returns early",
+      "max_score": 6,
+      "description": "convertPrice returns the original amount unchanged when targetCurrency equals the base currency (USD), without applying a rate"
+    },
+    {
+      "name": "Missing rate error",
+      "max_score": 8,
+      "description": "convertPrice throws an error (not returns 0 or undefined) when the rate for a requested currency is not found"
+    },
+    {
+      "name": "Sub-$10 rounds to .99",
+      "max_score": 10,
+      "description": "roundPrice produces an amount ending in .99 for input amounts less than 10 (e.g. 7.3 → 7.99)"
+    },
+    {
+      "name": "$10-$99 rounds to nearest $0.05",
+      "max_score": 10,
+      "description": "roundPrice for amounts between 10 and 99 rounds to nearest $0.05 increment (e.g. uses Math.round(amount * 20) / 20 or equivalent logic)"
+    },
+    {
+      "name": "$100+ rounds to whole number",
+      "max_score": 8,
+      "description": "roundPrice for amounts >= 100 returns a whole number (Math.round)"
+    },
+    {
+      "name": "JPY rounds to integer",
+      "max_score": 10,
+      "description": "roundPrice for JPY (decimalDigits === 0) returns Math.round of the input, not a decimal"
+    },
+    {
+      "name": "Demo includes JPY",
+      "max_score": 9,
+      "description": "The demo output includes at least one JPY conversion example showing a whole-number result"
+    },
+    {
+      "name": "Cache check before fetch",
+      "max_score": 10,
+      "description": "getExchangeRates checks the cache first and only fetches from the API when no cached value exists"
+    }
+  ]
+}

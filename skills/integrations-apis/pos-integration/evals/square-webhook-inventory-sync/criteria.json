@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly builds a Square webhook endpoint that verifies signatures using the right HMAC construction, handles the correct event types, and updates inventory per location with safety stock logic.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "HMAC-SHA256 verification",
+      "max_score": 10,
+      "description": "Uses createHmac('sha256', ...) with the Square webhook secret to verify the incoming signature"
+    },
+    {
+      "name": "Full URL in HMAC input",
+      "max_score": 12,
+      "description": "The HMAC is computed over the full notification URL concatenated with the raw body (not just the body alone, and not just the path)"
+    },
+    {
+      "name": "Raw body for verification",
+      "max_score": 8,
+      "description": "Reads the raw request body (Buffer/bytes) before any JSON parsing, and uses the raw bytes for signature verification"
+    },
+    {
+      "name": "401 on invalid signature",
+      "max_score": 8,
+      "description": "Returns HTTP 401 (or equivalent rejection) when the computed signature does not match the x-square-hmacsha256-signature header"
+    },
+    {
+      "name": "inventory.count.updated handler",
+      "max_score": 8,
+      "description": "Handles the 'inventory.count.updated' event type and triggers an inventory update"
+    },
+    {
+      "name": "catalog.version.updated handler",
+      "max_score": 6,
+      "description": "Handles the 'catalog.version.updated' event type"
+    },
+    {
+      "name": "payment.completed handler",
+      "max_score": 6,
+      "description": "Handles the 'payment.completed' event type"
+    },
+    {
+      "name": "refund.created handler",
+      "max_score": 6,
+      "description": "Handles the 'refund.created' event type"
+    },
+    {
+      "name": "Per-location inventory update",
+      "max_score": 10,
+      "description": "Updates inventory quantity at the specific location_id (locationId) from the inventory count event, not as a single global quantity"
+    },
+    {
+      "name": "Safety stock deduction",
+      "max_score": 10,
+      "description": "The total available quantity exposed online is less than 100% of total physical stock — either by applying a percentage reduction or subtracting a buffer amount"
+    },
+    {
+      "name": "SKU lookup via mapping",
+      "max_score": 8,
+      "description": "Looks up the internal SKU/variant by the Square catalog_object_id (variation ID) from the event — does NOT assume catalog_object_id equals the SKU"
+    },
+    {
+      "name": "Accepted response",
+      "max_score": 8,
+      "description": "Returns a successful 200 response with an accepted acknowledgement when the event is processed"
+    }
+  ]
+}

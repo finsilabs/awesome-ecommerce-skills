@@ -1,0 +1,10 @@
+{
+  "name": "finsi/quick-view-modal",
+  "version": "0.1.0",
+  "summary": "Product quick-view overlays with add-to-cart without leaving the listing page",
+  "skills": {
+    "quick-view-modal": {
+      "path": "SKILL.md"
+    }
+  }
+}

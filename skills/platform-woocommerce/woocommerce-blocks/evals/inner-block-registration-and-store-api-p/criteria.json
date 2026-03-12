@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements the WooCommerce Blocks inner block registration pattern, including the PHP IntegrationInterface, Store API extension for data persistence, and proper order meta transfer on checkout. Covers the full stack from PHP bootstrap to React component to server-side save.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "woocommerce_blocks_loaded hook",
+      "max_score": 7,
+      "description": "Main plugin file uses add_action('woocommerce_blocks_loaded', ...) to register the integration (not init, plugins_loaded, or another hook)"
+    },
+    {
+      "name": "IntegrationInterface class check",
+      "max_score": 7,
+      "description": "Bootstrap code checks for existence of Automattic\\WooCommerce\\Blocks\\Integrations\\IntegrationInterface before proceeding"
+    },
+    {
+      "name": "IntegrationInterface implementation",
+      "max_score": 8,
+      "description": "Integration class implements Automattic\\WooCommerce\\Blocks\\Integrations\\IntegrationInterface and defines get_name(), initialize(), get_script_handles(), get_editor_script_handles(), and get_script_data() methods"
+    },
+    {
+      "name": "block.json registration",
+      "max_score": 7,
+      "description": "Integration class calls register_block_type() pointing to a block.json file (not registering block attributes manually)"
+    },
+    {
+      "name": "registerCheckoutBlock usage",
+      "max_score": 8,
+      "description": "JavaScript file calls registerCheckoutBlock() imported from @woocommerce/blocks-checkout (not registerBlockType from @wordpress/blocks)"
+    },
+    {
+      "name": "@wordpress/element imports",
+      "max_score": 7,
+      "description": "React hooks (useState, useEffect, etc.) are imported from @wordpress/element, not from 'react'"
+    },
+    {
+      "name": "extensionCartUpdate for persistence",
+      "max_score": 9,
+      "description": "JavaScript component calls extensionCartUpdate() from @woocommerce/blocks-checkout to send data to the server (not storing only in component state or localStorage)"
+    },
+    {
+      "name": "Store API endpoint registration",
+      "max_score": 8,
+      "description": "PHP code calls woocommerce_store_api_register_endpoint_data() with endpoint set to CartSchema::IDENTIFIER, a namespace, schema_callback, and schema_type => ARRAY_A"
+    },
+    {
+      "name": "Store API update callback",
+      "max_score": 8,
+      "description": "PHP code calls woocommerce_store_api_register_update_callback() with a namespace and callback that saves data to WC()->session"
+    },
+    {
+      "name": "Server-side sanitization",
+      "max_score": 7,
+      "description": "PHP callback sanitizes the incoming field value before saving (e.g. sanitize_text_field, sanitize_textarea_field, or similar WordPress sanitization function)"
+    },
+    {
+      "name": "woocommerce_checkout_order_created hook",
+      "max_score": 9,
+      "description": "PHP code uses the woocommerce_checkout_order_created action to transfer session data to order meta via $order->update_meta_data() and $order->save()"
+    },
+    {
+      "name": "block.json apiVersion and parent",
+      "max_score": 7,
+      "description": "block.json sets apiVersion to 3 and parent array to a woocommerce/* checkout step block name (e.g. woocommerce/checkout-shipping-methods-block)"
+    },
+    {
+      "name": "Prefixed namespace and meta key",
+      "max_score": 8,
+      "description": "Store API namespace and order meta key are prefixed with the plugin slug (e.g. 'delivery-date-checkout' or similar), not generic names like 'custom' or 'data'"
+    }
+  ]
+}

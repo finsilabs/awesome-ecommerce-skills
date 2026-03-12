@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the review submission endpoint correctly: signed token validation, verified-purchase detection, the three-way auto-moderation logic (spam/profanity/verified), and the correct data model fields including status transitions and approvedAt timestamp.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Review data model fields",
+      "max_score": 8,
+      "description": "The Review type/interface/schema includes: id, productId, orderId (nullable), customerId (nullable), authorName, authorEmail, rating typed as 1|2|3|4|5, title, body, verifiedPurchase boolean, status, helpfulVotes, createdAt, approvedAt (nullable)"
+    },
+    {
+      "name": "Token validation 401",
+      "max_score": 9,
+      "description": "The submission endpoint verifies the review token before processing; returns 401 (or equivalent error) when the token is invalid or missing"
+    },
+    {
+      "name": "verifiedPurchase from order",
+      "max_score": 8,
+      "description": "verifiedPurchase is determined by checking whether an order item exists matching both the token's orderId and the submitted productId (not just checking if a token exists)"
+    },
+    {
+      "name": "Spam threshold 0.8",
+      "max_score": 10,
+      "description": "Reviews with a spam score above 0.8 are assigned status 'spam' (the threshold is 0.8, not 0.5 or 0.9)"
+    },
+    {
+      "name": "Profanity triggers pending",
+      "max_score": 9,
+      "description": "Reviews that contain profanity (but are not spam) are assigned status 'pending', not auto-rejected or auto-approved"
+    },
+    {
+      "name": "Verified auto-approve",
+      "max_score": 9,
+      "description": "Verified purchase reviews with no profanity and spam score ≤ 0.8 are auto-approved (status 'approved'), not left as 'pending'"
+    },
+    {
+      "name": "approvedAt set on approval",
+      "max_score": 8,
+      "description": "approvedAt is set to the current timestamp when a review is auto-approved; it is null when status is 'pending' or 'spam'"
+    },
+    {
+      "name": "Summary update after approval",
+      "max_score": 9,
+      "description": "updateProductRatingSummary (or equivalent) is called only when a review is approved, not for pending or spam reviews"
+    },
+    {
+      "name": "Unique constraint on reviews",
+      "max_score": 8,
+      "description": "The schema or migration includes a unique constraint on the combination of customerId and productId (prevents duplicate reviews from same customer)"
+    },
+    {
+      "name": "No delete in moderation",
+      "max_score": 8,
+      "description": "The moderation actions support only 'approve' and 'reject' (status change); there is NO delete/destroy endpoint or action for reviews"
+    },
+    {
+      "name": "moderatedBy recorded",
+      "max_score": 7,
+      "description": "When a moderator approves or rejects a review, the moderatedBy field is set to the admin user's id"
+    },
+    {
+      "name": "moderationReason recorded",
+      "max_score": 7,
+      "description": "The moderation endpoint accepts and stores a reason field alongside the approve/reject action"
+    }
+  ]
+}

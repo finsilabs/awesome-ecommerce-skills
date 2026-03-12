@@ -1,0 +1,46 @@
+{
+  "context": "Tests whether the agent implements plan changes using stripe.invoices.retrieveUpcoming for proration preview, uses create_prorations as the default behavior, applies upgrades immediately with prorations while scheduling downgrades for end of billing period, and documents the approach clearly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Preview uses retrieveUpcoming",
+      "max_score": 15,
+      "description": "Uses `stripe.invoices.retrieveUpcoming` (or equivalent upcoming invoice API) to calculate the proration cost in preview mode"
+    },
+    {
+      "name": "Preview returns proration amount",
+      "max_score": 8,
+      "description": "Preview mode returns the proration amount due (e.g., `prorationAmount` or equivalent field) derived from the upcoming invoice"
+    },
+    {
+      "name": "create_prorations default",
+      "max_score": 12,
+      "description": "Uses `proration_behavior: 'create_prorations'` (or equivalent) as the default when applying a plan change via `stripe.subscriptions.update`"
+    },
+    {
+      "name": "Upgrade prorated immediately",
+      "max_score": 12,
+      "description": "Upgrade path applies the plan change immediately with proration (does NOT use `none` proration_behavior or schedule for end of period)"
+    },
+    {
+      "name": "Downgrade at period end",
+      "max_score": 15,
+      "description": "Downgrade path is scheduled to take effect at the end of the current billing period (e.g., sets `proration_behavior: 'none'` or uses `billing_cycle_anchor`, or schedules a subscription schedule) — does NOT immediately prorate a downgrade"
+    },
+    {
+      "name": "Applies via subscriptions.update",
+      "max_score": 10,
+      "description": "Uses `stripe.subscriptions.update` with an `items` array containing the new `price` to apply the plan change"
+    },
+    {
+      "name": "IMPLEMENTATION_NOTES: proration explanation",
+      "max_score": 15,
+      "description": "`IMPLEMENTATION_NOTES.md` explicitly explains the different behavior for upgrades vs. downgrades with respect to proration"
+    },
+    {
+      "name": "IMPLEMENTATION_NOTES: preview vs apply",
+      "max_score": 13,
+      "description": "`IMPLEMENTATION_NOTES.md` documents what preview mode returns vs. what the apply mode does"
+    }
+  ]
+}

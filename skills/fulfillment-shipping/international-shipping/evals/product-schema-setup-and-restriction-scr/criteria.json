@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly extends the product schema with the right column types and creates the HS code reference table, implements a two-layer restriction screening function, seeds known restrictions, and positions screening at checkout rather than post-label.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "hs_code column type",
+      "max_score": 8,
+      "description": "hs_code column is defined as VARCHAR(10) (not VARCHAR(6), VARCHAR(20), TEXT, or other type)"
+    },
+    {
+      "name": "country_of_origin column type",
+      "max_score": 8,
+      "description": "country_of_origin column is defined as VARCHAR(2) (exactly 2-char code, ISO 3166-1 alpha-2)"
+    },
+    {
+      "name": "restricted_countries array type",
+      "max_score": 8,
+      "description": "restricted_countries column is defined as an array of 2-char codes (e.g. VARCHAR(2)[] or TEXT[] with a note about 2-char codes)"
+    },
+    {
+      "name": "declared_value_override in cents",
+      "max_score": 8,
+      "description": "declared_value_override column is INTEGER (not DECIMAL/FLOAT) with a comment or note indicating it stores cents"
+    },
+    {
+      "name": "hs_codes reference table",
+      "max_score": 8,
+      "description": "A separate hs_codes reference table is created with at least a primary key code column and a description column"
+    },
+    {
+      "name": "Product-level restriction check",
+      "max_score": 10,
+      "description": "screenForRestrictions checks each product's own restricted_countries field against the destination country"
+    },
+    {
+      "name": "Global restriction DB check",
+      "max_score": 10,
+      "description": "screenForRestrictions also queries a global/shared restrictions table by (country_code, hs_code) — two-layer check, not just product-level"
+    },
+    {
+      "name": "Return type shape",
+      "max_score": 8,
+      "description": "screenForRestrictions returns an object with both an 'allowed' boolean AND a 'blockedProducts' array (not just one or the other)"
+    },
+    {
+      "name": "Known restrictions seeded",
+      "max_score": 10,
+      "description": "Seed data includes entries for at least 2 of: Australia firearm parts (hs prefix 9305), India alcohol (hs prefix 2207), China consumer electronics (hs prefix 8517)"
+    },
+    {
+      "name": "Screening at checkout",
+      "max_score": 10,
+      "description": "notes.md or code comments explicitly state that screening should occur before fulfillment/at checkout, not after label creation"
+    },
+    {
+      "name": "Blocked product details",
+      "max_score": 12,
+      "description": "Each entry in blockedProducts includes at least productId (or id), name, and a reason string"
+    }
+  ]
+}

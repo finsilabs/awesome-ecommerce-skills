@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly integrates Cloudflare Turnstile as an invisible-first CAPTCHA and implements a properly hidden honeypot field, including correct server-side verification and response codes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Turnstile over alternatives",
+      "max_score": 9,
+      "description": "Uses Cloudflare Turnstile (cf-turnstile widget or challenges.cloudflare.com) rather than reCAPTCHA, hCaptcha, or other CAPTCHA services"
+    },
+    {
+      "name": "Turnstile script source",
+      "max_score": 7,
+      "description": "Loads Turnstile via script tag from https://challenges.cloudflare.com/turnstile/v0/api.js"
+    },
+    {
+      "name": "cf-turnstile div",
+      "max_score": 7,
+      "description": "Embeds the widget using a div with class cf-turnstile and a data-sitekey attribute"
+    },
+    {
+      "name": "Server-side verification endpoint",
+      "max_score": 9,
+      "description": "POSTs the token to https://challenges.cloudflare.com/turnstile/v0/siteverify with secret, response, and remoteip fields"
+    },
+    {
+      "name": "403 on verification failure",
+      "max_score": 8,
+      "description": "Returns HTTP 403 (not 400 or 401) when the Turnstile token is missing or verification fails"
+    },
+    {
+      "name": "Passive/invisible-first mode",
+      "max_score": 8,
+      "description": "Code or comments indicate the CAPTCHA operates in invisible/passive mode and only escalates to a visible challenge when passive scoring detects suspicious activity"
+    },
+    {
+      "name": "Honeypot CSS hiding",
+      "max_score": 8,
+      "description": "Honeypot container is hidden using CSS with position: absolute and left/top set to -9999px (not display:none or visibility:hidden)"
+    },
+    {
+      "name": "Honeypot aria-hidden",
+      "max_score": 6,
+      "description": "Honeypot container element has aria-hidden=\"true\""
+    },
+    {
+      "name": "Honeypot input attributes",
+      "max_score": 8,
+      "description": "Honeypot input has tabIndex={-1} (or tabindex=\"-1\") AND autoComplete=\"off\" (or autocomplete=\"off\")"
+    },
+    {
+      "name": "Silent discard on honeypot fill",
+      "max_score": 9,
+      "description": "When the honeypot field is filled, the form submission is silently discarded (optionally showing a fake success) rather than displaying an error that tips off the bot"
+    },
+    {
+      "name": "Randomized honeypot name",
+      "max_score": 8,
+      "description": "Honeypot field name is not a static obvious value like 'website' or 'email2'; uses a randomized or session-specific name"
+    },
+    {
+      "name": "No visible CAPTCHA by default",
+      "max_score": 7,
+      "description": "Does NOT configure the CAPTCHA to show a visible challenge widget for every user by default"
+    },
+    {
+      "name": "x-www-form-urlencoded verification",
+      "max_score": 6,
+      "description": "Sends the siteverify request with Content-Type: application/x-www-form-urlencoded"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly builds a merchant-customizable Shopify product section with proper block attributes, schema presets, native Liquid filters, and variant-aware UI. Covers core Online Store 2.0 section patterns required for theme editor compatibility.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "block.shopify_attributes present",
+      "max_score": 12,
+      "description": "Every block's wrapper element includes `{{ block.shopify_attributes }}` as an attribute"
+    },
+    {
+      "name": "Schema has presets array",
+      "max_score": 12,
+      "description": "The section's {% schema %} JSON includes a non-empty `presets` array so the section appears in the theme editor 'Add section' menu"
+    },
+    {
+      "name": "image_url filter used",
+      "max_score": 10,
+      "description": "Product images are rendered using the `image_url` filter (with an explicit `width` parameter), not the deprecated `img_url` filter"
+    },
+    {
+      "name": "image_tag with lazy loading",
+      "max_score": 8,
+      "description": "The `image_tag` filter is used with `loading: 'lazy'` for product media images"
+    },
+    {
+      "name": "image_tag widths and sizes",
+      "max_score": 8,
+      "description": "The `image_tag` filter includes both `widths` and `sizes` parameters to generate a responsive srcset"
+    },
+    {
+      "name": "money filter for prices",
+      "max_score": 8,
+      "description": "All price output uses the `| money` Liquid filter rather than manual formatting"
+    },
+    {
+      "name": "product form tag used",
+      "max_score": 10,
+      "description": "The add-to-cart form uses `{% form 'product', product %}` rather than a plain HTML `<form>` tag"
+    },
+    {
+      "name": "selected_or_first_available_variant",
+      "max_score": 10,
+      "description": "The hidden variant ID input and availability logic reference `product.selected_or_first_available_variant` (not `product.variants.first` or a hardcoded variant)"
+    },
+    {
+      "name": "Blocks iterated via section.blocks",
+      "max_score": 8,
+      "description": "The section renders content by looping over `section.blocks` with `{% for block in section.blocks %}` and using `block.type`"
+    },
+    {
+      "name": "JSON template uses section reference",
+      "max_score": 14,
+      "description": "A JSON template file (e.g. product.json) is produced that references the section by key, with an `order` array — not an inline Liquid template"
+    }
+  ]
+}

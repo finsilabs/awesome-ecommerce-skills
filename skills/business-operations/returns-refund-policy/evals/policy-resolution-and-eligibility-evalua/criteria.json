@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the core returns policy engine with the correct schema, priority-based policy resolution with NULL wildcard matching, proper reason codes in the eligibility result, and capped restocking fee calculation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "return_policies table schema",
+      "max_score": 6,
+      "description": "The SQL schema defines a `return_policies` table with columns for product_category_ids (array), customer_segments (array), order_tags (array), return_window_days, restocking_fee_pct, restocking_fee_max, auto_approve, and is_active"
+    },
+    {
+      "name": "return_policy_versions table",
+      "max_score": 7,
+      "description": "A `return_policy_versions` table is defined with a `snapshot` column of JSONB type that stores a full policy snapshot and a foreign key to return_policies"
+    },
+    {
+      "name": "Default seed policies",
+      "max_score": 7,
+      "description": "At least 4 seed policies are inserted covering: a Final Sale / no-returns policy (0 days), an Electronics policy (15 days with restocking fee), an Apparel policy (30 days no fee), and a Standard fallback policy (30 days)"
+    },
+    {
+      "name": "Priority DESC ordering",
+      "max_score": 9,
+      "description": "Policy resolution fetches active policies ordered by priority descending and returns the first matching policy"
+    },
+    {
+      "name": "NULL wildcard matching",
+      "max_score": 9,
+      "description": "Policy resolution treats NULL/empty product_category_ids, customer_segments, or order_tags as matching all values (wildcard), not as requiring an empty array match"
+    },
+    {
+      "name": "NOT_DELIVERED reason code",
+      "max_score": 7,
+      "description": "Eligibility evaluation returns `eligible: false` with reason `NOT_DELIVERED` when the order status is not 'delivered'"
+    },
+    {
+      "name": "FINAL_SALE reason code",
+      "max_score": 8,
+      "description": "Eligibility evaluation returns `eligible: false` with reason `FINAL_SALE` when the matched policy has return_window_days of 0"
+    },
+    {
+      "name": "WINDOW_EXPIRED reason code",
+      "max_score": 8,
+      "description": "Eligibility evaluation returns `eligible: false` with reason `WINDOW_EXPIRED` when days since purchase exceeds return_window_days"
+    },
+    {
+      "name": "REASON_NOT_ALLOWED reason code",
+      "max_score": 8,
+      "description": "Eligibility evaluation returns `eligible: false` with reason `REASON_NOT_ALLOWED` when allowed_reasons is set and the return reason is not in the list"
+    },
+    {
+      "name": "daysRemaining in result",
+      "max_score": 6,
+      "description": "The eligibility result includes a `daysRemaining` field containing the number of days left in the return window"
+    },
+    {
+      "name": "Restocking fee percentage calculation",
+      "max_score": 9,
+      "description": "Restocking fee is calculated as round(itemValueCents * (restocking_fee_pct / 100))"
+    },
+    {
+      "name": "Restocking fee max cap",
+      "max_score": 9,
+      "description": "When restocking_fee_max is set, the calculated fee is capped at that maximum value (fee = min(calculatedFee, restocking_fee_max))"
+    },
+    {
+      "name": "requiresManualReview from auto_approve",
+      "max_score": 7,
+      "description": "The eligibility result's `requiresManualReview` field is set to the inverse of the matched policy's `auto_approve` flag"
+    }
+  ]
+}

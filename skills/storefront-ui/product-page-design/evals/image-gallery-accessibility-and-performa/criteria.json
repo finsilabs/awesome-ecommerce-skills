@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds a product image gallery that correctly implements lazy/eager loading, hover-based zoom, accessible thumbnail markup, CLS prevention, mobile touch support, keyboard navigation, and hero image preload.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "First image eager loading",
+      "max_score": 8,
+      "description": "The main/hero image (index 0) uses loading=\"eager\" (not lazy)"
+    },
+    {
+      "name": "Thumbnail lazy loading",
+      "max_score": 8,
+      "description": "Thumbnail images use loading=\"lazy\""
+    },
+    {
+      "name": "Explicit image dimensions",
+      "max_score": 8,
+      "description": "All img elements have explicit width and height attributes set, OR the main image container uses aspect-ratio CSS property"
+    },
+    {
+      "name": "Hover zoom via backgroundPosition",
+      "max_score": 10,
+      "description": "Zoom is implemented by updating CSS backgroundPosition based on mouse coordinates (not by scaling with transform or opening a modal)"
+    },
+    {
+      "name": "Zoom backgroundSize value",
+      "max_score": 7,
+      "description": "The zoomed background uses backgroundSize of '200%' (or equivalent — a numeric value >= 150% that enables partial-image inspection)"
+    },
+    {
+      "name": "Thumbnail container ARIA",
+      "max_score": 8,
+      "description": "The thumbnails container element has role=\"listbox\" and an aria-label attribute"
+    },
+    {
+      "name": "Thumbnail button ARIA",
+      "max_score": 8,
+      "description": "Each thumbnail button has aria-selected (reflecting whether it is active) and an aria-label attribute"
+    },
+    {
+      "name": "Mobile touch-action",
+      "max_score": 9,
+      "description": "The gallery main image container has touch-action: none applied (in CSS or inline style) to support pinch-to-zoom on touch devices"
+    },
+    {
+      "name": "Gallery keyboard navigation",
+      "max_score": 10,
+      "description": "Pressing left/right arrow keys changes the active image (a keyboard event handler is present on the gallery or a wrapping element)"
+    },
+    {
+      "name": "Hero preload link",
+      "max_score": 8,
+      "description": "A <link rel=\"preload\" as=\"image\"> tag is generated or documented for the first product image to improve LCP"
+    },
+    {
+      "name": "Gallery sticky positioning",
+      "max_score": 8,
+      "description": "The gallery container uses position: sticky with a top offset in CSS so it stays in view while the user scrolls the product info column"
+    },
+    {
+      "name": "Cursor zoom feedback",
+      "max_score": 8,
+      "description": "The main image container has cursor: zoom-in when not zoomed and cursor: zoom-out when zoomed"
+    }
+  ]
+}

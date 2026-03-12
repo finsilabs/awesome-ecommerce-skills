@@ -1,0 +1,10 @@
+{
+  "name": "finsi/data-retention-policies",
+  "version": "0.1.0",
+  "summary": "Order/customer data lifecycle management and automated purging",
+  "skills": {
+    "data-retention-policies": {
+      "path": "SKILL.md"
+    }
+  }
+}

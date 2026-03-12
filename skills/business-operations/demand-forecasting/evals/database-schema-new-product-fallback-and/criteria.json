@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements: the daily_sales materialized view with the right schema and exclusion filter, the nightly refresh strategy, the new-product fallback (< 90 days), the category-level seasonal index fallback, and MAPE monitoring with a 30% threshold.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Materialized view name",
+      "max_score": 5,
+      "description": "The SQL creates a materialized view named exactly `daily_sales`"
+    },
+    {
+      "name": "View columns",
+      "max_score": 6,
+      "description": "The daily_sales view produces columns: product_id, sale_date, units_sold"
+    },
+    {
+      "name": "Cancelled orders excluded",
+      "max_score": 8,
+      "description": "The view or aggregation query excludes orders with status 'cancelled'"
+    },
+    {
+      "name": "Refunded orders excluded",
+      "max_score": 8,
+      "description": "The view or aggregation query excludes orders with status 'refunded'"
+    },
+    {
+      "name": "Index created",
+      "max_score": 7,
+      "description": "An index named `idx_daily_sales_product_date` (or equivalent) is created on (product_id, sale_date)"
+    },
+    {
+      "name": "CONCURRENTLY refresh",
+      "max_score": 8,
+      "description": "The nightly refresh uses `REFRESH MATERIALIZED VIEW CONCURRENTLY daily_sales` (not a DROP+RECREATE or non-CONCURRENTLY variant)"
+    },
+    {
+      "name": "New product threshold 90 days",
+      "max_score": 10,
+      "description": "Products with fewer than 90 days of sales history are identified and routed to a fallback rather than the main decomposition model"
+    },
+    {
+      "name": "Category-average fallback",
+      "max_score": 10,
+      "description": "New products (< 90 days old) use a category-average demand rate as their demand proxy, not zero or a hard-coded value"
+    },
+    {
+      "name": "Category seasonal index fallback",
+      "max_score": 8,
+      "description": "When a product has insufficient history for its own seasonal index, the system falls back to a category-level seasonal index"
+    },
+    {
+      "name": "MAPE formula correct",
+      "max_score": 10,
+      "description": "MAPE is computed as mean of |actual - forecast| / actual * 100 (absolute percentage error averaged)"
+    },
+    {
+      "name": "MAPE 30% threshold",
+      "max_score": 10,
+      "description": "The system flags or alerts when MAPE exceeds 30% — this threshold is explicitly used in the code or output"
+    },
+    {
+      "name": "MAPE computed monthly",
+      "max_score": 5,
+      "description": "MAPE is computed on a monthly basis (per month or aggregated per calendar month), not daily or yearly"
+    },
+    {
+      "name": "Order lines joined correctly",
+      "max_score": 5,
+      "description": "The aggregation joins order_lines to orders (not a single table) to get product_id and created_at"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the EAV pattern with the correct structure (attribute_definitions with typed data_type CHECK, product_attributes with typed value columns), creates appropriate partial indexes for filterable attributes, uses an options/option-values junction table for variant axes, and acknowledges the EAV vs JSONB denormalization trade-off.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "attribute_definitions table",
+      "max_score": 8,
+      "description": "Schema includes an attribute_definitions (or similarly named) table that defines attribute metadata separately from product attribute values"
+    },
+    {
+      "name": "data_type CHECK constraint",
+      "max_score": 9,
+      "description": "attribute_definitions has a data_type column with a CHECK constraint that includes at least 'string', 'number', 'boolean', 'date', and 'enum' as allowed values"
+    },
+    {
+      "name": "Typed value columns",
+      "max_score": 10,
+      "description": "product_attributes table uses separate typed value columns (e.g., value_string, value_number, value_boolean, value_date) rather than a single text/JSON column"
+    },
+    {
+      "name": "Filterable flag",
+      "max_score": 7,
+      "description": "attribute_definitions has a filterable (or equivalent) boolean column to flag which attributes are used for filtering"
+    },
+    {
+      "name": "Searchable flag",
+      "max_score": 6,
+      "description": "attribute_definitions has a searchable (or equivalent) boolean column to flag which attributes are indexed for text search"
+    },
+    {
+      "name": "Partial index for string attributes",
+      "max_score": 9,
+      "description": "A partial index exists on product_attributes(attribute_id, value_string) WHERE value_string IS NOT NULL"
+    },
+    {
+      "name": "Partial index for numeric attributes",
+      "max_score": 9,
+      "description": "A partial index exists on product_attributes(attribute_id, value_number) WHERE value_number IS NOT NULL"
+    },
+    {
+      "name": "UNIQUE constraint on product+attribute",
+      "max_score": 7,
+      "description": "product_attributes table has a UNIQUE constraint on (product_id, attribute_id) to prevent duplicate attribute entries per product"
+    },
+    {
+      "name": "Faceted multi-filter query",
+      "max_score": 10,
+      "description": "queries.sql contains a query that filters products by two or more attribute values simultaneously using JOINs and a HAVING COUNT = N pattern (or equivalent) to require all filters match"
+    },
+    {
+      "name": "Numeric range filter query",
+      "max_score": 8,
+      "description": "queries.sql contains a query filtering products by a numeric attribute range (e.g., WHERE value_number BETWEEN x AND y or value_number > x)"
+    },
+    {
+      "name": "EAV vs JSONB trade-off",
+      "max_score": 9,
+      "description": "design-notes.md explicitly notes that EAV is flexible but slow for reads and recommends denormalizing commonly filtered attributes into JSONB columns"
+    },
+    {
+      "name": "Materialized view or search index recommendation",
+      "max_score": 8,
+      "description": "design-notes.md mentions materialized views OR an external search index (Elasticsearch, Meilisearch, or similar) for pre-computing filter counts on large catalogs"
+    }
+  ]
+}

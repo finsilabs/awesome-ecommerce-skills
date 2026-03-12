@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the WooCommerce Settings API correctly to add a configuration page, adds a custom product data tab using the proper WooCommerce hooks, uses WooCommerce helper functions to render form fields, and correctly namespaces and sanitizes meta data.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Settings tab filter",
+      "max_score": 10,
+      "description": "Plugin uses the 'woocommerce_settings_tabs_array' filter to register a new settings tab"
+    },
+    {
+      "name": "Settings render action",
+      "max_score": 8,
+      "description": "Plugin uses a 'woocommerce_settings_tabs_{id}' action to render the settings page"
+    },
+    {
+      "name": "Settings save action",
+      "max_score": 8,
+      "description": "Plugin uses a 'woocommerce_update_options_{id}' action to save the settings"
+    },
+    {
+      "name": "woocommerce_admin_fields render",
+      "max_score": 8,
+      "description": "Settings page is rendered by calling woocommerce_admin_fields() with an array of field definitions"
+    },
+    {
+      "name": "woocommerce_update_options save",
+      "max_score": 8,
+      "description": "Settings are saved by calling woocommerce_update_options() with the same field definitions array"
+    },
+    {
+      "name": "Product data tab filter",
+      "max_score": 10,
+      "description": "Plugin registers a custom product data tab using the 'woocommerce_product_data_tabs' filter"
+    },
+    {
+      "name": "Product panel action",
+      "max_score": 8,
+      "description": "Plugin renders the product custom panel using the 'woocommerce_product_data_panels' action"
+    },
+    {
+      "name": "Product meta save action",
+      "max_score": 8,
+      "description": "Plugin saves custom product meta using the 'woocommerce_process_product_meta' action"
+    },
+    {
+      "name": "WooCommerce field helper",
+      "max_score": 10,
+      "description": "Product panel uses woocommerce_wp_text_input() or woocommerce_wp_select() to render input fields (not raw HTML inputs)"
+    },
+    {
+      "name": "Namespaced meta key",
+      "max_score": 8,
+      "description": "Custom product meta keys are prefixed with a plugin-specific slug (e.g., '_myplugin_field', not '_field')"
+    },
+    {
+      "name": "Input sanitization",
+      "max_score": 7,
+      "description": "POST data for saving product meta is passed through sanitize_text_field() or equivalent before storage"
+    },
+    {
+      "name": "Output escaping",
+      "max_score": 7,
+      "description": "Data displayed in HTML output uses esc_html() or esc_attr() to escape before rendering"
+    }
+  ]
+}

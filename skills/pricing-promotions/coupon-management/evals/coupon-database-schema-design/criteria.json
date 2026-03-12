@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent designs the coupon schema with the exact column names, data types, constraints, and indexes specified in the coupon-management skill — including both the coupons and coupon_redemptions tables.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Coupons table exists",
+      "max_score": 5,
+      "description": "A CREATE TABLE statement for a table named exactly 'coupons' is present"
+    },
+    {
+      "name": "Redemptions table exists",
+      "max_score": 5,
+      "description": "A CREATE TABLE statement for a table named exactly 'coupon_redemptions' is present"
+    },
+    {
+      "name": "UUID primary key with gen_random_uuid",
+      "max_score": 8,
+      "description": "The coupons table id column is UUID PRIMARY KEY with DEFAULT gen_random_uuid()"
+    },
+    {
+      "name": "Code column type and constraint",
+      "max_score": 8,
+      "description": "The code column is VARCHAR(64) NOT NULL UNIQUE"
+    },
+    {
+      "name": "Type CHECK constraint",
+      "max_score": 10,
+      "description": "The type column has a CHECK constraint that restricts values to exactly ('percentage', 'fixed_amount', 'free_shipping')"
+    },
+    {
+      "name": "Numeric precision for money columns",
+      "max_score": 8,
+      "description": "value, min_order_amount, max_discount_amount, and discount_amount columns use NUMERIC(10,2)"
+    },
+    {
+      "name": "Nullable usage_limit",
+      "max_score": 8,
+      "description": "usage_limit is defined as INTEGER with no NOT NULL constraint (nullable to represent unlimited)"
+    },
+    {
+      "name": "per_customer_limit default",
+      "max_score": 8,
+      "description": "per_customer_limit has DEFAULT 1"
+    },
+    {
+      "name": "TIMESTAMPTZ for date columns",
+      "max_score": 8,
+      "description": "starts_at, expires_at, redeemed_at, and created_at columns use TIMESTAMPTZ (not TIMESTAMP or DATE)"
+    },
+    {
+      "name": "Product/category arrays",
+      "max_score": 5,
+      "description": "product_ids and category_ids columns are defined as UUID[] (PostgreSQL arrays)"
+    },
+    {
+      "name": "Code lookup index",
+      "max_score": 10,
+      "description": "An index on the coupons code column is defined (e.g. idx_coupons_code ON coupons(code))"
+    },
+    {
+      "name": "Redemptions lookup index",
+      "max_score": 10,
+      "description": "A composite index on coupon_redemptions covering both customer_id and coupon_id is defined"
+    },
+    {
+      "name": "Redemptions foreign key",
+      "max_score": 7,
+      "description": "coupon_redemptions.coupon_id references coupons(id) via a FOREIGN KEY constraint"
+    }
+  ]
+}

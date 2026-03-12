@@ -1,0 +1,10 @@
+{
+  "name": "finsi/returns-refund-policy",
+  "version": "0.1.0",
+  "summary": "Policy engine for return windows, restocking fees, and automated approvals",
+  "skills": {
+    "returns-refund-policy": {
+      "path": "SKILL.md"
+    }
+  }
+}

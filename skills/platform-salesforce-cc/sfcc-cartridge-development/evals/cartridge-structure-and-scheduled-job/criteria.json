@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly scaffolds an SFCC cartridge with the prescribed directory structure and metadata, and implements a scheduled job step following SFCC Job Framework conventions including Status return values, Transaction.wrap for DB writes, categorized logging, HTTPClient usage, and externalizing configuration.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cartridge directory layout",
+      "max_score": 10,
+      "description": "The cartridge contains the required subdirectory structure: cartridge/controllers/, cartridge/models/, cartridge/scripts/, cartridge/templates/default/, cartridge/forms/default/, cartridge/static/default/css/, cartridge/static/default/js/"
+    },
+    {
+      "name": "Properties file present",
+      "max_score": 8,
+      "description": "A .properties file exists inside the cartridge directory (e.g., int_acme_inventory.properties) containing the demandware.cartridges.<name>.multipleLanguageStorefront=true property"
+    },
+    {
+      "name": "Use strict directive",
+      "max_score": 5,
+      "description": "The job step script starts with 'use strict'; at the top of the file"
+    },
+    {
+      "name": "Status object returned",
+      "max_score": 12,
+      "description": "The job step's execute function returns a dw/system/Status object (new Status(Status.OK, ...) or new Status(Status.ERROR, ...)) in all code paths, not just success paths"
+    },
+    {
+      "name": "Status.ERROR on failure",
+      "max_score": 10,
+      "description": "The job step returns Status.ERROR (not throws or returns null/undefined) when an error condition is encountered such as a non-200 HTTP response or missing inventory list"
+    },
+    {
+      "name": "Transaction.wrap for DB writes",
+      "max_score": 12,
+      "description": "All inventory record create/update operations are wrapped inside Transaction.wrap(function() { ... }), not called outside a transaction"
+    },
+    {
+      "name": "Categorized logger",
+      "max_score": 8,
+      "description": "Logging uses Logger.getLogger(category, prefix) with two string arguments, not the plain Logger.getLogger() or Logger directly"
+    },
+    {
+      "name": "HTTPClient for external call",
+      "max_score": 8,
+      "description": "The script uses dw/net/HTTPClient to make the external ERP API request, with open(), setRequestHeader(), and send() calls"
+    },
+    {
+      "name": "No hardcoded config values",
+      "max_score": 12,
+      "description": "The ERP API URL and authentication key are NOT hardcoded as string literals in the script; they are read from job step parameters (params.get(...)) or site preferences"
+    },
+    {
+      "name": "Script API used for inventory",
+      "max_score": 10,
+      "description": "Inventory updates use dw/catalog/ProductInventoryMgr (e.g., ProductInventoryMgr.getInventoryList(), inventoryList.getRecord(), inventoryList.createRecord()) rather than any direct data manipulation"
+    },
+    {
+      "name": "module.exports.execute",
+      "max_score": 5,
+      "description": "The job step exports the execute function as module.exports.execute = execute (the SFCC Job Framework convention for step scripts)"
+    }
+  ]
+}

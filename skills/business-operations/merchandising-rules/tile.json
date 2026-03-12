@@ -1,0 +1,10 @@
+{
+  "name": "finsi/merchandising-rules",
+  "version": "0.1.0",
+  "summary": "Visual merchandising, product ranking rules, and automated collection curation",
+  "skills": {
+    "merchandising-rules": {
+      "path": "SKILL.md"
+    }
+  }
+}

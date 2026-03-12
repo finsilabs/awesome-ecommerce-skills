@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly sets up a Next.js Shopify storefront with the right Storefront API client, ISR configuration, static params strategy, cache headers, and image configuration.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct Shopify package",
+      "max_score": 10,
+      "description": "lib/shopify.ts imports from '@shopify/storefront-api-client' (not a different Shopify client library)"
+    },
+    {
+      "name": "createStorefrontApiClient used",
+      "max_score": 8,
+      "description": "lib/shopify.ts calls createStorefrontApiClient() to construct the client instance"
+    },
+    {
+      "name": "API version 2025-01",
+      "max_score": 10,
+      "description": "The Storefront API client is configured with apiVersion: '2025-01'"
+    },
+    {
+      "name": "ISR revalidate export",
+      "max_score": 10,
+      "description": "app/products/[handle]/page.tsx exports 'export const revalidate' with a numeric value (e.g. 60)"
+    },
+    {
+      "name": "generateStaticParams limit",
+      "max_score": 10,
+      "description": "generateStaticParams fetches a limited set of products (e.g. first: 200 or first: 500) rather than fetching all products without a limit"
+    },
+    {
+      "name": "notFound() used",
+      "max_score": 8,
+      "description": "app/products/[handle]/page.tsx calls notFound() when the product query returns no product"
+    },
+    {
+      "name": "dynamicParams true",
+      "max_score": 10,
+      "description": "app/products/[handle]/page.tsx exports 'export const dynamicParams = true' so long-tail products are rendered on demand"
+    },
+    {
+      "name": "Product cache header",
+      "max_score": 12,
+      "description": "next.config.ts sets Cache-Control to 'public, s-maxage=60, stale-while-revalidate=600' for '/products/:path*'"
+    },
+    {
+      "name": "API no-store header",
+      "max_score": 10,
+      "description": "next.config.ts sets Cache-Control to 'no-store' for '/api/:path*'"
+    },
+    {
+      "name": "Image remote patterns",
+      "max_score": 12,
+      "description": "next.config.ts configures images.remotePatterns to include at least one Shopify CDN hostname pattern (e.g. '**.shopify.com')"
+    }
+  ]
+}

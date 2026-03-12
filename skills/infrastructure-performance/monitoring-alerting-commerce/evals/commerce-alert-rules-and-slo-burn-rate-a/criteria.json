@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent designs a commerce alert rule set that follows symptom-based alerting principles, uses appropriate `for` durations, includes runbook annotations, applies multi-window burn-rate SLO alerting, monitors decline codes specifically, and correctly handles production vs staging routing.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Symptom-based alerting",
+      "max_score": 10,
+      "description": "ALERTING_DESIGN.md explicitly describes the alerting philosophy as symptom-based (alerting on customer-visible outcomes like payment success rate or checkout availability) rather than cause-based (e.g., Stripe API latency, Redis latency)"
+    },
+    {
+      "name": "Payment success rate alert",
+      "max_score": 9,
+      "description": "commerce-alerts.yaml includes an alert rule on payment success rate falling below a threshold (using rate(payment_successes_total) / (rate(payment_successes_total) + rate(payment_failures_total)))"
+    },
+    {
+      "name": "Payment success rate threshold",
+      "max_score": 5,
+      "description": "The payment success rate alert fires at a threshold of < 0.90 (90%)"
+    },
+    {
+      "name": "Latency alert",
+      "max_score": 6,
+      "description": "commerce-alerts.yaml includes an alert on P99 order creation latency exceeding a threshold using histogram_quantile(0.99, ...order_creation_duration_ms_bucket...)"
+    },
+    {
+      "name": "Service down alert",
+      "max_score": 6,
+      "description": "commerce-alerts.yaml includes an alert that fires when rate(checkout_started_total[5m]) == 0 (no checkout activity)"
+    },
+    {
+      "name": "Cart abandonment alert",
+      "max_score": 6,
+      "description": "commerce-alerts.yaml includes a cart abandonment rate alert (rate(checkout_abandoned_total) / rate(checkout_started_total) exceeding a threshold)"
+    },
+    {
+      "name": "for: durations present",
+      "max_score": 6,
+      "description": "Every alert rule in commerce-alerts.yaml has a non-zero `for:` duration (no alert fires immediately on first evaluation)"
+    },
+    {
+      "name": "Runbook annotations",
+      "max_score": 6,
+      "description": "At least two alert rules in commerce-alerts.yaml include a `runbook` annotation with a URL"
+    },
+    {
+      "name": "Decline code monitoring",
+      "max_score": 8,
+      "description": "ALERTING_DESIGN.md or commerce-alerts.yaml addresses monitoring payment failures broken down by decline_code (not just aggregate failure count), explaining that different decline codes require different responses"
+    },
+    {
+      "name": "Multi-window burn-rate",
+      "max_score": 10,
+      "description": "ALERTING_DESIGN.md describes or commerce-alerts.yaml implements multi-window burn-rate alerting with both a short window (1h) and a longer window (6h) for SLO error budget consumption"
+    },
+    {
+      "name": "Alert count discipline",
+      "max_score": 6,
+      "description": "ALERTING_DESIGN.md explicitly addresses limiting the initial alert set to a small number of high-value alerts (mentions starting with a focused set of 3–5 alerts covering the most impactful failure modes)"
+    },
+    {
+      "name": "Prod vs staging routing",
+      "max_score": 7,
+      "description": "routing.yaml or ALERTING_DESIGN.md includes separate routing rules for production vs staging environments"
+    },
+    {
+      "name": "Staging suppression",
+      "max_score": 8,
+      "description": "routing.yaml or ALERTING_DESIGN.md describes suppressing staging alerts outside business hours (e.g., using time_intervals or inhibition rules)"
+    },
+    {
+      "name": "Severity labels",
+      "max_score": 7,
+      "description": "Alert rules in commerce-alerts.yaml include `severity` labels (critical or warning) that differentiate between impactful outages and degraded performance"
+    }
+  ]
+}

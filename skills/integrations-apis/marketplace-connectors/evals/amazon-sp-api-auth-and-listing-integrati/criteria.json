@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements Amazon SP-API authentication using LWA OAuth with token caching, AWS Signature Version 4 signing with the right packages, the modern Listings Items API, and correct inventory update patterns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "LWA token refresh endpoint",
+      "max_score": 8,
+      "description": "Uses https://api.amazon.com/auth/o2/token with grant_type=refresh_token for token retrieval"
+    },
+    {
+      "name": "Token cache with 60s buffer",
+      "max_score": 8,
+      "description": "Caches the access token and checks expiry with at least a 60-second buffer before expiration (e.g., Date.now() + 60000)"
+    },
+    {
+      "name": "SigV4 package: @smithy/signature-v4",
+      "max_score": 10,
+      "description": "Imports SignatureV4 from '@smithy/signature-v4' (not aws4, aws-sdk, or another signing library)"
+    },
+    {
+      "name": "SHA256 package: @aws-crypto/sha256-js",
+      "max_score": 10,
+      "description": "Imports Sha256 from '@aws-crypto/sha256-js' (not a different crypto library)"
+    },
+    {
+      "name": "SigV4 service=execute-api",
+      "max_score": 8,
+      "description": "Configures SignatureV4 with service: 'execute-api'"
+    },
+    {
+      "name": "Listings Items API version",
+      "max_score": 10,
+      "description": "Uses the /listings/2021-08-01/items/ path (not an older Marketplace or MWS endpoint)"
+    },
+    {
+      "name": "PUT for listing create/update",
+      "max_score": 8,
+      "description": "Uses HTTP PUT method when creating or replacing a listing via the Listings Items API"
+    },
+    {
+      "name": "PATCH for inventory update",
+      "max_score": 8,
+      "description": "Uses HTTP PATCH method when updating inventory quantity on an existing listing"
+    },
+    {
+      "name": "fulfillment_availability patch path",
+      "max_score": 10,
+      "description": "Inventory PATCH targets the /attributes/fulfillment_availability path with op='replace'"
+    },
+    {
+      "name": "fulfillment_channel_code DEFAULT",
+      "max_score": 8,
+      "description": "Inventory update includes fulfillment_channel_code: 'DEFAULT' in the patch value"
+    },
+    {
+      "name": "Listing suppression check",
+      "max_score": 6,
+      "description": "Code or notes address checking for listing suppressions in the API response when a listing may be inactive despite a successful submission"
+    },
+    {
+      "name": "Packages in package.json",
+      "max_score": 6,
+      "description": "package.json lists @smithy/signature-v4 and @aws-crypto/sha256-js as dependencies"
+    }
+  ]
+}

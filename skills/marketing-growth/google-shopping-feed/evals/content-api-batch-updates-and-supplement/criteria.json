@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the googleapis package with the correct API version and authentication, uses custombatch for bulk updates rather than individual inserts, and correctly generates a supplemental TSV promotion feed with proper format and headers.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "googleapis package",
+      "max_score": 8,
+      "description": "The implementation imports from `googleapis` (specifically `import { google } from 'googleapis'`) — not from a REST HTTP client, fetch wrapper, or unofficial Google library"
+    },
+    {
+      "name": "Content API v2.1",
+      "max_score": 8,
+      "description": "The Content API client is initialised with `version: 'v2.1'` — not v1, v2, or another version string"
+    },
+    {
+      "name": "GoogleAuth with content scope",
+      "max_score": 9,
+      "description": "Authentication uses `new google.auth.GoogleAuth(...)` with `keyFile` pointing to `GOOGLE_SERVICE_ACCOUNT_KEY_PATH` environment variable and the scope `https://www.googleapis.com/auth/content`"
+    },
+    {
+      "name": "custombatch for bulk updates",
+      "max_score": 10,
+      "description": "Product updates use `content.products.custombatch(...)` — NOT a loop of individual `content.products.insert` or `content.products.update` calls"
+    },
+    {
+      "name": "Batch method insert",
+      "max_score": 7,
+      "description": "Each entry in the custombatch request has `method: 'insert'`"
+    },
+    {
+      "name": "batchId per entry",
+      "max_score": 6,
+      "description": "Each batch entry includes a `batchId` field (e.g., the array index)"
+    },
+    {
+      "name": "Supplemental TSV format",
+      "max_score": 9,
+      "description": "The promotions feed is returned as TSV (tab-separated values or comma-separated with the specified columns), NOT as XML or JSON"
+    },
+    {
+      "name": "TSV columns correct",
+      "max_score": 8,
+      "description": "The supplemental feed header row contains exactly `id,sale_price,sale_price_effective_date` (in that order)"
+    },
+    {
+      "name": "sale_price_effective_date format",
+      "max_score": 9,
+      "description": "The `sale_price_effective_date` column is formatted as `startISO/endISO` — two ISO 8601 datetime strings separated by a forward slash `/`"
+    },
+    {
+      "name": "TSV Content-Type header",
+      "max_score": 8,
+      "description": "The supplemental feed endpoint sets `Content-Type` to `text/tab-separated-values; charset=utf-8`"
+    },
+    {
+      "name": "Price format in batch",
+      "max_score": 9,
+      "description": "Price in the batch payload uses a `{ value: '...', currency: '...' }` object where `value` is formatted with two decimal places (toFixed(2))"
+    },
+    {
+      "name": "Batch size respect",
+      "max_score": 9,
+      "description": "The code batches or limits requests to a maximum of 1000 products per custombatch call (e.g., chunks the SKU list if over 1000)"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent generates correct SEO meta tag structures for category pages (canonical URL, OpenGraph, Schema.org structured data) and implements AI auto-categorization using the correct model, parameters, and human-review workflow. The agent is asked to build both the SEO utilities and a bulk auto-categorization tool.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Canonical URL path format",
+      "max_score": 10,
+      "description": "The canonical URL is constructed as 'https://<domain>/c/<category.path>' (using /c/ prefix and the materialized path), not a different URL scheme"
+    },
+    {
+      "name": "OpenGraph included",
+      "max_score": 8,
+      "description": "The SEO output includes OpenGraph tags with at least title, description, and type fields"
+    },
+    {
+      "name": "OpenGraph type is website",
+      "max_score": 5,
+      "description": "The OpenGraph 'type' field is set to 'website'"
+    },
+    {
+      "name": "OpenGraph image",
+      "max_score": 5,
+      "description": "The OpenGraph output includes an image field populated from category.imageUrl (or image_url)"
+    },
+    {
+      "name": "Schema.org CollectionPage",
+      "max_score": 8,
+      "description": "The structured data uses @type: 'CollectionPage' (not 'WebPage', 'ProductCollection', or other type)"
+    },
+    {
+      "name": "BreadcrumbList in structured data",
+      "max_score": 8,
+      "description": "The structured data includes a breadcrumb property with @type: 'BreadcrumbList' and itemListElement array of ListItem entries"
+    },
+    {
+      "name": "seoTitle/seoDescription fallback",
+      "max_score": 6,
+      "description": "The meta title and description use the category's seoTitle/seoDescription fields when available, with a computed fallback when they are null/undefined"
+    },
+    {
+      "name": "gpt-4o-mini model",
+      "max_score": 10,
+      "description": "The auto-categorization code uses model 'gpt-4o-mini' (not gpt-4, gpt-4-turbo, gpt-3.5-turbo, or another model)"
+    },
+    {
+      "name": "Temperature 0.1",
+      "max_score": 8,
+      "description": "The OpenAI API call for auto-categorization uses temperature: 0.1"
+    },
+    {
+      "name": "JSON response format",
+      "max_score": 8,
+      "description": "The OpenAI API call uses response_format: { type: 'json_object' }"
+    },
+    {
+      "name": "Returns 1-3 category IDs",
+      "max_score": 8,
+      "description": "The auto-categorization prompt instructs the model to return 1-3 category IDs, and the code parses and returns categoryIds"
+    },
+    {
+      "name": "Human review workflow",
+      "max_score": 8,
+      "description": "The auto-categorization output or workflow includes a mechanism for human review — low-confidence suggestions are flagged or queued for review rather than applied automatically"
+    },
+    {
+      "name": "faceted URL canonical",
+      "max_score": 8,
+      "description": "Code or documentation addresses faceted/filtered URL variants by adding a rel='canonical' pointing to the unfaceted category URL"
+    }
+  ]
+}

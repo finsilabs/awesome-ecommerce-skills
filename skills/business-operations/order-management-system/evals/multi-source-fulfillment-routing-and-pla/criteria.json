@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements fulfillment routing that prefers own warehouses over dropship suppliers, selects the nearest warehouse by distance to destination ZIP, groups order lines by fulfillment source, wraps fulfillment creation in a transaction, queues planning asynchronously, models orders and fulfillments as separate entities, and warns customers about split shipments.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Warehouses tried first",
+      "max_score": 10,
+      "description": "The routing logic attempts to fulfill from own warehouses before considering dropship suppliers"
+    },
+    {
+      "name": "Dropship fallback order",
+      "max_score": 8,
+      "description": "When falling back to dropship suppliers, suppliers are evaluated/sorted by cost (ascending) rather than arbitrarily or by name"
+    },
+    {
+      "name": "Null for no source",
+      "max_score": 5,
+      "description": "When neither warehouse stock nor a dropship supplier is available for an item, the routing function returns null (or equivalent sentinel) rather than throwing or silently assigning a default"
+    },
+    {
+      "name": "Nearest warehouse selected",
+      "max_score": 10,
+      "description": "Among warehouses with sufficient stock, the one geographically closest to the customer's destination (by ZIP or coordinates) is selected — not just the first available"
+    },
+    {
+      "name": "Lines grouped by source",
+      "max_score": 10,
+      "description": "Order lines from the same fulfillment source are grouped together into a single shipment group rather than creating one fulfillment per line"
+    },
+    {
+      "name": "Source type included in key",
+      "max_score": 7,
+      "description": "The grouping key distinguishes both the source type ('warehouse' vs 'dropship') and the source id, so two sources with the same id but different types are not merged"
+    },
+    {
+      "name": "Fulfillment creation in transaction",
+      "max_score": 10,
+      "description": "The insertion of fulfillment records and fulfillment line records is wrapped in a single database transaction"
+    },
+    {
+      "name": "Separate order and fulfillment entities",
+      "max_score": 8,
+      "description": "Orders and fulfillments are modelled as separate tables/objects — fulfillment records reference the order by id rather than fulfillment data being embedded in the order record"
+    },
+    {
+      "name": "Async fulfillment queue",
+      "max_score": 10,
+      "description": "Fulfillment planning is triggered via a background queue or job (not called synchronously inline with payment confirmation)"
+    },
+    {
+      "name": "Split shipment customer warning",
+      "max_score": 10,
+      "description": "The design or output includes a mechanism (checkout warning, notification, or response field) to inform the customer when their order will arrive in multiple separate shipments"
+    },
+    {
+      "name": "FulfillmentSource type distinction",
+      "max_score": 7,
+      "description": "Fulfillment source records distinguish between type 'warehouse' and type 'dropship' (not just a generic 'source')"
+    },
+    {
+      "name": "Backordered lines handled",
+      "max_score": 5,
+      "description": "Lines with no available source are separated from the fulfilled lines rather than blocking the entire order fulfillment plan"
+    }
+  ]
+}

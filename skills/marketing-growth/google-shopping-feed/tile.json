@@ -1,0 +1,10 @@
+{
+  "name": "finsi/google-shopping-feed",
+  "version": "0.1.0",
+  "summary": "Product feed generation for Google Merchant Center with optimization rules",
+  "skills": {
+    "google-shopping-feed": {
+      "path": "SKILL.md"
+    }
+  }
+}

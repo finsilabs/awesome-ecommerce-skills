@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the specified breakpoints for the pricing table, filters out rows where the price doesn't change, calculates cart savings correctly, and displays savings prominently in the demo output.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Breakpoints [1,5,10,25,50,100,250]",
+      "max_score": 12,
+      "description": "getPricingTable evaluates prices at exactly these quantity breakpoints: 1, 5, 10, 25, 50, 100, 250"
+    },
+    {
+      "name": "250 labeled '250+'",
+      "max_score": 7,
+      "description": "The quantity 250 is labeled as '250+' in the pricing table output (not '250')"
+    },
+    {
+      "name": "Dedup unchanged price rows",
+      "max_score": 12,
+      "description": "getPricingTable filters out rows where unitPrice is the same as the previous row — only rows with a price change are returned"
+    },
+    {
+      "name": "lineTotal = unitPrice * quantity",
+      "max_score": 8,
+      "description": "calculateCart computes each line's total as unitPrice multiplied by quantity"
+    },
+    {
+      "name": "savings = (basePrice - unitPrice) * quantity",
+      "max_score": 10,
+      "description": "calculateCart computes per-line savings as (basePrice minus unitPrice) multiplied by quantity"
+    },
+    {
+      "name": "totalSavings returned",
+      "max_score": 8,
+      "description": "calculateCart returns a totalSavings field summing savings across all lines"
+    },
+    {
+      "name": "subtotal returned",
+      "max_score": 5,
+      "description": "calculateCart returns a subtotal field summing all lineTotals"
+    },
+    {
+      "name": "Savings shown in demo output",
+      "max_score": 10,
+      "description": "The demo script prints savings information (e.g. 'You save' or 'savings') — not just the unit price alone"
+    },
+    {
+      "name": "savingsPct in pricing table",
+      "max_score": 8,
+      "description": "getPricingTable includes a savings percentage field (e.g. savingsPct) calculated as Math.round((1 - unitPrice/basePrice) * 100)"
+    },
+    {
+      "name": "Pricing table first row always included",
+      "max_score": 10,
+      "description": "The first breakpoint row (quantity 1) is always included in the pricing table output regardless of price changes"
+    },
+    {
+      "name": "Demo uses sample tiers with 3+ breaks",
+      "max_score": 5,
+      "description": "The demo script defines a product with at least 3 distinct quantity break tiers (not just 1 or 2)"
+    },
+    {
+      "name": "Demo has 3-line cart",
+      "max_score": 5,
+      "description": "The demo script's calculateCart call uses a cart with at least 3 lines"
+    }
+  ]
+}

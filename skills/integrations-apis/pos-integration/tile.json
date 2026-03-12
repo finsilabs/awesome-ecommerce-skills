@@ -1,0 +1,10 @@
+{
+  "name": "finsi/pos-integration",
+  "version": "0.1.0",
+  "summary": "Point-of-sale integration with online inventory and unified order management",
+  "skills": {
+    "pos-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds the FacetPanel with correct accessibility attributes, count-based sorting, zero-count disabling, overflow limiting, active count badges, collapsible groups, and the ActiveFilterPills component with clear-all support.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Aria-label on aside",
+      "max_score": 6,
+      "description": "The FacetPanel root element is an <aside> with an aria-label attribute (e.g., 'Product filters')"
+    },
+    {
+      "name": "Aria-expanded on toggle",
+      "max_score": 8,
+      "description": "Each facet group has a toggle button with an aria-expanded attribute that reflects the expanded/collapsed state"
+    },
+    {
+      "name": "Aria-controls on toggle",
+      "max_score": 6,
+      "description": "The facet group toggle button has an aria-controls attribute referencing the id of the values list"
+    },
+    {
+      "name": "Role group on value list",
+      "max_score": 6,
+      "description": "The list of facet values uses role='group' and has an aria-label attribute"
+    },
+    {
+      "name": "Count descending sort",
+      "max_score": 10,
+      "description": "Facet values within each group are sorted by count in descending order (highest count first)"
+    },
+    {
+      "name": "Zero-count disabled",
+      "max_score": 10,
+      "description": "Checkboxes for values with count=0 are rendered with disabled=true, UNLESS that value is already in the active filters"
+    },
+    {
+      "name": "Active count badge",
+      "max_score": 8,
+      "description": "When one or more values are selected in a facet group, a badge or indicator showing the number of active selections appears on the group heading"
+    },
+    {
+      "name": "Expanded by default",
+      "max_score": 6,
+      "description": "Facet groups are expanded by default (not collapsed) on initial render"
+    },
+    {
+      "name": "Top 10 overflow limit",
+      "max_score": 12,
+      "description": "Facet groups with more than 10 values show only the top 10 by default, with a 'Show more' (or equivalent) toggle to reveal the rest"
+    },
+    {
+      "name": "Dismissible pills",
+      "max_score": 8,
+      "description": "ActiveFilterPills renders each active filter value as a button or element that, when clicked, removes only that individual filter value"
+    },
+    {
+      "name": "Clear all button",
+      "max_score": 10,
+      "description": "ActiveFilterPills renders a 'Clear all' button that is visible whenever at least one filter is active"
+    },
+    {
+      "name": "Pills above grid",
+      "max_score": 10,
+      "description": "COMPONENT_NOTES.md or component structure places the ActiveFilterPills display above/before the product grid, not inside the sidebar"
+    }
+  ]
+}

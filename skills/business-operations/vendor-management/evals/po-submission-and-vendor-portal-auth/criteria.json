@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the vendor portal using token-based authentication with deep links, correct acknowledgment status guards, buyer notification, ship-to address confirmation, expected delivery buffer, and unit cost immutability.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Token-based portal links",
+      "max_score": 10,
+      "description": "The submitPurchaseOrder function generates a portal token and includes it as a URL parameter in the email link (not a persistent password or session cookie approach)"
+    },
+    {
+      "name": "Short-lived token expiry",
+      "max_score": 8,
+      "description": "The token generation includes a 7-day expiry (or the design notes describe short-lived tokens with ~7-day lifetime) rather than indefinite validity"
+    },
+    {
+      "name": "One-click deep link",
+      "max_score": 8,
+      "description": "The email to the vendor contains an acknowledgeUrl / deep link that goes directly to the specific PO (includes poId) so the vendor can confirm in one click"
+    },
+    {
+      "name": "Ship-to address in email",
+      "max_score": 8,
+      "description": "The PO email to the vendor includes the ship-to address in the email body data/template"
+    },
+    {
+      "name": "Address confirmation in portal",
+      "max_score": 8,
+      "description": "The portal acknowledgment flow requires the vendor to confirm the ship-to address (either as a required field, a confirm checkbox, or notes to this effect in design_notes.md)"
+    },
+    {
+      "name": "Vendor ownership check",
+      "max_score": 8,
+      "description": "The acknowledgment endpoint verifies that the PO belongs to the authenticated vendor (compares po.vendor_id with req.vendor.id or equivalent)"
+    },
+    {
+      "name": "Already-acknowledged guard",
+      "max_score": 8,
+      "description": "The acknowledgment endpoint returns an error (HTTP 422 or equivalent) when the PO status is not 'submitted'"
+    },
+    {
+      "name": "Buyer notification",
+      "max_score": 8,
+      "description": "The acknowledgment handler sends an email to the buyer after a successful acknowledgment"
+    },
+    {
+      "name": "Delivery date buffer",
+      "max_score": 10,
+      "description": "The calculateExpectedDelivery function adds lead_time_days PLUS an additional 2-day buffer (total = lead_time_days + 2)"
+    },
+    {
+      "name": "Unit cost immutability",
+      "max_score": 8,
+      "description": "The design_notes.md or code comments explicitly state that unit costs stored at PO creation time must NOT be updated retroactively, and discrepancies are flagged for AP review"
+    },
+    {
+      "name": "PO status update on submit",
+      "max_score": 8,
+      "description": "The submitPurchaseOrder function updates the PO status to 'submitted' and records submitted_at timestamp after sending the email"
+    },
+    {
+      "name": "Acknowledgment timestamp",
+      "max_score": 8,
+      "description": "The acknowledgment endpoint sets status to 'acknowledged' and records acknowledged_at timestamp"
+    }
+  ]
+}

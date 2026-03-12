@@ -1,0 +1,10 @@
+{
+  "name": "finsi/coupon-management",
+  "version": "0.1.0",
+  "summary": "Coupon CRUD, validation rules, usage limits, single-use codes, bulk generation",
+  "skills": {
+    "coupon-management": {
+      "path": "SKILL.md"
+    }
+  }
+}

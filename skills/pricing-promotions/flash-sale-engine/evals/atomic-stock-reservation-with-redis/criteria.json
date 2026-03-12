@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct flash sale database schema with the exact column types and constraints, implements atomic Redis-based stock reservation with ioredis, handles the overshoot scenario, persists reservations asynchronously to the DB, and addresses data reconciliation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Prices as integer cents",
+      "max_score": 8,
+      "description": "sale_price and original_price columns are defined as INTEGER (not DECIMAL/FLOAT/NUMERIC), with a comment or name indicating they store cents"
+    },
+    {
+      "name": "Status CHECK constraint",
+      "max_score": 8,
+      "description": "The status column has a CHECK constraint that includes all four allowed values: 'scheduled', 'active', 'sold_out', and 'ended'"
+    },
+    {
+      "name": "queue_enabled column",
+      "max_score": 6,
+      "description": "The flash_sales table includes a queue_enabled BOOLEAN column with a DEFAULT false"
+    },
+    {
+      "name": "Composite index",
+      "max_score": 8,
+      "description": "A database index is created on the flash_sales table covering at minimum (status, starts_at, ends_at)"
+    },
+    {
+      "name": "ioredis package",
+      "max_score": 8,
+      "description": "Uses ioredis (import from 'ioredis') rather than another Redis client library such as redis or node-redis"
+    },
+    {
+      "name": "REDIS_URL env var",
+      "max_score": 6,
+      "description": "Redis connection is initialized using process.env.REDIS_URL as the connection string"
+    },
+    {
+      "name": "Atomic INCR reservation",
+      "max_score": 10,
+      "description": "Stock reservation uses redis.incr() (or equivalent atomic increment) on a Redis key rather than a database SELECT + UPDATE pattern"
+    },
+    {
+      "name": "Overshoot correction",
+      "max_score": 10,
+      "description": "After INCR, if the new count exceeds sale_quantity, the code calls redis.decr() (or equivalent) to roll back the increment before returning SOLD_OUT"
+    },
+    {
+      "name": "Async DB persist",
+      "max_score": 10,
+      "description": "After a successful Redis reservation, the DB insert/persist is called asynchronously (fire-and-forget) — the reservation response is NOT blocked waiting for the DB write to complete"
+    },
+    {
+      "name": "DB persist error logging",
+      "max_score": 6,
+      "description": "The asynchronous DB persist has a .catch() handler that logs the error (e.g., console.error) rather than silently swallowing it"
+    },
+    {
+      "name": "Redis-to-DB reconciliation",
+      "max_score": 10,
+      "description": "reconcile.ts contains a mechanism (e.g., periodic job or function) that reads the Redis sold counter and updates sold_count in the database — not relying solely on Redis for permanent state"
+    },
+    {
+      "name": "Separate sale quantity pool",
+      "max_score": 10,
+      "description": "DESIGN.md or code comments explain that flash sale stock (sale_quantity) is a separate allocation from main product inventory"
+    }
+  ]
+}

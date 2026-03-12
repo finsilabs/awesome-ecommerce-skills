@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent designs the gift card database schema using an append-only ledger pattern with two tables, correct column types, a case-insensitive unique index on the code, and no stored balance column.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Two separate tables",
+      "max_score": 5,
+      "description": "Schema includes two distinct tables: one for gift card records and one for transactions/ledger entries (not combined into one table, not using a single 'balance' column)"
+    },
+    {
+      "name": "No stored balance column",
+      "max_score": 15,
+      "description": "The gift card table does NOT contain a 'balance' or 'current_balance' column — balance is derived only from summing transactions"
+    },
+    {
+      "name": "Code column uniqueness",
+      "max_score": 5,
+      "description": "The gift card code field is declared UNIQUE (or has a unique constraint) on the gift cards table"
+    },
+    {
+      "name": "Amounts as integer cents",
+      "max_score": 10,
+      "description": "Monetary amount fields (initial_value, transaction amount) are defined as INTEGER (not DECIMAL, FLOAT, or NUMERIC with scale > 0), representing cents"
+    },
+    {
+      "name": "Foreign key on transactions",
+      "max_score": 10,
+      "description": "The transactions table has a card_id column with a foreign key reference to the gift cards table's primary key"
+    },
+    {
+      "name": "Transaction amount sign semantics",
+      "max_score": 5,
+      "description": "The transactions table amount column comment or schema indicates positive = credit (issuance/reload) and negative = debit (redemption), OR the schema/code shows this sign convention in use"
+    },
+    {
+      "name": "Transaction type constraint",
+      "max_score": 15,
+      "description": "The transactions table type column uses a CHECK constraint (or enum) limiting values to exactly: 'issue', 'redeem', 'reload', 'refund', 'void', 'expiration' — no fewer and no additional values"
+    },
+    {
+      "name": "Case-insensitive code index",
+      "max_score": 15,
+      "description": "A unique index is created on UPPER(code) (or a case-insensitive expression) rather than on the raw code column"
+    },
+    {
+      "name": "Descending transaction index",
+      "max_score": 10,
+      "description": "An index exists on the transactions table keyed by (card_id, created_at DESC) or equivalent — enabling fast per-card transaction lookups in reverse chronological order"
+    },
+    {
+      "name": "is_active flag",
+      "max_score": 10,
+      "description": "The gift cards table includes an is_active (or equivalent active/enabled) boolean column defaulting to true"
+    }
+  ]
+}

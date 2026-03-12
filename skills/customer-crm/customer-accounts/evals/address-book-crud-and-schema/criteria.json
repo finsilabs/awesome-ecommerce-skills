@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the customer address book with correct schema design (country as ISO alpha-2, optional state, is_default/label fields, indexed customer_id) and correct default-address management logic (auto-default for first address, clear-then-set on new default, promote-on-delete).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "country as VARCHAR(2)",
+      "max_score": 8,
+      "description": "The customer_addresses table defines country as VARCHAR(2) or CHAR(2) — the two-character ISO 3166-1 alpha-2 format"
+    },
+    {
+      "name": "state optional",
+      "max_score": 8,
+      "description": "The state/province column in the address schema is nullable / NOT required (no NOT NULL constraint) to support countries that don't use state/province codes"
+    },
+    {
+      "name": "is_default field",
+      "max_score": 7,
+      "description": "Address schema includes an is_default BOOLEAN field (defaulting to false)"
+    },
+    {
+      "name": "label field",
+      "max_score": 5,
+      "description": "Address schema includes a label field for user-friendly names like 'Home' or 'Work'"
+    },
+    {
+      "name": "customer_id index",
+      "max_score": 7,
+      "description": "A database index is created on the customer_id (or customer_id foreign key) column of the addresses table"
+    },
+    {
+      "name": "First address auto-default",
+      "max_score": 10,
+      "description": "When adding an address and no other addresses exist for that customer, the new address is automatically set as the default"
+    },
+    {
+      "name": "Clear defaults before setting new default",
+      "max_score": 10,
+      "description": "When adding or updating an address as default, existing default addresses are cleared first before setting the new default (not just overwritten)"
+    },
+    {
+      "name": "Ownership check on update/delete",
+      "max_score": 10,
+      "description": "Before updating or deleting an address, the code verifies the address belongs to the requesting customer — returns 404 if not found or owned by another customer"
+    },
+    {
+      "name": "Promote on default delete",
+      "max_score": 10,
+      "description": "When the default address is deleted, the first remaining address is automatically promoted to be the new default"
+    },
+    {
+      "name": "UUID primary key",
+      "max_score": 8,
+      "description": "Address primary key uses UUID type (not integer/serial)"
+    },
+    {
+      "name": "ON DELETE CASCADE",
+      "max_score": 7,
+      "description": "The foreign key from customer_addresses to customers includes ON DELETE CASCADE"
+    },
+    {
+      "name": "Delete returns 204",
+      "max_score": 5,
+      "description": "The delete address endpoint returns HTTP 204 (no content) on success"
+    },
+    {
+      "name": "Create returns 201",
+      "max_score": 5,
+      "description": "The add address endpoint returns HTTP 201 (created) on success"
+    }
+  ]
+}

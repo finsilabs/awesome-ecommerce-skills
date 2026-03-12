@@ -1,0 +1,10 @@
+{
+  "name": "finsi/monitoring-alerting-commerce",
+  "version": "0.1.0",
+  "summary": "Commerce-specific dashboards — checkout success rate, cart errors, payment failures",
+  "skills": {
+    "monitoring-alerting-commerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

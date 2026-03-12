@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements SFCC import automation using WebDAV for file upload and the Jobs API for job triggering. Focuses on correct URL patterns, authentication methods, job parallelism, parameter names, and diagnostic logging.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "WebDAV URL pattern",
+      "max_score": 10,
+      "description": "File upload uses the WebDAV URL pattern: {instanceUrl}/on/demandware.servlet/webdav/Sites/Impex/src/{filename}"
+    },
+    {
+      "name": "WebDAV Basic auth",
+      "max_score": 10,
+      "description": "WebDAV PUT requests use Basic authentication with clientId:clientSecret base64-encoded (not Bearer token)"
+    },
+    {
+      "name": "WebDAV PUT method",
+      "max_score": 6,
+      "description": "File uploads use HTTP PUT method (not POST or multipart)"
+    },
+    {
+      "name": "Jobs API URL pattern",
+      "max_score": 10,
+      "description": "Job trigger requests POST to {instanceUrl}/s/-/dw/data/v23_2/jobs/{jobId}/executions"
+    },
+    {
+      "name": "Jobs API Bearer auth",
+      "max_score": 8,
+      "description": "Job trigger requests use Bearer token authentication (not Basic auth)"
+    },
+    {
+      "name": "ImportFile parameter",
+      "max_score": 10,
+      "description": "Job trigger request body includes a parameter named exactly 'ImportFile' with the filename as its value"
+    },
+    {
+      "name": "Separate job IDs",
+      "max_score": 10,
+      "description": "Catalog, inventory, and pricebook imports use separate/distinct job IDs (not one shared job definition for all three)"
+    },
+    {
+      "name": "Parallel execution",
+      "max_score": 8,
+      "description": "Catalog and inventory job triggers are initiated concurrently (e.g. using Promise.all or similar parallel execution pattern)"
+    },
+    {
+      "name": "Zero-records logging",
+      "max_score": 10,
+      "description": "import-log-schema.md or script comments mention checking for '0 records processed' and the likely cause (file path mismatch or ImportFile parameter mismatch)"
+    },
+    {
+      "name": "Log output present",
+      "max_score": 8,
+      "description": "Script includes console.log or similar logging after each upload and job trigger step (not just on error)"
+    },
+    {
+      "name": "catalogID parameter",
+      "max_score": 10,
+      "description": "Catalog import job trigger body includes a parameter named 'catalogID' with the catalog ID value"
+    }
+  ]
+}

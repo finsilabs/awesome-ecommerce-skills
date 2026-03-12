@@ -1,0 +1,81 @@
+{
+  "context": "Tests whether the agent correctly implements the volume pricing database schema with the right table structure, column types, nullable fields, constraints, and indexing as specified in the skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "price_tiers table exists",
+      "max_score": 5,
+      "description": "schema.sql contains a CREATE TABLE statement for price_tiers"
+    },
+    {
+      "name": "price_tiers UUID PK",
+      "max_score": 5,
+      "description": "price_tiers.id uses UUID type with DEFAULT gen_random_uuid()"
+    },
+    {
+      "name": "Nullable product_id and category_id",
+      "max_score": 7,
+      "description": "price_tiers.product_id and category_id are nullable (no NOT NULL constraint), referencing products and categories respectively"
+    },
+    {
+      "name": "Nullable customer_group",
+      "max_score": 5,
+      "description": "price_tiers.customer_group is nullable VARCHAR (no NOT NULL constraint)"
+    },
+    {
+      "name": "price_type CHECK constraint",
+      "max_score": 8,
+      "description": "price_tiers.price_type has a CHECK constraint limiting values to 'fixed' and 'percentage_off'"
+    },
+    {
+      "name": "price_value NUMERIC type",
+      "max_score": 7,
+      "description": "price_tiers.price_value uses NUMERIC(10,2) type (not INTEGER or FLOAT)"
+    },
+    {
+      "name": "priority column default",
+      "max_score": 5,
+      "description": "price_tiers.priority has NOT NULL with DEFAULT 0"
+    },
+    {
+      "name": "Lookup index",
+      "max_score": 10,
+      "description": "A CREATE INDEX is present on price_tiers covering (product_id, customer_group, min_quantity)"
+    },
+    {
+      "name": "price_lists table exists",
+      "max_score": 8,
+      "description": "schema.sql contains a CREATE TABLE statement for price_lists with name, customer_group, currency, starts_at, ends_at, is_active columns"
+    },
+    {
+      "name": "currency default USD",
+      "max_score": 5,
+      "description": "price_lists.currency has DEFAULT 'USD'"
+    },
+    {
+      "name": "is_active default true",
+      "max_score": 5,
+      "description": "price_lists.is_active has NOT NULL DEFAULT true"
+    },
+    {
+      "name": "price_list_items table exists",
+      "max_score": 8,
+      "description": "schema.sql contains a CREATE TABLE for price_list_items with price_list_id FK, product_id FK, price, and min_quantity columns"
+    },
+    {
+      "name": "price_list_items.price is INTEGER",
+      "max_score": 10,
+      "description": "price_list_items.price column uses INTEGER type (storing cents), NOT NUMERIC or DECIMAL"
+    },
+    {
+      "name": "min_quantity default 1",
+      "max_score": 7,
+      "description": "price_list_items.min_quantity has NOT NULL DEFAULT 1"
+    },
+    {
+      "name": "TIMESTAMPTZ timestamps",
+      "max_score": 5,
+      "description": "Timestamp columns (created_at, starts_at, ends_at) use TIMESTAMPTZ type (not TIMESTAMP without timezone)"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly integrates TaxJar for US sales tax calculation, including correct package usage, API parameter structure, shipping tax codes, caching strategy, and graceful error handling.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct package",
+      "max_score": 8,
+      "description": "Uses the 'taxjar' npm package (import/require from 'taxjar'), not a generic HTTP client or hardcoded rates"
+    },
+    {
+      "name": "API key from env",
+      "max_score": 8,
+      "description": "Initializes TaxJar client with apiKey read from process.env.TAXJAR_API_KEY (not hardcoded)"
+    },
+    {
+      "name": "Address fields",
+      "max_score": 8,
+      "description": "Passes both from_* (from_country, from_zip, from_state, from_city, from_street) AND to_* address fields to taxForOrder()"
+    },
+    {
+      "name": "Amount calculation",
+      "max_score": 8,
+      "description": "Sets 'amount' as the computed sum of unitPrice * quantity across all line items (not a fixed value)"
+    },
+    {
+      "name": "Line item structure",
+      "max_score": 8,
+      "description": "line_items array includes id, quantity, unit_price, product_tax_code, and discount fields for each item"
+    },
+    {
+      "name": "Shipping tax code",
+      "max_score": 8,
+      "description": "Uses 'FreightInside' (or equivalent TaxJar freight code) as the tax code for shipping, not a blank or omitted code"
+    },
+    {
+      "name": "No hardcoded rates",
+      "max_score": 8,
+      "description": "Does NOT contain hardcoded numeric tax rate constants (e.g. 0.08, 8%) used as primary tax values — relies on TaxJar API response"
+    },
+    {
+      "name": "Cache key uses zip and total",
+      "max_score": 8,
+      "description": "Cache key is derived from both the destination zip code and the line item total (not just one or neither)"
+    },
+    {
+      "name": "Cache TTL is 1 hour",
+      "max_score": 8,
+      "description": "Cache entries are set with a TTL of 3600 seconds (1 hour)"
+    },
+    {
+      "name": "MD5 hash for cache key",
+      "max_score": 9,
+      "description": "Uses MD5 (createHash('md5')) to generate the cache key from the zip and total values"
+    },
+    {
+      "name": "Error fallback rate",
+      "max_score": 9,
+      "description": "When TaxJar API throws an error, applies a fallback tax rate of approximately 8.5% (0.085) OR explicitly blocks checkout with an error message — not silently ignores the error"
+    },
+    {
+      "name": "Transaction code stored",
+      "max_score": 10,
+      "description": "The returned tax result includes or the code persists the TaxJar transaction code (amount_to_collect / rate) on the order record for future reference"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements bulletproof payout processing with correct status transitions, minimum threshold, atomic transactions, multi-seller transfer groups, suspended seller scoping, email summaries, and the correct earnings dashboard query.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Minimum payout threshold",
+      "max_score": 8,
+      "description": "Payouts below 100 cents ($1.00) are skipped — the code checks totalAmount < 100 and continues to the next seller"
+    },
+    {
+      "name": "stripe.transfers.create used",
+      "max_score": 8,
+      "description": "Funds are sent to sellers using stripe.transfers.create (not stripe.payouts.create or a different method)"
+    },
+    {
+      "name": "Transfer metadata included",
+      "max_score": 6,
+      "description": "stripe.transfers.create includes a metadata object containing at minimum payout_id and seller_id"
+    },
+    {
+      "name": "Atomic status update on success",
+      "max_score": 12,
+      "description": "Payout status ('paid') and earning status ('paid_out') are updated together inside a single database transaction — not in two separate calls"
+    },
+    {
+      "name": "paid_out only after transfer confirms",
+      "max_score": 10,
+      "description": "Earning status is set to 'paid_out' only after the stripe.transfers.create call returns successfully — NOT before the transfer"
+    },
+    {
+      "name": "Failed payout status set",
+      "max_score": 8,
+      "description": "On Stripe transfer error, the payout record status is updated to 'failed' (not left as 'pending')"
+    },
+    {
+      "name": "Active-only sellers for new payouts",
+      "max_score": 8,
+      "description": "processWeeklyPayouts queries for sellers with status: 'active' only — suspended sellers are excluded from new payouts"
+    },
+    {
+      "name": "transfer_group for multi-seller orders",
+      "max_score": 8,
+      "description": "processMultiSellerOrder creates a PaymentIntent with transfer_group set to the orderId, linking all transfers to the same order"
+    },
+    {
+      "name": "Separate transfer per seller",
+      "max_score": 8,
+      "description": "processMultiSellerOrder creates individual stripe.transfers.create calls for each seller, each with transfer_group: orderId"
+    },
+    {
+      "name": "Earnings summary query structure",
+      "max_score": 8,
+      "description": "The earnings API uses SUM(CASE WHEN status = 'available' ...) and SUM(CASE WHEN status = 'held' ...) to compute available_balance and held_balance separately"
+    },
+    {
+      "name": "Payout summary email sent",
+      "max_score": 8,
+      "description": "After a successful payout, an email is sent to the seller summarizing the payout (referencing orders, commission, and/or payout amount)"
+    },
+    {
+      "name": "Payout period tracked",
+      "max_score": 8,
+      "description": "Each payout record includes period_start and period_end dates (covering the 7-day window for weekly payouts)"
+    }
+  ]
+}

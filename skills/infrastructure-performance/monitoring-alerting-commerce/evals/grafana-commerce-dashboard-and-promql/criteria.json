@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent builds a Grafana commerce dashboard with the required panel types and correct PromQL queries, including both business and technical KPI panels as prescribed by the skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Checkout funnel panel",
+      "max_score": 7,
+      "description": "dashboard-notes.md or dashboard JSON includes a checkout funnel panel (described as Sankey, bar chart, or funnel visualization showing cart-to-confirmation drop-off)"
+    },
+    {
+      "name": "Payment success rate gauge",
+      "max_score": 7,
+      "description": "dashboard-notes.md or dashboard JSON includes a payment success rate panel using a gauge visualization (not time series or stat)"
+    },
+    {
+      "name": "Revenue per hour panel",
+      "max_score": 7,
+      "description": "dashboard-notes.md or dashboard JSON includes a revenue per hour panel using a time series visualization"
+    },
+    {
+      "name": "Decline code pie chart",
+      "max_score": 7,
+      "description": "dashboard-notes.md or dashboard JSON includes a payment failures by decline code panel using a pie chart visualization"
+    },
+    {
+      "name": "Latency time series panel",
+      "max_score": 7,
+      "description": "dashboard-notes.md or dashboard JSON includes an order creation latency panel showing P50/P95/P99 as a time series"
+    },
+    {
+      "name": "Abandonment rate stat panel",
+      "max_score": 8,
+      "description": "dashboard-notes.md or dashboard JSON includes a checkout abandonment rate panel using a stat panel visualization"
+    },
+    {
+      "name": "Active carts gauge",
+      "max_score": 5,
+      "description": "dashboard-notes.md or dashboard JSON includes an active carts panel using a gauge visualization"
+    },
+    {
+      "name": "Out of stock counter",
+      "max_score": 5,
+      "description": "dashboard-notes.md or dashboard JSON includes an out of stock events panel"
+    },
+    {
+      "name": "Payment success rate PromQL",
+      "max_score": 10,
+      "description": "dashboard-notes.md or dashboard JSON uses a PromQL query dividing rate(payment_successes_total[...]) by (rate(payment_successes_total[...]) + rate(payment_failures_total[...])) for the payment success rate panel"
+    },
+    {
+      "name": "P99 latency PromQL",
+      "max_score": 10,
+      "description": "dashboard-notes.md or dashboard JSON uses histogram_quantile(0.99, sum(rate(order_creation_duration_ms_bucket[...])) by (le, ...)) for the latency panel"
+    },
+    {
+      "name": "Checkout conversion PromQL",
+      "max_score": 8,
+      "description": "dashboard-notes.md or dashboard JSON uses rate(checkout_completed_total[1h]) / rate(checkout_started_total[1h]) (with 1h window) for the checkout conversion panel"
+    },
+    {
+      "name": "Decline code topk PromQL",
+      "max_score": 10,
+      "description": "dashboard-notes.md or dashboard JSON uses topk(5, sum(rate(payment_failures_total[...])) by (decline_code)) for the decline code panel"
+    },
+    {
+      "name": "Business metric included",
+      "max_score": 9,
+      "description": "dashboard-notes.md or dashboard JSON includes at least one business metric panel (orders per minute OR revenue per hour) alongside the technical SLO panels"
+    }
+  ]
+}

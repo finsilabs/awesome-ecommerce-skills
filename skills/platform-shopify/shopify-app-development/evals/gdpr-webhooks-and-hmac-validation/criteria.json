@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements mandatory GDPR webhook handlers and HMAC-based webhook authentication for a Shopify App Store submission, including all three required GDPR topics and proper signature verification.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CUSTOMERS_DATA_REQUEST handler",
+      "max_score": 9,
+      "description": "webhooks.tsx includes a case or handler for the \"CUSTOMERS_DATA_REQUEST\" topic"
+    },
+    {
+      "name": "CUSTOMERS_REDACT handler",
+      "max_score": 9,
+      "description": "webhooks.tsx includes a case or handler for the \"CUSTOMERS_REDACT\" topic"
+    },
+    {
+      "name": "SHOP_REDACT handler",
+      "max_score": 9,
+      "description": "webhooks.tsx includes a case or handler for the \"SHOP_REDACT\" topic"
+    },
+    {
+      "name": "APP_UNINSTALLED retained",
+      "max_score": 8,
+      "description": "webhooks.tsx still handles the \"APP_UNINSTALLED\" topic (not removed from the original)"
+    },
+    {
+      "name": "HMAC verification present",
+      "max_score": 12,
+      "description": "webhooks.tsx performs HMAC signature verification on the incoming webhook request (via authenticate.webhook, manual HMAC check, or equivalent)"
+    },
+    {
+      "name": "Raw body before parsing",
+      "max_score": 10,
+      "description": "WEBHOOK_NOTES.md or code comments mention that raw body must be read before JSON parsing to validate HMAC correctly, OR code demonstrates this pattern"
+    },
+    {
+      "name": "Notes: GDPR topics required by Shopify",
+      "max_score": 10,
+      "description": "WEBHOOK_NOTES.md states that the three GDPR topics (customers/data_request, customers/redact, shop/redact) are mandatory requirements for App Store submission"
+    },
+    {
+      "name": "Notes: HMAC validation purpose",
+      "max_score": 9,
+      "description": "WEBHOOK_NOTES.md explains that HMAC validation confirms the request originated from Shopify"
+    },
+    {
+      "name": "GDPR handlers contain real logic",
+      "max_score": 12,
+      "description": "The CUSTOMERS_REDACT and/or SHOP_REDACT handlers contain actual data deletion or redaction logic (not just empty stubs or comments saying 'TODO')"
+    },
+    {
+      "name": "No unauthenticated webhook path",
+      "max_score": 12,
+      "description": "webhooks.tsx does NOT process or act on webhook payload before authentication/HMAC verification completes"
+    }
+  ]
+}

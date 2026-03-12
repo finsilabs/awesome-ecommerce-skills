@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements the product card compare checkbox (with limit enforcement), the floating comparison tray (with placeholder slots, count display, aria attributes, and body padding), and the correct URL structure for navigating to the comparison page.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Checkbox disabled at limit",
+      "max_score": 10,
+      "description": "The compare checkbox on a ProductCard is disabled when the product is NOT already selected AND the selection has already reached the maximum allowed (4 products)"
+    },
+    {
+      "name": "Maximum 4 products enforced",
+      "max_score": 8,
+      "description": "The toggle logic prevents adding more than 4 products to the comparison (the cap is 4, not 3 or 5)"
+    },
+    {
+      "name": "Tray hidden when empty",
+      "max_score": 7,
+      "description": "The ComparisonTray returns null (or is not rendered) when selectedProducts is empty (length === 0)"
+    },
+    {
+      "name": "Placeholder slots",
+      "max_score": 9,
+      "description": "The tray renders placeholder/empty slot elements for the remaining unfilled positions up to the maximum (e.g. if 2 selected, 2 placeholders are shown)"
+    },
+    {
+      "name": "aria-hidden on placeholders",
+      "max_score": 6,
+      "description": "The placeholder slot elements have aria-hidden=\"true\""
+    },
+    {
+      "name": "Count display",
+      "max_score": 7,
+      "description": "The tray displays a count in the format \"N/4 selected\" (or equivalent) showing how many products are currently selected out of the maximum"
+    },
+    {
+      "name": "aria-live polite",
+      "max_score": 8,
+      "description": "The tray container element has aria-live=\"polite\" to announce changes to screen reader users"
+    },
+    {
+      "name": "Compare link aria-disabled",
+      "max_score": 8,
+      "description": "The Compare button or link in the tray uses aria-disabled=\"true\" (or equivalent) when fewer than 2 products are selected"
+    },
+    {
+      "name": "Compare URL format",
+      "max_score": 9,
+      "description": "The Compare link navigates to a URL using the `compare` query parameter for each product id, e.g. /compare?compare=id1&compare=id2"
+    },
+    {
+      "name": "Individual product removal",
+      "max_score": 7,
+      "description": "Each product in the tray has a remove button that triggers onRemove with that product's id; the aria-label includes the product name"
+    },
+    {
+      "name": "Clear all button",
+      "max_score": 6,
+      "description": "The tray includes a Clear all button that triggers onClear to remove all selected products"
+    },
+    {
+      "name": "Body padding-bottom",
+      "max_score": 8,
+      "description": "The page or container element adds padding-bottom when the comparison tray is visible, so the tray does not obscure page content beneath it"
+    },
+    {
+      "name": "Checkbox label wraps input",
+      "max_score": 7,
+      "description": "The compare checkbox is wrapped in a <label> element (making the full label area clickable), and the input has an id linked to the label"
+    }
+  ]
+}

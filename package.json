@@ -10,7 +10,11 @@
     "catalog": "node tools/scripts/generate-catalog.js",
     "readme": "node tools/scripts/generate-readme.js",
     "chain": "npm run validate:strict && npm run catalog && npm run readme",
-    "test": "node --test 'tools/scripts/__tests__/*.test.js'"
+    "test": "node --test 'tools/scripts/__tests__/*.test.js'",
+    "tiles:setup": "node tools/scripts/setup-tiles.js",
+    "tiles:generate-scenarios": "bash tools/scripts/batch-generate-scenarios.sh",
+    "tiles:download-scenarios": "bash tools/scripts/batch-download-scenarios.sh",
+    "tiles:run-evals": "bash tools/scripts/batch-run-evals.sh"
   },
   "devDependencies": {
     "yaml": "^2.8.2"

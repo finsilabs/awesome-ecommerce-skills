@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses crypto.randomBytes with the unambiguous character set for code generation, handles bulk collisions via ON CONFLICT, sets correct single-use limits, and implements atomic optimistic-locking redemption as specified in the coupon-management skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses crypto.randomBytes",
+      "max_score": 10,
+      "description": "generateCouponCode uses Node's built-in crypto.randomBytes (not Math.random or uuid) to generate the random portion"
+    },
+    {
+      "name": "Unambiguous character set",
+      "max_score": 10,
+      "description": "The character set used for code generation omits ambiguous characters: does NOT include '0', 'O', '1', or 'I'"
+    },
+    {
+      "name": "Code format: prefix-random",
+      "max_score": 8,
+      "description": "Generated codes follow the format '${prefix}-${randomChars}' (a prefix, a hyphen, then the random segment)"
+    },
+    {
+      "name": "Batch size 500",
+      "max_score": 8,
+      "description": "bulkGenerateCoupons processes codes in batches — batch size is 500 (or a constant named to that effect)"
+    },
+    {
+      "name": "Conflict-safe insert",
+      "max_score": 10,
+      "description": "bulkGenerateCoupons uses an insert strategy equivalent to ON CONFLICT DO NOTHING / onConflict: 'ignore' to silently skip collisions"
+    },
+    {
+      "name": "Generates until target quantity",
+      "max_score": 8,
+      "description": "bulkGenerateCoupons continues looping until the actual number of successfully inserted codes reaches the requested quantity"
+    },
+    {
+      "name": "usage_limit: 1 on bulk codes",
+      "max_score": 8,
+      "description": "Each bulk-generated code is inserted with usage_limit set to 1"
+    },
+    {
+      "name": "per_customer_limit: 1 on bulk codes",
+      "max_score": 8,
+      "description": "Each bulk-generated code is inserted with per_customer_limit set to 1"
+    },
+    {
+      "name": "Atomic UPDATE with WHERE guard",
+      "max_score": 10,
+      "description": "redeemCoupon uses an UPDATE ... SET usage_count = usage_count + 1 WHERE ... AND (usage_limit IS NULL OR usage_count < usage_limit) pattern"
+    },
+    {
+      "name": "rowCount race-condition check",
+      "max_score": 10,
+      "description": "redeemCoupon checks the UPDATE row count and throws an error (e.g. COUPON_EXHAUSTED) when zero rows were updated"
+    },
+    {
+      "name": "Transaction parameter",
+      "max_score": 10,
+      "description": "redeemCoupon accepts a transaction object/parameter rather than opening its own connection, enabling it to run inside the order creation transaction"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/sfcc-business-manager",
+  "version": "0.1.0",
+  "summary": "Business Manager configuration, import/export, and site preferences",
+  "skills": {
+    "sfcc-business-manager": {
+      "path": "SKILL.md"
+    }
+  }
+}

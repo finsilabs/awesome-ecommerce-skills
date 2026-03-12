@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements a Merchant Center audit using the productstatuses API, handles multi-country feed expansion with correct offerId format and matching country/language settings, properly groups variants, and follows guidance on private-label product identifiers.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "productstatuses.list usage",
+      "max_score": 9,
+      "description": "The audit function calls `content.productstatuses.list(...)` to retrieve disapproval data — not productstatuses.get in a loop, or a different API method"
+    },
+    {
+      "name": "maxResults: 250",
+      "max_score": 8,
+      "description": "The `productstatuses.list` call includes `maxResults: 250` as a parameter"
+    },
+    {
+      "name": "Multi-country offerId format",
+      "max_score": 10,
+      "description": "For multi-country product entries, the `offerId` is formatted as `{sku}-{country}` (e.g., `SKU123-GB`), not just the raw SKU"
+    },
+    {
+      "name": "targetCountry per entry",
+      "max_score": 8,
+      "description": "Each country-specific product entry has a distinct `targetCountry` matching that country's code (e.g., `'US'`, `'GB'`, `'CA'`)"
+    },
+    {
+      "name": "contentLanguage per entry",
+      "max_score": 8,
+      "description": "Each country-specific product entry has a `contentLanguage` set to the correct language code for that country"
+    },
+    {
+      "name": "Currency per country",
+      "max_score": 8,
+      "description": "The price `currency` field varies per country (e.g., USD for US, GBP for GB, CAD for CA) — not a single hardcoded currency for all countries"
+    },
+    {
+      "name": "item_group_id for variant grouping",
+      "max_score": 8,
+      "description": "All variants of the same product share the same `item_group_id` (the parent product ID), ensuring they are grouped in Shopping rather than displayed as separate products"
+    },
+    {
+      "name": "Private-label identifier_exists: no",
+      "max_score": 8,
+      "description": "Products without a GTIN or UPC have `identifier_exists` set to `'no'` (or equivalent), NOT omitted entirely or set to `'yes'`"
+    },
+    {
+      "name": "Private-label brand + MPN",
+      "max_score": 9,
+      "description": "Private-label products with `identifier_exists: no` also include both a `brand` AND an `mpn` field — not just one or neither"
+    },
+    {
+      "name": "Disapproval codes aggregated",
+      "max_score": 8,
+      "description": "The audit output aggregates issue codes by frequency (counts per code), not just listing raw issues per product"
+    },
+    {
+      "name": "destinationStatuses checked",
+      "max_score": 8,
+      "description": "The audit iterates over `destinationStatuses` (or `itemLevelIssues`) from each product status, not just the top-level status field"
+    },
+    {
+      "name": "Numeric product category",
+      "max_score": 8,
+      "description": "The `googleProductCategory` field for products uses a numeric taxonomy ID value, not a human-readable name string"
+    }
+  ]
+}

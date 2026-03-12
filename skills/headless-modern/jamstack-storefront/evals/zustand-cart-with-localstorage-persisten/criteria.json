@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the Zustand cart store with the persist middleware, correct CartItem interface fields, the expected localStorage key, and all required store operations including quantity merging.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "zustand imported",
+      "max_score": 8,
+      "description": "lib/cart-store.ts imports 'create' from 'zustand'"
+    },
+    {
+      "name": "persist middleware imported",
+      "max_score": 10,
+      "description": "lib/cart-store.ts imports 'persist' from 'zustand/middleware' (not from another package)"
+    },
+    {
+      "name": "persist middleware used",
+      "max_score": 10,
+      "description": "The store is wrapped with persist() middleware rather than managing localStorage manually"
+    },
+    {
+      "name": "Storage key name",
+      "max_score": 10,
+      "description": "The persist configuration uses name: 'cart-storage' as the localStorage key"
+    },
+    {
+      "name": "variantId field",
+      "max_score": 8,
+      "description": "The CartItem type/interface includes a 'variantId' field (string)"
+    },
+    {
+      "name": "price and quantity fields",
+      "max_score": 8,
+      "description": "The CartItem type/interface includes both 'price' (number) and 'quantity' (number) fields"
+    },
+    {
+      "name": "title and image fields",
+      "max_score": 8,
+      "description": "The CartItem type/interface includes both 'title' (string) and 'image' (string) fields"
+    },
+    {
+      "name": "addItem merges quantity",
+      "max_score": 12,
+      "description": "addItem checks for an existing item with the same variantId and increments quantity rather than adding a duplicate entry"
+    },
+    {
+      "name": "total() computed",
+      "max_score": 10,
+      "description": "The store includes a total() function that computes the sum of price * quantity across all items"
+    },
+    {
+      "name": "removeItem and clearCart",
+      "max_score": 8,
+      "description": "The store includes both a removeItem(variantId) operation and a clearCart() operation"
+    },
+    {
+      "name": "updateQuantity operation",
+      "max_score": 8,
+      "description": "The store includes an updateQuantity(variantId, quantity) operation"
+    }
+  ]
+}

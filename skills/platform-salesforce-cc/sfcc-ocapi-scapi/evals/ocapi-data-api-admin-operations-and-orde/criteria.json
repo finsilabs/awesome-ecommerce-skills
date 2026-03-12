@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly uses OCAPI Data API for server-side order management, obtains admin tokens via client credentials from the correct Demandware endpoint, constructs proper OCAPI Data API URLs, secures credentials using environment variables, and implements idempotency for order submission.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "OCAPI for admin ops",
+      "max_score": 8,
+      "description": "Order management and admin operations use OCAPI Data API endpoints rather than SCAPI Shopper APIs"
+    },
+    {
+      "name": "Demandware token endpoint",
+      "max_score": 10,
+      "description": "Admin token is fetched from `https://account.demandware.com/dwsso/oauth2/access_token` — NOT from the shortCode.api.commercecloud.salesforce.com SLAS endpoint"
+    },
+    {
+      "name": "Client credentials grant",
+      "max_score": 10,
+      "description": "Admin token request uses grant_type=client_credentials with Basic auth header (base64 encoded client_id:client_secret)"
+    },
+    {
+      "name": "OCAPI URL structure",
+      "max_score": 10,
+      "description": "OCAPI Data API URLs follow the pattern `{SFCC_INSTANCE_URL}/s/{siteId}/dw/data/v23_2/...` where SFCC_INSTANCE_URL points to a *.dx.commercecloud.salesforce.com host"
+    },
+    {
+      "name": "Environment variables for credentials",
+      "max_score": 10,
+      "description": "OCAPI client ID and client secret are read from environment variables (e.g. SFCC_OCAPI_CLIENT_ID, SFCC_OCAPI_CLIENT_SECRET) — NOT hardcoded in source code"
+    },
+    {
+      "name": "Server-side only code paths",
+      "max_score": 8,
+      "description": "OCAPI credential usage and admin token retrieval are in server-side only modules/files (e.g. not in browser-accessible code, marked as server-only, or in an API route)"
+    },
+    {
+      "name": "Idempotency-Key header",
+      "max_score": 10,
+      "description": "Order submission requests include an `Idempotency-Key` header to prevent duplicate order creation from race conditions or retries"
+    },
+    {
+      "name": "Order status update via PATCH",
+      "max_score": 8,
+      "description": "Order status changes use HTTP PATCH to the OCAPI Data API orders endpoint with the status field in the request body"
+    },
+    {
+      "name": "OCAPI version in URL",
+      "max_score": 8,
+      "description": "OCAPI Data API URLs include a version segment matching v23_2 (e.g. /dw/data/v23_2/)"
+    },
+    {
+      "name": "No SCAPI for order management",
+      "max_score": 8,
+      "description": "Order retrieval and status management do NOT use SCAPI/Shopper Orders endpoints (e.g. shopper-orders) — these are used only for customer-facing checkout, not admin ops"
+    },
+    {
+      "name": "Bearer token in Authorization header",
+      "max_score": 10,
+      "description": "OCAPI Data API requests include the admin access token as `Authorization: Bearer {token}` header"
+    }
+  ]
+}

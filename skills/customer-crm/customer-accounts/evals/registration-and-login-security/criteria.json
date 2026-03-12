@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements customer registration and login with the correct security patterns: bcrypt cost factor, zod validation constraints, email enumeration prevention, session token generation, and proper data sanitization before returning customer records.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "bcrypt import",
+      "max_score": 7,
+      "description": "Uses the 'bcrypt' package (not 'bcryptjs' or other alternatives) for password hashing"
+    },
+    {
+      "name": "bcrypt cost factor",
+      "max_score": 10,
+      "description": "Calls bcrypt.hash with cost factor 12 (e.g., bcrypt.hash(password, 12))"
+    },
+    {
+      "name": "zod validation",
+      "max_score": 7,
+      "description": "Uses zod (import { z } from 'zod') for input validation on the registration endpoint"
+    },
+    {
+      "name": "Password length constraints",
+      "max_score": 8,
+      "description": "Validates password with minimum 8 and maximum 128 characters (z.string().min(8).max(128) or equivalent)"
+    },
+    {
+      "name": "Name length constraints",
+      "max_score": 5,
+      "description": "Validates firstName and lastName with minimum 1 and maximum 100 characters"
+    },
+    {
+      "name": "Duplicate email 409",
+      "max_score": 8,
+      "description": "Returns HTTP 409 status when registration detects an existing account with the same email"
+    },
+    {
+      "name": "Email enumeration prevention (login)",
+      "max_score": 10,
+      "description": "Returns the same error message for both 'user not found' and 'wrong password' cases during login — does NOT use distinct messages that reveal whether the email exists"
+    },
+    {
+      "name": "Disabled account 403",
+      "max_score": 7,
+      "description": "Returns HTTP 403 (not 401 or 404) when a disabled customer attempts to log in"
+    },
+    {
+      "name": "sanitizeCustomer strips passwordHash",
+      "max_score": 10,
+      "description": "Removes the passwordHash field before returning customer data to the client — the response object does NOT include passwordHash"
+    },
+    {
+      "name": "JWT session token",
+      "max_score": 8,
+      "description": "Uses jsonwebtoken (jwt.sign) to create a session token returned alongside the customer object"
+    },
+    {
+      "name": "JWT payload type field",
+      "max_score": 8,
+      "description": "JWT payload includes a 'type' field set to 'customer' (e.g., { sub: customerId, type: 'customer' })"
+    },
+    {
+      "name": "JWT 7-day expiry",
+      "max_score": 7,
+      "description": "JWT token is created with expiresIn: '7d'"
+    },
+    {
+      "name": "Verification email on registration",
+      "max_score": 5,
+      "description": "Code includes a call to send a verification email after creating the customer record (e.g., sendVerificationEmail or equivalent)"
+    }
+  ]
+}

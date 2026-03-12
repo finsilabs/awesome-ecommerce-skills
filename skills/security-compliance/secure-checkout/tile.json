@@ -1,0 +1,10 @@
+{
+  "name": "finsi/secure-checkout",
+  "version": "0.1.0",
+  "summary": "TLS, CSP headers, tokenization, and XSS prevention for payment pages",
+  "skills": {
+    "secure-checkout": {
+      "path": "SKILL.md"
+    }
+  }
+}

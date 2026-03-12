@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent sets up a Magento GraphQL client with correct HTTP headers (including the Store header), proper error handling for the GraphQL errors array, Next.js ISR cache options, and secure token storage using httpOnly cookies rather than localStorage.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Store header included",
+      "max_score": 12,
+      "description": "The fetch/request code includes a `Store` header (e.g. `Store: process.env...STORE_CODE` or similar) on every GraphQL request"
+    },
+    {
+      "name": "Store header default value",
+      "max_score": 8,
+      "description": "The Store header falls back to `\"default\"` when no store code env var is set (e.g. `?? \"default\"` or equivalent fallback)"
+    },
+    {
+      "name": "POST to /graphql",
+      "max_score": 8,
+      "description": "The client sends HTTP POST requests to the `/graphql` endpoint (not a REST path)"
+    },
+    {
+      "name": "GraphQL errors array check",
+      "max_score": 10,
+      "description": "The response handler checks for an `errors` property in the JSON body and throws or returns an error when it is non-empty"
+    },
+    {
+      "name": "HTTP error check",
+      "max_score": 6,
+      "description": "The code also checks `response.ok` (or HTTP status) and throws when the HTTP request itself fails"
+    },
+    {
+      "name": "Bearer token in Authorization header",
+      "max_score": 8,
+      "description": "When a token is provided, it is passed as `Authorization: Bearer <token>` in the request headers"
+    },
+    {
+      "name": "No token for public queries",
+      "max_score": 6,
+      "description": "The Authorization header is conditionally added only when a token is present — it is NOT sent on every request"
+    },
+    {
+      "name": "Next.js ISR revalidate",
+      "max_score": 8,
+      "description": "The fetch call includes `next: { revalidate: 300 }` (or a similar revalidation window around 300 seconds) in its options"
+    },
+    {
+      "name": "httpOnly cookie for token",
+      "max_score": 12,
+      "description": "The customer bearer token is stored or set in an httpOnly cookie — the code does NOT use `localStorage.setItem` or `sessionStorage` to store it"
+    },
+    {
+      "name": "No localStorage token storage",
+      "max_score": 8,
+      "description": "There is no `localStorage.setItem` or `sessionStorage.setItem` call used to persist the customer token"
+    },
+    {
+      "name": "Unauthorized error handling",
+      "max_score": 8,
+      "description": "The client or calling code handles the `The current customer isn't authorized` error by redirecting to login or clearing the token"
+    },
+    {
+      "name": "Content-Type header",
+      "max_score": 6,
+      "description": "The request includes `Content-Type: application/json` header"
+    }
+  ]
+}

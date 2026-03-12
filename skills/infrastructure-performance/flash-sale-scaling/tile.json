@@ -1,0 +1,10 @@
+{
+  "name": "finsi/flash-sale-scaling",
+  "version": "0.1.0",
+  "summary": "Auto-scaling, queue-based ordering, and circuit breakers for traffic spikes",
+  "skills": {
+    "flash-sale-scaling": {
+      "path": "SKILL.md"
+    }
+  }
+}

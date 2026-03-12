@@ -1,0 +1,10 @@
+{
+  "name": "finsi/personalization-engine",
+  "version": "0.1.0",
+  "summary": "Product recommendations using collaborative filtering and browsing history",
+  "skills": {
+    "personalization-engine": {
+      "path": "SKILL.md"
+    }
+  }
+}

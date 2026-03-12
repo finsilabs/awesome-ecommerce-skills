@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements inventory reservation using optimistic concurrency control (version-based locking) with correct retry logic, proper error types, and transaction logging — rather than naive read-then-write or serialized locking approaches.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Optimistic lock in UPDATE",
+      "max_score": 15,
+      "description": "The conditional UPDATE (or equivalent) includes a filter on the current version value — i.e. the WHERE clause checks `version = <current version>` so that the update only succeeds if no other writer changed it first"
+    },
+    {
+      "name": "No SELECT FOR UPDATE",
+      "max_score": 10,
+      "description": "The code does NOT use SELECT FOR UPDATE (or any equivalent pessimistic locking hint like FOR SHARE, LOCK IN SHARE MODE) anywhere in the reservation path"
+    },
+    {
+      "name": "Version increment on write",
+      "max_score": 10,
+      "description": "On a successful reservation the version field is incremented by 1 in the same update that modifies reserved quantity"
+    },
+    {
+      "name": "MAX_RETRIES equals 3",
+      "max_score": 10,
+      "description": "The retry loop runs at most 3 attempts (MAX_RETRIES = 3 or equivalent constant set to 3)"
+    },
+    {
+      "name": "Retry delay formula",
+      "max_score": 10,
+      "description": "The delay between retries is 50 * (attempt + 1) milliseconds (i.e. 50ms, 100ms, 150ms) — not a fixed delay, not exponential doubling"
+    },
+    {
+      "name": "Typed insufficient-stock error",
+      "max_score": 10,
+      "description": "When available stock is less than the requested quantity and backorder is not enabled, the code throws a specific InventoryInsufficientError (or analogous named class/type) rather than a plain Error or generic exception"
+    },
+    {
+      "name": "Backorder bypass check",
+      "max_score": 10,
+      "description": "The insufficient-stock check is guarded by backorderAllowed: when backorder is allowed the function does NOT throw the insufficient error and proceeds with the reservation"
+    },
+    {
+      "name": "Transaction log on success",
+      "max_score": 10,
+      "description": "After a successful optimistic update, a record is written to the inventory_transactions (or equivalent audit) table with type='reserve'"
+    },
+    {
+      "name": "Transaction quantity is negative",
+      "max_score": 10,
+      "description": "The transaction log entry for a reservation stores quantity as a negative number (−quantity), representing a decrease in available stock"
+    },
+    {
+      "name": "Error after retries exhausted",
+      "max_score": 5,
+      "description": "After all retry attempts are exhausted without a successful update, the function throws an error (not silently returns)"
+    }
+  ]
+}

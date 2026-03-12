@@ -1,0 +1,10 @@
+{
+  "name": "finsi/ecommerce-caching",
+  "version": "0.1.0",
+  "summary": "Multi-layer caching — CDN, application, database, and cart-aware cache invalidation",
+  "skills": {
+    "ecommerce-caching": {
+      "path": "SKILL.md"
+    }
+  }
+}

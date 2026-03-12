@@ -1,0 +1,395 @@
+[
+  {"skill": "b2b-commerce", "path": "skills/business-operations/b2b-commerce", "generation_id": "019ce439-d08b-766e-9c70-64941cd038de
+019ce439-d08b-766e-9c70-64941cd038de"}
+,
+  {"skill": "demand-forecasting", "path": "skills/business-operations/demand-forecasting", "generation_id": "019ce439-dd46-735b-a99b-99b839c879cc
+019ce439-dd46-735b-a99b-99b839c879cc"}
+,
+  {"skill": "marketplace-building", "path": "skills/business-operations/marketplace-building", "generation_id": "019ce439-e8fa-770f-8fac-099cbcad920e
+019ce439-e8fa-770f-8fac-099cbcad920e"}
+,
+  {"skill": "merchandising-rules", "path": "skills/business-operations/merchandising-rules", "generation_id": "019ce439-f5ba-763e-926d-88eac7cc1bca
+019ce439-f5ba-763e-926d-88eac7cc1bca"}
+,
+  {"skill": "multi-channel-selling", "path": "skills/business-operations/multi-channel-selling", "generation_id": "019ce43a-024d-772e-aecc-b7c484f47994
+019ce43a-024d-772e-aecc-b7c484f47994"}
+,
+  {"skill": "order-management-system", "path": "skills/business-operations/order-management-system", "generation_id": "019ce43a-0e39-731c-9801-8d9102a3b154
+019ce43a-0e39-731c-9801-8d9102a3b154"}
+,
+  {"skill": "returns-refund-policy", "path": "skills/business-operations/returns-refund-policy", "generation_id": "019ce43a-1a68-775a-9606-7f00177af2ba
+019ce43a-1a68-775a-9606-7f00177af2ba"}
+,
+  {"skill": "vendor-management", "path": "skills/business-operations/vendor-management", "generation_id": "019ce43a-272e-762e-a08b-748a84501bdc
+019ce43a-272e-762e-a08b-748a84501bdc"}
+,
+  {"skill": "catalog-import-export", "path": "skills/catalog-inventory/catalog-import-export", "generation_id": "019ce43a-32be-75ce-8d62-bd26cad2e604
+019ce43a-32be-75ce-8d62-bd26cad2e604"}
+,
+  {"skill": "digital-products", "path": "skills/catalog-inventory/digital-products", "generation_id": "019ce43a-3ea8-7304-8f7e-76961432d6c2
+019ce43a-3ea8-7304-8f7e-76961432d6c2"}
+,
+  {"skill": "inventory-tracking", "path": "skills/catalog-inventory/inventory-tracking", "generation_id": "019ce43a-4a6a-74af-983d-c6f91bd016fe
+019ce43a-4a6a-74af-983d-c6f91bd016fe"}
+,
+  {"skill": "low-stock-alerts", "path": "skills/catalog-inventory/low-stock-alerts", "generation_id": "019ce43a-55db-74e3-96e4-e2d281200a85
+019ce43a-55db-74e3-96e4-e2d281200a85"}
+,
+  {"skill": "multi-warehouse", "path": "skills/catalog-inventory/multi-warehouse", "generation_id": "019ce43a-627a-7650-a241-f8a6842af117
+019ce43a-627a-7650-a241-f8a6842af117"}
+,
+  {"skill": "product-bundles-kits", "path": "skills/catalog-inventory/product-bundles-kits", "generation_id": "019ce43a-6edc-7455-ae52-67569c5a258f
+019ce43a-6edc-7455-ae52-67569c5a258f"}
+,
+  {"skill": "product-categorization", "path": "skills/catalog-inventory/product-categorization", "generation_id": "019ce43a-7a80-74cc-b39d-994deb485f26
+019ce43a-7a80-74cc-b39d-994deb485f26"}
+,
+  {"skill": "product-content-enrichment", "path": "skills/catalog-inventory/product-content-enrichment", "generation_id": "019ce43a-8641-72da-aa5d-ef7004448bc3
+019ce43a-8641-72da-aa5d-ef7004448bc3"}
+,
+  {"skill": "product-data-modeling", "path": "skills/catalog-inventory/product-data-modeling", "generation_id": "019ce43a-91d2-7659-bbc0-1d85da3a8964
+019ce43a-91d2-7659-bbc0-1d85da3a8964"}
+,
+  {"skill": "variant-matrix", "path": "skills/catalog-inventory/variant-matrix", "generation_id": "019ce43a-9d12-72c2-8d6c-95c9131848b0
+019ce43a-9d12-72c2-8d6c-95c9131848b0"}
+,
+  {"skill": "customer-accounts", "path": "skills/customer-crm/customer-accounts", "generation_id": "019ce43a-a8bc-748e-a1d2-564a214bdd0d
+019ce43a-a8bc-748e-a1d2-564a214bdd0d"}
+,
+  {"skill": "customer-lifetime-value", "path": "skills/customer-crm/customer-lifetime-value", "generation_id": "019ce43a-b51f-7220-bceb-2a6c84686459
+019ce43a-b51f-7220-bceb-2a6c84686459"}
+,
+  {"skill": "customer-segmentation", "path": "skills/customer-crm/customer-segmentation", "generation_id": "019ce43a-c0f0-730e-bb95-158d4e4ad2d8
+019ce43a-c0f0-730e-bb95-158d4e4ad2d8"}
+,
+  {"skill": "customer-support-integration", "path": "skills/customer-crm/customer-support-integration", "generation_id": "019ce43a-cc2c-768b-8b8b-b4eb6b5879ca
+019ce43a-cc2c-768b-8b8b-b4eb6b5879ca"}
+,
+  {"skill": "live-chat-commerce", "path": "skills/customer-crm/live-chat-commerce", "generation_id": "019ce43a-d789-7109-b0cf-0530d71040f4
+019ce43a-d789-7109-b0cf-0530d71040f4"}
+,
+  {"skill": "personalization-engine", "path": "skills/customer-crm/personalization-engine", "generation_id": "019ce43a-e36c-735c-9dec-6af6e0e71ea4
+019ce43a-e36c-735c-9dec-6af6e0e71ea4"}
+,
+  {"skill": "product-reviews-ratings", "path": "skills/customer-crm/product-reviews-ratings", "generation_id": "019ce43a-ee93-751f-8950-85439dbf684f
+019ce43a-ee93-751f-8950-85439dbf684f"}
+,
+  {"skill": "referral-program", "path": "skills/customer-crm/referral-program", "generation_id": "019ce43a-fa1e-7584-b7a5-563816dba808
+019ce43a-fa1e-7584-b7a5-563816dba808"}
+,
+  {"skill": "user-generated-content", "path": "skills/customer-crm/user-generated-content", "generation_id": "019ce43b-061c-701e-830b-71647f5ded9f
+019ce43b-061c-701e-830b-71647f5ded9f"}
+,
+  {"skill": "ab-testing-ecommerce", "path": "skills/data-analytics/ab-testing-ecommerce", "generation_id": "019ce43b-1224-726f-ac62-ecd7a14a05b8
+019ce43b-1224-726f-ac62-ecd7a14a05b8"}
+,
+  {"skill": "attribution-modeling", "path": "skills/data-analytics/attribution-modeling", "generation_id": "019ce43b-1d82-713c-a833-93dbdea79919
+019ce43b-1d82-713c-a833-93dbdea79919"}
+,
+  {"skill": "customer-analytics", "path": "skills/data-analytics/customer-analytics", "generation_id": "019ce43b-2933-731c-80d5-d6a571b971e8
+019ce43b-2933-731c-80d5-d6a571b971e8"}
+,
+  {"skill": "ecommerce-data-warehouse", "path": "skills/data-analytics/ecommerce-data-warehouse", "generation_id": "019ce43b-35a6-73f7-b2de-a72c6eaed1b7
+019ce43b-35a6-73f7-b2de-a72c6eaed1b7"}
+,
+  {"skill": "product-analytics", "path": "skills/data-analytics/product-analytics", "generation_id": "019ce43b-410e-75d4-b121-85dae683e916
+019ce43b-410e-75d4-b121-85dae683e916"}
+,
+  {"skill": "sales-reporting-dashboard", "path": "skills/data-analytics/sales-reporting-dashboard", "generation_id": "019ce43b-4ca4-716c-bac7-0b1d15ccc7fb
+019ce43b-4ca4-716c-bac7-0b1d15ccc7fb"}
+,
+  {"skill": "dropshipping-integration", "path": "skills/fulfillment-shipping/dropshipping-integration", "generation_id": "019ce43b-5883-72e4-bc9b-56f1caf338b7
+019ce43b-5883-72e4-bc9b-56f1caf338b7"}
+,
+  {"skill": "free-shipping-thresholds", "path": "skills/fulfillment-shipping/free-shipping-thresholds", "generation_id": "019ce43b-645e-75da-baf4-d5ab52253f2b
+019ce43b-645e-75da-baf4-d5ab52253f2b"}
+,
+  {"skill": "international-shipping", "path": "skills/fulfillment-shipping/international-shipping", "generation_id": "019ce43b-7036-70fb-95b3-293373754b8e
+019ce43b-7036-70fb-95b3-293373754b8e"}
+,
+  {"skill": "order-fulfillment-workflow", "path": "skills/fulfillment-shipping/order-fulfillment-workflow", "generation_id": "019ce43b-7be8-74b3-82e2-facc26fe642a
+019ce43b-7be8-74b3-82e2-facc26fe642a"}
+,
+  {"skill": "returns-management", "path": "skills/fulfillment-shipping/returns-management", "generation_id": "019ce43b-87b8-713c-9ed2-866eac18fe65
+019ce43b-87b8-713c-9ed2-866eac18fe65"}
+,
+  {"skill": "same-day-delivery", "path": "skills/fulfillment-shipping/same-day-delivery", "generation_id": "019ce43b-9358-76d8-beee-bcce20115dc6
+019ce43b-9358-76d8-beee-bcce20115dc6"}
+,
+  {"skill": "shipment-tracking", "path": "skills/fulfillment-shipping/shipment-tracking", "generation_id": "019ce43b-9eb6-741b-9a8a-b27da0a02506
+019ce43b-9eb6-741b-9a8a-b27da0a02506"}
+,
+  {"skill": "shipping-rate-calculator", "path": "skills/fulfillment-shipping/shipping-rate-calculator", "generation_id": "019ce43b-abaa-766b-ace6-1a403a6b9bff
+019ce43b-abaa-766b-ace6-1a403a6b9bff"}
+,
+  {"skill": "commerce-api-gateway", "path": "skills/headless-modern/commerce-api-gateway", "generation_id": "019ce43b-b774-74be-85e4-2908efce683b
+019ce43b-b774-74be-85e4-2908efce683b"}
+,
+  {"skill": "commerce-js-integration", "path": "skills/headless-modern/commerce-js-integration", "generation_id": "019ce43b-c2f0-750c-b048-3c38034f4eb7
+019ce43b-c2f0-750c-b048-3c38034f4eb7"}
+,
+  {"skill": "composable-commerce", "path": "skills/headless-modern/composable-commerce", "generation_id": "019ce43b-ce5c-74a1-bce1-727d3569f0ec
+019ce43b-ce5c-74a1-bce1-727d3569f0ec"}
+,
+  {"skill": "jamstack-storefront", "path": "skills/headless-modern/jamstack-storefront", "generation_id": "019ce43b-db51-735a-9882-c8159ab54b55
+019ce43b-db51-735a-9882-c8159ab54b55"}
+,
+  {"skill": "medusa-development", "path": "skills/headless-modern/medusa-development", "generation_id": "019ce43b-e6f0-752e-b957-b895a480112f
+019ce43b-e6f0-752e-b957-b895a480112f"}
+,
+  {"skill": "pwa-storefront", "path": "skills/headless-modern/pwa-storefront", "generation_id": "019ce43b-f259-714a-91ab-ffed5ce2083c
+019ce43b-f259-714a-91ab-ffed5ce2083c"}
+,
+  {"skill": "saleor-development", "path": "skills/headless-modern/saleor-development", "generation_id": "019ce43b-fe00-77a9-8f8e-9332474de747
+019ce43b-fe00-77a9-8f8e-9332474de747"}
+,
+  {"skill": "shopify-hydrogen", "path": "skills/headless-modern/shopify-hydrogen", "generation_id": "019ce43c-09fb-727d-964a-4410c63b377f
+019ce43c-09fb-727d-964a-4410c63b377f"}
+,
+  {"skill": "database-optimization-commerce", "path": "skills/infrastructure-performance/database-optimization-commerce", "generation_id": "019ce43c-1556-75a7-a34b-d4a631f0811c
+019ce43c-1556-75a7-a34b-d4a631f0811c"}
+,
+  {"skill": "ecommerce-caching", "path": "skills/infrastructure-performance/ecommerce-caching", "generation_id": "019ce43c-2111-73bb-b835-6c5499a2e744
+019ce43c-2111-73bb-b835-6c5499a2e744"}
+,
+  {"skill": "edge-commerce", "path": "skills/infrastructure-performance/edge-commerce", "generation_id": "019ce43c-2ce0-777b-b851-c05c6638a790
+019ce43c-2ce0-777b-b851-c05c6638a790"}
+,
+  {"skill": "flash-sale-scaling", "path": "skills/infrastructure-performance/flash-sale-scaling", "generation_id": "019ce43c-38a2-764e-8213-05d4d84b4310
+019ce43c-38a2-764e-8213-05d4d84b4310"}
+,
+  {"skill": "image-optimization-cdn", "path": "skills/infrastructure-performance/image-optimization-cdn", "generation_id": "019ce43c-4464-7425-a708-0c79676ed6ef
+019ce43c-4464-7425-a708-0c79676ed6ef"}
+,
+  {"skill": "load-testing-commerce", "path": "skills/infrastructure-performance/load-testing-commerce", "generation_id": "019ce43c-5062-7308-86d0-1dff3beca9f7
+019ce43c-5062-7308-86d0-1dff3beca9f7"}
+,
+  {"skill": "monitoring-alerting-commerce", "path": "skills/infrastructure-performance/monitoring-alerting-commerce", "generation_id": "019ce43c-5c46-73f9-bdfc-a53f18da9496
+019ce43c-5c46-73f9-bdfc-a53f18da9496"}
+,
+  {"skill": "analytics-integration", "path": "skills/integrations-apis/analytics-integration", "generation_id": "019ce43c-67f1-75dd-8971-ca2cff548a11
+019ce43c-67f1-75dd-8971-ca2cff548a11"}
+,
+  {"skill": "email-service-integration", "path": "skills/integrations-apis/email-service-integration", "generation_id": "019ce43c-73a8-7344-887a-fdc3686c1b45
+019ce43c-73a8-7344-887a-fdc3686c1b45"}
+,
+  {"skill": "erp-integration", "path": "skills/integrations-apis/erp-integration", "generation_id": "019ce43c-7f60-719e-a0c2-d42c478c20c6
+019ce43c-7f60-719e-a0c2-d42c478c20c6"}
+,
+  {"skill": "marketplace-connectors", "path": "skills/integrations-apis/marketplace-connectors", "generation_id": "019ce43c-8a8c-722e-adff-d85d8c7fda31
+019ce43c-8a8c-722e-adff-d85d8c7fda31"}
+,
+  {"skill": "pos-integration", "path": "skills/integrations-apis/pos-integration", "generation_id": "019ce43c-96b9-7518-8c30-a4739b46bb89
+019ce43c-96b9-7518-8c30-a4739b46bb89"}
+,
+  {"skill": "product-information-management", "path": "skills/integrations-apis/product-information-management", "generation_id": "019ce43c-a22e-7295-aff2-39d09b420fb2
+019ce43c-a22e-7295-aff2-39d09b420fb2"}
+,
+  {"skill": "webhook-architecture", "path": "skills/integrations-apis/webhook-architecture", "generation_id": "019ce43c-ad9c-70ac-b7ee-f092d5cae425
+019ce43c-ad9c-70ac-b7ee-f092d5cae425"}
+,
+  {"skill": "affiliate-program", "path": "skills/marketing-growth/affiliate-program", "generation_id": "019ce43c-b8e3-732f-b22c-573421613977
+019ce43c-b8e3-732f-b22c-573421613977"}
+,
+  {"skill": "cart-abandonment-recovery", "path": "skills/marketing-growth/cart-abandonment-recovery", "generation_id": "019ce43c-c452-737c-bb75-de466cae4db9
+019ce43c-c452-737c-bb75-de466cae4db9"}
+,
+  {"skill": "content-commerce", "path": "skills/marketing-growth/content-commerce", "generation_id": "019ce43c-cff6-738f-872f-e181e936e9d1
+019ce43c-cff6-738f-872f-e181e936e9d1"}
+,
+  {"skill": "conversion-rate-optimization", "path": "skills/marketing-growth/conversion-rate-optimization", "generation_id": "019ce43c-dc62-764e-89c5-e01cbd1a5776
+019ce43c-dc62-764e-89c5-e01cbd1a5776"}
+,
+  {"skill": "ecommerce-seo", "path": "skills/marketing-growth/ecommerce-seo", "generation_id": "019ce43c-e91d-739c-a34a-4f0693d62434
+019ce43c-e91d-739c-a34a-4f0693d62434"}
+,
+  {"skill": "email-marketing-automation", "path": "skills/marketing-growth/email-marketing-automation", "generation_id": "019ce43c-f562-7487-9d21-fc3609300c19
+019ce43c-f562-7487-9d21-fc3609300c19"}
+,
+  {"skill": "exit-intent-popups", "path": "skills/marketing-growth/exit-intent-popups", "generation_id": "019ce43d-03ea-70a8-aab2-c7d78d84478e
+019ce43d-03ea-70a8-aab2-c7d78d84478e"}
+,
+  {"skill": "google-shopping-feed", "path": "skills/marketing-growth/google-shopping-feed", "generation_id": "019ce43d-0ff2-752c-8652-01daca1e9049
+019ce43d-0ff2-752c-8652-01daca1e9049"}
+,
+  {"skill": "influencer-tracking", "path": "skills/marketing-growth/influencer-tracking", "generation_id": "019ce43d-1c22-765f-9c02-1d848b1793ad
+019ce43d-1c22-765f-9c02-1d848b1793ad"}
+,
+  {"skill": "push-notifications", "path": "skills/marketing-growth/push-notifications", "generation_id": "019ce43d-2866-7089-893f-810869c5c150
+019ce43d-2866-7089-893f-810869c5c150"}
+,
+  {"skill": "sms-marketing", "path": "skills/marketing-growth/sms-marketing", "generation_id": "019ce43d-34c1-76ee-8238-acf221b691e8
+019ce43d-34c1-76ee-8238-acf221b691e8"}
+,
+  {"skill": "social-commerce", "path": "skills/marketing-growth/social-commerce", "generation_id": "019ce43d-4187-7559-bf8e-bc061ab73892
+019ce43d-4187-7559-bf8e-bc061ab73892"}
+,
+  {"skill": "buy-now-pay-later", "path": "skills/payments-checkout/buy-now-pay-later", "generation_id": "019ce43d-5168-764a-a02a-3ff02144ce3e
+019ce43d-5168-764a-a02a-3ff02144ce3e"}
+,
+  {"skill": "cart-logic", "path": "skills/payments-checkout/cart-logic", "generation_id": "019ce43d-5cc8-77f0-939e-9f03cf64a17b
+019ce43d-5cc8-77f0-939e-9f03cf64a17b"}
+,
+  {"skill": "checkout-flow-optimization", "path": "skills/payments-checkout/checkout-flow-optimization", "generation_id": "019ce43d-68c8-74ec-8ef1-020a0e496df6
+019ce43d-68c8-74ec-8ef1-020a0e496df6"}
+,
+  {"skill": "guest-checkout", "path": "skills/payments-checkout/guest-checkout", "generation_id": "019ce43d-7465-747a-bb1e-65ccd8ee1f39
+019ce43d-7465-747a-bb1e-65ccd8ee1f39"}
+,
+  {"skill": "multi-currency", "path": "skills/payments-checkout/multi-currency", "generation_id": "019ce43d-8003-7118-abfe-406006e2db5d
+019ce43d-8003-7118-abfe-406006e2db5d"}
+,
+  {"skill": "order-processing-pipeline", "path": "skills/payments-checkout/order-processing-pipeline", "generation_id": "019ce43d-8c29-762a-bdc4-e5db37e97f63
+019ce43d-8c29-762a-bdc4-e5db37e97f63"}
+,
+  {"skill": "paypal-integration", "path": "skills/payments-checkout/paypal-integration", "generation_id": "019ce43d-984f-76cd-aa32-0cc1072fc4f6
+019ce43d-984f-76cd-aa32-0cc1072fc4f6"}
+,
+  {"skill": "subscription-billing", "path": "skills/payments-checkout/subscription-billing", "generation_id": "019ce43d-a3f0-737d-b9c0-d0fc224bcae1
+019ce43d-a3f0-737d-b9c0-d0fc224bcae1"}
+,
+  {"skill": "tax-calculation", "path": "skills/payments-checkout/tax-calculation", "generation_id": "019ce43d-af02-7219-a0b8-f35724d03b70
+019ce43d-af02-7219-a0b8-f35724d03b70"}
+,
+  {"skill": "magento-graphql", "path": "skills/platform-magento/magento-graphql", "generation_id": "019ce43d-ba96-7499-aa8f-04af8a6f84bb
+019ce43d-ba96-7499-aa8f-04af8a6f84bb"}
+,
+  {"skill": "magento-indexing-caching", "path": "skills/platform-magento/magento-indexing-caching", "generation_id": "019ce43d-c5ec-71ff-9f61-c0ea8aaceab5
+019ce43d-c5ec-71ff-9f61-c0ea8aaceab5"}
+,
+  {"skill": "magento-module-development", "path": "skills/platform-magento/magento-module-development", "generation_id": "019ce43d-d18a-734e-a34c-135d8da01e80
+019ce43d-d18a-734e-a34c-135d8da01e80"}
+,
+  {"skill": "magento-multi-store", "path": "skills/platform-magento/magento-multi-store", "generation_id": "019ce43d-dd60-7222-ba6f-399a8c726027
+019ce43d-dd60-7222-ba6f-399a8c726027"}
+,
+  {"skill": "sfcc-business-manager", "path": "skills/platform-salesforce-cc/sfcc-business-manager", "generation_id": "019ce43d-e8f2-7309-a1bb-5570959f00d6
+019ce43d-e8f2-7309-a1bb-5570959f00d6"}
+,
+  {"skill": "sfcc-cartridge-development", "path": "skills/platform-salesforce-cc/sfcc-cartridge-development", "generation_id": "019ce43d-f4bb-752f-b3d0-82c08004401b
+019ce43d-f4bb-752f-b3d0-82c08004401b"}
+,
+  {"skill": "sfcc-ocapi-scapi", "path": "skills/platform-salesforce-cc/sfcc-ocapi-scapi", "generation_id": "019ce43e-005f-704d-a9a4-493b10d15c13
+019ce43e-005f-704d-a9a4-493b10d15c13"}
+,
+  {"skill": "shopify-admin-api", "path": "skills/platform-shopify/shopify-admin-api", "generation_id": "019ce43e-0be7-74be-8740-d473d8627623
+019ce43e-0be7-74be-8740-d473d8627623"}
+,
+  {"skill": "shopify-app-development", "path": "skills/platform-shopify/shopify-app-development", "generation_id": "019ce43e-1771-713a-8e5c-6aed3889ab6e
+019ce43e-1771-713a-8e5c-6aed3889ab6e"}
+,
+  {"skill": "shopify-checkout-extensions", "path": "skills/platform-shopify/shopify-checkout-extensions", "generation_id": "019ce43e-2306-756c-93a7-bf848bfa7ab5
+019ce43e-2306-756c-93a7-bf848bfa7ab5"}
+,
+  {"skill": "shopify-metafields", "path": "skills/platform-shopify/shopify-metafields", "generation_id": "019ce43e-2ed2-745d-825a-09726ad23d9b
+019ce43e-2ed2-745d-825a-09726ad23d9b"}
+,
+  {"skill": "shopify-storefront-api", "path": "skills/platform-shopify/shopify-storefront-api", "generation_id": "019ce43e-3aab-77a8-a6e5-80109419942d
+019ce43e-3aab-77a8-a6e5-80109419942d"}
+,
+  {"skill": "shopify-theme-development", "path": "skills/platform-shopify/shopify-theme-development", "generation_id": "019ce43e-477c-72f1-9fd2-39dcf575d453
+019ce43e-477c-72f1-9fd2-39dcf575d453"}
+,
+  {"skill": "shopify-webhooks", "path": "skills/platform-shopify/shopify-webhooks", "generation_id": "019ce43e-53bd-7219-954a-159567da399c
+019ce43e-53bd-7219-954a-159567da399c"}
+,
+  {"skill": "woocommerce-blocks", "path": "skills/platform-woocommerce/woocommerce-blocks", "generation_id": "019ce43e-5fee-764c-8f88-19d036718bbb
+019ce43e-5fee-764c-8f88-19d036718bbb"}
+,
+  {"skill": "woocommerce-performance", "path": "skills/platform-woocommerce/woocommerce-performance", "generation_id": "019ce43e-6bde-773a-8ab2-1afdf704b853
+019ce43e-6bde-773a-8ab2-1afdf704b853"}
+,
+  {"skill": "woocommerce-plugin-development", "path": "skills/platform-woocommerce/woocommerce-plugin-development", "generation_id": "019ce43e-7798-7498-afc0-d713eba61cda
+019ce43e-7798-7498-afc0-d713eba61cda"}
+,
+  {"skill": "woocommerce-rest-api", "path": "skills/platform-woocommerce/woocommerce-rest-api", "generation_id": "019ce43e-83a9-761e-8351-096e56d0f13f
+019ce43e-83a9-761e-8351-096e56d0f13f"}
+,
+  {"skill": "woocommerce-subscriptions", "path": "skills/platform-woocommerce/woocommerce-subscriptions", "generation_id": "019ce43e-8f4e-75bb-8905-0dad253dc72e
+019ce43e-8f4e-75bb-8905-0dad253dc72e"}
+,
+  {"skill": "ab-testing-pricing", "path": "skills/pricing-promotions/ab-testing-pricing", "generation_id": "019ce43e-9b0f-7345-aa20-643bfc513292
+019ce43e-9b0f-7345-aa20-643bfc513292"}
+,
+  {"skill": "coupon-management", "path": "skills/pricing-promotions/coupon-management", "generation_id": "019ce43e-a6c7-7188-bb76-19a3b1e3b43f
+019ce43e-a6c7-7188-bb76-19a3b1e3b43f"}
+,
+  {"skill": "discount-engine", "path": "skills/pricing-promotions/discount-engine", "generation_id": "019ce43e-b2da-70c7-abc5-e5bb1f55b69b
+019ce43e-b2da-70c7-abc5-e5bb1f55b69b"}
+,
+  {"skill": "dynamic-pricing", "path": "skills/pricing-promotions/dynamic-pricing", "generation_id": "019ce43e-be52-75ab-958a-78efa9db5632
+019ce43e-be52-75ab-958a-78efa9db5632"}
+,
+  {"skill": "flash-sale-engine", "path": "skills/pricing-promotions/flash-sale-engine", "generation_id": "019ce43e-ca02-71ef-8cec-98212951e85c
+019ce43e-ca02-71ef-8cec-98212951e85c"}
+,
+  {"skill": "gift-cards", "path": "skills/pricing-promotions/gift-cards", "generation_id": "019ce43e-d558-77c5-9b99-4d548cb1cfc0
+019ce43e-d558-77c5-9b99-4d548cb1cfc0"}
+,
+  {"skill": "loyalty-points-system", "path": "skills/pricing-promotions/loyalty-points-system", "generation_id": "019ce43e-e116-754d-9fb8-51f7f9507b6f
+019ce43e-e116-754d-9fb8-51f7f9507b6f"}
+,
+  {"skill": "price-rules-engine", "path": "skills/pricing-promotions/price-rules-engine", "generation_id": "019ce43e-ecd2-74f9-b62a-904cca7d09e5
+019ce43e-ecd2-74f9-b62a-904cca7d09e5"}
+,
+  {"skill": "volume-pricing", "path": "skills/pricing-promotions/volume-pricing", "generation_id": "019ce43e-f89e-7152-88b6-4352939a0b27
+019ce43e-f89e-7152-88b6-4352939a0b27"}
+,
+  {"skill": "account-security", "path": "skills/security-compliance/account-security", "generation_id": "019ce43f-04fe-7396-bac5-de0851176c0d
+019ce43f-04fe-7396-bac5-de0851176c0d"}
+,
+  {"skill": "bot-protection", "path": "skills/security-compliance/bot-protection", "generation_id": "019ce43f-117c-733c-ab83-b071d4053a0b
+019ce43f-117c-733c-ab83-b071d4053a0b"}
+,
+  {"skill": "data-retention-policies", "path": "skills/security-compliance/data-retention-policies", "generation_id": "019ce43f-1d88-7261-ba78-dda0a4e1ce75
+019ce43f-1d88-7261-ba78-dda0a4e1ce75"}
+,
+  {"skill": "fraud-detection", "path": "skills/security-compliance/fraud-detection", "generation_id": "019ce43f-2936-770f-864e-e062217c473b
+019ce43f-2936-770f-864e-e062217c473b"}
+,
+  {"skill": "gdpr-ecommerce", "path": "skills/security-compliance/gdpr-ecommerce", "generation_id": "019ce43f-34e8-729d-9d2f-b7b9f6bb6a47
+019ce43f-34e8-729d-9d2f-b7b9f6bb6a47"}
+,
+  {"skill": "pci-dss-compliance", "path": "skills/security-compliance/pci-dss-compliance", "generation_id": "019ce43f-4099-727a-8fb1-f7f90680b144
+019ce43f-4099-727a-8fb1-f7f90680b144"}
+,
+  {"skill": "secure-checkout", "path": "skills/security-compliance/secure-checkout", "generation_id": "019ce43f-4c71-759e-beb3-932b2b3df027
+019ce43f-4c71-759e-beb3-932b2b3df027"}
+,
+  {"skill": "accessibility-commerce", "path": "skills/storefront-ui/accessibility-commerce", "generation_id": "019ce43f-5825-77d9-870f-bb86c219b9ed
+019ce43f-5825-77d9-870f-bb86c219b9ed"}
+,
+  {"skill": "faceted-navigation", "path": "skills/storefront-ui/faceted-navigation", "generation_id": "019ce43f-63ba-71dc-8f4e-5f6acc836df9
+019ce43f-63ba-71dc-8f4e-5f6acc836df9"}
+,
+  {"skill": "image-zoom-360", "path": "skills/storefront-ui/image-zoom-360", "generation_id": "019ce43f-705e-709a-b1d3-88fdee7364d4
+019ce43f-705e-709a-b1d3-88fdee7364d4"}
+,
+  {"skill": "mega-menu-builder", "path": "skills/storefront-ui/mega-menu-builder", "generation_id": "019ce43f-7d50-74af-98d6-78d45a8c277e
+019ce43f-7d50-74af-98d6-78d45a8c277e"}
+,
+  {"skill": "product-comparison", "path": "skills/storefront-ui/product-comparison", "generation_id": "019ce43f-88e0-705d-855e-e3c802c56c55
+019ce43f-88e0-705d-855e-e3c802c56c55"}
+,
+  {"skill": "product-page-design", "path": "skills/storefront-ui/product-page-design", "generation_id": "019ce43f-9506-77fe-8863-7d1e25033a83
+019ce43f-9506-77fe-8863-7d1e25033a83"}
+,
+  {"skill": "quick-view-modal", "path": "skills/storefront-ui/quick-view-modal", "generation_id": "019ce43f-a5d4-72ef-9067-4a935524113f
+019ce43f-a5d4-72ef-9067-4a935524113f"}
+,
+  {"skill": "recently-viewed-products", "path": "skills/storefront-ui/recently-viewed-products", "generation_id": "019ce43f-b2be-7549-a578-36bb4c592664
+019ce43f-b2be-7549-a578-36bb4c592664"}
+,
+  {"skill": "responsive-storefront", "path": "skills/storefront-ui/responsive-storefront", "generation_id": "019ce43f-be96-7039-86e0-f4c4e644f7f9
+019ce43f-be96-7039-86e0-f4c4e644f7f9"}
+,
+  {"skill": "search-autocomplete", "path": "skills/storefront-ui/search-autocomplete", "generation_id": "019ce43f-ca5e-7058-9a25-5c2d862a2108
+019ce43f-ca5e-7058-9a25-5c2d862a2108"}
+,
+  {"skill": "storefront-theming", "path": "skills/storefront-ui/storefront-theming", "generation_id": "019ce43f-d69c-734b-b5b0-57358f0fe2da
+019ce43f-d69c-734b-b5b0-57358f0fe2da"}
+,
+  {"skill": "wishlist-save-for-later", "path": "skills/storefront-ui/wishlist-save-for-later", "generation_id": "019ce43f-e235-72f9-9138-f68f3bb81076
+019ce43f-e235-72f9-9138-f68f3bb81076"}
+
+]

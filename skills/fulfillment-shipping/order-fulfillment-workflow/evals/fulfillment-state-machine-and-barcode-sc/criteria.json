@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent designs the fulfillment state machine with the correct set of statuses and transitions, wraps transitions in an atomic database transaction with an event audit log, implements barcode scan verification that checks both identifier types and quantity, records every scan, enforces full-pick verification before advancing status, and exposes the correct HTTP endpoint with appropriate error codes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "All 9 fulfillment statuses",
+      "max_score": 10,
+      "description": "FulfillmentStatus type includes all of: 'awaiting_fulfillment', 'pick_pending', 'picking', 'picked', 'packing', 'packed', 'label_created', 'shipped', 'delivered'"
+    },
+    {
+      "name": "Correct valid transitions",
+      "max_score": 10,
+      "description": "VALID_TRANSITIONS (or equivalent) encodes the correct progression: awaiting_fulfillment→pick_pending, pick_pending→picking, picking→[picked,pick_pending], picked→packing, packing→packed, packed→label_created, label_created→shipped, shipped→delivered, delivered→[]"
+    },
+    {
+      "name": "Transition uses DB transaction",
+      "max_score": 10,
+      "description": "transitionFulfillment wraps the status update AND event insertion in a single database transaction (db.transaction or equivalent), so both writes are atomic"
+    },
+    {
+      "name": "Fulfillment event audit record",
+      "max_score": 10,
+      "description": "Each status transition inserts a record into a fulfillmentEvents (or equivalent) table/collection containing from_status, to_status, actor_id, and a timestamp"
+    },
+    {
+      "name": "Scan accepts barcode OR SKU",
+      "max_score": 10,
+      "description": "verifyPickScan accepts the scan as valid if the scanned value matches EITHER the product's barcode field OR the product's sku field — not just one of them"
+    },
+    {
+      "name": "Scan checks quantity match",
+      "max_score": 8,
+      "description": "verifyPickScan returns an error (not success) when pickedQuantity does not exactly match the expected line quantity"
+    },
+    {
+      "name": "Scan recorded in verification log",
+      "max_score": 10,
+      "description": "After a successful scan, a record is inserted into a pickVerifications (or equivalent) table with at minimum: fulfillment_id, order_line_id, scanned_barcode, picked_quantity, and a timestamp"
+    },
+    {
+      "name": "No manual scan override",
+      "max_score": 8,
+      "description": "No code path allows bypassing or overriding the barcode scan result — there is no flag or parameter to force-pass a failed scan"
+    },
+    {
+      "name": "Full-pick enforcement",
+      "max_score": 10,
+      "description": "markOrderFullyPicked (or equivalent) throws an error / refuses to advance to 'picked' unless the count of verified pick records equals the count of order lines"
+    },
+    {
+      "name": "HTTP scan endpoint method and path",
+      "max_score": 7,
+      "description": "A POST route at /api/fulfillment/:fulfillmentId/scan (or equivalent) is defined for the mobile scanner"
+    },
+    {
+      "name": "422 on failed scan",
+      "max_score": 7,
+      "description": "The scan endpoint returns HTTP 422 (Unprocessable Entity) when scan verification fails, not 400 or 500"
+    }
+  ]
+}

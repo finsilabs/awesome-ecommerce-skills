@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses @aws-sdk/client-sqs for SQS integration with correct FIFO queue parameters, implements a database-free fast-path checkout, releases inventory and notifies the customer on processing failure, configures the HPA with correct replica counts and CPU target, and writes an Artillery load test with the correct phase structure and scenario weights.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "@aws-sdk/client-sqs",
+      "max_score": 8,
+      "description": "Imports SQSClient and SendMessageCommand from @aws-sdk/client-sqs (AWS SDK v3), not from the legacy aws-sdk v2 package"
+    },
+    {
+      "name": "No DB call in fast path",
+      "max_score": 10,
+      "description": "The POST checkout handler does NOT make any database write before returning — it validates, reserves in Redis (or stub), and enqueues only"
+    },
+    {
+      "name": "MessageGroupId = customerId",
+      "max_score": 10,
+      "description": "The SQS SendMessageCommand sets MessageGroupId to the customer's ID (not a static value or orderId)"
+    },
+    {
+      "name": "MessageDeduplicationId = orderId",
+      "max_score": 10,
+      "description": "The SQS SendMessageCommand sets MessageDeduplicationId to the orderId"
+    },
+    {
+      "name": "status: 'queued' response",
+      "max_score": 8,
+      "description": "The POST handler returns a response with status field set to 'queued' without waiting for DB write or payment"
+    },
+    {
+      "name": "Release + notify on failure",
+      "max_score": 8,
+      "description": "processOrder catch block calls both releaseInventory (or equivalent) and a customer notification before rethrowing"
+    },
+    {
+      "name": "HPA minReplicas: 50",
+      "max_score": 10,
+      "description": "hpa.yaml sets minReplicas to 50"
+    },
+    {
+      "name": "HPA CPU target: 60",
+      "max_score": 8,
+      "description": "hpa.yaml sets the CPU averageUtilization target to 60"
+    },
+    {
+      "name": "Artillery warm-up phase",
+      "max_score": 8,
+      "description": "load-test.yml contains a warm-up phase with duration: 60 and arrivalRate: 10"
+    },
+    {
+      "name": "Artillery spike phase",
+      "max_score": 8,
+      "description": "load-test.yml contains a spike phase with duration: 30 and arrivalRate: 500"
+    },
+    {
+      "name": "Artillery scenario weights",
+      "max_score": 8,
+      "description": "load-test.yml includes two scenarios: one with weight 70 (checkout flow) and one with weight 30 (catalog browse)"
+    },
+    {
+      "name": "Sustained load phase",
+      "max_score": 4,
+      "description": "load-test.yml contains a sustained load phase with duration: 120 and arrivalRate: 100"
+    }
+  ]
+}

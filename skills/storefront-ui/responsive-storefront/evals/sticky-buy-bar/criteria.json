@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements the sticky buy bar using getBoundingClientRect scroll detection, aria accessibility attributes, safe-area-inset-bottom for iOS, translateY CSS animation, and the mobile-first PDP two-column layout with sticky image panel.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "getBoundingClientRect detection",
+      "max_score": 10,
+      "description": "The scroll handler calls getBoundingClientRect() on the primary Add to Cart button ref to determine visibility (NOT checking scrollY or offsetTop directly)"
+    },
+    {
+      "name": "Visibility condition",
+      "max_score": 10,
+      "description": "The sticky bar becomes visible when the primary button's rect.bottom < 0 (button has scrolled above the viewport top)"
+    },
+    {
+      "name": "Passive scroll listener",
+      "max_score": 8,
+      "description": "The scroll event listener is registered with `{ passive: true }` option"
+    },
+    {
+      "name": "aria-hidden management",
+      "max_score": 8,
+      "description": "The sticky bar container uses aria-hidden={true} when not visible and aria-hidden={false} (or no attribute) when visible"
+    },
+    {
+      "name": "tabIndex management",
+      "max_score": 8,
+      "description": "Interactive elements inside the sticky bar use tabIndex={-1} when the bar is hidden and tabIndex={0} (or default) when visible"
+    },
+    {
+      "name": "CSS translateY animation",
+      "max_score": 8,
+      "description": "The sticky bar is hidden via `transform: translateY(100%)` and shown via `transform: translateY(0)` (NOT via display:none or visibility:hidden alone)"
+    },
+    {
+      "name": "Safe area inset bottom",
+      "max_score": 10,
+      "description": "The sticky bar CSS uses `env(safe-area-inset-bottom)` in the padding-bottom to account for iPhone home indicator"
+    },
+    {
+      "name": "Fixed positioning",
+      "max_score": 6,
+      "description": "The sticky bar uses `position: fixed; bottom: 0; left: 0; right: 0` (anchored to the bottom of the viewport)"
+    },
+    {
+      "name": "z-index 50",
+      "max_score": 6,
+      "description": "The sticky bar has z-index: 50 (matching the specified value, not an arbitrary high number like 999)"
+    },
+    {
+      "name": "PDP mobile single column",
+      "max_score": 6,
+      "description": "The PDP layout uses a single column (`grid-template-columns: 1fr`) as the base mobile style"
+    },
+    {
+      "name": "PDP desktop two-panel",
+      "max_score": 6,
+      "description": "The PDP layout switches to `grid-template-columns: 1fr 1fr` at 768px (md breakpoint)"
+    },
+    {
+      "name": "Sticky images panel",
+      "max_score": 6,
+      "description": "The images/gallery panel in the PDP uses `position: sticky` on desktop so it stays in view while the right panel scrolls"
+    },
+    {
+      "name": "Dynamic viewport height",
+      "max_score": 8,
+      "description": "Any full-height layout element uses `100dvh` (not just `100vh`) to handle iOS Safari's dynamic toolbar"
+    }
+  ]
+}

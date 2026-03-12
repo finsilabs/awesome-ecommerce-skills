@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements bot auto-response with the correct detection patterns (order number regex and keyword matching), persists bot messages with the right sender identity, returns a boolean routing signal, attributes conversions within a 24-hour window, increments agent stats, and tracks first-response time as the primary SLA metric.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Order number regex",
+      "max_score": 9,
+      "description": "Uses a regex that matches sequences of 5 or more digits (e.g. /#?(\\d{5,})/ or equivalent) to detect order number references in messages"
+    },
+    {
+      "name": "Keyword detection",
+      "max_score": 8,
+      "description": "Also detects order status queries using keyword matching for phrases like 'order status', 'where is my order', 'track order', or similar (case-insensitive)"
+    },
+    {
+      "name": "Bot senderType",
+      "max_score": 9,
+      "description": "Bot messages are persisted with senderType set to 'bot' (not 'agent', 'system', or another value)"
+    },
+    {
+      "name": "Bot senderId",
+      "max_score": 9,
+      "description": "Bot messages are persisted with senderId set to 'order-status-bot' (exact string)"
+    },
+    {
+      "name": "Boolean routing return",
+      "max_score": 9,
+      "description": "The bot handler function returns true when the bot handled the message, and false when the message should be routed to a human agent"
+    },
+    {
+      "name": "Attribution window 24h",
+      "max_score": 9,
+      "description": "Conversion attribution checks for a chat conversation within exactly 24 hours (withinHours: 24 or equivalent) before the order was placed"
+    },
+    {
+      "name": "Attribution source field",
+      "max_score": 8,
+      "description": "Creates an attribution record with source set to 'live_chat'"
+    },
+    {
+      "name": "Agent stats increment",
+      "max_score": 9,
+      "description": "Increments the assigned agent's 'attributedSales' stat (or equivalent) after recording the attribution"
+    },
+    {
+      "name": "First-response time tracking",
+      "max_score": 9,
+      "description": "The analytics module tracks time-to-first-agent-reply as a metric (computes or records the time between conversation creation and first agent message)"
+    },
+    {
+      "name": "First-response time alerting",
+      "max_score": 9,
+      "description": "The analytics module includes an alerting or notification mechanism that triggers when first-response time exceeds a configured threshold"
+    },
+    {
+      "name": "Closed conversation filter",
+      "max_score": 8,
+      "description": "Attribution lookup filters for conversations with status 'closed' (not just any recent conversation)"
+    },
+    {
+      "name": "Bot integration design note",
+      "max_score": 4,
+      "description": "design-notes.md explains how the bot integrates with human agent routing (i.e. the fallback mechanism when the bot cannot handle a query)"
+    }
+  ]
+}

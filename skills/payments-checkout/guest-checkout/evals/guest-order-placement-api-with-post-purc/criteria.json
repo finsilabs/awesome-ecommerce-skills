@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the guest order placement API correctly: storing the order without a user account, generating a secure token for post-purchase account creation, sending it in the confirmation email, and applying fraud prevention to guest orders.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "userId null in order",
+      "max_score": 10,
+      "description": "The order is created with userId set to null (not omitted, not set to a placeholder — explicitly null) to indicate no associated account"
+    },
+    {
+      "name": "guestEmail field stored",
+      "max_score": 10,
+      "description": "The order record stores the customer's email in a field named guestEmail (not 'email', 'customerEmail', or similar)"
+    },
+    {
+      "name": "Email validated server-side",
+      "max_score": 8,
+      "description": "The handler validates the email with a regex check (equivalent to /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/) and returns a 400 error if invalid"
+    },
+    {
+      "name": "Token uses crypto.randomBytes",
+      "max_score": 12,
+      "description": "The token in generateAccountCreationToken is generated using crypto.randomBytes(32).toString('hex') (or an equivalent 32-byte secure random value)"
+    },
+    {
+      "name": "Token expiry 48-72 hours",
+      "max_score": 10,
+      "description": "The token's expiresAt is set to between 48 and 72 hours from creation time (i.e. Date.now() + N * 60 * 60 * 1000 where 48 <= N <= 72)"
+    },
+    {
+      "name": "Token stored in DB",
+      "max_score": 8,
+      "description": "The generated token, email, orderId, and expiresAt are persisted to a database table/collection (e.g. accountCreationTokens)"
+    },
+    {
+      "name": "Token sent in confirmation email",
+      "max_score": 10,
+      "description": "The generated account creation token is passed to sendOrderConfirmationEmail (or equivalent), so it is included in the confirmation email sent to the customer"
+    },
+    {
+      "name": "Payment failure handled",
+      "max_score": 8,
+      "description": "If processPayment does not return status 'succeeded', the order status is set to a failed state and an error response is returned (not a 200 success)"
+    },
+    {
+      "name": "Fraud prevention mentioned",
+      "max_score": 12,
+      "description": "design-notes.md OR code comments explicitly mention applying fraud scoring, address verification, or velocity checks to guest orders (not just authenticated ones)"
+    },
+    {
+      "name": "Cart marked converted",
+      "max_score": 12,
+      "description": "After a successful order, the cart is updated to a converted/used state and linked to the new order (prevents the cart being re-used for another order)"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements category move operations with transactional subtree path updates, and breadcrumb retrieval using materialized path_ids rather than recursive queries. The agent is given an existing category structure and asked to implement reorganization and breadcrumb features.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Transaction wraps all updates",
+      "max_score": 12,
+      "description": "The moveCategory implementation wraps all database writes (the moved category AND its descendants) inside a single database transaction"
+    },
+    {
+      "name": "Descendants found via path prefix",
+      "max_score": 10,
+      "description": "Finding descendants uses a 'path starts with' / prefix query (e.g. WHERE path LIKE 'old/path/%' or { path: { startsWith: category.path + '/' } }) rather than a recursive CTE or multiple round-trips"
+    },
+    {
+      "name": "Descendant paths rewritten",
+      "max_score": 10,
+      "description": "After a category move, descendant rows have their 'path' field updated (via string replacement of old prefix with new prefix)"
+    },
+    {
+      "name": "Descendant pathIds rewritten",
+      "max_score": 10,
+      "description": "After a category move, descendant rows have their 'path_ids' (pathIds) array updated to reflect the new ancestry"
+    },
+    {
+      "name": "depth recalculated on move",
+      "max_score": 8,
+      "description": "The 'depth' field is recalculated for the moved category and its descendants after a move"
+    },
+    {
+      "name": "Breadcrumb single query",
+      "max_score": 12,
+      "description": "The breadcrumb retrieval function fetches all ancestors in a single DB query using the path_ids array (e.g. WHERE id IN (path_ids)), NOT a recursive query or one-by-one lookups"
+    },
+    {
+      "name": "Self excluded from ancestors",
+      "max_score": 8,
+      "description": "The ancestor query excludes the current category itself (e.g. using .slice(0, -1) or excluding own ID)"
+    },
+    {
+      "name": "Ancestors ordered by depth",
+      "max_score": 8,
+      "description": "Ancestors are ordered by 'depth' ascending so breadcrumbs are returned root-first"
+    },
+    {
+      "name": "URL uses /c/ prefix",
+      "max_score": 8,
+      "description": "Generated breadcrumb URLs use the '/c/' prefix followed by the category path (e.g. '/c/clothing/women/dresses')"
+    },
+    {
+      "name": "No recursive CTE",
+      "max_score": 8,
+      "description": "Neither the move nor the breadcrumb logic uses a recursive SQL CTE or WITH RECURSIVE query"
+    },
+    {
+      "name": "Tree ordered by depth then position",
+      "max_score": 6,
+      "description": "The full category tree query orders results by depth ascending first, then by position ascending"
+    }
+  ]
+}

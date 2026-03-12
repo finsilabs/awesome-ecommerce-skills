@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements partial receipt tracking with damaged goods quarantine and a vendor scorecard with the correct metrics, period, and weighted formula.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Partial status tracking",
+      "max_score": 10,
+      "description": "The receiveGoodsAgainstPO function sets PO status to 'partial' when not all line quantities have been fully received, and 'received' when all lines are complete"
+    },
+    {
+      "name": "Per-line quantity tracking",
+      "max_score": 8,
+      "description": "The function updates quantity_received on individual po_lines (not just the PO header), accumulating received quantities across multiple deliveries"
+    },
+    {
+      "name": "Good condition inventory update",
+      "max_score": 10,
+      "description": "Inventory is only incremented for items received in 'good' condition — damaged items do NOT cause an inventory increment"
+    },
+    {
+      "name": "Damaged goods quarantine",
+      "max_score": 10,
+      "description": "Damaged items are inserted into a separate table (damagedGoods, quarantine, or equivalent) rather than being discarded or merged with good inventory"
+    },
+    {
+      "name": "Receipt in transaction",
+      "max_score": 8,
+      "description": "The receiveGoodsAgainstPO function wraps all database updates (line updates, inventory, damaged goods, status) in a single database transaction"
+    },
+    {
+      "name": "90-day default period",
+      "max_score": 8,
+      "description": "The generateVendorScorecard function defaults to a 90-day lookback period when periodDays is not specified"
+    },
+    {
+      "name": "On-time rate formula",
+      "max_score": 8,
+      "description": "On-time rate is calculated as (number of POs received on or before expected_delivery) / (total POs in period), expressed as a ratio 0–1"
+    },
+    {
+      "name": "Fill rate formula",
+      "max_score": 8,
+      "description": "Fill rate is calculated as total quantity_received / total quantity_ordered across all lines in the period, expressed as a ratio 0–1"
+    },
+    {
+      "name": "Defect rate formula",
+      "max_score": 8,
+      "description": "Defect rate is calculated as total damaged units / total received units, expressed as a ratio 0–1"
+    },
+    {
+      "name": "Scorecard weights",
+      "max_score": 12,
+      "description": "The overall score formula applies weights of 40% to on-time rate, 40% to fill rate, and 20% to (1 - defect rate), scaled to 0–100"
+    },
+    {
+      "name": "Weights documented",
+      "max_score": 10,
+      "description": "scorecard_explanation.md explicitly states the formula and the three weights (40/40/20) used to compute the overall score"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent implements scalper-bot behavioral detection using timing and signal analysis, a Redis-backed virtual waiting room with correct FIFO ordering and drain rate, time-limited checkout tokens, and server-side purchase limits with atomic locking.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Page load timestamp",
+      "max_score": 6,
+      "description": "Sets window.__pageLoadTime = Date.now() (or equivalent) client-side at page load to record when the session began"
+    },
+    {
+      "name": "Elapsed time to server",
+      "max_score": 6,
+      "description": "Sends elapsed seconds (computed from window.__pageLoadTime) to the server as part of the checkout submission"
+    },
+    {
+      "name": "5-second timing threshold",
+      "max_score": 8,
+      "description": "Server-side validation rejects or flags checkouts completed in under 5 seconds"
+    },
+    {
+      "name": "Suspicious activity logging",
+      "max_score": 6,
+      "description": "Logs flagged sessions with reason 'superhuman_checkout_speed' (or equivalent) rather than silently discarding"
+    },
+    {
+      "name": "Behavioral signals tracked",
+      "max_score": 8,
+      "description": "Tracks at least 3 of the following client-side signals: mouseMovements, keystrokes, timeOnPage, focusEvents, scrollDepth"
+    },
+    {
+      "name": "Bot probability score threshold",
+      "max_score": 7,
+      "description": "Computes a numeric bot probability score and uses a threshold of 70 (or equivalent) to classify a session as likely-bot"
+    },
+    {
+      "name": "Redis sorted set for queue",
+      "max_score": 8,
+      "description": "Waiting room uses a Redis sorted set (ZADD) with Unix timestamp as the score for FIFO ordering"
+    },
+    {
+      "name": "Correct drain rate",
+      "max_score": 7,
+      "description": "Waiting room processes 50 customers per minute (drainRate = 50 or equivalent)"
+    },
+    {
+      "name": "10-minute checkout token",
+      "max_score": 8,
+      "description": "Granted checkout tokens are stored with a 600-second (10-minute) TTL using SETEX or equivalent"
+    },
+    {
+      "name": "Server-side purchase limit",
+      "max_score": 8,
+      "description": "Purchase limit is enforced server-side (database or Redis counter), NOT by client-side state alone"
+    },
+    {
+      "name": "Redis NX lock for race conditions",
+      "max_score": 9,
+      "description": "Uses Redis SET with NX flag and an expiry (e.g. 30s) to acquire a purchase lock and prevent concurrent duplicate purchases"
+    },
+    {
+      "name": "Lock key pattern",
+      "max_score": 7,
+      "description": "Purchase lock key includes both customer/session identifier and product identifier (e.g. purchase_lock:{customerId}:{productId})"
+    },
+    {
+      "name": "Server-side behavioral analysis",
+      "max_score": 6,
+      "description": "Behavioral analysis is validated server-side (not only in client-side JavaScript that can be bypassed)"
+    },
+    {
+      "name": "Session fingerprinting supplement",
+      "max_score": 6,
+      "description": "Code or comments indicate that session or device fingerprinting supplements IP-based detection (to handle bots that rotate IPs)"
+    }
+  ]
+}

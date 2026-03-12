@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the core dynamic pricing algorithm with the correct demand signal thresholds, inventory pressure logic, competitor undercutting rules, slow-mover markdown, and the two tiers of price guardrails (business floor/ceiling and cost-based margin floor). Also checks that the recommendation and application concerns are separated.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "TypeScript interfaces defined",
+      "max_score": 5,
+      "description": "Defines separate named types/interfaces for pricing context input, competitor price, and pricing decision output (three distinct structures)"
+    },
+    {
+      "name": "Prices stored as cents",
+      "max_score": 5,
+      "description": "The interface/type definitions use integer or number fields annotated or documented as cents for currentPrice, costPrice, floorPrice, ceilingPrice (not floating-point dollars)"
+    },
+    {
+      "name": "Demand signal: conversion threshold",
+      "max_score": 10,
+      "description": "High-demand price increase is triggered when conversionRate (salesLast24h divided by max(viewsLast24h, 1)) exceeds 0.08 — uses exactly 0.08 as the threshold"
+    },
+    {
+      "name": "Demand signal: inventory condition",
+      "max_score": 8,
+      "description": "The high-demand +5% increase is only applied when inventoryLevel is above the reorderPoint (not just on conversion rate alone)"
+    },
+    {
+      "name": "Inventory pressure: correct multiplier",
+      "max_score": 10,
+      "description": "Near-stockout condition (inventoryLevel <= reorderPoint * 0.5) triggers a price increase of exactly +8% (multiplied by 1.08, rounded to integer)"
+    },
+    {
+      "name": "Competitor undercut: 2% band",
+      "max_score": 8,
+      "description": "Competitor price reduction is only triggered when current price is more than 2% above the lowest in-stock competitor (threshold: lowestCompetitor * 1.02)"
+    },
+    {
+      "name": "Competitor undercut: 1% below",
+      "max_score": 8,
+      "description": "When the competitor undercut condition fires, the new price is set to lowestCompetitorPrice * 0.99 (1% below, not an exact match)"
+    },
+    {
+      "name": "Slow mover markdown",
+      "max_score": 8,
+      "description": "Products with salesVelocity7d below 0.1 receive a 5% markdown (multiplied by 0.95, rounded to integer)"
+    },
+    {
+      "name": "Business floor and ceiling enforced",
+      "max_score": 8,
+      "description": "Output price is clamped to the provided floorPrice and ceilingPrice values (both upper and lower bounds applied)"
+    },
+    {
+      "name": "15% margin floor enforced",
+      "max_score": 10,
+      "description": "Output price is always at least costPrice * 1.15 rounded to integer — this floor is applied regardless of floor/ceiling settings"
+    },
+    {
+      "name": "Confidence score varies by competitor data",
+      "max_score": 8,
+      "description": "confidenceScore in the output is higher (e.g. 0.85) when in-stock competitor prices are available vs lower (e.g. 0.6) when no in-stock competitors exist"
+    },
+    {
+      "name": "Recommendation separated from application",
+      "max_score": 12,
+      "description": "The compute/recommend function only returns a decision object — it does NOT directly mutate state, write to a database, or apply the price. A separate function or call site is responsible for applying changes."
+    }
+  ]
+}

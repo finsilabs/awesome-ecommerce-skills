@@ -1,0 +1,10 @@
+{
+  "name": "finsi/customer-accounts",
+  "version": "0.1.0",
+  "summary": "Registration, profile management, address book, and order history",
+  "skills": {
+    "customer-accounts": {
+      "path": "SKILL.md"
+    }
+  }
+}

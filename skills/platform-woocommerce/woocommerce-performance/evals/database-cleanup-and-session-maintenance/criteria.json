@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the WooCommerce maintenance plugin using Action Scheduler for scheduling, applies the correct expiry thresholds and LIMIT sizes for each DELETE operation, and uses a two-step approach for transient cleanup.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Action Scheduler used",
+      "max_score": 12,
+      "description": "Plugin uses as_schedule_recurring_action() (not wp_schedule_event) to register the daily cleanup"
+    },
+    {
+      "name": "No double-registration guard",
+      "max_score": 8,
+      "description": "Uses as_next_scheduled_action() to check before calling as_schedule_recurring_action() (prevents duplicate schedule entries on re-activation)"
+    },
+    {
+      "name": "Session expiry threshold is 48 hours",
+      "max_score": 12,
+      "description": "The session DELETE query uses a threshold of 48 hours (time() - 48 * HOUR_IN_SECONDS or equivalent) not any other duration"
+    },
+    {
+      "name": "Session DELETE uses LIMIT 5000",
+      "max_score": 10,
+      "description": "The DELETE query for woocommerce_sessions includes LIMIT 5000 (not unlimited, not a different limit)"
+    },
+    {
+      "name": "Transient timeout step",
+      "max_score": 10,
+      "description": "First transient DELETE targets option_name LIKE '_transient_timeout_%' with option_value < UNIX_TIMESTAMP() and includes LIMIT 5000"
+    },
+    {
+      "name": "Orphaned transient step",
+      "max_score": 10,
+      "description": "Second transient DELETE removes orphaned _transient_ entries that have no matching _transient_timeout_ row (via LEFT JOIN or subquery), with LIMIT 5000"
+    },
+    {
+      "name": "Log rotation interval is 30 days",
+      "max_score": 10,
+      "description": "The woocommerce_log DELETE query uses an interval of 30 days (DATE_SUB(NOW(), INTERVAL 30 DAY) or equivalent)"
+    },
+    {
+      "name": "Log DELETE uses LIMIT 10000",
+      "max_score": 10,
+      "description": "The DELETE query for woocommerce_log includes LIMIT 10000"
+    },
+    {
+      "name": "Cleanup scheduled at off-peak",
+      "max_score": 8,
+      "description": "The recurring schedule is set to run at a low-traffic time (e.g., midnight / 'tomorrow midnight' or another off-peak offset) rather than immediately or at an arbitrary offset"
+    },
+    {
+      "name": "Batch size rationale documented",
+      "max_score": 10,
+      "description": "cleanup-design.md explains that LIMIT values are chosen to avoid long table locks or equivalent explanation for batching"
+    }
+  ]
+}

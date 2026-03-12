@@ -1,0 +1,10 @@
+{
+  "name": "finsi/email-marketing-automation",
+  "version": "0.1.0",
+  "summary": "Triggered email flows — welcome, post-purchase, win-back, browse abandonment",
+  "skills": {
+    "email-marketing-automation": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shopify-admin-api",
+  "version": "0.1.0",
+  "summary": "Admin API for products, orders, customers with GraphQL and REST",
+  "skills": {
+    "shopify-admin-api": {
+      "path": "SKILL.md"
+    }
+  }
+}

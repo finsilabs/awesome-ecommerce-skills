@@ -1,0 +1,10 @@
+{
+  "name": "finsi/attribution-modeling",
+  "version": "0.1.0",
+  "summary": "Multi-touch attribution for marketing spend optimization",
+  "skills": {
+    "attribution-modeling": {
+      "path": "SKILL.md"
+    }
+  }
+}

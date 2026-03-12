@@ -1,0 +1,10 @@
+{
+  "name": "finsi/free-shipping-thresholds",
+  "version": "0.1.0",
+  "summary": "Dynamic free shipping rules with progress indicators and upsell nudges",
+  "skills": {
+    "free-shipping-thresholds": {
+      "path": "SKILL.md"
+    }
+  }
+}

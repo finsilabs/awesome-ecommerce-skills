@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements SLAS-based guest authentication using PKCE, handles token lifecycle management proactively, secures tokens via httpOnly cookies, and correctly handles guest-to-customer session continuity with basket merging.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "PKCE code verifier generation",
+      "max_score": 10,
+      "description": "Guest token flow generates a code_verifier (random bytes) and derives a code_challenge (SHA-256 hash, base64url encoded) — does NOT skip the PKCE step"
+    },
+    {
+      "name": "Two-step authorize flow",
+      "max_score": 10,
+      "description": "Authorization is done in two steps: (1) GET/POST to the oauth2/authorize endpoint with redirect:manual to capture the auth code from the Location header, (2) POST to oauth2/token with grant_type=authorization_code_pkce"
+    },
+    {
+      "name": "SLAS base URL pattern",
+      "max_score": 8,
+      "description": "SLAS URL is constructed as `https://{SFCC_SHORT_CODE}.api.commercecloud.salesforce.com/shopper/auth/v1` using an environment variable for the short code"
+    },
+    {
+      "name": "ORG_ID environment variable",
+      "max_score": 7,
+      "description": "ORG_ID is read from an environment variable (e.g. SFCC_ORG_ID) and is described or referenced in f_ecom_xxx format"
+    },
+    {
+      "name": "Proactive token refresh",
+      "max_score": 10,
+      "description": "Token refresh is triggered proactively before expiry (e.g. on a timer, checking expiry time) rather than only in response to a 401 error"
+    },
+    {
+      "name": "Refresh token grant type",
+      "max_score": 8,
+      "description": "Token refresh uses grant_type=refresh_token with the refresh_token value and client_id against the oauth2/token endpoint"
+    },
+    {
+      "name": "httpOnly cookie storage",
+      "max_score": 10,
+      "description": "Access tokens are stored in httpOnly cookies set server-side — client-side JavaScript does NOT have direct access to the token value"
+    },
+    {
+      "name": "Server-side proxy for API calls",
+      "max_score": 8,
+      "description": "SFCC API calls from the frontend are routed through a server-side proxy or BFF layer rather than made directly from client-side code"
+    },
+    {
+      "name": "Guest basket merge mechanism",
+      "max_score": 10,
+      "description": "Login flow passes guestBasketId in the POST /baskets request body (with the customer access token) to trigger basket merge — does NOT attempt to merge baskets from different SLAS client IDs"
+    },
+    {
+      "name": "Customer login endpoint",
+      "max_score": 9,
+      "description": "Customer login uses the oauth2/login endpoint with the guest access token in the Authorization header and type=credentials in the body"
+    },
+    {
+      "name": "SLAS channel_id parameter",
+      "max_score": 10,
+      "description": "The authorize request includes channel_id set to the site ID (SFCC_SITE_ID environment variable)"
+    }
+  ]
+}

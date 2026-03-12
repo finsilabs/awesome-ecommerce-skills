@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements an OCAPI hook with correct hooks.json registration, creates an XML form definition using the Demandware schema, uses server.forms.getForm() for form handling, wraps Custom Object writes in Transaction.wrap(), uses categorized loggers, and avoids hardcoding configurable values.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "hooks.json file present",
+      "max_score": 10,
+      "description": "A hooks.json file exists in the cartridge with a 'hooks' array that registers the OCAPI after-POST hook using the 'name' and 'script' fields"
+    },
+    {
+      "name": "Correct hook name",
+      "max_score": 8,
+      "description": "The hooks.json entry uses a hook name matching the dw.ocapi.shop.order.afterPOST pattern (or another appropriate OCAPI hook name) for the order creation event"
+    },
+    {
+      "name": "XML form definition",
+      "max_score": 10,
+      "description": "A form definition XML file exists under forms/default/ using the Demandware XML form schema (xmlns='http://www.demandware.com/xml/form/2008-04-19') with <field> elements for name, email, and message"
+    },
+    {
+      "name": "server.forms.getForm usage",
+      "max_score": 10,
+      "description": "The controller uses `server.forms.getForm('<formId>')` to retrieve the form object, not manual req.form parsing for form validation"
+    },
+    {
+      "name": "Transaction.wrap for Custom Object",
+      "max_score": 12,
+      "description": "The Custom Object creation in the feedback controller is wrapped inside `Transaction.wrap(function() { ... })`, not called outside a transaction"
+    },
+    {
+      "name": "Categorized logger in hook",
+      "max_score": 8,
+      "description": "The OCAPI hook script uses `Logger.getLogger(category, prefix)` with two string arguments for logging, not plain Logger or Logger.error/Logger.warn without a category"
+    },
+    {
+      "name": "Categorized logger in controller",
+      "max_score": 8,
+      "description": "The Feedback controller uses `Logger.getLogger(category, prefix)` with two string arguments for error/info logging"
+    },
+    {
+      "name": "No hardcoded analytics URL",
+      "max_score": 12,
+      "description": "The analytics endpoint URL is NOT hardcoded as a string literal in the hook script; it is read from a Site Preference, custom preference, or other externalized configuration"
+    },
+    {
+      "name": "Use strict in all scripts",
+      "max_score": 5,
+      "description": "Every .js file produced (controller, hook script) starts with `'use strict';` at the top"
+    },
+    {
+      "name": "HTTPClient for analytics call",
+      "max_score": 8,
+      "description": "The OCAPI hook uses dw/net/HTTPClient with open(), setRequestHeader(), and send() to post order data to the analytics endpoint"
+    },
+    {
+      "name": "Status.OK returned from hook",
+      "max_score": 9,
+      "description": "The OCAPI hook function returns a new Status(Status.OK) object at the end (SFCC requires hooks to return a Status object)"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/image-optimization-cdn",
+  "version": "0.1.0",
+  "summary": "Product image pipeline — resize, compress, WebP/AVIF, lazy load, CDN delivery",
+  "skills": {
+    "image-optimization-cdn": {
+      "path": "SKILL.md"
+    }
+  }
+}

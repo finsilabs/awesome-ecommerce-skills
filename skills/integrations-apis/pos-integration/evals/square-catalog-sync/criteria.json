@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements a Square POS catalog sync module, using the right Square client package, environment configuration, catalog object structure, and handling of Square-assigned IDs.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Square npm package",
+      "max_score": 8,
+      "description": "Imports Client and/or Environment from the 'square' package (not a different Square SDK or HTTP client wrapper)"
+    },
+    {
+      "name": "Environment switching",
+      "max_score": 8,
+      "description": "Sets Square environment to Environment.Production when NODE_ENV is 'production' and Environment.Sandbox otherwise"
+    },
+    {
+      "name": "Description truncation",
+      "max_score": 10,
+      "description": "Truncates catalog item description to 500 characters (e.g. substring(0, 500) or slice(0, 500))"
+    },
+    {
+      "name": "Hash-prefix new IDs",
+      "max_score": 10,
+      "description": "Uses a '#' prefix on catalog object IDs when constructing new CatalogObject payloads (e.g. '#item_...' or '#var_...')"
+    },
+    {
+      "name": "Batch upsert method",
+      "max_score": 10,
+      "description": "Calls catalogApi.batchUpsertCatalogObjects (not individual upsertCatalogObject per item)"
+    },
+    {
+      "name": "Idempotency key",
+      "max_score": 8,
+      "description": "Passes an idempotencyKey to batchUpsertCatalogObjects (not absent or empty)"
+    },
+    {
+      "name": "ID mapping persistence",
+      "max_score": 12,
+      "description": "Reads result.idMappings from the batchUpsertCatalogObjects response and stores the Square-assigned variation IDs back to the internal SKU or product record"
+    },
+    {
+      "name": "Track inventory flag",
+      "max_score": 8,
+      "description": "Sets trackInventory: true on item variations in the CatalogObject payload"
+    },
+    {
+      "name": "Fixed pricing type",
+      "max_score": 8,
+      "description": "Uses pricingType: 'FIXED_PRICING' on variations (not VARIABLE_PRICING)"
+    },
+    {
+      "name": "Price in minor units",
+      "max_score": 9,
+      "description": "Converts price to minor currency units (cents) for priceMoney.amount (e.g. multiplies by 100)"
+    },
+    {
+      "name": "Catalog as sync target",
+      "max_score": 9,
+      "description": "Syncs FROM the commerce/PIM catalog TO Square (not the reverse direction — Square is populated from the existing product data)"
+    }
+  ]
+}

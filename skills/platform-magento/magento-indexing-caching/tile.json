@@ -1,0 +1,10 @@
+{
+  "name": "finsi/magento-indexing-caching",
+  "version": "0.1.0",
+  "summary": "Indexer management, Varnish config, and full-page cache strategies",
+  "skills": {
+    "magento-indexing-caching": {
+      "path": "SKILL.md"
+    }
+  }
+}

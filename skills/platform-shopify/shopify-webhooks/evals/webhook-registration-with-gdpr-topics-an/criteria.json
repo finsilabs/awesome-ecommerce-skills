@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent registers webhooks in the afterAuth hook, includes all three mandatory GDPR topics and APP_UNINSTALLED, correctly handles ALREADY_EXISTS errors as non-fatal, and ensures GDPR handlers always return 200.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "afterAuth placement",
+      "max_score": 8,
+      "description": "The README or code comments state that `registerWebhooks` should be called in the `afterAuth` hook (or equivalent OAuth completion callback), not at server startup"
+    },
+    {
+      "name": "GDPR: customers-data-request",
+      "max_score": 7,
+      "description": "The registration list includes the `CUSTOMERS_DATA_REQUEST` topic"
+    },
+    {
+      "name": "GDPR: customers-redact",
+      "max_score": 7,
+      "description": "The registration list includes the `CUSTOMERS_REDACT` topic"
+    },
+    {
+      "name": "GDPR: shop-redact",
+      "max_score": 7,
+      "description": "The registration list includes the `SHOP_REDACT` topic"
+    },
+    {
+      "name": "APP_UNINSTALLED topic",
+      "max_score": 10,
+      "description": "The registration list includes the `APP_UNINSTALLED` topic"
+    },
+    {
+      "name": "ALREADY_EXISTS ignored",
+      "max_score": 12,
+      "description": "The registration code explicitly checks for the 'Address for this topic has already been taken' error message (or equivalent ALREADY_EXISTS condition) and does NOT throw or fail on it"
+    },
+    {
+      "name": "Real errors still thrown",
+      "max_score": 8,
+      "description": "Errors other than ALREADY_EXISTS are still propagated (thrown or otherwise surfaced) after filtering"
+    },
+    {
+      "name": "GraphQL mutation used",
+      "max_score": 8,
+      "description": "Webhook subscriptions are created using the `webhookSubscriptionCreate` GraphQL mutation (not REST API)"
+    },
+    {
+      "name": "GDPR handlers return 200",
+      "max_score": 10,
+      "description": "All three GDPR endpoint handlers respond with HTTP 200, even if no data processing logic is present"
+    },
+    {
+      "name": "All three GDPR routes present",
+      "max_score": 10,
+      "description": "The gdpr.ts file contains route handlers for all three paths: `/webhooks/gdpr/customers-data-request`, `/webhooks/gdpr/customers-redact`, and `/webhooks/gdpr/shop-redact`"
+    },
+    {
+      "name": "JSON format in subscription",
+      "max_score": 5,
+      "description": "The `webhookSubscription` input object includes `format: \"JSON\"`"
+    },
+    {
+      "name": "callbackUrl construction",
+      "max_score": 8,
+      "description": "Each webhook's callback URL is constructed from the provided `appUrl` parameter (not hardcoded)"
+    }
+  ]
+}

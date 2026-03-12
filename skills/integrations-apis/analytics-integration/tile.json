@@ -1,0 +1,10 @@
+{
+  "name": "finsi/analytics-integration",
+  "version": "0.1.0",
+  "summary": "GA4, Meta Pixel, server-side tagging, and data layer implementation",
+  "skills": {
+    "analytics-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent uses the ICE scoring framework with the correct interface shape and formula, implements a revenue impact calculator with the correct parameters, documents the max-3-concurrent-experiments constraint and statistical rigor requirements, and tracks revenue per visitor as a success metric.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ICE interface fields",
+      "max_score": 10,
+      "description": "Defines an experiment data structure with at least three separate numeric fields for impact, confidence, and ease (not a single combined score field)"
+    },
+    {
+      "name": "ICE score is product",
+      "max_score": 10,
+      "description": "Computes the ICE score as the product (multiplication) of impact, confidence, and ease — not a sum, average, or weighted sum"
+    },
+    {
+      "name": "ICE sorts descending",
+      "max_score": 6,
+      "description": "Ranks experiments in descending order of ICE score (highest score first)"
+    },
+    {
+      "name": "ICE scale 1-5",
+      "max_score": 8,
+      "description": "Uses a 1-to-5 scale for each ICE dimension (not 1-10, 0-100, or percentages)"
+    },
+    {
+      "name": "Revenue impact function",
+      "max_score": 8,
+      "description": "Implements a revenue impact calculation that takes at minimum: visitor count, current CVR, expected CVR lift, and average order value as inputs"
+    },
+    {
+      "name": "Revenue impact outputs lift",
+      "max_score": 6,
+      "description": "The revenue impact function returns or prints both monthly and annual revenue lift (not just current vs. new revenue)"
+    },
+    {
+      "name": "Max 3 concurrent experiments",
+      "max_score": 12,
+      "description": "experiment-guidance.md explicitly states that no more than 3 experiments should run simultaneously (or equivalent warning about concurrent test interference)"
+    },
+    {
+      "name": "Pre-calculated sample size",
+      "max_score": 8,
+      "description": "experiment-guidance.md mentions setting a minimum detectable effect or pre-calculating required sample size before launching a test (not stopping 'when it looks significant')"
+    },
+    {
+      "name": "Fixed test duration",
+      "max_score": 6,
+      "description": "experiment-guidance.md advises using a fixed experiment duration based on statistical power, not peeking and stopping early when results look promising"
+    },
+    {
+      "name": "Revenue per visitor metric",
+      "max_score": 10,
+      "description": "experiment-guidance.md recommends tracking revenue per visitor (not CVR alone) as a success metric, noting that CVR gains can be offset by AOV drops"
+    },
+    {
+      "name": "Express payments included",
+      "max_score": 6,
+      "description": "The experiment backlog includes an experiment for express/wallet payment methods (Apple Pay, Google Pay, or equivalent) and it receives a high ICE score"
+    },
+    {
+      "name": "Guest checkout experiment",
+      "max_score": 6,
+      "description": "The experiment for removing forced account registration (guest checkout) is included in the backlog and ranks near the top of the prioritized list"
+    },
+    {
+      "name": "Hypothesis field",
+      "max_score": 4,
+      "description": "Each experiment entry includes a hypothesis statement (not just a name/title) describing the expected outcome"
+    }
+  ]
+}

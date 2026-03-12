@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent applies mobile-first CSS architecture with correct design tokens, responsive grid using auto-fill, proper touch target sizing, and correct variant swatch hit area implementation for a commerce product catalog.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Mobile-first base styles",
+      "max_score": 10,
+      "description": "Base grid styles target small screens first, with min-width media queries used to enhance for larger screens (NOT max-width for narrowing down)"
+    },
+    {
+      "name": "CSS custom properties",
+      "max_score": 8,
+      "description": "Spacing, touch target, and/or layout values are defined as CSS custom properties (CSS variables with -- prefix) rather than hard-coded magic numbers"
+    },
+    {
+      "name": "Touch target token value",
+      "max_score": 8,
+      "description": "The touch target custom property or hard-coded value is 44px (matching WCAG 2.5.5 requirement)"
+    },
+    {
+      "name": "Grid auto-fill pattern",
+      "max_score": 10,
+      "description": "The product grid uses `display: grid` with `repeat(auto-fill, ...)` so column count adjusts automatically without explicit per-breakpoint column counts"
+    },
+    {
+      "name": "Grid minmax sizing",
+      "max_score": 8,
+      "description": "The grid uses `minmax(min(160px, 100%), 1fr)` (or equivalent min() formula) for the mobile base column size"
+    },
+    {
+      "name": "Breakpoint values",
+      "max_score": 6,
+      "description": "Media query breakpoints used are 640px and/or 1024px (matching the sm/lg breakpoint spec), not arbitrary values like 600px or 900px"
+    },
+    {
+      "name": "Image aspect ratio",
+      "max_score": 8,
+      "description": "Product card images use `aspect-ratio: 4/5` (portrait) and `object-fit: cover`"
+    },
+    {
+      "name": "Global touch target rule",
+      "max_score": 8,
+      "description": "A CSS rule sets min-height and min-width of 44px on interactive elements (button, a, select, or [role=button]) globally"
+    },
+    {
+      "name": "CTA button push to bottom",
+      "max_score": 6,
+      "description": "The Add to Cart button (or card CTA) uses `margin-top: auto` to push it to the bottom of the card flex container"
+    },
+    {
+      "name": "Swatch hit area 44px",
+      "max_score": 10,
+      "description": "Color variant swatches have a 44px hit area (width: 44px; height: 44px) even if the visible circle is smaller"
+    },
+    {
+      "name": "Swatch visual vs hit area",
+      "max_score": 8,
+      "description": "Swatch visual indicator is rendered smaller than 44px (e.g., via a ::before pseudo-element or inner element) while the click/tap target remains 44px"
+    },
+    {
+      "name": "Image lazy loading",
+      "max_score": 10,
+      "description": "Product card images include `loading=\"lazy\"` and have explicit `width` and `height` attributes to prevent layout shift"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements browse abandonment with debounce logic and either the custom BullMQ flow or the Klaviyo Track API integration, including correct event properties, payload structure, and the anonymous visitor gate.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "30-minute trigger delay",
+      "max_score": 10,
+      "description": "The browse abandonment first email is scheduled with a 30-minute delay (1800000ms or 30*60000) from the product view event"
+    },
+    {
+      "name": "Debounce: remove existing job",
+      "max_score": 12,
+      "description": "Before scheduling a new browse-abandon job for a customer, any previously queued browse-abandon step-0 job for that customer is removed/cancelled"
+    },
+    {
+      "name": "Browse abandon 2 steps",
+      "max_score": 6,
+      "description": "The browse abandonment flow schedules exactly 2 email steps"
+    },
+    {
+      "name": "Step 1 delay is 25 hours",
+      "max_score": 10,
+      "description": "The second browse-abandon email (step 1) is scheduled 25 hours after the product view (90000000ms or 25*3600000), NOT 24 hours"
+    },
+    {
+      "name": "Step 1 includes withReviews",
+      "max_score": 8,
+      "description": "The step 1 (second) browse abandonment email payload includes withReviews: true"
+    },
+    {
+      "name": "4 related products",
+      "max_score": 8,
+      "description": "The browse abandonment payload fetches or requests exactly 4 related products (getRelatedProducts or equivalent called with count=4)"
+    },
+    {
+      "name": "Anonymous visitor gate",
+      "max_score": 8,
+      "description": "The browse abandonment trigger is gated on a known/authenticated customer ID — the code checks that the customer is identified (logged in or has captured email) before scheduling, or documents this requirement"
+    },
+    {
+      "name": "Klaviyo package import",
+      "max_score": 8,
+      "description": "If Klaviyo integration is implemented, imports from 'klaviyo-api' (ApiClient, EventsApi, EventCreateQueryV2) — does NOT use a generic fetch/axios call or unofficial SDK"
+    },
+    {
+      "name": "Klaviyo auth setup",
+      "max_score": 7,
+      "description": "If Klaviyo is used, the API key is set via ApiClient.instance.authentications['Klaviyo-API-Key'].apiKey"
+    },
+    {
+      "name": "Klaviyo Viewed Product properties",
+      "max_score": 10,
+      "description": "If Klaviyo is used, the 'Viewed Product' event includes all six properties: ProductName, ProductID, Categories, ImageURL, URL, Price"
+    },
+    {
+      "name": "Cancel browse-abandon on cart",
+      "max_score": 13,
+      "description": "An onCartItemAdded (or equivalent) function removes all pending browse-abandon jobs for the customer when they add to cart"
+    }
+  ]
+}

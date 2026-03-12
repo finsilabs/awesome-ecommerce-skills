@@ -1,0 +1,10 @@
+{
+  "name": "finsi/account-security",
+  "version": "0.1.0",
+  "summary": "Brute-force protection, MFA, session management for customer accounts",
+  "skills": {
+    "account-security": {
+      "path": "SKILL.md"
+    }
+  }
+}

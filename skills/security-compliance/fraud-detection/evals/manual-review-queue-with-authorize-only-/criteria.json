@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the manual fraud review queue: setting the right order status, using authorize-only (no capture), sending Slack alerts to the correct channel, auto-expiring after 48 hours by cancelling the PaymentIntent, and avoiding exposure of fraud rule details in client-facing error responses.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Order status set correctly",
+      "max_score": 8,
+      "description": "Sets the order status to 'pending_fraud_review' (exact string) when flagging an order"
+    },
+    {
+      "name": "No fulfillment on flag",
+      "max_score": 8,
+      "description": "The flagForManualReview function does NOT trigger order fulfillment — a comment or code structure explicitly shows fulfillment is withheld"
+    },
+    {
+      "name": "Authorize-only (no capture)",
+      "max_score": 10,
+      "description": "The design-notes.md or code comments explicitly state that payment is authorized but NOT captured until review passes (capture_method: 'manual' or equivalent discussion)"
+    },
+    {
+      "name": "Slack channel name",
+      "max_score": 8,
+      "description": "Sends Slack notification to the channel '#fraud-review' (exact channel name)"
+    },
+    {
+      "name": "Slack message includes risk score",
+      "max_score": 6,
+      "description": "The Slack alert includes the order ID and the numeric risk score out of 100"
+    },
+    {
+      "name": "48-hour expiry window",
+      "max_score": 10,
+      "description": "expireUnreviewedOrders uses a 48-hour (not 24-hour or 72-hour) window to identify stale review orders"
+    },
+    {
+      "name": "PaymentIntent cancelled on expiry",
+      "max_score": 10,
+      "description": "Calls stripe.paymentIntents.cancel() for each expired order (not refund, not void — cancel)"
+    },
+    {
+      "name": "Expiry status set",
+      "max_score": 8,
+      "description": "Sets order status to 'fraud_review_expired' after cancellation"
+    },
+    {
+      "name": "No fraud reason in client error",
+      "max_score": 12,
+      "description": "The checkout-error-handler.ts does NOT include internal fraud signal details, rule thresholds, or block reasons in the HTTP response body sent to the client"
+    },
+    {
+      "name": "fraudRiskScore stored",
+      "max_score": 6,
+      "description": "Stores the numeric risk score on the order record when flagging (e.g., fraudRiskScore field)"
+    },
+    {
+      "name": "reviewRequestedAt timestamp",
+      "max_score": 6,
+      "description": "Stores a timestamp (reviewRequestedAt or equivalent) on the order when it is flagged for review"
+    },
+    {
+      "name": "Cancellation email sent",
+      "max_score": 8,
+      "description": "Sends an order cancellation email to the customer when an unreviewed order expires"
+    }
+  ]
+}

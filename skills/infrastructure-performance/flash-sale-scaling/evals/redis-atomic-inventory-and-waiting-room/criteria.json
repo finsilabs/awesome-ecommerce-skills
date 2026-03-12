@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses ioredis with a server-side Lua script for atomic inventory reservation, implements correct return semantics, releases inventory via incrby on failure, syncs to database, and implements the fair waiting room using Redis sorted-set commands.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ioredis library",
+      "max_score": 8,
+      "description": "Imports and uses ioredis (not redis, node-redis, or any other Redis client library)"
+    },
+    {
+      "name": "Lua script via eval",
+      "max_score": 12,
+      "description": "Uses redis.eval() to execute a Lua script for atomic inventory check-and-decrement (not separate GET + DECRBY calls)"
+    },
+    {
+      "name": "Reserve returns 1",
+      "max_score": 8,
+      "description": "Lua script returns 1 to indicate a successful reservation"
+    },
+    {
+      "name": "Reserve returns 0",
+      "max_score": 8,
+      "description": "Lua script returns 0 to indicate out-of-stock (current quantity less than requested)"
+    },
+    {
+      "name": "Reserve returns -1",
+      "max_score": 8,
+      "description": "Lua script returns -1 (or handles nil) to indicate the product key does not exist"
+    },
+    {
+      "name": "incrby release",
+      "max_score": 10,
+      "description": "releaseInventory uses redis.incrby() (not redis.set or redis.incr) to return stock to the pool"
+    },
+    {
+      "name": "DB sync function",
+      "max_score": 8,
+      "description": "syncInventoryToDatabase iterates over inventory:* keys and calls a database update for each product"
+    },
+    {
+      "name": "zadd with timestamp",
+      "max_score": 10,
+      "description": "enterWaitingRoom uses redis.zadd with the current timestamp (Date.now() or similar) as the score for FIFO ordering"
+    },
+    {
+      "name": "zrank for position",
+      "max_score": 8,
+      "description": "enterWaitingRoom uses redis.zrank to retrieve the customer's queue position"
+    },
+    {
+      "name": "zpopmin for admission",
+      "max_score": 10,
+      "description": "admitFromQueue uses redis.zpopmin to remove and return the next batch of customers from the queue"
+    },
+    {
+      "name": "Inventory key pattern",
+      "max_score": 5,
+      "description": "Inventory Redis keys follow the pattern inventory:{productId}"
+    },
+    {
+      "name": "Queue key pattern",
+      "max_score": 5,
+      "description": "Waiting room Redis keys follow the pattern sale_queue:{productId} (or equivalent queue-scoped-by-product pattern)"
+    }
+  ]
+}

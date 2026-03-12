@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the four email flow trigger functions with correct step counts, timing delays, template names, and cancellation logic when a customer converts. Covers the welcome series, post-purchase nurture, and win-back campaign specifications.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Welcome series 3 steps",
+      "max_score": 6,
+      "description": "The welcome flow schedules exactly 3 email steps (not 2, not 4)"
+    },
+    {
+      "name": "Welcome step delays",
+      "max_score": 8,
+      "description": "Welcome step delays are: step 0 = 0ms (immediate), step 1 = 2 days (172800000ms or 2*86400000), step 2 = 7 days (604800000ms or 7*86400000)"
+    },
+    {
+      "name": "Welcome trigger event",
+      "max_score": 5,
+      "description": "The welcome flow is documented or triggered on customer.created or newsletter signup event"
+    },
+    {
+      "name": "Post-purchase 4 steps",
+      "max_score": 6,
+      "description": "The post-purchase flow schedules exactly 4 email steps"
+    },
+    {
+      "name": "Post-purchase step delays",
+      "max_score": 8,
+      "description": "Post-purchase delays are: step 0 = 0ms, step 1 = 2 days, step 2 = 7 days, step 3 = 21 days (1814400000ms or 21*86400000)"
+    },
+    {
+      "name": "Post-purchase template names",
+      "max_score": 7,
+      "description": "Post-purchase steps reference the four templates: 'order-confirmation', 'shipping-update', 'delivery-check-in', 'review-request' (in any form: string constants, enum values, or comments)"
+    },
+    {
+      "name": "Cancel win-back on purchase",
+      "max_score": 10,
+      "description": "The post-purchase trigger function (or order.paid handler) cancels/removes pending win-back jobs for the customer before scheduling new emails"
+    },
+    {
+      "name": "Win-back 3 thresholds",
+      "max_score": 8,
+      "description": "The win-back cron targets customers at exactly 3 thresholds: 60, 90, and 120 days since last order"
+    },
+    {
+      "name": "Escalating win-back discounts",
+      "max_score": 10,
+      "description": "Win-back discount amounts escalate: 10% at 60 days, 15% at 90 days, 20% at 120 days"
+    },
+    {
+      "name": "Win-back expiry",
+      "max_score": 6,
+      "description": "Win-back discount payload includes expiresInDays: 7"
+    },
+    {
+      "name": "Win-back cron schedule",
+      "max_score": 8,
+      "description": "The win-back cron is scheduled at 8:00 AM daily (cron expression '0 8 * * *' or equivalent comment/annotation)"
+    },
+    {
+      "name": "Skip already-queued win-back",
+      "max_score": 8,
+      "description": "Before enqueuing a win-back job, the code checks whether a job with that ID already exists and skips if it does"
+    },
+    {
+      "name": "Cancel browse-abandon on cart add",
+      "max_score": 10,
+      "description": "An onCartItemAdded handler (or equivalent) removes pending browse-abandon jobs for the customer when they add to cart"
+    }
+  ]
+}

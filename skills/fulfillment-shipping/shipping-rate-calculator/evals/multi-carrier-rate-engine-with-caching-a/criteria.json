@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent builds the rate engine with parallel fetching using Promise.allSettled, a 5-second per-carrier timeout, 15-minute in-memory caching, flat-rate fallback on total failure, and shows only 2-3 rate options to users.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Promise.allSettled used",
+      "max_score": 12,
+      "description": "Uses Promise.allSettled (not Promise.all) to fetch rates from all carriers concurrently, so individual failures don't abort the whole request"
+    },
+    {
+      "name": "5-second timeout per carrier",
+      "max_score": 12,
+      "description": "Each carrier call is wrapped in a Promise.race with a timeout that rejects after 5000ms (5 seconds)"
+    },
+    {
+      "name": "15-minute cache TTL",
+      "max_score": 10,
+      "description": "Cached rates expire after 15 minutes (900000ms or 15 * 60 * 1000)"
+    },
+    {
+      "name": "Cache key includes origin+dest+weight",
+      "max_score": 8,
+      "description": "The cache key is derived from origin postal code, destination postal code/country, and package weight"
+    },
+    {
+      "name": "Flat-rate fallback on failure",
+      "max_score": 12,
+      "description": "When all carrier API calls fail or time out, the engine returns at least one flat-rate option instead of an empty array or throwing an error"
+    },
+    {
+      "name": "Rates sorted ascending",
+      "max_score": 8,
+      "description": "The returned rates array is sorted by rate (price) in ascending order"
+    },
+    {
+      "name": "At most 3 options shown",
+      "max_score": 10,
+      "description": "The final rates presented to callers include at most 3 options (cheapest free, cheapest paid, fastest guaranteed)"
+    },
+    {
+      "name": "Fastest uses estimatedDays<=2",
+      "max_score": 8,
+      "description": "The 'fastest' option selection criterion checks estimatedDays <= 2 AND guaranteed === true"
+    },
+    {
+      "name": "registerCarrier method",
+      "max_score": 10,
+      "description": "Engine exposes a registerCarrier(adapter: CarrierAdapter) method for adding carriers"
+    },
+    {
+      "name": "CarrierAdapter interface",
+      "max_score": 10,
+      "description": "CarrierAdapter interface defines name (string) and getRates(request: ShipmentRequest): Promise<ShippingRate[]>"
+    }
+  ]
+}

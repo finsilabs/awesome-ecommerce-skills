@@ -1,0 +1,10 @@
+{
+  "name": "finsi/medusa-development",
+  "version": "0.1.0",
+  "summary": "Medusa.js setup, custom services, subscribers, and API extensions",
+  "skills": {
+    "medusa-development": {
+      "path": "SKILL.md"
+    }
+  }
+}
