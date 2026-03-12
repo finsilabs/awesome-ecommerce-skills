@@ -1,0 +1,70 @@
+{
+  "workflows": [
+    {
+      "id": "launch-dtc-store",
+      "title": "Launch a DTC Store",
+      "description": "End-to-end journey from product modeling to storefront launch",
+      "steps": [
+        { "title": "Model your catalog", "goal": "Define product schema, variants, and categories", "recommendedSkills": ["product-data-modeling", "variant-matrix", "product-categorization"], "notes": "Start here — everything else depends on your data model" },
+        { "title": "Build the storefront", "goal": "Create product pages, navigation, and search", "recommendedSkills": ["product-page-design", "search-autocomplete", "faceted-navigation", "responsive-storefront"], "notes": "Mobile-first, optimize for Core Web Vitals" },
+        { "title": "Implement checkout", "goal": "Cart, payment, and order processing", "recommendedSkills": ["cart-logic", "checkout-flow-optimization", "stripe-integration", "guest-checkout"], "notes": "Guest checkout first, accounts optional" },
+        { "title": "Set up shipping", "goal": "Rates, tracking, and returns", "recommendedSkills": ["shipping-rate-calculator", "shipment-tracking", "free-shipping-thresholds"], "notes": "Start with flat rate, add real-time rates later" },
+        { "title": "Configure tax", "goal": "Tax calculation and compliance", "recommendedSkills": ["tax-calculation"], "notes": "Use a tax service (TaxJar/Avalara) from day one" },
+        { "title": "Add promotions", "goal": "Discounts, coupons, and pricing", "recommendedSkills": ["discount-engine", "coupon-management"], "notes": "Keep rules simple at launch" },
+        { "title": "Launch marketing", "goal": "SEO, email, and abandonment recovery", "recommendedSkills": ["ecommerce-seo", "email-marketing-automation", "cart-abandonment-recovery", "analytics-integration"], "notes": "Set up tracking before launch" },
+        { "title": "Harden and launch", "goal": "Security, monitoring, and go-live", "recommendedSkills": ["secure-checkout", "monitoring-alerting-commerce", "load-testing-commerce"], "notes": "Load test before launch day" }
+      ]
+    },
+    {
+      "id": "migrate-to-headless",
+      "title": "Migrate to Headless",
+      "description": "Replatform from monolith to composable/headless architecture",
+      "steps": [
+        { "title": "Audit current platform", "goal": "Map features, integrations, and data", "recommendedSkills": ["composable-commerce", "product-data-modeling"], "notes": "Document every integration and custom feature" },
+        { "title": "Design API layer", "goal": "Choose headless backend and define API contracts", "recommendedSkills": ["commerce-api-gateway", "medusa-development", "saleor-development"], "notes": "Evaluate Medusa, Saleor, and Shopify Hydrogen" },
+        { "title": "Build new storefront", "goal": "Implement headless frontend", "recommendedSkills": ["jamstack-storefront", "pwa-storefront", "shopify-hydrogen"], "notes": "Start with critical path: PDP, PLP, cart, checkout" },
+        { "title": "Migrate data", "goal": "Transfer products, customers, and orders", "recommendedSkills": ["catalog-import-export", "product-data-modeling", "webhook-architecture"], "notes": "Run parallel systems during migration" },
+        { "title": "Reconnect integrations", "goal": "ERP, email, analytics, and payments", "recommendedSkills": ["erp-integration", "analytics-integration", "stripe-integration", "email-service-integration"], "notes": "Test each integration independently" },
+        { "title": "Cutover", "goal": "DNS switch, monitoring, and rollback plan", "recommendedSkills": ["monitoring-alerting-commerce", "ecommerce-caching", "edge-commerce"], "notes": "Have a rollback plan; do a soft launch first" }
+      ]
+    },
+    {
+      "id": "black-friday-prep",
+      "title": "Black Friday Prep",
+      "description": "Prepare your store for peak traffic and flash sales",
+      "steps": [
+        { "title": "Load test", "goal": "Simulate peak traffic patterns", "recommendedSkills": ["load-testing-commerce", "database-optimization-commerce"], "notes": "Test at 3x expected peak" },
+        { "title": "Scale infrastructure", "goal": "Auto-scaling, CDN, and caching", "recommendedSkills": ["flash-sale-scaling", "ecommerce-caching", "image-optimization-cdn", "edge-commerce"], "notes": "Pre-warm caches and CDN" },
+        { "title": "Prepare flash sales", "goal": "Configure time-limited deals", "recommendedSkills": ["flash-sale-engine", "discount-engine", "coupon-management"], "notes": "Test discount stacking rules" },
+        { "title": "Set up monitoring", "goal": "Real-time dashboards and alerts", "recommendedSkills": ["monitoring-alerting-commerce", "sales-reporting-dashboard"], "notes": "Alert on checkout error rate, not just uptime" },
+        { "title": "Incident response plan", "goal": "Runbooks for common failures", "recommendedSkills": ["bot-protection", "fraud-detection", "secure-checkout"], "notes": "Have kill switches for features that can be shed" }
+      ]
+    },
+    {
+      "id": "build-marketplace",
+      "title": "Build a Marketplace",
+      "description": "Multi-vendor marketplace from architecture to launch",
+      "steps": [
+        { "title": "Design multi-vendor architecture", "goal": "Tenant model, data isolation, and routing", "recommendedSkills": ["marketplace-building", "product-data-modeling", "order-management-system"], "notes": "Decide: shared catalog vs isolated catalogs" },
+        { "title": "Build seller onboarding", "goal": "Registration, verification, and catalog upload", "recommendedSkills": ["vendor-management", "catalog-import-export", "customer-accounts"], "notes": "KYC/KYB verification is critical" },
+        { "title": "Implement payouts", "goal": "Commission calculation and seller payments", "recommendedSkills": ["stripe-integration", "subscription-billing"], "notes": "Stripe Connect or equivalent for marketplace payouts" },
+        { "title": "Build unified catalog", "goal": "Search, navigation, and product display", "recommendedSkills": ["search-autocomplete", "faceted-navigation", "product-categorization", "product-page-design"], "notes": "Normalize product data across sellers" },
+        { "title": "Order routing and fulfillment", "goal": "Split orders and multi-seller fulfillment", "recommendedSkills": ["order-management-system", "shipping-rate-calculator", "shipment-tracking", "returns-management"], "notes": "Handle split-shipment returns gracefully" },
+        { "title": "Reviews and trust", "goal": "Seller ratings and buyer protection", "recommendedSkills": ["product-reviews-ratings", "fraud-detection", "customer-support-integration"], "notes": "Two-sided review system" },
+        { "title": "Analytics and reporting", "goal": "Seller dashboards and marketplace metrics", "recommendedSkills": ["sales-reporting-dashboard", "analytics-integration", "customer-analytics"], "notes": "Separate seller vs platform analytics" }
+      ]
+    },
+    {
+      "id": "commerce-security-audit",
+      "title": "Commerce Security Audit",
+      "description": "Comprehensive security assessment for e-commerce",
+      "steps": [
+        { "title": "PCI-DSS assessment", "goal": "Evaluate payment data handling", "recommendedSkills": ["pci-dss-compliance", "secure-checkout"], "notes": "Determine SAQ level first" },
+        { "title": "Fraud review", "goal": "Assess fraud detection and prevention", "recommendedSkills": ["fraud-detection", "bot-protection"], "notes": "Review chargeback rates and patterns" },
+        { "title": "Privacy compliance", "goal": "GDPR, CCPA, and data retention audit", "recommendedSkills": ["gdpr-ecommerce", "data-retention-policies"], "notes": "Map all PII data flows" },
+        { "title": "Application security", "goal": "XSS, CSRF, injection, and auth review", "recommendedSkills": ["secure-checkout", "account-security"], "notes": "Focus on checkout and account flows" },
+        { "title": "Infrastructure hardening", "goal": "Network, monitoring, and incident response", "recommendedSkills": ["monitoring-alerting-commerce", "ecommerce-caching", "load-testing-commerce"], "notes": "Review WAF rules and rate limiting" }
+      ]
+    }
+  ]
+}

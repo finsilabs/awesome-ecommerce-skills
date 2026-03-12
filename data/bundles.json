@@ -1,0 +1,82 @@
+{
+  "common": [
+    "product-data-modeling", "cart-logic", "checkout-flow-optimization",
+    "customer-accounts", "ecommerce-seo", "shipping-rate-calculator",
+    "discount-engine", "inventory-tracking", "product-page-design",
+    "order-processing-pipeline", "stripe-integration", "webhook-architecture",
+    "monitoring-alerting-commerce", "secure-checkout", "analytics-integration"
+  ],
+  "store-builder": [
+    "product-data-modeling", "variant-matrix", "inventory-tracking",
+    "catalog-import-export", "product-categorization", "product-page-design",
+    "search-autocomplete", "faceted-navigation", "responsive-storefront",
+    "checkout-flow-optimization", "stripe-integration", "cart-logic",
+    "guest-checkout", "order-processing-pipeline", "tax-calculation",
+    "multi-currency", "discount-engine", "coupon-management",
+    "shipping-rate-calculator", "returns-management", "shipment-tracking",
+    "free-shipping-thresholds", "customer-accounts", "product-reviews-ratings",
+    "ecommerce-seo", "email-marketing-automation", "cart-abandonment-recovery",
+    "analytics-integration", "image-optimization-cdn", "secure-checkout",
+    "account-security", "webhook-architecture", "monitoring-alerting-commerce",
+    "storefront-theming", "accessibility-commerce", "wishlist-save-for-later",
+    "recently-viewed-products", "product-comparison", "quick-view-modal",
+    "mega-menu-builder", "sales-reporting-dashboard"
+  ],
+  "growth-marketer": [
+    "ecommerce-seo", "email-marketing-automation", "cart-abandonment-recovery",
+    "social-commerce", "google-shopping-feed", "conversion-rate-optimization",
+    "push-notifications", "affiliate-program", "content-commerce",
+    "sms-marketing", "influencer-tracking", "exit-intent-popups",
+    "customer-segmentation", "personalization-engine", "customer-lifetime-value",
+    "referral-program", "ab-testing-ecommerce", "attribution-modeling",
+    "loyalty-points-system", "dynamic-pricing", "flash-sale-engine",
+    "product-reviews-ratings", "user-generated-content", "sales-reporting-dashboard",
+    "customer-analytics"
+  ],
+  "platform-migrator": [
+    "product-data-modeling", "catalog-import-export", "variant-matrix",
+    "product-categorization", "inventory-tracking", "multi-warehouse",
+    "checkout-flow-optimization", "order-processing-pipeline", "tax-calculation",
+    "multi-currency", "discount-engine", "coupon-management",
+    "shipping-rate-calculator", "customer-accounts", "product-reviews-ratings",
+    "shopify-storefront-api", "shopify-admin-api", "shopify-webhooks",
+    "woocommerce-rest-api", "magento-graphql", "sfcc-ocapi-scapi",
+    "composable-commerce", "commerce-api-gateway", "webhook-architecture",
+    "erp-integration", "analytics-integration", "ecommerce-data-warehouse",
+    "medusa-development", "saleor-development", "shopify-hydrogen"
+  ],
+  "security-ops": [
+    "pci-dss-compliance", "fraud-detection", "gdpr-ecommerce",
+    "bot-protection", "secure-checkout", "account-security",
+    "data-retention-policies", "webhook-architecture",
+    "monitoring-alerting-commerce", "load-testing-commerce",
+    "ecommerce-caching", "order-processing-pipeline",
+    "stripe-integration", "paypal-integration", "subscription-billing"
+  ],
+  "headless-architect": [
+    "composable-commerce", "jamstack-storefront", "commerce-api-gateway",
+    "pwa-storefront", "medusa-development", "saleor-development",
+    "shopify-hydrogen", "commerce-js-integration",
+    "shopify-storefront-api", "shopify-admin-api",
+    "woocommerce-rest-api", "magento-graphql", "sfcc-ocapi-scapi",
+    "ecommerce-caching", "edge-commerce", "image-optimization-cdn",
+    "webhook-architecture", "analytics-integration",
+    "database-optimization-commerce", "flash-sale-scaling"
+  ],
+  "b2b-specialist": [
+    "b2b-commerce", "volume-pricing", "price-rules-engine",
+    "customer-segmentation", "customer-accounts", "multi-warehouse",
+    "order-management-system", "vendor-management", "erp-integration",
+    "product-information-management", "catalog-import-export",
+    "multi-channel-selling", "tax-calculation", "subscription-billing"
+  ],
+  "marketplace-builder": [
+    "marketplace-building", "vendor-management", "multi-channel-selling",
+    "order-management-system", "shipping-rate-calculator", "returns-management",
+    "dropshipping-integration", "product-data-modeling", "product-categorization",
+    "search-autocomplete", "faceted-navigation", "discount-engine",
+    "coupon-management", "customer-accounts", "product-reviews-ratings",
+    "fraud-detection", "webhook-architecture", "analytics-integration",
+    "stripe-integration", "subscription-billing"
+  ]
+}
