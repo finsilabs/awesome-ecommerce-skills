@@ -10,7 +10,7 @@
     "catalog": "node tools/scripts/generate-catalog.js",
     "readme": "node tools/scripts/generate-readme.js",
     "chain": "npm run validate:strict && npm run catalog && npm run readme",
-    "test": "node --test tools/scripts/__tests__/"
+    "test": "node --test 'tools/scripts/__tests__/*.test.js'"
   },
   "devDependencies": {
     "yaml": "^2.8.2"
