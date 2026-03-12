@@ -1,11 +1,235 @@
 [
   {
+    "id": "merchandising-rules",
+    "path": "skills/business-operations/merchandising-rules",
+    "category": "business-operations",
+    "name": "Merchandising Rules",
+    "description": "Visual merchandising, product ranking rules, and automated collection curation",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "product-data-modeling",
+    "path": "skills/catalog-inventory/product-data-modeling",
+    "category": "catalog-inventory",
+    "name": "Product Data Modeling",
+    "description": "Schema design for products with variants, options, attributes, and relationships",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "customer-accounts",
+    "path": "skills/customer-crm/customer-accounts",
+    "category": "customer-crm",
+    "name": "Customer Accounts",
+    "description": "Registration, profile management, address book, and order history",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "id": "ecommerce-data-warehouse",
+    "path": "skills/data-analytics/ecommerce-data-warehouse",
+    "category": "data-analytics",
+    "name": "Ecommerce Data Warehouse",
+    "description": "Data warehouse design for commerce — star schema, ETL pipelines, dbt models",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "shipping-rate-calculator",
+    "path": "skills/fulfillment-shipping/shipping-rate-calculator",
+    "category": "fulfillment-shipping",
+    "name": "Shipping Rate Calculator",
+    "description": "Real-time rate calculation with carrier APIs (UPS, FedEx, USPS, DHL)",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "medusa-development",
+    "path": "skills/headless-modern/medusa-development",
+    "category": "headless-modern",
+    "name": "Medusa Development",
+    "description": "Medusa.js setup, custom services, subscribers, and API extensions",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "medusa"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "ecommerce-caching",
+    "path": "skills/infrastructure-performance/ecommerce-caching",
+    "category": "infrastructure-performance",
+    "name": "Ecommerce Caching",
+    "description": "Multi-layer caching — CDN, application, database, and cart-aware cache invalidation",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "erp-integration",
+    "path": "skills/integrations-apis/erp-integration",
+    "category": "integrations-apis",
+    "name": "Erp Integration",
+    "description": "ERP sync patterns (SAP, NetSuite, Odoo) for orders, inventory, and customers",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "ecommerce-seo",
+    "path": "skills/marketing-growth/ecommerce-seo",
+    "category": "marketing-growth",
+    "name": "Ecommerce Seo",
+    "description": "Product page SEO, structured data (JSON-LD), canonical URLs, and sitemap generation",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "stripe-integration",
     "path": "skills/payments-checkout/stripe-integration",
     "category": "payments-checkout",
     "name": "Stripe Integration",
     "description": "Stripe payment intents, subscriptions, webhooks, and SCA compliance",
     "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "magento-module-development",
+    "path": "skills/platform-magento/magento-module-development",
+    "category": "platform-magento",
+    "name": "Magento Module Development",
+    "description": "Custom Magento 2 modules with dependency injection and service contracts",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "magento"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "sfcc-cartridge-development",
+    "path": "skills/platform-salesforce-cc/sfcc-cartridge-development",
+    "category": "platform-salesforce-cc",
+    "name": "Sfcc Cartridge Development",
+    "description": "SFRA cartridge architecture, controllers, and ISML templates",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "salesforce-commerce-cloud"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "shopify-theme-development",
+    "path": "skills/platform-shopify/shopify-theme-development",
+    "category": "platform-shopify",
+    "name": "Shopify Theme Development",
+    "description": "Liquid templating, theme architecture, sections, and theme app extensions",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "shopify"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "woocommerce-plugin-development",
+    "path": "skills/platform-woocommerce/woocommerce-plugin-development",
+    "category": "platform-woocommerce",
+    "name": "Woocommerce Plugin Development",
+    "description": "Custom WooCommerce plugins with hooks, filters, and settings API",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "woocommerce"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "discount-engine",
+    "path": "skills/pricing-promotions/discount-engine",
+    "category": "pricing-promotions",
+    "name": "Discount Engine",
+    "description": "Rule-based discount system — percentage, fixed, BOGO, tiered, conditional",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "pci-dss-compliance",
+    "path": "skills/security-compliance/pci-dss-compliance",
+    "category": "security-compliance",
+    "name": "Pci Dss Compliance",
+    "description": "PCI-DSS requirements mapping, SAQ selection, and implementation checklist",
+    "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "product-page-design",
+    "path": "skills/storefront-ui/product-page-design",
+    "category": "storefront-ui",
+    "name": "Product Page Design",
+    "description": "High-converting product page layouts with image galleries, variant selectors, and social proof",
+    "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [

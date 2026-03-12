@@ -1,7 +1,353 @@
 {
-  "generatedAt": "2026-03-12T19:15:02.283Z",
-  "total": 1,
+  "generatedAt": "2026-03-12T19:45:20.378Z",
+  "total": 17,
   "skills": [
+    {
+      "id": "merchandising-rules",
+      "name": "Merchandising Rules",
+      "description": "Visual merchandising, product ranking rules, and automated collection curation",
+      "category": "business-operations",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "merchandising",
+        "product-ranking",
+        "collections",
+        "sorting",
+        "curation",
+        "search-relevance",
+        "boosting"
+      ],
+      "triggers": [
+        "implement merchandising rules",
+        "build product ranking",
+        "automate collection curation",
+        "product sorting algorithm"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/business-operations/merchandising-rules",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "product-data-modeling",
+      "name": "Product Data Modeling",
+      "description": "Schema design for products with variants, options, attributes, and relationships",
+      "category": "catalog-inventory",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "product",
+        "catalog",
+        "schema",
+        "variants",
+        "attributes",
+        "database",
+        "modeling"
+      ],
+      "triggers": [
+        "design product schema",
+        "model product variants",
+        "product database design",
+        "catalog data model"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/catalog-inventory/product-data-modeling",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "customer-accounts",
+      "name": "Customer Accounts",
+      "description": "Registration, profile management, address book, and order history",
+      "category": "customer-crm",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "customer",
+        "accounts",
+        "registration",
+        "profile",
+        "address-book",
+        "order-history",
+        "authentication"
+      ],
+      "triggers": [
+        "build customer accounts",
+        "add user registration",
+        "create customer portal",
+        "implement address book"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/customer-crm/customer-accounts",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "ecommerce-data-warehouse",
+      "name": "Ecommerce Data Warehouse",
+      "description": "Data warehouse design for commerce — star schema, ETL pipelines, dbt models",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "data-warehouse",
+        "star-schema",
+        "etl",
+        "dbt",
+        "analytics",
+        "bigquery",
+        "snowflake",
+        "redshift"
+      ],
+      "triggers": [
+        "build ecommerce data warehouse",
+        "design analytics schema",
+        "create dbt models",
+        "ecommerce ETL pipeline"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/data-analytics/ecommerce-data-warehouse",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "shipping-rate-calculator",
+      "name": "Shipping Rate Calculator",
+      "description": "Real-time rate calculation with carrier APIs (UPS, FedEx, USPS, DHL)",
+      "category": "fulfillment-shipping",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shipping",
+        "rates",
+        "carriers",
+        "ups",
+        "fedex",
+        "usps",
+        "dhl",
+        "fulfillment"
+      ],
+      "triggers": [
+        "calculate shipping rates",
+        "integrate carrier APIs",
+        "add shipping options",
+        "real-time shipping quotes"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/shipping-rate-calculator",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "medusa-development",
+      "name": "Medusa Development",
+      "description": "Medusa.js setup, custom services, subscribers, and API extensions",
+      "category": "headless-modern",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "medusa",
+        "headless-commerce",
+        "nodejs",
+        "api",
+        "services",
+        "subscribers",
+        "modules"
+      ],
+      "triggers": [
+        "build with medusa",
+        "medusa.js development",
+        "create medusa service",
+        "extend medusa api"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/headless-modern/medusa-development",
+      "platforms": [
+        "medusa"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "ecommerce-caching",
+      "name": "Ecommerce Caching",
+      "description": "Multi-layer caching — CDN, application, database, and cart-aware cache invalidation",
+      "category": "infrastructure-performance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "caching",
+        "cdn",
+        "redis",
+        "varnish",
+        "performance",
+        "cache-invalidation",
+        "edge-caching"
+      ],
+      "triggers": [
+        "implement ecommerce caching",
+        "add caching layer",
+        "cache invalidation strategy",
+        "CDN configuration for store"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/infrastructure-performance/ecommerce-caching",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "erp-integration",
+      "name": "Erp Integration",
+      "description": "ERP sync patterns (SAP, NetSuite, Odoo) for orders, inventory, and customers",
+      "category": "integrations-apis",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "erp",
+        "sap",
+        "netsuite",
+        "odoo",
+        "integration",
+        "sync",
+        "orders",
+        "inventory",
+        "middleware"
+      ],
+      "triggers": [
+        "integrate ERP system",
+        "sync orders with ERP",
+        "connect SAP to ecommerce",
+        "ERP inventory sync"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/integrations-apis/erp-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "ecommerce-seo",
+      "name": "Ecommerce Seo",
+      "description": "Product page SEO, structured data (JSON-LD), canonical URLs, and sitemap generation",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "seo",
+        "structured-data",
+        "json-ld",
+        "sitemap",
+        "canonical",
+        "meta-tags",
+        "schema-org"
+      ],
+      "triggers": [
+        "optimize ecommerce SEO",
+        "add structured data",
+        "generate sitemap",
+        "fix product page SEO"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/marketing-growth/ecommerce-seo",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
     {
       "id": "stripe-integration",
       "name": "Stripe Integration",
@@ -35,6 +381,272 @@
         "opencode"
       ],
       "path": "skills/payments-checkout/stripe-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "magento-module-development",
+      "name": "Magento Module Development",
+      "description": "Custom Magento 2 modules with dependency injection and service contracts",
+      "category": "platform-magento",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "magento",
+        "magento2",
+        "module",
+        "dependency-injection",
+        "service-contracts",
+        "plugins",
+        "observers"
+      ],
+      "triggers": [
+        "build magento module",
+        "create magento 2 extension",
+        "magento dependency injection",
+        "customize magento"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-magento/magento-module-development",
+      "platforms": [
+        "magento"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "sfcc-cartridge-development",
+      "name": "Sfcc Cartridge Development",
+      "description": "SFRA cartridge architecture, controllers, and ISML templates",
+      "category": "platform-salesforce-cc",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "sfcc",
+        "salesforce-commerce-cloud",
+        "sfra",
+        "cartridge",
+        "isml",
+        "controllers",
+        "pipelines"
+      ],
+      "triggers": [
+        "build sfcc cartridge",
+        "sfra development",
+        "salesforce commerce cloud customization",
+        "create sfcc controller"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-salesforce-cc/sfcc-cartridge-development",
+      "platforms": [
+        "salesforce-commerce-cloud"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "shopify-theme-development",
+      "name": "Shopify Theme Development",
+      "description": "Liquid templating, theme architecture, sections, and theme app extensions",
+      "category": "platform-shopify",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "shopify",
+        "liquid",
+        "theme",
+        "sections",
+        "blocks",
+        "dawn",
+        "theme-app-extensions"
+      ],
+      "triggers": [
+        "build shopify theme",
+        "customize shopify template",
+        "shopify liquid code",
+        "create shopify section"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-shopify/shopify-theme-development",
+      "platforms": [
+        "shopify"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "woocommerce-plugin-development",
+      "name": "Woocommerce Plugin Development",
+      "description": "Custom WooCommerce plugins with hooks, filters, and settings API",
+      "category": "platform-woocommerce",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "woocommerce",
+        "wordpress",
+        "plugin",
+        "hooks",
+        "filters",
+        "php",
+        "settings-api"
+      ],
+      "triggers": [
+        "build woocommerce plugin",
+        "customize woocommerce",
+        "woocommerce hooks",
+        "extend woocommerce"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-woocommerce/woocommerce-plugin-development",
+      "platforms": [
+        "woocommerce"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "discount-engine",
+      "name": "Discount Engine",
+      "description": "Rule-based discount system — percentage, fixed, BOGO, tiered, conditional",
+      "category": "pricing-promotions",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "discounts",
+        "promotions",
+        "pricing",
+        "coupons",
+        "bogo",
+        "tiered-pricing",
+        "rules-engine"
+      ],
+      "triggers": [
+        "build discount system",
+        "implement promo codes",
+        "create discount engine",
+        "add coupon support"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/pricing-promotions/discount-engine",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pci-dss-compliance",
+      "name": "Pci Dss Compliance",
+      "description": "PCI-DSS requirements mapping, SAQ selection, and implementation checklist",
+      "category": "security-compliance",
+      "risk": "critical",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "pci-dss",
+        "security",
+        "compliance",
+        "payments",
+        "encryption",
+        "tokenization",
+        "saq"
+      ],
+      "triggers": [
+        "implement PCI compliance",
+        "PCI-DSS requirements",
+        "secure payment data",
+        "PCI SAQ selection"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/security-compliance/pci-dss-compliance",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "product-page-design",
+      "name": "Product Page Design",
+      "description": "High-converting product page layouts with image galleries, variant selectors, and social proof",
+      "category": "storefront-ui",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "product-page",
+        "ui",
+        "gallery",
+        "variants",
+        "social-proof",
+        "conversion",
+        "responsive"
+      ],
+      "triggers": [
+        "design product page",
+        "build product detail page",
+        "create PDP layout",
+        "product page components"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/storefront-ui/product-page-design",
       "platforms": [
         "platform-agnostic"
       ],
