@@ -1,0 +1,1190 @@
+[
+  {
+    "skill": "woocommerce-subscriptions",
+    "path": "skills/platform-woocommerce/woocommerce-subscriptions",
+    "eval_id": "019ce44b-0410-7729-bb5f-14ed2f6dd61b",
+    "status": "completed",
+    "baseline_avg": 31,
+    "with_context_avg": 100,
+    "lift": 69
+  },
+  {
+    "skill": "fraud-detection",
+    "path": "skills/security-compliance/fraud-detection",
+    "eval_id": "019ce44b-3551-742c-8a54-2ded92f2f5d3",
+    "status": "completed",
+    "baseline_avg": 34,
+    "with_context_avg": 97,
+    "lift": 63
+  },
+  {
+    "skill": "low-stock-alerts",
+    "path": "skills/catalog-inventory/low-stock-alerts",
+    "eval_id": "019ce449-81ba-7130-a122-b63b028ea504",
+    "status": "completed",
+    "baseline_avg": 36,
+    "with_context_avg": 98,
+    "lift": 62
+  },
+  {
+    "skill": "product-content-enrichment",
+    "path": "skills/catalog-inventory/product-content-enrichment",
+    "eval_id": "019ce449-99f2-71b4-8298-902dd62a1f2b",
+    "status": "completed",
+    "baseline_avg": 39,
+    "with_context_avg": 97,
+    "lift": 58
+  },
+  {
+    "skill": "customer-lifetime-value",
+    "path": "skills/customer-crm/customer-lifetime-value",
+    "eval_id": "019ce449-aa0a-71ad-b1f0-2af27dc0ff9b",
+    "status": "completed",
+    "baseline_avg": 40,
+    "with_context_avg": 97,
+    "lift": 57
+  },
+  {
+    "skill": "referral-program",
+    "path": "skills/customer-crm/referral-program",
+    "eval_id": "019ce449-c6ac-7318-a747-17084fe81b38",
+    "status": "completed",
+    "baseline_avg": 47,
+    "with_context_avg": 100,
+    "lift": 53
+  },
+  {
+    "skill": "coupon-management",
+    "path": "skills/pricing-promotions/coupon-management",
+    "eval_id": "019ce44b-0b84-7648-a20e-98c2c44ac493",
+    "status": "completed",
+    "baseline_avg": 49,
+    "with_context_avg": 100,
+    "lift": 51
+  },
+  {
+    "skill": "dropshipping-integration",
+    "path": "skills/fulfillment-shipping/dropshipping-integration",
+    "eval_id": "019ce449-ede5-77ac-b0e7-d57f384e6fed",
+    "status": "completed",
+    "baseline_avg": 50,
+    "with_context_avg": 100,
+    "lift": 50
+  },
+  {
+    "skill": "search-autocomplete",
+    "path": "skills/storefront-ui/search-autocomplete",
+    "eval_id": "019ce44b-6535-71ac-8c59-ba23fa9db88e",
+    "status": "completed",
+    "baseline_avg": 46,
+    "with_context_avg": 96,
+    "lift": 50
+  },
+  {
+    "skill": "dynamic-pricing",
+    "path": "skills/pricing-promotions/dynamic-pricing",
+    "eval_id": "019ce44b-131e-760b-a0b6-a5c3f4649978",
+    "status": "completed",
+    "baseline_avg": 44,
+    "with_context_avg": 93,
+    "lift": 49
+  },
+  {
+    "skill": "responsive-storefront",
+    "path": "skills/storefront-ui/responsive-storefront",
+    "eval_id": "019ce44b-619c-7025-a5bc-a6b469d12d3e",
+    "status": "completed",
+    "baseline_avg": 49,
+    "with_context_avg": 98,
+    "lift": 49
+  },
+  {
+    "skill": "google-shopping-feed",
+    "path": "skills/marketing-growth/google-shopping-feed",
+    "eval_id": "019ce44a-8180-703b-a5ed-516f20483b59",
+    "status": "completed",
+    "baseline_avg": 49,
+    "with_context_avg": 97,
+    "lift": 48
+  },
+  {
+    "skill": "returns-management",
+    "path": "skills/fulfillment-shipping/returns-management",
+    "eval_id": "019ce449-fcc0-7406-9636-ea8f07802333",
+    "status": "completed",
+    "baseline_avg": 53,
+    "with_context_avg": 99,
+    "lift": 46
+  },
+  {
+    "skill": "email-marketing-automation",
+    "path": "skills/marketing-growth/email-marketing-automation",
+    "eval_id": "019ce44a-780c-720b-a16e-40d84e01def8",
+    "status": "completed",
+    "baseline_avg": 50,
+    "with_context_avg": 96,
+    "lift": 46
+  },
+  {
+    "skill": "shopify-admin-api",
+    "path": "skills/platform-shopify/shopify-admin-api",
+    "eval_id": "019ce44a-d5f4-7457-8be1-c302eff836a8",
+    "status": "completed",
+    "baseline_avg": 54,
+    "with_context_avg": 100,
+    "lift": 46
+  },
+  {
+    "skill": "international-shipping",
+    "path": "skills/fulfillment-shipping/international-shipping",
+    "eval_id": "019ce449-f562-7748-8074-398c5956cd30",
+    "status": "completed",
+    "baseline_avg": 47,
+    "with_context_avg": 92,
+    "lift": 45
+  },
+  {
+    "skill": "merchandising-rules",
+    "path": "skills/business-operations/merchandising-rules",
+    "eval_id": "019ce449-60c2-765a-ba4e-c57e04338fa7",
+    "status": "completed",
+    "baseline_avg": 56,
+    "with_context_avg": 100,
+    "lift": 44
+  },
+  {
+    "skill": "product-categorization",
+    "path": "skills/catalog-inventory/product-categorization",
+    "eval_id": "019ce449-9196-7722-b398-5d975c1b2fe9",
+    "status": "completed",
+    "baseline_avg": 55,
+    "with_context_avg": 99,
+    "lift": 44
+  },
+  {
+    "skill": "live-chat-commerce",
+    "path": "skills/customer-crm/live-chat-commerce",
+    "eval_id": "019ce449-b777-74d8-95e5-e63d172fdd10",
+    "status": "completed",
+    "baseline_avg": 53,
+    "with_context_avg": 97,
+    "lift": 44
+  },
+  {
+    "skill": "exit-intent-popups",
+    "path": "skills/marketing-growth/exit-intent-popups",
+    "eval_id": "019ce44a-7ce7-732e-90c2-3bbc7e396665",
+    "status": "completed",
+    "baseline_avg": 52,
+    "with_context_avg": 96,
+    "lift": 44
+  },
+  {
+    "skill": "loyalty-points-system",
+    "path": "skills/pricing-promotions/loyalty-points-system",
+    "eval_id": "019ce44b-1ec4-76be-a415-eb5aa12d0c75",
+    "status": "completed",
+    "baseline_avg": 56,
+    "with_context_avg": 100,
+    "lift": 44
+  },
+  {
+    "skill": "catalog-import-export",
+    "path": "skills/catalog-inventory/catalog-import-export",
+    "eval_id": "019ce449-76a6-72a1-bbfc-c2e6ccd02de5",
+    "status": "completed",
+    "baseline_avg": 47,
+    "with_context_avg": 90,
+    "lift": 43
+  },
+  {
+    "skill": "affiliate-program",
+    "path": "skills/marketing-growth/affiliate-program",
+    "eval_id": "019ce44a-649a-73cc-811c-014ce7b126b1",
+    "status": "completed",
+    "baseline_avg": 55,
+    "with_context_avg": 98,
+    "lift": 43
+  },
+  {
+    "skill": "inventory-tracking",
+    "path": "skills/catalog-inventory/inventory-tracking",
+    "eval_id": "019ce449-7dbf-77da-bc32-c59c9b03ea19",
+    "status": "completed",
+    "baseline_avg": 58,
+    "with_context_avg": 100,
+    "lift": 42
+  },
+  {
+    "skill": "b2b-commerce",
+    "path": "skills/business-operations/b2b-commerce",
+    "eval_id": "019ce449-5067-70de-b2a1-740c7c5b0596",
+    "status": "completed",
+    "baseline_avg": 56,
+    "with_context_avg": 96,
+    "lift": 40
+  },
+  {
+    "skill": "marketplace-connectors",
+    "path": "skills/integrations-apis/marketplace-connectors",
+    "eval_id": "019ce44a-5536-7379-b014-02e1cba4843a",
+    "status": "completed",
+    "baseline_avg": 55,
+    "with_context_avg": 95,
+    "lift": 40
+  },
+  {
+    "skill": "guest-checkout",
+    "path": "skills/payments-checkout/guest-checkout",
+    "eval_id": "019ce44a-9de4-70dc-8f33-0c294cfd2044",
+    "status": "completed",
+    "baseline_avg": 60,
+    "with_context_avg": 100,
+    "lift": 40
+  },
+  {
+    "skill": "ab-testing-pricing",
+    "path": "skills/pricing-promotions/ab-testing-pricing",
+    "eval_id": "019ce44b-075e-77dc-b1ae-cfcd94f8acf4",
+    "status": "completed",
+    "baseline_avg": 58,
+    "with_context_avg": 98,
+    "lift": 40
+  },
+  {
+    "skill": "data-retention-policies",
+    "path": "skills/security-compliance/data-retention-policies",
+    "eval_id": "019ce44b-30d2-735b-a776-ca150d7c5de2",
+    "status": "completed",
+    "baseline_avg": 59,
+    "with_context_avg": 99,
+    "lift": 40
+  },
+  {
+    "skill": "jamstack-storefront",
+    "path": "skills/headless-modern/jamstack-storefront",
+    "eval_id": "019ce44a-172f-713e-b734-c63b04188a52",
+    "status": "completed",
+    "baseline_avg": 61,
+    "with_context_avg": 100,
+    "lift": 39
+  },
+  {
+    "skill": "image-optimization-cdn",
+    "path": "skills/infrastructure-performance/image-optimization-cdn",
+    "eval_id": "019ce44a-3e09-750d-887c-6124df75f286",
+    "status": "completed",
+    "baseline_avg": 54,
+    "with_context_avg": 93,
+    "lift": 39
+  },
+  {
+    "skill": "multi-currency",
+    "path": "skills/payments-checkout/multi-currency",
+    "eval_id": "019ce44a-a1ee-739b-96c2-85243667db19",
+    "status": "completed",
+    "baseline_avg": 60,
+    "with_context_avg": 99,
+    "lift": 39
+  },
+  {
+    "skill": "discount-engine",
+    "path": "skills/pricing-promotions/discount-engine",
+    "eval_id": "019ce44b-0f55-70ad-9185-ddc4d56fa397",
+    "status": "completed",
+    "baseline_avg": 50,
+    "with_context_avg": 89,
+    "lift": 39
+  },
+  {
+    "skill": "woocommerce-performance",
+    "path": "skills/platform-woocommerce/woocommerce-performance",
+    "eval_id": "019ce44a-f67b-7552-8f90-b511613a601b",
+    "status": "completed",
+    "baseline_avg": 62,
+    "with_context_avg": 100,
+    "lift": 38
+  },
+  {
+    "skill": "account-security",
+    "path": "skills/security-compliance/account-security",
+    "eval_id": "019ce44b-29b2-76fa-a17c-f174b290a92b",
+    "status": "completed",
+    "baseline_avg": 55,
+    "with_context_avg": 93,
+    "lift": 38
+  },
+  {
+    "skill": "vendor-management",
+    "path": "skills/business-operations/vendor-management",
+    "eval_id": "019ce449-72ad-72c9-b9df-ccd2fe9ae7c0",
+    "status": "completed",
+    "baseline_avg": 56,
+    "with_context_avg": 93,
+    "lift": 37
+  },
+  {
+    "skill": "multi-warehouse",
+    "path": "skills/catalog-inventory/multi-warehouse",
+    "eval_id": "019ce449-8a01-721a-a420-da42b3c4ec95",
+    "status": "completed",
+    "baseline_avg": 56,
+    "with_context_avg": 93,
+    "lift": 37
+  },
+  {
+    "skill": "volume-pricing",
+    "path": "skills/pricing-promotions/volume-pricing",
+    "eval_id": "019ce44b-2615-7268-8b63-010c47cf5fc2",
+    "status": "completed",
+    "baseline_avg": 63,
+    "with_context_avg": 100,
+    "lift": 37
+  },
+  {
+    "skill": "product-analytics",
+    "path": "skills/data-analytics/product-analytics",
+    "eval_id": "019ce449-e394-722f-90ea-72dd73d18b3b",
+    "status": "completed",
+    "baseline_avg": 56,
+    "with_context_avg": 92,
+    "lift": 36
+  },
+  {
+    "skill": "edge-commerce",
+    "path": "skills/infrastructure-performance/edge-commerce",
+    "eval_id": "019ce44a-35ba-77fc-b1e5-1c8e2ff84553",
+    "status": "completed",
+    "baseline_avg": 64,
+    "with_context_avg": 100,
+    "lift": 36
+  },
+  {
+    "skill": "monitoring-alerting-commerce",
+    "path": "skills/infrastructure-performance/monitoring-alerting-commerce",
+    "eval_id": "019ce44a-46aa-75aa-8337-9300f4a91b34",
+    "status": "completed",
+    "baseline_avg": 54,
+    "with_context_avg": 90,
+    "lift": 36
+  },
+  {
+    "skill": "image-zoom-360",
+    "path": "skills/storefront-ui/image-zoom-360",
+    "eval_id": "019ce44b-4ae4-701a-b0ea-5dd82aff7be9",
+    "status": "completed",
+    "baseline_avg": 64,
+    "with_context_avg": 100,
+    "lift": 36
+  },
+  {
+    "skill": "recently-viewed-products",
+    "path": "skills/storefront-ui/recently-viewed-products",
+    "eval_id": "019ce44b-5e23-732b-8d8d-c5bdce01c41b",
+    "status": "completed",
+    "baseline_avg": 61,
+    "with_context_avg": 97,
+    "lift": 36
+  },
+  {
+    "skill": "multi-channel-selling",
+    "path": "skills/business-operations/multi-channel-selling",
+    "eval_id": "019ce449-661c-753e-af6b-401b26101001",
+    "status": "completed",
+    "baseline_avg": 64,
+    "with_context_avg": 99,
+    "lift": 35
+  },
+  {
+    "skill": "customer-analytics",
+    "path": "skills/data-analytics/customer-analytics",
+    "eval_id": "019ce449-da8d-70d9-ae2a-191259f268d4",
+    "status": "completed",
+    "baseline_avg": 63,
+    "with_context_avg": 98,
+    "lift": 35
+  },
+  {
+    "skill": "sms-marketing",
+    "path": "skills/marketing-growth/sms-marketing",
+    "eval_id": "019ce44a-8c7c-725c-bb1c-ee66fa59c165",
+    "status": "completed",
+    "baseline_avg": 65,
+    "with_context_avg": 100,
+    "lift": 35
+  },
+  {
+    "skill": "demand-forecasting",
+    "path": "skills/business-operations/demand-forecasting",
+    "eval_id": "019ce449-549c-75ed-9c18-bcaa232da321",
+    "status": "completed",
+    "baseline_avg": 56,
+    "with_context_avg": 90,
+    "lift": 34
+  },
+  {
+    "skill": "attribution-modeling",
+    "path": "skills/data-analytics/attribution-modeling",
+    "eval_id": "019ce449-d6f7-765d-8c4a-772014694ac4",
+    "status": "completed",
+    "baseline_avg": 61,
+    "with_context_avg": 95,
+    "lift": 34
+  },
+  {
+    "skill": "influencer-tracking",
+    "path": "skills/marketing-growth/influencer-tracking",
+    "eval_id": "019ce44a-8511-73e9-9a09-f6a4684b3e44",
+    "status": "completed",
+    "baseline_avg": 60,
+    "with_context_avg": 94,
+    "lift": 34
+  },
+  {
+    "skill": "social-commerce",
+    "path": "skills/marketing-growth/social-commerce",
+    "eval_id": "019ce44a-9015-726c-9b6d-97c8e92fb3d7",
+    "status": "completed",
+    "baseline_avg": 61,
+    "with_context_avg": 95,
+    "lift": 34
+  },
+  {
+    "skill": "free-shipping-thresholds",
+    "path": "skills/fulfillment-shipping/free-shipping-thresholds",
+    "eval_id": "019ce449-f1d2-7698-8383-07902dabc339",
+    "status": "completed",
+    "baseline_avg": 64,
+    "with_context_avg": 97,
+    "lift": 33
+  },
+  {
+    "skill": "flash-sale-scaling",
+    "path": "skills/infrastructure-performance/flash-sale-scaling",
+    "eval_id": "019ce44a-3a3e-75ce-a5a1-1919f1f39726",
+    "status": "completed",
+    "baseline_avg": 66,
+    "with_context_avg": 99,
+    "lift": 33
+  },
+  {
+    "skill": "cart-abandonment-recovery",
+    "path": "skills/marketing-growth/cart-abandonment-recovery",
+    "eval_id": "019ce44a-6850-74ad-a44e-42407b5d7bd2",
+    "status": "completed",
+    "baseline_avg": 66,
+    "with_context_avg": 99,
+    "lift": 33
+  },
+  {
+    "skill": "magento-indexing-caching",
+    "path": "skills/platform-magento/magento-indexing-caching",
+    "eval_id": "019ce44a-bdef-75ea-b63d-1676cff348c8",
+    "status": "completed",
+    "baseline_avg": 63,
+    "with_context_avg": 96,
+    "lift": 33
+  },
+  {
+    "skill": "mega-menu-builder",
+    "path": "skills/storefront-ui/mega-menu-builder",
+    "eval_id": "019ce44b-4f7f-745e-b1e2-1328b1a5985f",
+    "status": "completed",
+    "baseline_avg": 64,
+    "with_context_avg": 97,
+    "lift": 33
+  },
+  {
+    "skill": "commerce-api-gateway",
+    "path": "skills/headless-modern/commerce-api-gateway",
+    "eval_id": "019ce44a-0cb7-7398-8ba1-3e4f813b82a8",
+    "status": "completed",
+    "baseline_avg": 68,
+    "with_context_avg": 100,
+    "lift": 32
+  },
+  {
+    "skill": "order-processing-pipeline",
+    "path": "skills/payments-checkout/order-processing-pipeline",
+    "eval_id": "019ce44a-a592-71da-8e06-9958c07927e8",
+    "status": "completed",
+    "baseline_avg": 68,
+    "with_context_avg": 100,
+    "lift": 32
+  },
+  {
+    "skill": "flash-sale-engine",
+    "path": "skills/pricing-promotions/flash-sale-engine",
+    "eval_id": "019ce44b-1765-7799-bf55-fcd4e3f7fa5f",
+    "status": "completed",
+    "baseline_avg": 68,
+    "with_context_avg": 100,
+    "lift": 32
+  },
+  {
+    "skill": "product-comparison",
+    "path": "skills/storefront-ui/product-comparison",
+    "eval_id": "019ce44b-53bd-77ee-a8e8-4df23d8116db",
+    "status": "completed",
+    "baseline_avg": 64,
+    "with_context_avg": 96,
+    "lift": 32
+  },
+  {
+    "skill": "ab-testing-ecommerce",
+    "path": "skills/data-analytics/ab-testing-ecommerce",
+    "eval_id": "019ce449-d2b9-71c1-b028-a65816d3dd14",
+    "status": "completed",
+    "baseline_avg": 65,
+    "with_context_avg": 96,
+    "lift": 31
+  },
+  {
+    "skill": "ecommerce-data-warehouse",
+    "path": "skills/data-analytics/ecommerce-data-warehouse",
+    "eval_id": "019ce449-df42-72ed-89da-79f0dfa45cf1",
+    "status": "completed",
+    "baseline_avg": 61,
+    "with_context_avg": 92,
+    "lift": 31
+  },
+  {
+    "skill": "sales-reporting-dashboard",
+    "path": "skills/data-analytics/sales-reporting-dashboard",
+    "eval_id": "019ce449-e806-758d-bf1f-8f585cb408af",
+    "status": "completed",
+    "baseline_avg": 69,
+    "with_context_avg": 100,
+    "lift": 31
+  },
+  {
+    "skill": "shipping-rate-calculator",
+    "path": "skills/fulfillment-shipping/shipping-rate-calculator",
+    "eval_id": "019ce44a-0894-746a-b714-f56ec19ffd70",
+    "status": "completed",
+    "baseline_avg": 59,
+    "with_context_avg": 90,
+    "lift": 31
+  },
+  {
+    "skill": "webhook-architecture",
+    "path": "skills/integrations-apis/webhook-architecture",
+    "eval_id": "019ce44a-60bc-7569-adeb-6514e8512138",
+    "status": "completed",
+    "baseline_avg": 68,
+    "with_context_avg": 99,
+    "lift": 31
+  },
+  {
+    "skill": "conversion-rate-optimization",
+    "path": "skills/marketing-growth/conversion-rate-optimization",
+    "eval_id": "019ce44a-7095-765f-871e-ffe23a7b5822",
+    "status": "completed",
+    "baseline_avg": 69,
+    "with_context_avg": 100,
+    "lift": 31
+  },
+  {
+    "skill": "product-page-design",
+    "path": "skills/storefront-ui/product-page-design",
+    "eval_id": "019ce44b-5718-768f-a909-bdc7588194cc",
+    "status": "completed",
+    "baseline_avg": 59,
+    "with_context_avg": 90,
+    "lift": 31
+  },
+  {
+    "skill": "quick-view-modal",
+    "path": "skills/storefront-ui/quick-view-modal",
+    "eval_id": "019ce44b-5a9e-7660-9381-0d223d073128",
+    "status": "completed",
+    "baseline_avg": 69,
+    "with_context_avg": 100,
+    "lift": 31
+  },
+  {
+    "skill": "shipment-tracking",
+    "path": "skills/fulfillment-shipping/shipment-tracking",
+    "eval_id": "019ce44a-04c0-74b3-8ad2-e79bc64c0180",
+    "status": "completed",
+    "baseline_avg": 70,
+    "with_context_avg": 100,
+    "lift": 30
+  },
+  {
+    "skill": "load-testing-commerce",
+    "path": "skills/infrastructure-performance/load-testing-commerce",
+    "eval_id": "019ce44a-4316-755c-9d47-e2c9153f2b1a",
+    "status": "completed",
+    "baseline_avg": 70,
+    "with_context_avg": 100,
+    "lift": 30
+  },
+  {
+    "skill": "content-commerce",
+    "path": "skills/marketing-growth/content-commerce",
+    "eval_id": "019ce44a-6ca3-76ae-b0d0-31a56dce8595",
+    "status": "completed",
+    "baseline_avg": 70,
+    "with_context_avg": 100,
+    "lift": 30
+  },
+  {
+    "skill": "cart-logic",
+    "path": "skills/payments-checkout/cart-logic",
+    "eval_id": "019ce44a-974e-737a-a1ff-6600584dc1a9",
+    "status": "completed",
+    "baseline_avg": 66,
+    "with_context_avg": 95,
+    "lift": 29
+  },
+  {
+    "skill": "checkout-flow-optimization",
+    "path": "skills/payments-checkout/checkout-flow-optimization",
+    "eval_id": "019ce44a-9aa0-7339-adeb-74974e843fc3",
+    "status": "completed",
+    "baseline_avg": 66,
+    "with_context_avg": 95,
+    "lift": 29
+  },
+  {
+    "skill": "order-management-system",
+    "path": "skills/business-operations/order-management-system",
+    "eval_id": "019ce449-69af-73df-8688-67e1707dd688",
+    "status": "completed",
+    "baseline_avg": 71,
+    "with_context_avg": 99,
+    "lift": 28
+  },
+  {
+    "skill": "price-rules-engine",
+    "path": "skills/pricing-promotions/price-rules-engine",
+    "eval_id": "019ce44b-222b-77eb-b30f-65501847466f",
+    "status": "completed",
+    "baseline_avg": 71,
+    "with_context_avg": 99,
+    "lift": 28
+  },
+  {
+    "skill": "ecommerce-caching",
+    "path": "skills/infrastructure-performance/ecommerce-caching",
+    "eval_id": "019ce44a-31ff-70ac-ab39-bb6b1816fc94",
+    "status": "completed",
+    "baseline_avg": 71,
+    "with_context_avg": 98,
+    "lift": 27
+  },
+  {
+    "skill": "product-reviews-ratings",
+    "path": "skills/customer-crm/product-reviews-ratings",
+    "eval_id": "019ce449-c365-77ee-add0-42b0fe86ebef",
+    "status": "completed",
+    "baseline_avg": 71,
+    "with_context_avg": 97,
+    "lift": 26
+  },
+  {
+    "skill": "ecommerce-seo",
+    "path": "skills/marketing-growth/ecommerce-seo",
+    "eval_id": "019ce44a-7480-768c-9005-dc5a7c50ed7c",
+    "status": "completed",
+    "baseline_avg": 71,
+    "with_context_avg": 96,
+    "lift": 25
+  },
+  {
+    "skill": "marketplace-building",
+    "path": "skills/business-operations/marketplace-building",
+    "eval_id": "019ce449-59ba-76fd-a424-e8f9e26b242d",
+    "status": "completed",
+    "baseline_avg": 67,
+    "with_context_avg": 91,
+    "lift": 24
+  },
+  {
+    "skill": "woocommerce-blocks",
+    "path": "skills/platform-woocommerce/woocommerce-blocks",
+    "eval_id": "019ce44a-f20b-73ec-9bcc-7d6d43a8394b",
+    "status": "completed",
+    "baseline_avg": 75,
+    "with_context_avg": 99,
+    "lift": 24
+  },
+  {
+    "skill": "gift-cards",
+    "path": "skills/pricing-promotions/gift-cards",
+    "eval_id": "019ce44b-1b2e-736e-a568-d6a57adc4d26",
+    "status": "completed",
+    "baseline_avg": 73,
+    "with_context_avg": 97,
+    "lift": 24
+  },
+  {
+    "skill": "wishlist-save-for-later",
+    "path": "skills/storefront-ui/wishlist-save-for-later",
+    "eval_id": "019ce44b-6c6e-7298-b8e9-821dc5cc943c",
+    "status": "completed",
+    "baseline_avg": 73,
+    "with_context_avg": 97,
+    "lift": 24
+  },
+  {
+    "skill": "returns-refund-policy",
+    "path": "skills/business-operations/returns-refund-policy",
+    "eval_id": "019ce449-6e25-77df-884e-ddbc8abe26b7",
+    "status": "completed",
+    "baseline_avg": 75,
+    "with_context_avg": 98,
+    "lift": 23
+  },
+  {
+    "skill": "customer-accounts",
+    "path": "skills/customer-crm/customer-accounts",
+    "eval_id": "019ce449-a4b7-7409-9ab0-c84cc5851eec",
+    "status": "completed",
+    "baseline_avg": 77,
+    "with_context_avg": 100,
+    "lift": 23
+  },
+  {
+    "skill": "user-generated-content",
+    "path": "skills/customer-crm/user-generated-content",
+    "eval_id": "019ce449-ca68-769d-b5bf-d4996c79ffa7",
+    "status": "completed",
+    "baseline_avg": 66,
+    "with_context_avg": 89,
+    "lift": 23
+  },
+  {
+    "skill": "order-fulfillment-workflow",
+    "path": "skills/fulfillment-shipping/order-fulfillment-workflow",
+    "eval_id": "019ce449-f8e2-742a-9e5b-e1b884d64bfc",
+    "status": "completed",
+    "baseline_avg": 76,
+    "with_context_avg": 99,
+    "lift": 23
+  },
+  {
+    "skill": "tax-calculation",
+    "path": "skills/payments-checkout/tax-calculation",
+    "eval_id": "019ce44a-b401-7428-a842-b2fb4090d0a1",
+    "status": "completed",
+    "baseline_avg": 67,
+    "with_context_avg": 89,
+    "lift": 22
+  },
+  {
+    "skill": "woocommerce-rest-api",
+    "path": "skills/platform-woocommerce/woocommerce-rest-api",
+    "eval_id": "019ce44a-fffa-7257-8f49-508ff466e561",
+    "status": "completed",
+    "baseline_avg": 69,
+    "with_context_avg": 91,
+    "lift": 22
+  },
+  {
+    "skill": "storefront-theming",
+    "path": "skills/storefront-ui/storefront-theming",
+    "eval_id": "019ce44b-68d6-75bb-a51a-227486a736c7",
+    "status": "completed",
+    "baseline_avg": 73,
+    "with_context_avg": 95,
+    "lift": 22
+  },
+  {
+    "skill": "customer-support-integration",
+    "path": "skills/customer-crm/customer-support-integration",
+    "eval_id": "019ce449-b292-722f-94bd-069a75493952",
+    "status": "completed",
+    "baseline_avg": 77,
+    "with_context_avg": 97,
+    "lift": 20
+  },
+  {
+    "skill": "personalization-engine",
+    "path": "skills/customer-crm/personalization-engine",
+    "eval_id": "019ce449-bba7-77f9-aed7-11c33c501dce",
+    "status": "completed",
+    "baseline_avg": 75,
+    "with_context_avg": 95,
+    "lift": 20
+  },
+  {
+    "skill": "shopify-checkout-extensions",
+    "path": "skills/platform-shopify/shopify-checkout-extensions",
+    "eval_id": "019ce44a-ddd9-71b0-b001-b278f848e660",
+    "status": "completed",
+    "baseline_avg": 78,
+    "with_context_avg": 98,
+    "lift": 20
+  },
+  {
+    "skill": "shopify-storefront-api",
+    "path": "skills/platform-shopify/shopify-storefront-api",
+    "eval_id": "019ce44a-e528-7428-a12d-8301592a8d99",
+    "status": "completed",
+    "baseline_avg": 78,
+    "with_context_avg": 98,
+    "lift": 20
+  },
+  {
+    "skill": "bot-protection",
+    "path": "skills/security-compliance/bot-protection",
+    "eval_id": "019ce44b-2d29-76be-9bb7-66b20b14d82a",
+    "status": "completed",
+    "baseline_avg": 77,
+    "with_context_avg": 97,
+    "lift": 20
+  },
+  {
+    "skill": "product-data-modeling",
+    "path": "skills/catalog-inventory/product-data-modeling",
+    "eval_id": "019ce449-9d9e-7180-aaf2-1fca5c63312d",
+    "status": "completed",
+    "baseline_avg": 73,
+    "with_context_avg": 92,
+    "lift": 19
+  },
+  {
+    "skill": "same-day-delivery",
+    "path": "skills/fulfillment-shipping/same-day-delivery",
+    "eval_id": "019ce44a-00fe-714f-b5fe-a7b7baeef1a0",
+    "status": "completed",
+    "baseline_avg": 76,
+    "with_context_avg": 95,
+    "lift": 19
+  },
+  {
+    "skill": "erp-integration",
+    "path": "skills/integrations-apis/erp-integration",
+    "eval_id": "019ce44a-5188-721a-ad45-42f16f23195c",
+    "status": "completed",
+    "baseline_avg": 77,
+    "with_context_avg": 96,
+    "lift": 19
+  },
+  {
+    "skill": "buy-now-pay-later",
+    "path": "skills/payments-checkout/buy-now-pay-later",
+    "eval_id": "019ce44a-93ac-7492-91c0-d2381425eab1",
+    "status": "completed",
+    "baseline_avg": 78,
+    "with_context_avg": 97,
+    "lift": 19
+  },
+  {
+    "skill": "customer-segmentation",
+    "path": "skills/customer-crm/customer-segmentation",
+    "eval_id": "019ce449-aebb-71f2-a91c-cf6ab66ae13d",
+    "status": "completed",
+    "baseline_avg": 82,
+    "with_context_avg": 100,
+    "lift": 18
+  },
+  {
+    "skill": "commerce-js-integration",
+    "path": "skills/headless-modern/commerce-js-integration",
+    "eval_id": "019ce44a-1030-76d4-9d8e-1fbb965d4024",
+    "status": "completed",
+    "baseline_avg": 79,
+    "with_context_avg": 97,
+    "lift": 18
+  },
+  {
+    "skill": "composable-commerce",
+    "path": "skills/headless-modern/composable-commerce",
+    "eval_id": "019ce44a-13a7-76ce-bf57-61a772bd319e",
+    "status": "completed",
+    "baseline_avg": 65,
+    "with_context_avg": 83,
+    "lift": 18
+  },
+  {
+    "skill": "email-service-integration",
+    "path": "skills/integrations-apis/email-service-integration",
+    "eval_id": "019ce44a-4ddf-7158-a0cd-b4af2ac54cf2",
+    "status": "completed",
+    "baseline_avg": 78,
+    "with_context_avg": 96,
+    "lift": 18
+  },
+  {
+    "skill": "variant-matrix",
+    "path": "skills/catalog-inventory/variant-matrix",
+    "eval_id": "019ce449-a114-7445-947c-22caa3918250",
+    "status": "completed",
+    "baseline_avg": 77,
+    "with_context_avg": 94,
+    "lift": 17
+  },
+  {
+    "skill": "gdpr-ecommerce",
+    "path": "skills/security-compliance/gdpr-ecommerce",
+    "eval_id": "019ce44b-39d3-75e1-9acb-95ad0d3384ca",
+    "status": "completed",
+    "baseline_avg": 83,
+    "with_context_avg": 100,
+    "lift": 17
+  },
+  {
+    "skill": "database-optimization-commerce",
+    "path": "skills/infrastructure-performance/database-optimization-commerce",
+    "eval_id": "019ce44a-2e76-7107-94c5-0a4bf04f6a5f",
+    "status": "completed",
+    "baseline_avg": 83,
+    "with_context_avg": 99,
+    "lift": 16
+  },
+  {
+    "skill": "subscription-billing",
+    "path": "skills/payments-checkout/subscription-billing",
+    "eval_id": "019ce44a-afe9-715e-be07-ff4a9ac69966",
+    "status": "completed",
+    "baseline_avg": 84,
+    "with_context_avg": 100,
+    "lift": 16
+  },
+  {
+    "skill": "shopify-app-development",
+    "path": "skills/platform-shopify/shopify-app-development",
+    "eval_id": "019ce44a-da39-75d9-92d7-1d945f57d783",
+    "status": "completed",
+    "baseline_avg": 84,
+    "with_context_avg": 100,
+    "lift": 16
+  },
+  {
+    "skill": "product-information-management",
+    "path": "skills/integrations-apis/product-information-management",
+    "eval_id": "019ce44a-5c99-7649-a356-051143416104",
+    "status": "completed",
+    "baseline_avg": 79,
+    "with_context_avg": 94,
+    "lift": 15
+  },
+  {
+    "skill": "sfcc-ocapi-scapi",
+    "path": "skills/platform-salesforce-cc/sfcc-ocapi-scapi",
+    "eval_id": "019ce44a-d1d2-70c9-b496-49d9436c9510",
+    "status": "completed",
+    "baseline_avg": 78,
+    "with_context_avg": 93,
+    "lift": 15
+  },
+  {
+    "skill": "digital-products",
+    "path": "skills/catalog-inventory/digital-products",
+    "eval_id": "019ce449-7a2c-7299-ba36-49760373f61a",
+    "status": "completed",
+    "baseline_avg": 86,
+    "with_context_avg": 100,
+    "lift": 14
+  },
+  {
+    "skill": "analytics-integration",
+    "path": "skills/integrations-apis/analytics-integration",
+    "eval_id": "019ce44a-4a2e-718a-b9b2-d0a8e96da6c0",
+    "status": "completed",
+    "baseline_avg": 82,
+    "with_context_avg": 95,
+    "lift": 13
+  },
+  {
+    "skill": "pos-integration",
+    "path": "skills/integrations-apis/pos-integration",
+    "eval_id": "019ce44a-58ca-70c8-9d38-026011245fb4",
+    "status": "completed",
+    "baseline_avg": 82,
+    "with_context_avg": 95,
+    "lift": 13
+  },
+  {
+    "skill": "sfcc-business-manager",
+    "path": "skills/platform-salesforce-cc/sfcc-business-manager",
+    "eval_id": "019ce44a-c92c-7218-afaf-b87767200332",
+    "status": "completed",
+    "baseline_avg": 87,
+    "with_context_avg": 100,
+    "lift": 13
+  },
+  {
+    "skill": "pci-dss-compliance",
+    "path": "skills/security-compliance/pci-dss-compliance",
+    "eval_id": "019ce44b-3d3c-734d-a0d0-5ab3b076708f",
+    "status": "completed",
+    "baseline_avg": 86,
+    "with_context_avg": 99,
+    "lift": 13
+  },
+  {
+    "skill": "sfcc-cartridge-development",
+    "path": "skills/platform-salesforce-cc/sfcc-cartridge-development",
+    "eval_id": "019ce44a-cd73-75aa-950a-da76f5f2a79e",
+    "status": "completed",
+    "baseline_avg": 84,
+    "with_context_avg": 96,
+    "lift": 12
+  },
+  {
+    "skill": "woocommerce-plugin-development",
+    "path": "skills/platform-woocommerce/woocommerce-plugin-development",
+    "eval_id": "019ce44a-faa3-74de-959e-2bd6632ffee1",
+    "status": "completed",
+    "baseline_avg": 88,
+    "with_context_avg": 100,
+    "lift": 12
+  },
+  {
+    "skill": "pwa-storefront",
+    "path": "skills/headless-modern/pwa-storefront",
+    "eval_id": "019ce44a-22f6-7547-9a06-0fc11ad28985",
+    "status": "completed",
+    "baseline_avg": 86,
+    "with_context_avg": 97,
+    "lift": 11
+  },
+  {
+    "skill": "shopify-hydrogen",
+    "path": "skills/headless-modern/shopify-hydrogen",
+    "eval_id": "019ce44a-2b0e-712a-9e63-b249e665a31e",
+    "status": "completed",
+    "baseline_avg": 89,
+    "with_context_avg": 100,
+    "lift": 11
+  },
+  {
+    "skill": "push-notifications",
+    "path": "skills/marketing-growth/push-notifications",
+    "eval_id": "019ce44a-88d0-73e7-9710-dfb46282a3ec",
+    "status": "completed",
+    "baseline_avg": 85,
+    "with_context_avg": 96,
+    "lift": 11
+  },
+  {
+    "skill": "faceted-navigation",
+    "path": "skills/storefront-ui/faceted-navigation",
+    "eval_id": "019ce44b-4766-7609-8ed9-5aa398ed5639",
+    "status": "completed",
+    "baseline_avg": 89,
+    "with_context_avg": 99,
+    "lift": 10
+  },
+  {
+    "skill": "paypal-integration",
+    "path": "skills/payments-checkout/paypal-integration",
+    "eval_id": "019ce44a-a8f6-70fa-90f9-90f5b51216fd",
+    "status": "completed",
+    "baseline_avg": 88,
+    "with_context_avg": 97,
+    "lift": 9
+  },
+  {
+    "skill": "secure-checkout",
+    "path": "skills/security-compliance/secure-checkout",
+    "eval_id": "019ce44b-40ad-71bd-b1eb-9016d0ac497a",
+    "status": "completed",
+    "baseline_avg": 90,
+    "with_context_avg": 99,
+    "lift": 9
+  },
+  {
+    "skill": "magento-graphql",
+    "path": "skills/platform-magento/magento-graphql",
+    "eval_id": "019ce44a-b99c-702b-b9e7-1eb0ce939402",
+    "status": "completed",
+    "baseline_avg": 85,
+    "with_context_avg": 93,
+    "lift": 8
+  },
+  {
+    "skill": "shopify-metafields",
+    "path": "skills/platform-shopify/shopify-metafields",
+    "eval_id": "019ce44a-e178-75df-b469-8f6c937adad9",
+    "status": "completed",
+    "baseline_avg": 89,
+    "with_context_avg": 97,
+    "lift": 8
+  },
+  {
+    "skill": "stripe-integration",
+    "path": "skills/payments-checkout/stripe-integration",
+    "eval_id": "019ce44a-ac7b-75f1-9e26-7aec877ea3b4",
+    "status": "completed",
+    "baseline_avg": 94,
+    "with_context_avg": 100,
+    "lift": 6
+  },
+  {
+    "skill": "magento-module-development",
+    "path": "skills/platform-magento/magento-module-development",
+    "eval_id": "019ce44a-c1b7-73bf-bd29-1ed9ed56228e",
+    "status": "completed",
+    "baseline_avg": 88,
+    "with_context_avg": 94,
+    "lift": 6
+  },
+  {
+    "skill": "product-bundles-kits",
+    "path": "skills/catalog-inventory/product-bundles-kits",
+    "eval_id": "019ce449-8d8e-7109-b217-2136a6318b56",
+    "status": "completed",
+    "baseline_avg": 95,
+    "with_context_avg": 100,
+    "lift": 5
+  },
+  {
+    "skill": "saleor-development",
+    "path": "skills/headless-modern/saleor-development",
+    "eval_id": "019ce44a-270a-767a-86a6-f1f18ddbfdd1",
+    "status": "completed",
+    "baseline_avg": 95,
+    "with_context_avg": 100,
+    "lift": 5
+  },
+  {
+    "skill": "shopify-theme-development",
+    "path": "skills/platform-shopify/shopify-theme-development",
+    "eval_id": "019ce44a-e9b9-71ed-9fa4-5cb569c4af31",
+    "status": "completed",
+    "baseline_avg": 90,
+    "with_context_avg": 95,
+    "lift": 5
+  },
+  {
+    "skill": "shopify-webhooks",
+    "path": "skills/platform-shopify/shopify-webhooks",
+    "eval_id": "019ce44a-edfd-7415-a0fe-8558d0dd219b",
+    "status": "completed",
+    "baseline_avg": 95,
+    "with_context_avg": 100,
+    "lift": 5
+  },
+  {
+    "skill": "accessibility-commerce",
+    "path": "skills/storefront-ui/accessibility-commerce",
+    "eval_id": "019ce44b-43f6-74e8-a0b7-5de276e0503b",
+    "status": "completed",
+    "baseline_avg": 95,
+    "with_context_avg": 100,
+    "lift": 5
+  },
+  {
+    "skill": "medusa-development",
+    "path": "skills/headless-modern/medusa-development",
+    "eval_id": "019ce44a-1ad4-7568-817a-a5b83d1f486a",
+    "status": "completed",
+    "baseline_avg": 85,
+    "with_context_avg": 89,
+    "lift": 4
+  },
+  {
+    "skill": "magento-multi-store",
+    "path": "skills/platform-magento/magento-multi-store",
+    "eval_id": "019ce44a-c576-74b8-8e2f-a2d4933c70fa",
+    "status": "partial",
+    "baseline_avg": null,
+    "with_context_avg": null,
+    "lift": null
+  }
+]

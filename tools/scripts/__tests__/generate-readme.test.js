@@ -21,13 +21,13 @@ describe('generate-readme', () => {
 
   it('includes category table', () => {
     const readme = generateReadme(mockCatalog);
-    assert.ok(readme.includes('cat-one'));
-    assert.ok(readme.includes('cat-two'));
+    assert.ok(readme.includes('Cat One'));
+    assert.ok(readme.includes('Cat Two'));
   });
 
-  it('includes quick start section', () => {
+  it('includes getting started section', () => {
     const readme = generateReadme(mockCatalog);
-    assert.ok(readme.includes('Quick Start'));
+    assert.ok(readme.includes('Getting Started'));
   });
 
   it('includes tessl install instructions', () => {
@@ -38,5 +38,25 @@ describe('generate-readme', () => {
   it('includes contributing section', () => {
     const readme = generateReadme(mockCatalog);
     assert.ok(readme.includes('Contributing'));
+  });
+
+  it('includes what are skills section', () => {
+    const readme = generateReadme(mockCatalog);
+    assert.ok(readme.includes('What Are Skills?'));
+  });
+
+  it('includes eval results when provided', () => {
+    const evalResults = [
+      { skill: 'skill-a', baseline_avg: 60, with_context_avg: 95, lift: 35 },
+      { skill: 'skill-b', baseline_avg: 50, with_context_avg: 90, lift: 40 },
+    ];
+    const readme = generateReadme(mockCatalog, evalResults);
+    assert.ok(readme.includes('Eval Results'));
+    assert.ok(readme.includes('Improvement'));
+  });
+
+  it('omits eval results when not provided', () => {
+    const readme = generateReadme(mockCatalog, null);
+    assert.ok(!readme.includes('Eval Results'));
   });
 });
