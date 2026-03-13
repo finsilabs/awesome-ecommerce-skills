@@ -1,7 +1,37 @@
 {
-  "generatedAt": "2026-03-13T00:10:42.492Z",
-  "total": 132,
+  "generatedAt": "2026-03-13T00:38:14.789Z",
+  "total": 178,
   "skills": [
+    {
+      "id": "accounts-payable-management",
+      "name": "Accounts Payable Management",
+      "description": "Manage supplier invoices and vendor payments with automated receipt matching, payment scheduling, early discount optimization, and reconciliation workflows",
+      "category": "business-operations",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "accounts-payable",
+        "vendor-payments",
+        "procurement"
+      ],
+      "triggers": [
+        "manage vendor payments",
+        "automate accounts payable"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/business-operations/accounts-payable-management",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
     {
       "id": "b2b-commerce",
       "name": "B2b Commerce",
@@ -357,6 +387,36 @@
         "opencode"
       ],
       "path": "skills/catalog-inventory/catalog-import-export",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cogs-tracking-allocation",
+      "name": "Cogs Tracking Allocation",
+      "description": "Track cost of goods sold with FIFO/LIFO/weighted average inventory valuation, landed cost allocation for imports, and variance analysis against standard costs",
+      "category": "catalog-inventory",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "cogs",
+        "inventory-valuation",
+        "cost-accounting"
+      ],
+      "triggers": [
+        "track cost of goods",
+        "inventory costing"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/catalog-inventory/cogs-tracking-allocation",
       "platforms": [
         "platform-agnostic"
       ],
@@ -1181,6 +1241,84 @@
       "difficulty": "advanced"
     },
     {
+      "id": "cash-flow-forecasting",
+      "name": "Cash Flow Forecasting",
+      "description": "Forecast cash flow using historical sales patterns, payment terms, seasonal trends, and receivables modeling with scenario planning and runway tracking",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "cash-flow",
+        "forecasting",
+        "financial-planning"
+      ],
+      "triggers": [
+        "forecast cash flow",
+        "cash runway",
+        "cash flow model",
+        "payment terms modeling",
+        "seasonal cash planning",
+        "receivables forecast",
+        "working capital forecast"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/cash-flow-forecasting",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "cost-allocation-analysis",
+      "name": "Cost Allocation Analysis",
+      "description": "Allocate COGS, shipping, marketing, and overhead costs across products, channels, and orders to calculate true per-unit and per-order profitability",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "cost-allocation",
+        "profitability",
+        "cogs",
+        "gross-margin",
+        "contribution-margin",
+        "overhead",
+        "unit-economics",
+        "analytics",
+        "sql"
+      ],
+      "triggers": [
+        "cost allocation",
+        "true profitability",
+        "allocate costs to products",
+        "product margin analysis",
+        "COGS allocation",
+        "order profitability",
+        "overhead allocation",
+        "cost per order",
+        "fully-loaded cost"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/cost-allocation-analysis",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "customer-analytics",
       "name": "Customer Analytics",
       "description": "Analyze customer behavior with RFM scoring, purchase frequency tracking, churn prediction, and cohort analysis to improve retention strategy",
@@ -1223,6 +1361,41 @@
       "difficulty": "advanced"
     },
     {
+      "id": "ecommerce-budgeting-forecasting",
+      "name": "Ecommerce Budgeting Forecasting",
+      "description": "Build rolling operating budgets for marketing spend, inventory purchases, and operations with variance analysis, scenario modeling, and budget utilization alerts",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "budgeting",
+        "forecasting",
+        "financial-planning"
+      ],
+      "triggers": [
+        "build operating budget",
+        "marketing budget",
+        "inventory budget",
+        "variance analysis",
+        "budget vs actuals",
+        "rolling forecast",
+        "budget utilization"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/ecommerce-budgeting-forecasting",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "ecommerce-data-warehouse",
       "name": "Ecommerce Data Warehouse",
       "description": "Build a commerce data warehouse with star-schema tables, ETL pipelines, and dbt models for BigQuery, Snowflake, or Redshift analytics",
@@ -1260,6 +1433,145 @@
         "platform-agnostic"
       ],
       "difficulty": "advanced"
+    },
+    {
+      "id": "financial-analytics-dashboard",
+      "name": "Financial Analytics Dashboard",
+      "description": "Build interactive financial KPI dashboards with customizable metrics, drill-down analysis, variance explanations, and automated threshold-based alerting",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "financial-analytics",
+        "kpi-dashboard",
+        "reporting"
+      ],
+      "triggers": [
+        "build financial KPI dashboard",
+        "financial analytics",
+        "KPI monitoring",
+        "threshold alerts",
+        "variance dashboard",
+        "interactive financial reporting"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/financial-analytics-dashboard",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "financial-reporting-dashboard",
+      "name": "Financial Reporting Dashboard",
+      "description": "Build P&L, balance sheet, and cash flow dashboards for ecommerce with drill-down by product, channel, and time period for management and investor reporting",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "financial-reporting",
+        "dashboard",
+        "p-and-l"
+      ],
+      "triggers": [
+        "build financial dashboard",
+        "P&L dashboard",
+        "income statement reporting",
+        "balance sheet dashboard",
+        "cash flow report",
+        "investor reporting",
+        "management reporting"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/financial-reporting-dashboard",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "marketing-spend-analysis",
+      "name": "Marketing Spend Analysis",
+      "description": "Track and analyze marketing spend across all channels with ROAS calculation, diminishing returns analysis, and budget reallocation recommendations by platform",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "marketing-spend",
+        "roas",
+        "budget-optimization"
+      ],
+      "triggers": [
+        "analyze marketing spend",
+        "ROAS analysis",
+        "marketing budget allocation",
+        "channel efficiency",
+        "diminishing returns",
+        "ad spend optimization",
+        "blended ROAS"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/marketing-spend-analysis",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "marketplace-fee-reconciliation",
+      "name": "Marketplace Fee Reconciliation",
+      "description": "Reconcile and analyze seller fees from Amazon, eBay, Walmart, and Etsy with net revenue calculation, fee categorization, and optimization recommendations",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "marketplace-fees",
+        "reconciliation",
+        "amazon-fees"
+      ],
+      "triggers": [
+        "reconcile marketplace fees",
+        "Amazon seller fees",
+        "eBay fees",
+        "marketplace fee analysis",
+        "net marketplace revenue",
+        "settlement reconciliation",
+        "FBA fee analysis"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/marketplace-fee-reconciliation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
     },
     {
       "id": "product-analytics",
@@ -1304,6 +1616,76 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "profit-margin-analysis",
+      "name": "Profit Margin Analysis",
+      "description": "Analyze gross and net profit margins by product, category, channel, and customer segment with cost attribution, benchmarking, and trend visualization",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "profit-margin",
+        "profitability",
+        "cost-analysis"
+      ],
+      "triggers": [
+        "analyze profit margins",
+        "gross margin by product",
+        "profitability by channel",
+        "margin analysis",
+        "cost attribution",
+        "margin benchmarking",
+        "contribution margin"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/profit-margin-analysis",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "revenue-recognition-accounting",
+      "name": "Revenue Recognition Accounting",
+      "description": "Implement ASC 606 / IFRS 15 revenue recognition for subscriptions, bundles, and multi-element arrangements with deferred revenue tracking and journal entries",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "revenue-recognition",
+        "asc-606",
+        "accounting"
+      ],
+      "triggers": [
+        "implement revenue recognition",
+        "ASC 606",
+        "IFRS 15",
+        "deferred revenue",
+        "subscription revenue accounting",
+        "multi-element arrangement",
+        "revenue schedule"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/revenue-recognition-accounting",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
       "id": "sales-reporting-dashboard",
       "name": "Sales Reporting Dashboard",
       "description": "Build executive dashboards showing revenue, average order value, conversion rates, and cohort analysis with drill-down by date and channel",
@@ -1345,6 +1727,42 @@
         "platform-agnostic"
       ],
       "difficulty": "intermediate"
+    },
+    {
+      "id": "unit-economics-tracking",
+      "name": "Unit Economics Tracking",
+      "description": "Track customer acquisition cost, lifetime value, payback period, and contribution margin by cohort and channel with profitability benchmarks and trend analysis",
+      "category": "data-analytics",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "unit-economics",
+        "cac",
+        "ltv",
+        "payback-period"
+      ],
+      "triggers": [
+        "track unit economics",
+        "customer acquisition cost",
+        "lifetime value",
+        "LTV CAC ratio",
+        "payback period",
+        "cohort profitability",
+        "contribution margin per customer"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/data-analytics/unit-economics-tracking",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
     },
     {
       "id": "dropshipping-integration",
@@ -2609,6 +3027,38 @@
       "difficulty": "advanced"
     },
     {
+      "id": "applovin-ads-integration",
+      "name": "Applovin Ads Integration",
+      "description": "Integrate AppLovin MAX mediation and ad campaigns for mobile commerce apps with user acquisition, retargeting, and in-app purchase event tracking",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "applovin",
+        "mobile-ads",
+        "app-marketing",
+        "max-mediation"
+      ],
+      "triggers": [
+        "set up AppLovin ads",
+        "mobile app user acquisition",
+        "implement AppLovin MAX"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/applovin-ads-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
       "id": "cart-abandonment-recovery",
       "name": "Cart Abandonment Recovery",
       "description": "Win back shoppers who leave with carts by sending timed email, SMS, and push sequences with escalating incentives to complete their purchase",
@@ -2643,6 +3093,36 @@
         "opencode"
       ],
       "path": "skills/marketing-growth/cart-abandonment-recovery",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cart-recovery-sms",
+      "name": "Cart Recovery Sms",
+      "description": "Recover abandoned carts with targeted SMS sequences including urgency messaging, product reminders, discount incentives, and TCPA-compliant opt-in flows",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "sms",
+        "cart-recovery",
+        "abandonment"
+      ],
+      "triggers": [
+        "set up SMS cart recovery",
+        "reduce cart abandonment with SMS"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/cart-recovery-sms",
       "platforms": [
         "platform-agnostic"
       ],
@@ -2731,6 +3211,67 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "cross-sell-upsell-engine",
+      "name": "Cross Sell Upsell Engine",
+      "description": "Recommend complementary and premium products at checkout, in cart, and post-purchase using purchase patterns, browsing history, and margin optimization",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "cross-sell",
+        "upsell",
+        "recommendations",
+        "aov"
+      ],
+      "triggers": [
+        "increase average order value",
+        "add product recommendations"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/cross-sell-upsell-engine",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "customer-retention-engine",
+      "name": "Customer Retention Engine",
+      "description": "Build automated retention campaigns targeting at-risk customers with behavioral triggers, personalized offers, and churn prevention workflows",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "retention",
+        "churn-prevention",
+        "lifecycle"
+      ],
+      "triggers": [
+        "reduce churn",
+        "build retention campaigns"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/customer-retention-engine",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
       "id": "ecommerce-seo",
       "name": "Ecommerce Seo",
       "description": "Maximize organic search traffic with optimized product page meta tags, JSON-LD structured data for Google Shopping, and automated XML sitemaps",
@@ -2763,6 +3304,36 @@
         "opencode"
       ],
       "path": "skills/marketing-growth/ecommerce-seo",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "email-list-segmentation",
+      "name": "Email List Segmentation",
+      "description": "Create dynamic email segments based on purchase behavior, RFM scores, engagement signals, and lifecycle stage with automated rebalancing and list hygiene",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "email",
+        "segmentation",
+        "personalization"
+      ],
+      "triggers": [
+        "segment email list",
+        "create email segments"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/email-list-segmentation",
       "platforms": [
         "platform-agnostic"
       ],
@@ -2854,6 +3425,69 @@
       "difficulty": "beginner"
     },
     {
+      "id": "first-party-data-collection",
+      "name": "First Party Data Collection",
+      "description": "Build a first-party data strategy with progressive profiling, zero-party surveys, preference centers, and quiz-based product recommendations",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "first-party-data",
+        "privacy",
+        "zero-party"
+      ],
+      "triggers": [
+        "collect first-party data",
+        "build preference center"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/first-party-data-collection",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "google-ads-ecommerce",
+      "name": "Google Ads Ecommerce",
+      "description": "Build and optimize Google Ads campaigns for ecommerce with Performance Max, Shopping feeds, conversion tracking, and Smart Bidding strategies for ROAS",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "google-ads",
+        "pmax",
+        "shopping",
+        "sem",
+        "ppc"
+      ],
+      "triggers": [
+        "set up Google Ads",
+        "create shopping campaign",
+        "implement conversion tracking"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/google-ads-ecommerce",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
       "id": "google-shopping-feed",
       "name": "Google Shopping Feed",
       "description": "Generate and optimize a product feed for Google Merchant Center so your products appear in Google Shopping ads with correct attributes",
@@ -2889,6 +3523,36 @@
         "opencode"
       ],
       "path": "skills/marketing-growth/google-shopping-feed",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "influencer-marketplace-integration",
+      "name": "Influencer Marketplace Integration",
+      "description": "Connect to influencer networks to discover creators, manage campaign briefs, track deliverables, and measure ROI across Instagram, TikTok, and YouTube",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "influencer",
+        "creator-economy",
+        "partnerships"
+      ],
+      "triggers": [
+        "find influencers",
+        "manage influencer campaigns"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/influencer-marketplace-integration",
       "platforms": [
         "platform-agnostic"
       ],
@@ -2937,6 +3601,225 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "lifecycle-marketing-automation",
+      "name": "Lifecycle Marketing Automation",
+      "description": "Map customer journey stages from first visit to loyal advocate with personalized messaging, triggered workflows, and segment-based campaign automation",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "lifecycle",
+        "customer-journey",
+        "automation"
+      ],
+      "triggers": [
+        "set up lifecycle marketing",
+        "customer journey automation"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/lifecycle-marketing-automation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "loyalty-program-optimization",
+      "name": "Loyalty Program Optimization",
+      "description": "Design and optimize tiered loyalty programs with points, rewards, exclusive perks, and member-only benefits that increase repeat purchase rates and CLV",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "loyalty",
+        "rewards",
+        "retention"
+      ],
+      "triggers": [
+        "optimize loyalty program",
+        "design rewards program"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/loyalty-program-optimization",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "marketing-attribution-dashboard",
+      "name": "Marketing Attribution Dashboard",
+      "description": "Build multi-touch attribution dashboards tracking revenue by channel, campaign, and creative with blended ROAS analysis and budget allocation recommendations",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "attribution",
+        "analytics",
+        "marketing-roi"
+      ],
+      "triggers": [
+        "build attribution dashboard",
+        "track marketing ROI"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/marketing-attribution-dashboard",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "marketplace-advertising",
+      "name": "Marketplace Advertising",
+      "description": "Manage sponsored product ads across Amazon, eBay, and Walmart marketplace platforms with bid optimization, keyword targeting, and ACOS tracking",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "marketplace-ads",
+        "amazon-ads",
+        "sponsored-products"
+      ],
+      "triggers": [
+        "set up Amazon ads",
+        "manage marketplace advertising"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/marketplace-advertising",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "meta-ads-integration",
+      "name": "Meta Ads Integration",
+      "description": "Set up and optimize Meta (Facebook/Instagram) ad campaigns with Conversions API server-side tracking, dynamic product ads, and catalog sync for ecommerce",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "meta",
+        "facebook",
+        "instagram",
+        "advertising",
+        "capi",
+        "pixel"
+      ],
+      "triggers": [
+        "set up Facebook ads",
+        "implement Meta CAPI",
+        "create dynamic product ads"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/meta-ads-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "predictive-personalization",
+      "name": "Predictive Personalization",
+      "description": "Use machine learning models to predict customer preferences and dynamically personalize product recommendations, search results, and content across your store",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "personalization",
+        "machine-learning",
+        "recommendations",
+        "ai",
+        "customer-experience"
+      ],
+      "triggers": [
+        "personalize recommendations",
+        "predict customer preferences",
+        "ML product recommendations",
+        "dynamic personalization",
+        "personalized shopping experience"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/predictive-personalization",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "product-launch-campaigns",
+      "name": "Product Launch Campaigns",
+      "description": "Plan and execute multi-channel product launches with pre-launch waitlists, early access for VIPs, launch day orchestration, and post-launch momentum",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "product-launch",
+        "campaigns",
+        "go-to-market"
+      ],
+      "triggers": [
+        "launch new product",
+        "product launch campaign"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/product-launch-campaigns",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "push-notifications",
       "name": "Push Notifications",
       "description": "Send browser push notifications for price drops, back-in-stock alerts, and cart reminders to bring shoppers back without needing their email",
@@ -2976,6 +3859,96 @@
         "platform-agnostic"
       ],
       "difficulty": "beginner"
+    },
+    {
+      "id": "referral-viral-loops",
+      "name": "Referral Viral Loops",
+      "description": "Build referral mechanics with dual-sided rewards, unique tracking links, viral coefficient optimization, and anti-fraud controls for referral abuse",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "referral",
+        "viral",
+        "word-of-mouth"
+      ],
+      "triggers": [
+        "build referral program",
+        "create viral loop"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/referral-viral-loops",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "review-generation-engine",
+      "name": "Review Generation Engine",
+      "description": "Automatically request and collect product reviews post-purchase with timed email/SMS sequences, photo incentives, and fraud detection for fake reviews",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "reviews",
+        "ratings",
+        "social-proof"
+      ],
+      "triggers": [
+        "generate more reviews",
+        "automate review requests"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/review-generation-engine",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "seasonal-campaign-automation",
+      "name": "Seasonal Campaign Automation",
+      "description": "Automate seasonal marketing campaigns for Black Friday, holidays, and shopping events with templated workflows, countdown sequences, and year-round planning",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "seasonal",
+        "black-friday",
+        "holiday-marketing"
+      ],
+      "triggers": [
+        "plan seasonal campaigns",
+        "Black Friday campaign"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/seasonal-campaign-automation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
     },
     {
       "id": "sms-marketing",
@@ -3063,6 +4036,224 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "social-proof-widgets",
+      "name": "Social Proof Widgets",
+      "description": "Display real-time social proof including recent purchases, review counts, visitor counts, and verified buyer badges to build trust and boost conversions",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "social-proof",
+        "trust",
+        "conversion"
+      ],
+      "triggers": [
+        "add social proof",
+        "show recent purchases widget"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/social-proof-widgets",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "tiktok-ads-integration",
+      "name": "Tiktok Ads Integration",
+      "description": "Launch TikTok ad campaigns for ecommerce with Events API server-side tracking, Spark Ads, catalog sync, and shopping ads for product discovery",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "tiktok",
+        "tiktok-ads",
+        "spark-ads",
+        "social-advertising"
+      ],
+      "triggers": [
+        "set up TikTok ads",
+        "implement TikTok pixel",
+        "create TikTok shopping ads"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/tiktok-ads-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "tiktok-shop-integration",
+      "name": "Tiktok Shop Integration",
+      "description": "Sync your product catalog to TikTok Shop, manage orders and inventory, and enable shoppable content with live shopping and affiliate creator programs",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "tiktok-shop",
+        "social-commerce",
+        "live-shopping"
+      ],
+      "triggers": [
+        "set up TikTok Shop",
+        "enable live shopping"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/tiktok-shop-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "ugc-campaign-management",
+      "name": "Ugc Campaign Management",
+      "description": "Source, curate, and display user-generated content at scale with rights management, brand safety moderation, and trust-building social proof galleries",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "ugc",
+        "social-proof",
+        "content-marketing"
+      ],
+      "triggers": [
+        "manage UGC campaigns",
+        "display user content"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/ugc-campaign-management",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "video-commerce-integration",
+      "name": "Video Commerce Integration",
+      "description": "Enable shoppable video experiences with live shopping events, interactive product hotspots, and one-click checkout directly from video and livestream content",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "video-commerce",
+        "live-shopping",
+        "shoppable-video"
+      ],
+      "triggers": [
+        "add shoppable video",
+        "set up live shopping"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/video-commerce-integration",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "win-back-reactivation",
+      "name": "Win Back Reactivation",
+      "description": "Re-engage lapsed customers with automated win-back campaigns using personalized comeback offers based on purchase history and inactivity windows",
+      "category": "marketing-growth",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "win-back",
+        "reactivation",
+        "retention"
+      ],
+      "triggers": [
+        "win back inactive customers",
+        "reactivation campaign"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/marketing-growth/win-back-reactivation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "accounts-receivable-automation",
+      "name": "Accounts Receivable Automation",
+      "description": "Automate B2B accounts receivable with invoice generation, payment tracking, dunning sequences for past-due invoices, and aging analysis dashboards",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "accounts-receivable",
+        "invoicing",
+        "b2b-payments"
+      ],
+      "triggers": [
+        "accounts receivable",
+        "invoice tracking",
+        "dunning emails",
+        "past-due invoices",
+        "AR automation",
+        "B2B billing",
+        "aging report",
+        "invoice follow-up"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/payments-checkout/accounts-receivable-automation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "buy-now-pay-later",
       "name": "Buy Now Pay Later",
       "description": "Offer Klarna, Afterpay, or Affirm installment payments at checkout to reduce purchase hesitation and increase average order value",
@@ -3144,6 +4335,41 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "chargeback-management-prevention",
+      "name": "Chargeback Management Prevention",
+      "description": "Prevent and manage chargebacks with fraud scoring, compelling evidence automation, Visa CE 3.0 / Mastercom integration, and win-rate optimization",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "chargebacks",
+        "disputes",
+        "fraud-prevention"
+      ],
+      "triggers": [
+        "chargeback management",
+        "dispute handling",
+        "prevent chargebacks",
+        "fraud disputes",
+        "visa compelling evidence",
+        "mastercom",
+        "chargeback representment"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/payments-checkout/chargeback-management-prevention",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
       "id": "checkout-flow-optimization",
       "name": "Checkout Flow Optimization",
       "description": "Design a high-converting checkout with address autocomplete, smart field ordering, progress indicators, and minimal friction to reduce abandonment",
@@ -3184,6 +4410,42 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "currency-hedging-management",
+      "name": "Currency Hedging Management",
+      "description": "Manage foreign exchange risk for multi-currency ecommerce with FX rate tracking, hedging strategies, and realized/unrealized gain-loss accounting",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "currency",
+        "forex",
+        "hedging",
+        "multi-currency"
+      ],
+      "triggers": [
+        "currency hedging",
+        "FX risk management",
+        "foreign exchange",
+        "multi-currency accounting",
+        "exchange rate risk",
+        "forex exposure",
+        "currency gain loss"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/payments-checkout/currency-hedging-management",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
       "id": "guest-checkout",
       "name": "Guest Checkout",
       "description": "Allow shoppers to buy without creating an account, then invite them to save their details post-purchase to reduce checkout friction and increase conversion",
@@ -3220,6 +4482,41 @@
         "platform-agnostic"
       ],
       "difficulty": "beginner"
+    },
+    {
+      "id": "invoice-generation-automation",
+      "name": "Invoice Generation Automation",
+      "description": "Generate professional invoices automatically with custom branding, payment terms, line item details, tax breakdowns, and integration with accounting systems",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "invoicing",
+        "billing",
+        "automation"
+      ],
+      "triggers": [
+        "invoice generation",
+        "automated invoicing",
+        "PDF invoice",
+        "invoice automation",
+        "billing automation",
+        "generate invoice",
+        "invoice template"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/payments-checkout/invoice-generation-automation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
     },
     {
       "id": "multi-currency",
@@ -3296,6 +4593,115 @@
         "opencode"
       ],
       "path": "skills/payments-checkout/order-processing-pipeline",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "payment-reconciliation-automation",
+      "name": "Payment Reconciliation Automation",
+      "description": "Automate payment reconciliation across Stripe, PayPal, and bank accounts with exception handling, automated matching rules, and discrepancy alerting",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "reconciliation",
+        "payments",
+        "accounting"
+      ],
+      "triggers": [
+        "payment reconciliation",
+        "reconcile stripe",
+        "reconcile paypal",
+        "bank reconciliation",
+        "payment matching",
+        "discrepancy detection",
+        "automate reconciliation"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/payments-checkout/payment-reconciliation-automation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "payment-terms-optimization",
+      "name": "Payment Terms Optimization",
+      "description": "Configure flexible payment terms for B2B customers with net-30/60/90 options, early payment discounts, credit limit management, and automated collections",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "payment-terms",
+        "b2b",
+        "credit-management"
+      ],
+      "triggers": [
+        "payment terms",
+        "net-30 billing",
+        "net-60",
+        "credit terms",
+        "B2B credit",
+        "early payment discount",
+        "credit limit",
+        "trade credit",
+        "payment terms management"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/payments-checkout/payment-terms-optimization",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "payout-split-management",
+      "name": "Payout Split Management",
+      "description": "Manage complex payout splits for marketplaces and platforms with seller disbursements, commission calculation, tax withholding, and 1099 reporting",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "payouts",
+        "marketplace",
+        "disbursements",
+        "commissions"
+      ],
+      "triggers": [
+        "payout splits",
+        "seller payouts",
+        "marketplace disbursements",
+        "commission calculation",
+        "1099 reporting",
+        "tax withholding",
+        "stripe connect payouts",
+        "seller earnings"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/payments-checkout/payout-split-management",
       "platforms": [
         "platform-agnostic"
       ],
@@ -3458,6 +4864,45 @@
         "opencode"
       ],
       "path": "skills/payments-checkout/tax-calculation",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "tax-compliance-automation",
+      "name": "Tax Compliance Automation",
+      "description": "Automate multi-jurisdiction sales tax, VAT, and GST compliance with nexus tracking, exemption certificates, filing automation, and audit-ready reports",
+      "category": "payments-checkout",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "tax-compliance",
+        "sales-tax",
+        "vat",
+        "gst"
+      ],
+      "triggers": [
+        "sales tax automation",
+        "vat compliance",
+        "gst collection",
+        "tax nexus",
+        "tax filing",
+        "exemption certificates",
+        "economic nexus",
+        "avalara",
+        "taxjar",
+        "vertex"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/payments-checkout/tax-compliance-automation",
       "platforms": [
         "platform-agnostic"
       ],
@@ -4702,6 +6147,67 @@
         "platform-agnostic"
       ],
       "difficulty": "intermediate"
+    },
+    {
+      "id": "financial-audit-trail",
+      "name": "Financial Audit Trail",
+      "description": "Build immutable audit trails for all financial transactions with user attribution, change logging, tamper detection, and compliance-ready export for external audits",
+      "category": "security-compliance",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "audit-trail",
+        "compliance",
+        "financial-records"
+      ],
+      "triggers": [
+        "create audit trail",
+        "financial transaction logging"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/security-compliance/financial-audit-trail",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "financial-compliance-sox",
+      "name": "Financial Compliance Sox",
+      "description": "Implement SOX-compliant financial controls for ecommerce with audit trails, segregation of duties, access controls, and compliance-ready transaction logging",
+      "category": "security-compliance",
+      "risk": "safe",
+      "source": "curated",
+      "date_added": "2026-03-12",
+      "tags": [
+        "sox",
+        "financial-compliance",
+        "audit",
+        "controls"
+      ],
+      "triggers": [
+        "implement SOX compliance",
+        "financial audit controls"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli"
+      ],
+      "path": "skills/security-compliance/financial-compliance-sox",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "advanced"
     },
     {
       "id": "fraud-detection",

@@ -1,5 +1,19 @@
 [
   {
+    "id": "accounts-payable-management",
+    "path": "skills/business-operations/accounts-payable-management",
+    "category": "business-operations",
+    "name": "Accounts Payable Management",
+    "description": "Manage supplier invoices and vendor payments with automated receipt matching, payment scheduling, early discount optimization, and reconciliation workflows",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "b2b-commerce",
     "path": "skills/business-operations/b2b-commerce",
     "category": "business-operations",
@@ -117,6 +131,20 @@
     "category": "catalog-inventory",
     "name": "Catalog Import Export",
     "description": "Import and export your entire product catalog in CSV, JSON, or XML with validation, error reporting, and scheduled sync support",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "cogs-tracking-allocation",
+    "path": "skills/catalog-inventory/cogs-tracking-allocation",
+    "category": "catalog-inventory",
+    "name": "Cogs Tracking Allocation",
+    "description": "Track cost of goods sold with FIFO/LIFO/weighted average inventory valuation, landed cost allocation for imports, and variance analysis against standard costs",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
@@ -406,6 +434,34 @@
     "difficulty": "advanced"
   },
   {
+    "id": "cash-flow-forecasting",
+    "path": "skills/data-analytics/cash-flow-forecasting",
+    "category": "data-analytics",
+    "name": "Cash Flow Forecasting",
+    "description": "Forecast cash flow using historical sales patterns, payment terms, seasonal trends, and receivables modeling with scenario planning and runway tracking",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "cost-allocation-analysis",
+    "path": "skills/data-analytics/cost-allocation-analysis",
+    "category": "data-analytics",
+    "name": "Cost Allocation Analysis",
+    "description": "Allocate COGS, shipping, marketing, and overhead costs across products, channels, and orders to calculate true per-unit and per-order profitability",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "customer-analytics",
     "path": "skills/data-analytics/customer-analytics",
     "category": "data-analytics",
@@ -418,6 +474,20 @@
       "platform-agnostic"
     ],
     "difficulty": "advanced"
+  },
+  {
+    "id": "ecommerce-budgeting-forecasting",
+    "path": "skills/data-analytics/ecommerce-budgeting-forecasting",
+    "category": "data-analytics",
+    "name": "Ecommerce Budgeting Forecasting",
+    "description": "Build rolling operating budgets for marketing spend, inventory purchases, and operations with variance analysis, scenario modeling, and budget utilization alerts",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
   },
   {
     "id": "ecommerce-data-warehouse",
@@ -434,6 +504,62 @@
     "difficulty": "advanced"
   },
   {
+    "id": "financial-analytics-dashboard",
+    "path": "skills/data-analytics/financial-analytics-dashboard",
+    "category": "data-analytics",
+    "name": "Financial Analytics Dashboard",
+    "description": "Build interactive financial KPI dashboards with customizable metrics, drill-down analysis, variance explanations, and automated threshold-based alerting",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "financial-reporting-dashboard",
+    "path": "skills/data-analytics/financial-reporting-dashboard",
+    "category": "data-analytics",
+    "name": "Financial Reporting Dashboard",
+    "description": "Build P&L, balance sheet, and cash flow dashboards for ecommerce with drill-down by product, channel, and time period for management and investor reporting",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "marketing-spend-analysis",
+    "path": "skills/data-analytics/marketing-spend-analysis",
+    "category": "data-analytics",
+    "name": "Marketing Spend Analysis",
+    "description": "Track and analyze marketing spend across all channels with ROAS calculation, diminishing returns analysis, and budget reallocation recommendations by platform",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "marketplace-fee-reconciliation",
+    "path": "skills/data-analytics/marketplace-fee-reconciliation",
+    "category": "data-analytics",
+    "name": "Marketplace Fee Reconciliation",
+    "description": "Reconcile and analyze seller fees from Amazon, eBay, Walmart, and Etsy with net revenue calculation, fee categorization, and optimization recommendations",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "product-analytics",
     "path": "skills/data-analytics/product-analytics",
     "category": "data-analytics",
@@ -448,6 +574,34 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "profit-margin-analysis",
+    "path": "skills/data-analytics/profit-margin-analysis",
+    "category": "data-analytics",
+    "name": "Profit Margin Analysis",
+    "description": "Analyze gross and net profit margins by product, category, channel, and customer segment with cost attribution, benchmarking, and trend visualization",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "revenue-recognition-accounting",
+    "path": "skills/data-analytics/revenue-recognition-accounting",
+    "category": "data-analytics",
+    "name": "Revenue Recognition Accounting",
+    "description": "Implement ASC 606 / IFRS 15 revenue recognition for subscriptions, bundles, and multi-element arrangements with deferred revenue tracking and journal entries",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
     "id": "sales-reporting-dashboard",
     "path": "skills/data-analytics/sales-reporting-dashboard",
     "category": "data-analytics",
@@ -460,6 +614,20 @@
       "platform-agnostic"
     ],
     "difficulty": "intermediate"
+  },
+  {
+    "id": "unit-economics-tracking",
+    "path": "skills/data-analytics/unit-economics-tracking",
+    "category": "data-analytics",
+    "name": "Unit Economics Tracking",
+    "description": "Track customer acquisition cost, lifetime value, payback period, and contribution margin by cohort and channel with profitability benchmarks and trend analysis",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
   },
   {
     "id": "dropshipping-integration",
@@ -896,11 +1064,39 @@
     "difficulty": "advanced"
   },
   {
+    "id": "applovin-ads-integration",
+    "path": "skills/marketing-growth/applovin-ads-integration",
+    "category": "marketing-growth",
+    "name": "Applovin Ads Integration",
+    "description": "Integrate AppLovin MAX mediation and ad campaigns for mobile commerce apps with user acquisition, retargeting, and in-app purchase event tracking",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
     "id": "cart-abandonment-recovery",
     "path": "skills/marketing-growth/cart-abandonment-recovery",
     "category": "marketing-growth",
     "name": "Cart Abandonment Recovery",
     "description": "Win back shoppers who leave with carts by sending timed email, SMS, and push sequences with escalating incentives to complete their purchase",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "cart-recovery-sms",
+    "path": "skills/marketing-growth/cart-recovery-sms",
+    "category": "marketing-growth",
+    "name": "Cart Recovery Sms",
+    "description": "Recover abandoned carts with targeted SMS sequences including urgency messaging, product reminders, discount incentives, and TCPA-compliant opt-in flows",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
@@ -938,11 +1134,53 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "cross-sell-upsell-engine",
+    "path": "skills/marketing-growth/cross-sell-upsell-engine",
+    "category": "marketing-growth",
+    "name": "Cross Sell Upsell Engine",
+    "description": "Recommend complementary and premium products at checkout, in cart, and post-purchase using purchase patterns, browsing history, and margin optimization",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "customer-retention-engine",
+    "path": "skills/marketing-growth/customer-retention-engine",
+    "category": "marketing-growth",
+    "name": "Customer Retention Engine",
+    "description": "Build automated retention campaigns targeting at-risk customers with behavioral triggers, personalized offers, and churn prevention workflows",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
     "id": "ecommerce-seo",
     "path": "skills/marketing-growth/ecommerce-seo",
     "category": "marketing-growth",
     "name": "Ecommerce Seo",
     "description": "Maximize organic search traffic with optimized product page meta tags, JSON-LD structured data for Google Shopping, and automated XML sitemaps",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "email-list-segmentation",
+    "path": "skills/marketing-growth/email-list-segmentation",
+    "category": "marketing-growth",
+    "name": "Email List Segmentation",
+    "description": "Create dynamic email segments based on purchase behavior, RFM scores, engagement signals, and lifecycle stage with automated rebalancing and list hygiene",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
@@ -980,11 +1218,53 @@
     "difficulty": "beginner"
   },
   {
+    "id": "first-party-data-collection",
+    "path": "skills/marketing-growth/first-party-data-collection",
+    "category": "marketing-growth",
+    "name": "First Party Data Collection",
+    "description": "Build a first-party data strategy with progressive profiling, zero-party surveys, preference centers, and quiz-based product recommendations",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "google-ads-ecommerce",
+    "path": "skills/marketing-growth/google-ads-ecommerce",
+    "category": "marketing-growth",
+    "name": "Google Ads Ecommerce",
+    "description": "Build and optimize Google Ads campaigns for ecommerce with Performance Max, Shopping feeds, conversion tracking, and Smart Bidding strategies for ROAS",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
     "id": "google-shopping-feed",
     "path": "skills/marketing-growth/google-shopping-feed",
     "category": "marketing-growth",
     "name": "Google Shopping Feed",
     "description": "Generate and optimize a product feed for Google Merchant Center so your products appear in Google Shopping ads with correct attributes",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "influencer-marketplace-integration",
+    "path": "skills/marketing-growth/influencer-marketplace-integration",
+    "category": "marketing-growth",
+    "name": "Influencer Marketplace Integration",
+    "description": "Connect to influencer networks to discover creators, manage campaign briefs, track deliverables, and measure ROI across Instagram, TikTok, and YouTube",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
@@ -1008,6 +1288,104 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "lifecycle-marketing-automation",
+    "path": "skills/marketing-growth/lifecycle-marketing-automation",
+    "category": "marketing-growth",
+    "name": "Lifecycle Marketing Automation",
+    "description": "Map customer journey stages from first visit to loyal advocate with personalized messaging, triggered workflows, and segment-based campaign automation",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "loyalty-program-optimization",
+    "path": "skills/marketing-growth/loyalty-program-optimization",
+    "category": "marketing-growth",
+    "name": "Loyalty Program Optimization",
+    "description": "Design and optimize tiered loyalty programs with points, rewards, exclusive perks, and member-only benefits that increase repeat purchase rates and CLV",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "marketing-attribution-dashboard",
+    "path": "skills/marketing-growth/marketing-attribution-dashboard",
+    "category": "marketing-growth",
+    "name": "Marketing Attribution Dashboard",
+    "description": "Build multi-touch attribution dashboards tracking revenue by channel, campaign, and creative with blended ROAS analysis and budget allocation recommendations",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "marketplace-advertising",
+    "path": "skills/marketing-growth/marketplace-advertising",
+    "category": "marketing-growth",
+    "name": "Marketplace Advertising",
+    "description": "Manage sponsored product ads across Amazon, eBay, and Walmart marketplace platforms with bid optimization, keyword targeting, and ACOS tracking",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "meta-ads-integration",
+    "path": "skills/marketing-growth/meta-ads-integration",
+    "category": "marketing-growth",
+    "name": "Meta Ads Integration",
+    "description": "Set up and optimize Meta (Facebook/Instagram) ad campaigns with Conversions API server-side tracking, dynamic product ads, and catalog sync for ecommerce",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "predictive-personalization",
+    "path": "skills/marketing-growth/predictive-personalization",
+    "category": "marketing-growth",
+    "name": "Predictive Personalization",
+    "description": "Use machine learning models to predict customer preferences and dynamically personalize product recommendations, search results, and content across your store",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "product-launch-campaigns",
+    "path": "skills/marketing-growth/product-launch-campaigns",
+    "category": "marketing-growth",
+    "name": "Product Launch Campaigns",
+    "description": "Plan and execute multi-channel product launches with pre-launch waitlists, early access for VIPs, launch day orchestration, and post-launch momentum",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "push-notifications",
     "path": "skills/marketing-growth/push-notifications",
     "category": "marketing-growth",
@@ -1020,6 +1398,48 @@
       "platform-agnostic"
     ],
     "difficulty": "beginner"
+  },
+  {
+    "id": "referral-viral-loops",
+    "path": "skills/marketing-growth/referral-viral-loops",
+    "category": "marketing-growth",
+    "name": "Referral Viral Loops",
+    "description": "Build referral mechanics with dual-sided rewards, unique tracking links, viral coefficient optimization, and anti-fraud controls for referral abuse",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "review-generation-engine",
+    "path": "skills/marketing-growth/review-generation-engine",
+    "category": "marketing-growth",
+    "name": "Review Generation Engine",
+    "description": "Automatically request and collect product reviews post-purchase with timed email/SMS sequences, photo incentives, and fraud detection for fake reviews",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "seasonal-campaign-automation",
+    "path": "skills/marketing-growth/seasonal-campaign-automation",
+    "category": "marketing-growth",
+    "name": "Seasonal Campaign Automation",
+    "description": "Automate seasonal marketing campaigns for Black Friday, holidays, and shopping events with templated workflows, countdown sequences, and year-round planning",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
   },
   {
     "id": "sms-marketing",
@@ -1041,6 +1461,104 @@
     "category": "marketing-growth",
     "name": "Social Commerce",
     "description": "Sync your catalog to Instagram, TikTok, and Facebook to enable shoppable posts and in-app checkout directly from your social content",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "social-proof-widgets",
+    "path": "skills/marketing-growth/social-proof-widgets",
+    "category": "marketing-growth",
+    "name": "Social Proof Widgets",
+    "description": "Display real-time social proof including recent purchases, review counts, visitor counts, and verified buyer badges to build trust and boost conversions",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "tiktok-ads-integration",
+    "path": "skills/marketing-growth/tiktok-ads-integration",
+    "category": "marketing-growth",
+    "name": "Tiktok Ads Integration",
+    "description": "Launch TikTok ad campaigns for ecommerce with Events API server-side tracking, Spark Ads, catalog sync, and shopping ads for product discovery",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "tiktok-shop-integration",
+    "path": "skills/marketing-growth/tiktok-shop-integration",
+    "category": "marketing-growth",
+    "name": "Tiktok Shop Integration",
+    "description": "Sync your product catalog to TikTok Shop, manage orders and inventory, and enable shoppable content with live shopping and affiliate creator programs",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "ugc-campaign-management",
+    "path": "skills/marketing-growth/ugc-campaign-management",
+    "category": "marketing-growth",
+    "name": "Ugc Campaign Management",
+    "description": "Source, curate, and display user-generated content at scale with rights management, brand safety moderation, and trust-building social proof galleries",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "video-commerce-integration",
+    "path": "skills/marketing-growth/video-commerce-integration",
+    "category": "marketing-growth",
+    "name": "Video Commerce Integration",
+    "description": "Enable shoppable video experiences with live shopping events, interactive product hotspots, and one-click checkout directly from video and livestream content",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "win-back-reactivation",
+    "path": "skills/marketing-growth/win-back-reactivation",
+    "category": "marketing-growth",
+    "name": "Win Back Reactivation",
+    "description": "Re-engage lapsed customers with automated win-back campaigns using personalized comeback offers based on purchase history and inactivity windows",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "accounts-receivable-automation",
+    "path": "skills/payments-checkout/accounts-receivable-automation",
+    "category": "payments-checkout",
+    "name": "Accounts Receivable Automation",
+    "description": "Automate B2B accounts receivable with invoice generation, payment tracking, dunning sequences for past-due invoices, and aging analysis dashboards",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
@@ -1078,6 +1596,20 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "chargeback-management-prevention",
+    "path": "skills/payments-checkout/chargeback-management-prevention",
+    "category": "payments-checkout",
+    "name": "Chargeback Management Prevention",
+    "description": "Prevent and manage chargebacks with fraud scoring, compelling evidence automation, Visa CE 3.0 / Mastercom integration, and win-rate optimization",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
     "id": "checkout-flow-optimization",
     "path": "skills/payments-checkout/checkout-flow-optimization",
     "category": "payments-checkout",
@@ -1092,6 +1624,20 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "currency-hedging-management",
+    "path": "skills/payments-checkout/currency-hedging-management",
+    "category": "payments-checkout",
+    "name": "Currency Hedging Management",
+    "description": "Manage foreign exchange risk for multi-currency ecommerce with FX rate tracking, hedging strategies, and realized/unrealized gain-loss accounting",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
     "id": "guest-checkout",
     "path": "skills/payments-checkout/guest-checkout",
     "category": "payments-checkout",
@@ -1104,6 +1650,20 @@
       "platform-agnostic"
     ],
     "difficulty": "beginner"
+  },
+  {
+    "id": "invoice-generation-automation",
+    "path": "skills/payments-checkout/invoice-generation-automation",
+    "category": "payments-checkout",
+    "name": "Invoice Generation Automation",
+    "description": "Generate professional invoices automatically with custom branding, payment terms, line item details, tax breakdowns, and integration with accounting systems",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
   },
   {
     "id": "multi-currency",
@@ -1126,6 +1686,48 @@
     "name": "Order Processing Pipeline",
     "description": "Implement a reliable order state machine that moves orders from pending through payment, fulfillment, and delivery with webhook-driven transitions",
     "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "payment-reconciliation-automation",
+    "path": "skills/payments-checkout/payment-reconciliation-automation",
+    "category": "payments-checkout",
+    "name": "Payment Reconciliation Automation",
+    "description": "Automate payment reconciliation across Stripe, PayPal, and bank accounts with exception handling, automated matching rules, and discrepancy alerting",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "payment-terms-optimization",
+    "path": "skills/payments-checkout/payment-terms-optimization",
+    "category": "payments-checkout",
+    "name": "Payment Terms Optimization",
+    "description": "Configure flexible payment terms for B2B customers with net-30/60/90 options, early payment discounts, credit limit management, and automated collections",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "payout-split-management",
+    "path": "skills/payments-checkout/payout-split-management",
+    "category": "payments-checkout",
+    "name": "Payout Split Management",
+    "description": "Manage complex payout splits for marketplaces and platforms with seller disbursements, commission calculation, tax withholding, and 1099 reporting",
+    "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
@@ -1182,6 +1784,20 @@
     "name": "Tax Calculation",
     "description": "Calculate accurate sales tax and VAT at checkout using TaxJar or Avalara, with nexus management for multi-state and international compliance",
     "risk": "critical",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
+  },
+  {
+    "id": "tax-compliance-automation",
+    "path": "skills/payments-checkout/tax-compliance-automation",
+    "category": "payments-checkout",
+    "name": "Tax Compliance Automation",
+    "description": "Automate multi-jurisdiction sales tax, VAT, and GST compliance with nexus tracking, exemption certificates, filing automation, and audit-ready reports",
+    "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
@@ -1622,6 +2238,34 @@
       "platform-agnostic"
     ],
     "difficulty": "intermediate"
+  },
+  {
+    "id": "financial-audit-trail",
+    "path": "skills/security-compliance/financial-audit-trail",
+    "category": "security-compliance",
+    "name": "Financial Audit Trail",
+    "description": "Build immutable audit trails for all financial transactions with user attribution, change logging, tamper detection, and compliance-ready export for external audits",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "financial-compliance-sox",
+    "path": "skills/security-compliance/financial-compliance-sox",
+    "category": "security-compliance",
+    "name": "Financial Compliance Sox",
+    "description": "Implement SOX-compliant financial controls for ecommerce with audit trails, segregation of duties, access controls, and compliance-ready transaction logging",
+    "risk": "safe",
+    "source": "curated",
+    "date_added": "2026-03-12",
+    "platforms": [
+      "platform-agnostic"
+    ],
+    "difficulty": "advanced"
   },
   {
     "id": "fraud-detection",

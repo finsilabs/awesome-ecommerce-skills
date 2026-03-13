@@ -1,8 +1,8 @@
 # Awesome E-Commerce Skills
 
-> A curated collection of 132 ready-to-use e-commerce skills that make AI coding assistants dramatically better at building online stores.
+> A curated collection of 178 ready-to-use e-commerce skills that make AI coding assistants dramatically better at building online stores.
 
-![Skills](https://img.shields.io/badge/skills-132-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg) ![Tessl Evaluated](https://img.shields.io/badge/Tessl-evaluated-purple)
+![Skills](https://img.shields.io/badge/skills-178-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg) ![Tessl Evaluated](https://img.shields.io/badge/Tessl-evaluated-purple)
 
 ## What Are Skills?
 
@@ -120,26 +120,26 @@ New to this? Start here. These are the most commonly needed skills for any e-com
 
 ## All Categories
 
-132 skills organized into 17 categories. Click any category to browse its skills.
+178 skills organized into 17 categories. Click any category to browse its skills.
 
 | Category | Skills | Examples |
 |----------|--------|----------|
-| [**Business Operations**](skills/business-operations/) | 8 | B2b Commerce, Demand Forecasting, Marketplace Building, +5 more |
-| [**Catalog Inventory**](skills/catalog-inventory/) | 10 | Catalog Import Export, Digital Products, Inventory Tracking, +7 more |
+| [**Business Operations**](skills/business-operations/) | 9 | Accounts Payable Management, B2b Commerce, Demand Forecasting, +6 more |
+| [**Catalog Inventory**](skills/catalog-inventory/) | 11 | Catalog Import Export, Cogs Tracking Allocation, Digital Products, +8 more |
 | [**Customer Crm**](skills/customer-crm/) | 9 | Customer Accounts, Customer Lifetime Value, Customer Segmentation, +6 more |
-| [**Data Analytics**](skills/data-analytics/) | 6 | Ab Testing Ecommerce, Attribution Modeling, Customer Analytics, +3 more |
+| [**Data Analytics**](skills/data-analytics/) | 16 | Ab Testing Ecommerce, Attribution Modeling, Cash Flow Forecasting, +13 more |
 | [**Fulfillment Shipping**](skills/fulfillment-shipping/) | 8 | Dropshipping Integration, Free Shipping Thresholds, International Shipping, +5 more |
 | [**Headless Modern**](skills/headless-modern/) | 8 | Commerce Api Gateway, Commerce Js Integration, Composable Commerce, +5 more |
 | [**Infrastructure Performance**](skills/infrastructure-performance/) | 7 | Database Optimization Commerce, Ecommerce Caching, Edge Commerce, +4 more |
 | [**Integrations Apis**](skills/integrations-apis/) | 7 | Analytics Integration, Email Service Integration, Erp Integration, +4 more |
-| [**Marketing Growth**](skills/marketing-growth/) | 12 | Affiliate Program, Cart Abandonment Recovery, Content Commerce, +9 more |
-| [**Payments Checkout**](skills/payments-checkout/) | 10 | Buy Now Pay Later, Cart Logic, Checkout Flow Optimization, +7 more |
+| [**Marketing Growth**](skills/marketing-growth/) | 36 | Affiliate Program, Applovin Ads Integration, Cart Abandonment Recovery, +33 more |
+| [**Payments Checkout**](skills/payments-checkout/) | 18 | Accounts Receivable Automation, Buy Now Pay Later, Cart Logic, +15 more |
 | [**Platform Magento**](skills/platform-magento/) | 4 | Magento Graphql, Magento Indexing Caching, Magento Module Development, +1 more |
 | [**Platform Salesforce Cc**](skills/platform-salesforce-cc/) | 3 | Sfcc Business Manager, Sfcc Cartridge Development, Sfcc Ocapi Scapi |
 | [**Platform Shopify**](skills/platform-shopify/) | 7 | Shopify Admin Api, Shopify App Development, Shopify Checkout Extensions, +4 more |
 | [**Platform Woocommerce**](skills/platform-woocommerce/) | 5 | Woocommerce Blocks, Woocommerce Performance, Woocommerce Plugin Development, +2 more |
 | [**Pricing Promotions**](skills/pricing-promotions/) | 9 | Ab Testing Pricing, Coupon Management, Discount Engine, +6 more |
-| [**Security Compliance**](skills/security-compliance/) | 7 | Account Security, Bot Protection, Data Retention Policies, +4 more |
+| [**Security Compliance**](skills/security-compliance/) | 9 | Account Security, Bot Protection, Data Retention Policies, +6 more |
 | [**Storefront Ui**](skills/storefront-ui/) | 12 | Accessibility Commerce, Faceted Navigation, Image Zoom 360, +9 more |
 
 ## Curated Bundles
@@ -161,7 +161,7 @@ See [bundles.json](data/bundles.json) for the full skill lists in each bundle.
 
 ## Browse All Skills
 
-See [CATALOG.md](CATALOG.md) for the complete list of all 132 skills with descriptions, tags, and evaluation scores.
+See [CATALOG.md](CATALOG.md) for the complete list of all 178 skills with descriptions, tags, and evaluation scores.
 
 ## Contributing
 

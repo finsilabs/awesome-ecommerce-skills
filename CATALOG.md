@@ -1,13 +1,14 @@
 # Skill Catalog
 
-> 132 skills across 17 categories
+> 178 skills across 17 categories
 
-*Generated at 2026-03-13T00:10:42.492Z*
+*Generated at 2026-03-13T00:38:14.789Z*
 
 ## Business Operations `business-operations`
 
 | Skill | Description | Difficulty | Platforms |
 |-------|-------------|------------|-----------|
+| `accounts-payable-management` | Manage supplier invoices and vendor payments with automated receipt matching, payment scheduling, early discount optimization, and reconciliation workflows | intermediate | platform-agnostic |
 | `b2b-commerce` | Enable wholesale and B2B sales with company accounts, custom catalogs, quote workflows, purchase orders, and net payment terms | advanced | platform-agnostic |
 | `demand-forecasting` | Predict future inventory needs using historical sales data, seasonal trends, and reorder points to prevent stockouts and overstock | advanced | platform-agnostic |
 | `marketplace-building` | Launch a multi-vendor marketplace with seller onboarding, commission rules, automated payouts via Stripe Connect, and vendor dashboards | advanced | platform-agnostic |
@@ -22,6 +23,7 @@
 | Skill | Description | Difficulty | Platforms |
 |-------|-------------|------------|-----------|
 | `catalog-import-export` | Import and export your entire product catalog in CSV, JSON, or XML with validation, error reporting, and scheduled sync support | intermediate | platform-agnostic |
+| `cogs-tracking-allocation` | Track cost of goods sold with FIFO/LIFO/weighted average inventory valuation, landed cost allocation for imports, and variance analysis against standard costs | intermediate | platform-agnostic |
 | `digital-products` | Sell software, ebooks, and other downloads with secure delivery, license key generation, download limits, and expiration controls | intermediate | platform-agnostic |
 | `inventory-tracking` | Track stock levels in real time across all your warehouses with inventory reservation to prevent overselling and support for backorders | advanced | platform-agnostic |
 | `low-stock-alerts` | Automatically alert your team and trigger reorders when products fall below custom thresholds, using sales velocity and demand forecasting | intermediate | platform-agnostic |
@@ -52,10 +54,20 @@
 |-------|-------------|------------|-----------|
 | `ab-testing-ecommerce` | Run controlled experiments on product pages, checkout flows, and pricing to find what converts best using statistical significance testing | intermediate | platform-agnostic |
 | `attribution-modeling` | Understand which marketing channels drive purchases by implementing multi-touch attribution models across UTM-tracked campaigns and channels | advanced | platform-agnostic |
+| `cash-flow-forecasting` | Forecast cash flow using historical sales patterns, payment terms, seasonal trends, and receivables modeling with scenario planning and runway tracking | advanced | platform-agnostic |
+| `cost-allocation-analysis` | Allocate COGS, shipping, marketing, and overhead costs across products, channels, and orders to calculate true per-unit and per-order profitability | intermediate | platform-agnostic |
 | `customer-analytics` | Analyze customer behavior with RFM scoring, purchase frequency tracking, churn prediction, and cohort analysis to improve retention strategy | advanced | platform-agnostic |
+| `ecommerce-budgeting-forecasting` | Build rolling operating budgets for marketing spend, inventory purchases, and operations with variance analysis, scenario modeling, and budget utilization alerts | intermediate | platform-agnostic |
 | `ecommerce-data-warehouse` | Build a commerce data warehouse with star-schema tables, ETL pipelines, and dbt models for BigQuery, Snowflake, or Redshift analytics | advanced | platform-agnostic |
+| `financial-analytics-dashboard` | Build interactive financial KPI dashboards with customizable metrics, drill-down analysis, variance explanations, and automated threshold-based alerting | intermediate | platform-agnostic |
+| `financial-reporting-dashboard` | Build P&L, balance sheet, and cash flow dashboards for ecommerce with drill-down by product, channel, and time period for management and investor reporting | advanced | platform-agnostic |
+| `marketing-spend-analysis` | Track and analyze marketing spend across all channels with ROAS calculation, diminishing returns analysis, and budget reallocation recommendations by platform | intermediate | platform-agnostic |
+| `marketplace-fee-reconciliation` | Reconcile and analyze seller fees from Amazon, eBay, Walmart, and Etsy with net revenue calculation, fee categorization, and optimization recommendations | intermediate | platform-agnostic |
 | `product-analytics` | Track product performance with sell-through rates, views-to-purchase conversion, dead stock identification, and category-level reporting | intermediate | platform-agnostic |
+| `profit-margin-analysis` | Analyze gross and net profit margins by product, category, channel, and customer segment with cost attribution, benchmarking, and trend visualization | intermediate | platform-agnostic |
+| `revenue-recognition-accounting` | Implement ASC 606 / IFRS 15 revenue recognition for subscriptions, bundles, and multi-element arrangements with deferred revenue tracking and journal entries | advanced | platform-agnostic |
 | `sales-reporting-dashboard` | Build executive dashboards showing revenue, average order value, conversion rates, and cohort analysis with drill-down by date and channel | intermediate | platform-agnostic |
+| `unit-economics-tracking` | Track customer acquisition cost, lifetime value, payback period, and contribution margin by cohort and channel with profitability benchmarks and trend analysis | advanced | platform-agnostic |
 
 ## Fulfillment Shipping `fulfillment-shipping`
 
@@ -112,32 +124,64 @@
 | Skill | Description | Difficulty | Platforms |
 |-------|-------------|------------|-----------|
 | `affiliate-program` | Track affiliate sales with unique links, manage commission tiers, automate payouts, and detect fraudulent referrals to protect your margins | advanced | platform-agnostic |
+| `applovin-ads-integration` | Integrate AppLovin MAX mediation and ad campaigns for mobile commerce apps with user acquisition, retargeting, and in-app purchase event tracking | advanced | platform-agnostic |
 | `cart-abandonment-recovery` | Win back shoppers who leave with carts by sending timed email, SMS, and push sequences with escalating incentives to complete their purchase | intermediate | platform-agnostic |
+| `cart-recovery-sms` | Recover abandoned carts with targeted SMS sequences including urgency messaging, product reminders, discount incentives, and TCPA-compliant opt-in flows | intermediate | platform-agnostic |
 | `content-commerce` | Turn your blog into a sales channel by embedding shoppable product cards in editorial content and tracking content-influenced revenue | intermediate | platform-agnostic |
 | `conversion-rate-optimization` | Systematically improve your store's revenue per visitor by auditing checkout drop-off, running heatmaps, and implementing CRO best practices | intermediate | platform-agnostic |
+| `cross-sell-upsell-engine` | Recommend complementary and premium products at checkout, in cart, and post-purchase using purchase patterns, browsing history, and margin optimization | advanced | platform-agnostic |
+| `customer-retention-engine` | Build automated retention campaigns targeting at-risk customers with behavioral triggers, personalized offers, and churn prevention workflows | advanced | platform-agnostic |
 | `ecommerce-seo` | Maximize organic search traffic with optimized product page meta tags, JSON-LD structured data for Google Shopping, and automated XML sitemaps | intermediate | platform-agnostic |
+| `email-list-segmentation` | Create dynamic email segments based on purchase behavior, RFM scores, engagement signals, and lifecycle stage with automated rebalancing and list hygiene | intermediate | platform-agnostic |
 | `email-marketing-automation` | Build automated email flows for welcome series, post-purchase follow-ups, win-back campaigns, and browse abandonment to drive repeat revenue | intermediate | platform-agnostic |
 | `exit-intent-popups` | Capture leaving visitors with targeted exit-intent popups that show personalized offers, email capture forms, and respect frequency capping rules | beginner | platform-agnostic |
+| `first-party-data-collection` | Build a first-party data strategy with progressive profiling, zero-party surveys, preference centers, and quiz-based product recommendations | advanced | platform-agnostic |
+| `google-ads-ecommerce` | Build and optimize Google Ads campaigns for ecommerce with Performance Max, Shopping feeds, conversion tracking, and Smart Bidding strategies for ROAS | advanced | platform-agnostic |
 | `google-shopping-feed` | Generate and optimize a product feed for Google Merchant Center so your products appear in Google Shopping ads with correct attributes | intermediate | platform-agnostic |
+| `influencer-marketplace-integration` | Connect to influencer networks to discover creators, manage campaign briefs, track deliverables, and measure ROI across Instagram, TikTok, and YouTube | intermediate | platform-agnostic |
 | `influencer-tracking` | Measure influencer campaign ROI by generating unique UTM links per creator, attributing sales, and reporting revenue against campaign spend | intermediate | platform-agnostic |
+| `lifecycle-marketing-automation` | Map customer journey stages from first visit to loyal advocate with personalized messaging, triggered workflows, and segment-based campaign automation | advanced | platform-agnostic |
+| `loyalty-program-optimization` | Design and optimize tiered loyalty programs with points, rewards, exclusive perks, and member-only benefits that increase repeat purchase rates and CLV | intermediate | platform-agnostic |
+| `marketing-attribution-dashboard` | Build multi-touch attribution dashboards tracking revenue by channel, campaign, and creative with blended ROAS analysis and budget allocation recommendations | advanced | platform-agnostic |
+| `marketplace-advertising` | Manage sponsored product ads across Amazon, eBay, and Walmart marketplace platforms with bid optimization, keyword targeting, and ACOS tracking | advanced | platform-agnostic |
+| `meta-ads-integration` | Set up and optimize Meta (Facebook/Instagram) ad campaigns with Conversions API server-side tracking, dynamic product ads, and catalog sync for ecommerce | advanced | platform-agnostic |
+| `predictive-personalization` | Use machine learning models to predict customer preferences and dynamically personalize product recommendations, search results, and content across your store | advanced | platform-agnostic |
+| `product-launch-campaigns` | Plan and execute multi-channel product launches with pre-launch waitlists, early access for VIPs, launch day orchestration, and post-launch momentum | intermediate | platform-agnostic |
 | `push-notifications` | Send browser push notifications for price drops, back-in-stock alerts, and cart reminders to bring shoppers back without needing their email | beginner | platform-agnostic |
+| `referral-viral-loops` | Build referral mechanics with dual-sided rewards, unique tracking links, viral coefficient optimization, and anti-fraud controls for referral abuse | advanced | platform-agnostic |
+| `review-generation-engine` | Automatically request and collect product reviews post-purchase with timed email/SMS sequences, photo incentives, and fraud detection for fake reviews | intermediate | platform-agnostic |
+| `seasonal-campaign-automation` | Automate seasonal marketing campaigns for Black Friday, holidays, and shopping events with templated workflows, countdown sequences, and year-round planning | intermediate | platform-agnostic |
 | `sms-marketing` | Launch SMS marketing campaigns with opt-in flows, audience segmentation, and full TCPA/GDPR compliance to drive revenue through text messaging | intermediate | platform-agnostic |
 | `social-commerce` | Sync your catalog to Instagram, TikTok, and Facebook to enable shoppable posts and in-app checkout directly from your social content | intermediate | platform-agnostic |
+| `social-proof-widgets` | Display real-time social proof including recent purchases, review counts, visitor counts, and verified buyer badges to build trust and boost conversions | intermediate | platform-agnostic |
+| `tiktok-ads-integration` | Launch TikTok ad campaigns for ecommerce with Events API server-side tracking, Spark Ads, catalog sync, and shopping ads for product discovery | advanced | platform-agnostic |
+| `tiktok-shop-integration` | Sync your product catalog to TikTok Shop, manage orders and inventory, and enable shoppable content with live shopping and affiliate creator programs | advanced | platform-agnostic |
+| `ugc-campaign-management` | Source, curate, and display user-generated content at scale with rights management, brand safety moderation, and trust-building social proof galleries | intermediate | platform-agnostic |
+| `video-commerce-integration` | Enable shoppable video experiences with live shopping events, interactive product hotspots, and one-click checkout directly from video and livestream content | advanced | platform-agnostic |
+| `win-back-reactivation` | Re-engage lapsed customers with automated win-back campaigns using personalized comeback offers based on purchase history and inactivity windows | intermediate | platform-agnostic |
 
 ## Payments Checkout `payments-checkout`
 
 | Skill | Description | Difficulty | Platforms |
 |-------|-------------|------------|-----------|
+| `accounts-receivable-automation` | Automate B2B accounts receivable with invoice generation, payment tracking, dunning sequences for past-due invoices, and aging analysis dashboards | intermediate | platform-agnostic |
 | `buy-now-pay-later` | Offer Klarna, Afterpay, or Affirm installment payments at checkout to reduce purchase hesitation and increase average order value | intermediate | platform-agnostic |
 | `cart-logic` | Build a robust shopping cart with add/remove/update operations, session persistence across devices, and cart merge for returning logged-in users | intermediate | platform-agnostic |
+| `chargeback-management-prevention` | Prevent and manage chargebacks with fraud scoring, compelling evidence automation, Visa CE 3.0 / Mastercom integration, and win-rate optimization | advanced | platform-agnostic |
 | `checkout-flow-optimization` | Design a high-converting checkout with address autocomplete, smart field ordering, progress indicators, and minimal friction to reduce abandonment | intermediate | platform-agnostic |
+| `currency-hedging-management` | Manage foreign exchange risk for multi-currency ecommerce with FX rate tracking, hedging strategies, and realized/unrealized gain-loss accounting | advanced | platform-agnostic |
 | `guest-checkout` | Allow shoppers to buy without creating an account, then invite them to save their details post-purchase to reduce checkout friction and increase conversion | beginner | platform-agnostic |
+| `invoice-generation-automation` | Generate professional invoices automatically with custom branding, payment terms, line item details, tax breakdowns, and integration with accounting systems | intermediate | platform-agnostic |
 | `multi-currency` | Let international shoppers browse and pay in their local currency with automatic detection, live exchange rates, and locale-specific price formatting | intermediate | platform-agnostic |
 | `order-processing-pipeline` | Implement a reliable order state machine that moves orders from pending through payment, fulfillment, and delivery with webhook-driven transitions | advanced | platform-agnostic |
+| `payment-reconciliation-automation` | Automate payment reconciliation across Stripe, PayPal, and bank accounts with exception handling, automated matching rules, and discrepancy alerting | advanced | platform-agnostic |
+| `payment-terms-optimization` | Configure flexible payment terms for B2B customers with net-30/60/90 options, early payment discounts, credit limit management, and automated collections | intermediate | platform-agnostic |
+| `payout-split-management` | Manage complex payout splits for marketplaces and platforms with seller disbursements, commission calculation, tax withholding, and 1099 reporting | advanced | platform-agnostic |
 | `paypal-integration` | Add PayPal, Venmo, and Pay Later buttons to your store using the PayPal Commerce Platform SDK with Express Checkout for one-tap buying | intermediate | platform-agnostic |
 | `stripe-integration` | Build secure payment flows with Stripe — Payment Intents, subscription billing, webhook handling, and European SCA compliance for card payments | intermediate | platform-agnostic |
 | `subscription-billing` | Sell recurring subscriptions with automated billing, dunning emails for failed payments, plan upgrade/downgrade prorations, and self-serve cancellation | advanced | platform-agnostic |
 | `tax-calculation` | Calculate accurate sales tax and VAT at checkout using TaxJar or Avalara, with nexus management for multi-state and international compliance | advanced | platform-agnostic |
+| `tax-compliance-automation` | Automate multi-jurisdiction sales tax, VAT, and GST compliance with nexus tracking, exemption certificates, filing automation, and audit-ready reports | advanced | platform-agnostic |
 
 ## Platform Magento `platform-magento`
 
@@ -199,6 +243,8 @@
 | `account-security` | Protect customer accounts with brute-force lockouts, multi-factor authentication, secure session handling, and credential-stuffing defenses | intermediate | platform-agnostic |
 | `bot-protection` | Block automated bots from scraping your catalog, scalping limited inventory, and abusing checkout flows using CAPTCHA and behavioral detection | intermediate | platform-agnostic |
 | `data-retention-policies` | Automate the lifecycle of order and customer data — archive old records, anonymize personal data on request, and purge expired data on schedule | intermediate | platform-agnostic |
+| `financial-audit-trail` | Build immutable audit trails for all financial transactions with user attribution, change logging, tamper detection, and compliance-ready export for external audits | intermediate | platform-agnostic |
+| `financial-compliance-sox` | Implement SOX-compliant financial controls for ecommerce with audit trails, segregation of duties, access controls, and compliance-ready transaction logging | advanced | platform-agnostic |
 | `fraud-detection` | Protect your store from fraudulent orders using risk scoring, 3D Secure challenges, velocity checks, and manual review queues for suspicious orders | advanced | platform-agnostic |
 | `gdpr-ecommerce` | Make your store GDPR-compliant with cookie consent, customer data export on request, right-to-deletion workflows, and data processing agreements | intermediate | platform-agnostic |
 | `pci-dss-compliance` | Meet PCI-DSS payment security requirements by scoping your environment correctly, selecting the right SAQ, and implementing required controls | advanced | platform-agnostic |
