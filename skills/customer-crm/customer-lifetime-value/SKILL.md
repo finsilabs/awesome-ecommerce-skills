@@ -1,6 +1,6 @@
 ---
 name: customer-lifetime-value
-description: "Calculate and predict how much revenue each customer will generate over time, then automate retention strategies for your highest-value segments"
+description: "Calculate and predict the net profit value each customer will generate over their lifetime, then automate retention strategies for your highest-value segments"
 category: customer-crm
 risk: safe
 source: curated
@@ -26,6 +26,15 @@ Customer Lifetime Value (CLV) quantifies the total net revenue expected from a c
 - When calculating the ROI of retention programs (loyalty points, VIP benefits)
 - When a board or investor asks for cohort-level LTV curves
 - When segmenting customers by predicted future value rather than historical spend alone
+
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
+**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
 
 ## Core Instructions
 

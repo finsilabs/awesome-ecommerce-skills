@@ -27,6 +27,15 @@ Product reviews are the strongest social proof signal in e-commerce — products
 - When calculating aggregate scores that account for low review volume (Bayesian averaging)
 - When importing reviews from a third-party platform (Yotpo, Bazaarvoice) into a custom system
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
+**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
+
 ## Core Instructions
 
 1. **Design the review data model**
@@ -284,6 +293,7 @@ export async function markReviewHelpful(req: Request, res: Response) {
 - **Include structured review schema on every product page** — Google shows star ratings in SERPs only when `aggregateRating` is present
 - **Sort by "most helpful" by default** — most recent is not always most useful; helpful votes surface quality reviews
 - **Paginate review display** — load 5–10 reviews initially with infinite scroll or pagination; loading all reviews blocks page LCP
+- **When a customer requests account deletion, anonymize their reviews** — remove author name and email but keep review text and rating; see @gdpr-ecommerce for the full erasure workflow
 
 ## Common Pitfalls
 

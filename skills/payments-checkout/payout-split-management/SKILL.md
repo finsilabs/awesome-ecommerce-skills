@@ -32,6 +32,15 @@ The design must be highly accurate (penny-perfect accounting), auditable (every 
 - When managing rolling reserves for high-risk or new sellers
 - When you need a split payout system for affiliate commissions or referral rewards
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
+**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+
 ## Core Instructions
 
 ### 1. Design the payout split data model
@@ -162,8 +171,14 @@ export async function calculateOrderEarnings(order) {
     commission = await computeTieredCommission(seller, order);
   }
 
-  // Step 2: Payment processing fee pass-through (Stripe fee: 2.9% + $0.30)
-  const processingFee = order.total_amount * 0.029 + 0.30;
+  // Step 2: Payment processing fee pass-through
+  // NOTE: Do NOT rely on the hardcoded 2.9% + $0.30 estimate — actual Stripe fees vary
+  // by card type (e.g., Amex, international cards) and country. Instead, retrieve the
+  // exact fee from `balance_transaction.fee` on the Stripe BalanceTransaction object:
+  //   const balanceTxn = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
+  //   const processingFee = balanceTxn.fee / 100;  // fee is in cents
+  // Using the estimated rate will cause penny discrepancies that compound over time.
+  const processingFee = order.stripe_processing_fee ?? (order.total_amount * 0.029 + 0.30);
 
   // Step 3: Rolling reserve
   const reserve = order.subtotal * seller.rolling_reserve_pct;

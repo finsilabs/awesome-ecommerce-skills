@@ -26,6 +26,15 @@ Build high-converting product detail pages (PDP) with zoomable image galleries, 
 - When adding an image gallery with zoom, thumbnails, and swipe support
 - When integrating social proof elements like reviews, ratings, and stock indicators
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
+**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
+
 ## Core Instructions
 
 1. **Structure the PDP layout with a two-column grid**

@@ -32,6 +32,15 @@ Manual tax management is a significant legal and financial risk. Getting it wron
 - When you are launching in a new country and need to understand VAT/GST registration requirements
 - When selling digital goods or SaaS internationally (different rules than physical goods in most jurisdictions)
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
+**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+
 ## Core Instructions
 
 ### 1. Design the tax compliance data model
@@ -176,13 +185,17 @@ export async function calculateTax({ order, customer, items }) {
 }
 
 async function checkExemptionCertificate(customer, state) {
+  // Two separate OR conditions must be composed with AND to avoid the second OR
+  // silently overwriting the first (JavaScript objects cannot have duplicate keys).
   return db.exemptionCertificates.findFirst({
     where: {
-      OR: [{ customer_id: customer.id }, { customer_email: customer.email }],
-      issuing_state: state,
-      status: 'active',
-      valid_from: { lte: new Date() },
-      OR: [{ valid_until: null }, { valid_until: { gte: new Date() } }],
+      AND: [
+        { OR: [{ customer_id: customer.id }, { customer_email: customer.email }] },
+        { issuing_state: state },
+        { status: 'active' },
+        { valid_from: { lte: new Date() } },
+        { OR: [{ valid_until: null }, { valid_until: { gte: new Date() } }] },
+      ],
     },
   });
 }

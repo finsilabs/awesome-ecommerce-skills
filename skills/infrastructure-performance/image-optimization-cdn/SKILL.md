@@ -26,6 +26,15 @@ Product images are typically the largest assets on e-commerce pages and the sing
 - When original product images from vendors are multi-megabyte PSDs or BMPs that need automation
 - When adding WebP/AVIF support to an existing storefront that serves only JPEG/PNG
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify manages infrastructure, CDN, and scaling. Focus on Liquid template performance, image optimization via Shopify's CDN, and app performance.
+**WooCommerce**: You manage hosting and performance. Use caching plugins (WP Rocket, Redis Object Cache), CDN (Cloudflare), and optimize database queries.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Access to your hosting/infrastructure, monitoring tools
+
 ## Core Instructions
 
 1. **Set up Sharp for server-side image processing**

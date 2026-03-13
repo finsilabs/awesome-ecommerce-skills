@@ -32,6 +32,15 @@ A well-built AR automation system reduces DSO by 5–15 days by ensuring follow-
 - When building a wholesale or distribution ecommerce platform with trade accounts
 - When you need audit-ready AR records for lenders or investors doing due diligence
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
+**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+
 ## Core Instructions
 
 ### 1. Design the AR data model
@@ -186,6 +195,13 @@ export async function generateInvoice({ orderId, customerId, paymentTerms, lineI
 
 async function generateInvoiceNumber() {
   // Format: INV-2026-0001234
+  // WARNING: Using db.invoices.count() here has a race condition — two concurrent requests
+  // can read the same count and generate the same invoice number. In production, use an
+  // advisory lock or a database sequence to guarantee uniqueness. See the
+  // @invoice-generation-automation skill for the advisory-lock pattern:
+  //   await db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('invoice_number_seq'))`;
+  // The UNIQUE constraint on invoice_number will catch duplicates as a last resort,
+  // but you should not rely on that — handle the conflict and retry instead.
   const year = new Date().getFullYear();
   const count = await db.invoices.count({ where: { invoice_number: { startsWith: `INV-${year}-` } } });
   return `INV-${year}-${String(count + 1).padStart(7, '0')}`;

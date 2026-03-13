@@ -20,11 +20,22 @@ Lapsed customers — those who have not purchased within 2x their typical repurc
 
 ## When to Use This Skill
 
+> **Note:** For proactive churn prevention before customers lapse, see @customer-retention-engine. This skill focuses on re-engaging customers who have already become inactive.
+
 - When a large portion of your customer base has not purchased in 90–180 days
 - When overall repeat purchase rate is declining year-over-year
 - When you have never systematically targeted lapsed customers before
 - When lifecycle marketing is in place but there is no specific win-back workflow
 - When wanting to identify which lapsed customers are worth discounting vs. sunsetting
+
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, email/SMS automation platform (Klaviyo or similar), customer purchase history and inactivity data
 
 ## Core Instructions
 

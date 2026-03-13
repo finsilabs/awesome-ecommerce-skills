@@ -36,6 +36,15 @@ Key design principles: every metric needs a clear definition, every chart needs 
 
 ---
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
+**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+
 ## Core Instructions
 
 ### Step 1 — Define the KPI Registry
@@ -133,8 +142,15 @@ class FinancialMetricsEngine:
             raise ValueError(f"Unknown KPI: {kpi_name}")
 
         dimension_filters = ""
+        params: list = [start_date, end_date]
         if dimensions:
-            clauses = [f"{k} = '{v}'" for k, v in dimensions.items()]
+            # WARNING: Do NOT use f-string interpolation (f"{k} = '{v}'") to build SQL filters
+            # from user-supplied dimension values — this is vulnerable to SQL injection.
+            # Use parameterized queries instead:
+            clauses = []
+            for k, v in dimensions.items():
+                clauses.append(f"{k} = %s")  # use ? for SQLite / :param for SQLAlchemy
+                params.append(v)
             dimension_filters = "AND " + " AND ".join(clauses)
 
         group_by_cols = [f"DATE_TRUNC('{granularity}', order_date) AS period"]
@@ -146,12 +162,12 @@ class FinancialMetricsEngine:
                 {', '.join(group_by_cols)},
                 {kpi_def['sql_expression']} AS metric_value
             FROM {kpi_def.get('source_table', 'order_facts')}
-            WHERE order_date BETWEEN '{start_date}' AND '{end_date}'
+            WHERE order_date BETWEEN %s AND %s
             {dimension_filters}
             GROUP BY {', '.join([str(i+1) for i in range(len(group_by_cols))])}
             ORDER BY period
         """
-        return pd.read_sql(query, self.db)
+        return pd.read_sql(query, self.db, params=params)
 
     def compute_period_comparison(
         self,

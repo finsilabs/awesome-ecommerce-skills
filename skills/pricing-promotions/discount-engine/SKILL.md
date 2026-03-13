@@ -26,6 +26,15 @@ Build a flexible, rule-based discount engine that supports percentage off, fixed
 - When creating automatic discounts that apply based on cart conditions
 - When you need BOGO, bundle, or gift-with-purchase promotions
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
+**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
+
 ## Core Instructions
 
 1. **Define the discount data model**
@@ -230,6 +239,16 @@ Build a flexible, rule-based discount engine that supports percentage off, fixed
              const itemDiscount = Math.round(discountAmount * proportion);
              lineAllocations.set(item.id, itemDiscount);
              totalDiscount += itemDiscount;
+           }
+
+           // Remainder allocation: Math.round() per item can cause the sum to drift by 1-2 cents.
+           // Adjust the last item so the total exactly equals the intended discount amount.
+           const actualTotal = Array.from(lineAllocations.values()).reduce((s, v) => s + v, 0);
+           const remainder = discountAmount - actualTotal;
+           if (remainder !== 0 && eligibleItems.length > 0) {
+             const lastItem = eligibleItems[eligibleItems.length - 1];
+             lineAllocations.set(lastItem.id, (lineAllocations.get(lastItem.id) ?? 0) + remainder);
+             totalDiscount += remainder;
            }
          } else {
            // Apply fixed amount per eligible item

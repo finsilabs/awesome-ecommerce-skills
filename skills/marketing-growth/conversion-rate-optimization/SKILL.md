@@ -27,6 +27,15 @@ Conversion rate optimization (CRO) is the systematic process of increasing the p
 - When post-redesign metrics show a conversion regression and root cause analysis is needed
 - When stakeholders need a prioritized roadmap of CRO experiments with expected impact
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, analytics platform (GA4, Heap, or Mixpanel), A/B testing tool (Optimizely, VWO, or Shopify Experiments)
+
 ## Core Instructions
 
 1. **Instrument the checkout funnel with step-level tracking**

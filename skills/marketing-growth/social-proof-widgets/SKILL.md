@@ -26,6 +26,15 @@ Social proof leverages the psychological tendency to follow the behavior of othe
 - When wanting to add real-time purchase notifications without a third-party SaaS tool
 - When building a low-stock urgency display based on actual inventory data
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, social proof tool (Fomo, TrustPulse, or custom widget), order/review data access
+
 ## Core Instructions
 
 ### 1. Social proof data API
@@ -60,7 +69,7 @@ export async function getProductSocialProof(req: Request, res: Response) {
 
   return res.json({
     recentPurchases,
-    activeVisitors:    Math.max(activeVisitors, 1),
+    activeVisitors,    // 0 means the widget should be hidden (below minimum threshold)
     reviews:           { average: reviewSummary.avgRating, total: reviewSummary.total },
     stockLevel:        { quantity: stockLevel, isLow: stockLevel > 0 && stockLevel <= 5, isSoldOut: stockLevel === 0 },
     purchasedLast24h:  recentOrders.length,
@@ -90,7 +99,9 @@ async function getActiveVisitors(productId: string): Promise<number> {
 
   await redis.zremrangebyscore(key, '-inf', now - windowMs);
   const count = await redis.zcard(key);
-  return count + (count < 3 ? Math.floor(Math.random() * 3) : 0);
+  // Return 0 when count is too low — the caller should hide the widget below a minimum threshold.
+  // Never pad with random values; only show real data.
+  return count < 3 ? 0 : count;
 }
 ```
 

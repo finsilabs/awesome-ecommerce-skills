@@ -26,6 +26,15 @@ Edge computing executes code in the CDN PoP closest to each user, reducing laten
 - When you need to inject personalization hints (customer tier, ab variant) into cached page responses
 - When building a multi-region deployment where each region needs its own origin but shares a single domain
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify manages infrastructure, CDN, and scaling. Focus on Liquid template performance, image optimization via Shopify's CDN, and app performance.
+**WooCommerce**: You manage hosting and performance. Use caching plugins (WP Rocket, Redis Object Cache), CDN (Cloudflare), and optimize database queries.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Access to your hosting/infrastructure, monitoring tools
+
 ## Core Instructions
 
 1. **Set up Vercel Edge Middleware for geo-routing**

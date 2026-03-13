@@ -25,6 +25,15 @@ Implement multi-currency support that detects a visitor's preferred currency fro
 - When implementing a currency selector in the site header
 - When integrating Stripe or PayPal multi-currency settlement
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
+**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+
 ## Core Instructions
 
 1. **Define supported currencies and exchange rate strategy**
@@ -86,7 +95,13 @@ Implement multi-currency support that detects a visitor's preferred currency fro
    ```javascript
    // lib/currencyRounding.js
 
-   export function roundPrice(amount, currency) {
+   /**
+    * Applies psychological ("charm") pricing rounding for DISPLAY purposes only.
+    * This function must NOT be used to determine the amount charged to the customer.
+    * Always charge the exact converted amount (stored in the base currency); use this
+    * function only when rendering prices in the UI.
+    */
+   export function roundPriceForDisplay(amount, currency) {
      const config = SUPPORTED_CURRENCIES[currency];
      if (!config) return amount;
 
@@ -271,7 +286,7 @@ const paymentIntent = await stripe.paymentIntents.create({
 
 | Problem | Solution |
 |---------|----------|
-| Prices look odd after conversion (€23.847) | Apply the `roundPrice` function to converted prices before display and storage |
+| Prices look odd after conversion (€23.847) | Apply the `roundPriceForDisplay` function to converted prices before display (not before charging) |
 | Currency flashes to base currency on page load (hydration mismatch) | Read the user's currency preference from a cookie server-side and render with the correct currency from the first render |
 | Payment amount does not match displayed price | Always recalculate the payment amount server-side using the same exchange rate that was shown to the customer; store the rate at checkout time |
 | JPY amount passed to Stripe as cents (¥300000 instead of ¥3000) | For zero-decimal currencies (JPY, KRW), pass the whole amount to Stripe — do not multiply by 100 |

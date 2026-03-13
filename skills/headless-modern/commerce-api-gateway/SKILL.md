@@ -26,6 +26,18 @@ An API gateway sits between storefront clients and the set of backend commerce s
 - When you want to apply rate limiting, circuit breakers, or caching without modifying each service
 - When you need a single GraphQL schema that spans catalog, inventory, CMS, and personalization data
 
+## Prerequisites & Platform Notes
+
+**This skill is written for custom/headless storefronts** (Node.js, Python, or similar backend). The code examples use TypeScript/Node.js and can be adapted to any stack.
+
+**Shopify**: Shopify Hydrogen is Shopify's headless framework. MACH/composable patterns apply when using Shopify as the commerce backend with a custom frontend, or when mixing Shopify with other best-of-breed services.
+**WooCommerce**: WooCommerce can serve as a headless backend via its REST API and WPGraphQL. These patterns apply when decoupling the frontend from WordPress.
+**Magento**: Magento's GraphQL API and PWA Studio support headless architectures. These composable patterns apply to Magento as a backend service in a MACH stack.
+
+**You'll need**:
+- Node.js 18+ (or adapt to your backend language)
+- Redis for caching/queues
+
 ## Core Instructions
 
 1. **Set up Apollo Router for GraphQL Federation**

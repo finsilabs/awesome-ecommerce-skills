@@ -26,6 +26,15 @@ Build a horizontal navigation bar that expands into full-width panels containing
 - When the current dropdown menu is not accessible to keyboard or screen reader users
 - When navigation content needs to be managed by a merchandiser without code deploys
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
+**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
+
 ## Core Instructions
 
 1. **Define the navigation data model**

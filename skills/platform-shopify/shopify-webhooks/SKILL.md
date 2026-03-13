@@ -218,9 +218,17 @@ Shopify webhooks deliver real-time event notifications to your app's HTTP endpoi
 ### Full order creation handler with error handling and queue
 
 ```typescript
-import Bull from "bull";
+import { Queue, Worker } from "bullmq";
 
-const orderQueue = new Bull("order-processing", process.env.REDIS_URL!);
+const connection = { host: "localhost", port: 6379 };
+
+const orderQueue = new Queue("order-processing", {
+  connection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 5000 },
+  },
+});
 
 router.post("/webhooks/orders-create", async (req, res) => {
   // Must respond within 5 seconds
@@ -235,18 +243,16 @@ router.post("/webhooks/orders-create", async (req, res) => {
     { order: req.body, shop, webhookId },
     {
       jobId: webhookId, // Prevents duplicate jobs for same webhook
-      attempts: 3,
-      backoff: { type: "exponential", delay: 5000 },
     }
   );
 });
 
-orderQueue.process("process-order", async (job) => {
+const worker = new Worker("order-processing", async (job) => {
   const { order, shop, webhookId } = job.data;
   await syncOrderToERP(order, shop);
   await updateInventoryInWarehouse(order.line_items);
   await sendConfirmationNotification(order);
-});
+}, { connection });
 ```
 
 ### List and delete stale webhook subscriptions

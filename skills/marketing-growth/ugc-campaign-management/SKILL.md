@@ -26,6 +26,15 @@ User-generated content (UGC) — photos, videos, and reviews from real customers
 - When needing a rights management system before using customer photos in ads
 - When building a shoppable Instagram or TikTok gallery on your storefront
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, UGC platform (TINT, Stackla, or Bazaarvoice), social platform API access for content collection
+
 ## Core Instructions
 
 ### 1. UGC collection pipeline

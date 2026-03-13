@@ -26,6 +26,15 @@ Point-of-sale integration connects your physical retail operations with your onl
 - When building a custom kiosk or tablet-based POS application
 - When franchised or multi-location retail needs unified inventory and reporting
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify supports webhooks, the Admin API, and app extensions for integrations. Use Shopify Flow or custom apps to connect third-party services.
+**WooCommerce**: Use WooCommerce REST API and WordPress hooks for integrations. Connect via plugins or custom PHP code.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: API credentials for both your store and the external service
+
 ## Core Instructions
 
 1. **Set up Square POS API integration**

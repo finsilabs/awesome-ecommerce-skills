@@ -26,6 +26,15 @@ Build a return merchandise authorization (RMA) system that lets customers initia
 - When integrating return label generation with carrier APIs (UPS, FedEx, USPS)
 - When managing restocking — deciding whether returned items go back to sellable inventory or to a quarantine bin
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Use Shopify Shipping (carrier-calculated rates), Shopify Fulfillment Network, or apps like ShipStation. The Fulfillment API handles custom fulfillment workflows.
+**WooCommerce**: Use WooCommerce Shipping or plugins (ShipStation, WooCommerce Table Rate Shipping). Extend with woocommerce_shipping_methods filter.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with shipping configured, carrier API accounts if using custom rates
+
 ## Core Instructions
 
 1. **Design the RMA schema**

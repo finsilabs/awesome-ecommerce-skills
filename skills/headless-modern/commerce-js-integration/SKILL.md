@@ -26,6 +26,19 @@ Commerce.js (Chec) is a headless commerce platform offering a JavaScript SDK tha
 - When your catalog is small (under 1,000 products) and you don't need custom fulfillment logic
 - When you want a simple SDK without managing a full Shopify or commercetools environment
 
+## Prerequisites & Platform Notes
+
+**This skill is written for custom/headless storefronts** (Node.js, Python, or similar backend). The code examples use TypeScript/Node.js and can be adapted to any stack.
+
+**Shopify**: Shopify Hydrogen is Shopify's headless framework. MACH/composable patterns apply when using Shopify as the commerce backend with a custom frontend, or when mixing Shopify with other best-of-breed services.
+**WooCommerce**: WooCommerce can serve as a headless backend via its REST API and WPGraphQL. These patterns apply when decoupling the frontend from WordPress.
+**Magento**: Magento's GraphQL API and PWA Studio support headless architectures. These composable patterns apply to Magento as a backend service in a MACH stack.
+
+**You'll need**:
+- Node.js 18+ (or adapt to your backend language)
+- Stripe account and API keys
+- An email sending service (SendGrid, AWS SES, or Postmark)
+
 ## Core Instructions
 
 1. **Install the SDK and initialize the client**

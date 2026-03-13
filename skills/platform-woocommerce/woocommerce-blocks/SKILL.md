@@ -266,26 +266,50 @@ WooCommerce Blocks replaces the classic shortcode-based cart and checkout with R
 
 ### Checkout field validation
 
-```javascript
-// Validate that gift message doesn't contain URLs (client-side)
-import { registerCheckoutFilters } from "@woocommerce/blocks-checkout";
+Validation of custom checkout data should be done **server-side** via the Store API update callback. Client-side filters (`__experimentalRegisterCheckoutFilters`) can only modify display values (e.g., price formatting), not validate form fields.
 
-registerCheckoutFilters("my-checkout-fields", {
-  // Filter that runs on checkout validation
-  validateAdditionalFields: (value, extensions, args) => {
-    const giftMessage = WC().session?.gift_message ?? "";
-    const urlPattern = /https?:\/\//i;
-    if (urlPattern.test(giftMessage)) {
-      return {
-        "my-checkout-fields/gift-message": {
-          message: "Gift messages cannot contain links.",
-          hidden: false,
-        },
-      };
-    }
-    return {};
-  },
-});
+```php
+<?php
+// Server-side validation in the Store API update callback
+woocommerce_store_api_register_update_callback([
+    'namespace' => 'my-checkout-fields',
+    'callback'  => function (array $data) {
+        if (isset($data['gift_message'])) {
+            $message = sanitize_textarea_field($data['gift_message']);
+
+            // Reject messages that contain URLs
+            if (preg_match('#https?://#i', $message)) {
+                throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+                    'invalid_gift_message',
+                    __('Gift messages cannot contain links.', 'my-checkout-fields'),
+                    400
+                );
+            }
+
+            WC()->session->set('gift_message', $message);
+        }
+    },
+]);
+```
+
+On the client side, handle the error response from `extensionCartUpdate` to display validation messages:
+
+```javascript
+import { extensionCartUpdate } from "@woocommerce/blocks-checkout";
+
+const handleChange = async (e) => {
+  const value = e.target.value;
+  setGiftMessage(value);
+  try {
+    await extensionCartUpdate({
+      namespace: "my-checkout-fields",
+      data: { gift_message: value },
+    });
+    setError(null);
+  } catch (err) {
+    setError(err.message);
+  }
+};
 ```
 
 ### Disable a payment method for certain cart conditions

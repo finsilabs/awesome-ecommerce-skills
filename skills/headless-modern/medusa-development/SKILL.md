@@ -26,6 +26,21 @@ Build and extend headless e-commerce backends with Medusa.js using custom servic
 - When implementing event-driven automation via subscribers (e.g., send email on order placed)
 - When integrating external systems (ERP, CMS, fulfillment) with Medusa
 
+## Prerequisites & Platform Notes
+
+**This skill is written for custom/headless storefronts** (Node.js, Python, or similar backend). The code examples use TypeScript/Node.js and can be adapted to any stack.
+
+**Shopify**: Shopify Hydrogen is Shopify's headless framework. MACH/composable patterns apply when using Shopify as the commerce backend with a custom frontend, or when mixing Shopify with other best-of-breed services.
+**WooCommerce**: WooCommerce can serve as a headless backend via its REST API and WPGraphQL. These patterns apply when decoupling the frontend from WordPress.
+**Magento**: Magento's GraphQL API and PWA Studio support headless architectures. These composable patterns apply to Magento as a backend service in a MACH stack.
+
+**You'll need**:
+- Node.js 18+ (or adapt to your backend language)
+- PostgreSQL (or your preferred relational database)
+- Redis for caching/queues
+- Stripe account and API keys
+- An email sending service (SendGrid, AWS SES, or Postmark)
+
 ## Core Instructions
 
 1. **Set up a Medusa project**

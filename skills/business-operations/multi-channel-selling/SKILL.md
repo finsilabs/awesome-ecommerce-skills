@@ -26,6 +26,15 @@ Build a unified catalog and inventory layer that serves as the single source of 
 - When overselling on one channel because inventory is not shared in real time
 - When building a channel management platform that lets brands manage all their sales channels in one place
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
+**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
+
 ## Core Instructions
 
 1. **Design the channel-agnostic catalog architecture**

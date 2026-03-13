@@ -2,7 +2,7 @@
 name: coupon-management
 description: "Build a coupon system with percentage and fixed discounts, usage limits per customer, expiration dates, and bulk unique-code generation"
 category: pricing-promotions
-risk: safe
+risk: critical
 source: curated
 date_added: "2026-03-12"
 tags: [coupons, discounts, promotions, validation, bulk-generation, promo-codes]
@@ -25,6 +25,15 @@ Build a coupon system that handles the full lifecycle: creation with configurabl
 - When running marketing campaigns that require unique, single-use codes for each recipient
 - When building an admin interface to create and monitor coupon performance
 - When enforcing complex coupon rules such as product/category exclusions or customer segment restrictions
+
+## Prerequisites & Platform Notes
+
+**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
+**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
 
 ## Core Instructions
 

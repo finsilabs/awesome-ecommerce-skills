@@ -29,6 +29,15 @@ This skill covers building a personalization pipeline: data collection, feature 
 - When you're ready to move beyond rule-based merchandising to data-driven personalization
 - When conversion rates are plateauing and you need a lift from relevance
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, customer behavioral event data, ML recommendation platform (Dynamic Yield, Nosto, or custom model)
+
 ## Core Instructions
 
 ### 1. Collect behavioral events

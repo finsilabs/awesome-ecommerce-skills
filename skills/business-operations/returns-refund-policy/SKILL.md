@@ -26,6 +26,15 @@ Build a configurable policy engine that evaluates return eligibility based on pr
 - When building an automated approval workflow that handles 80% of returns without human intervention
 - When compliance or legal requirements mandate that return policies be auditable and version-controlled
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
+**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
+
 ## Core Instructions
 
 1. **Define the policy rules schema**
@@ -105,8 +114,11 @@ Build a configurable policy engine that evaluates return eligibility based on pr
        return { eligible: false, policy, reason: 'FINAL_SALE', restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0 };
      }
 
-     const daysSincePurchase = Math.floor((Date.now() - order.created_at.getTime()) / 86400000);
-     const daysRemaining = policy.return_window_days - daysSincePurchase;
+     if (!order.delivered_at) {
+       return { eligible: false, policy: null, reason: 'NOT_DELIVERED', restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0 };
+     }
+     const daysSinceDelivery = Math.floor((Date.now() - order.delivered_at.getTime()) / 86400000);
+     const daysRemaining = policy.return_window_days - daysSinceDelivery;
      if (daysRemaining < 0) {
        return { eligible: false, policy, reason: 'WINDOW_EXPIRED', restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0 };
      }

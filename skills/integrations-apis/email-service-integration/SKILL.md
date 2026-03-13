@@ -26,6 +26,15 @@ Transactional emails — order confirmations, shipping notifications, password r
 - When building custom email templates that match your brand identity
 - When tracking email delivery, open rates, and bounces for transactional emails
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify supports webhooks, the Admin API, and app extensions for integrations. Use Shopify Flow or custom apps to connect third-party services.
+**WooCommerce**: Use WooCommerce REST API and WordPress hooks for integrations. Connect via plugins or custom PHP code.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: API credentials for both your store and the external service
+
 ## Core Instructions
 
 1. **Configure DNS records for email deliverability**

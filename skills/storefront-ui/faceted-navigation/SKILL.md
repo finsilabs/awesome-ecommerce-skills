@@ -26,6 +26,15 @@ Build a filterable product listing page (PLP) where shoppers can narrow results 
 - When replacing a legacy faceted implementation that breaks the back button
 - When implementing Algolia InstantSearch or a custom faceting layer on Elasticsearch
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
+**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
+
 ## Core Instructions
 
 1. **Design the URL state schema**
@@ -249,12 +258,17 @@ Build a filterable product listing page (PLP) where shoppers can narrow results 
            <input type="range" min={min} max={max} value={localMin}
              onChange={e => setLocalMin(Number(e.target.value))}
              onMouseUp={handleCommit} onTouchEnd={handleCommit}
-             aria-label="Minimum price" />
+             aria-label="Minimum price"
+             aria-valuemin={min} aria-valuemax={max} aria-valuenow={localMin}
+             aria-valuetext={`$${localMin}`} />
            <input type="range" min={min} max={max} value={localMax}
              onChange={e => setLocalMax(Number(e.target.value))}
              onMouseUp={handleCommit} onTouchEnd={handleCommit}
-             aria-label="Maximum price" />
+             aria-label="Maximum price"
+             aria-valuemin={min} aria-valuemax={max} aria-valuenow={localMax}
+             aria-valuetext={`$${localMax}`} />
          </div>
+         <span aria-live="polite" className="sr-only">Price: ${localMin} to ${localMax}</span>
        </div>
      );
    }

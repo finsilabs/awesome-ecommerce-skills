@@ -26,6 +26,15 @@ Implement a flash sale system that handles high-concurrency traffic spikes with 
 - When you need a waiting room / queue to fairly admit customers during high-demand drops
 - When building a deals platform where multiple flash sales run simultaneously across different products
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
+**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
+
 ## Core Instructions
 
 1. **Design the flash sale schema**

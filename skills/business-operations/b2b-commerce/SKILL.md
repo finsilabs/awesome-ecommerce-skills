@@ -26,6 +26,15 @@ Implement B2B-specific features on top of an existing e-commerce platform: compa
 - When replacing a phone/email-based wholesale ordering process with a self-service portal
 - When B2B customers require purchase order numbers on invoices for their accounts payable process
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
+**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
+
 ## Core Instructions
 
 1. **Model company accounts and roles**

@@ -235,29 +235,31 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 ```
 
-### App Bridge ResourcePicker
+### App Bridge Resource Picker (v4)
 
 ```typescript
-import { ResourcePicker } from "@shopify/app-bridge-react";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import { useState } from "react";
+import { Button } from "@shopify/polaris";
 
 export default function ProductSelector() {
-  const [open, setOpen] = useState(false);
+  const shopify = useAppBridge();
   const [selected, setSelected] = useState<string[]>([]);
+
+  const handleSelectProducts = async () => {
+    const selection = await shopify.resourcePicker({
+      type: "product",
+      multiple: true,
+    });
+
+    if (selection) {
+      setSelected(selection.map((p) => p.id));
+    }
+  };
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Select Products</Button>
-      <ResourcePicker
-        resourceType="Product"
-        open={open}
-        onSelection={({ selection }) => {
-          setSelected(selection.map((p) => p.id));
-          setOpen(false);
-        }}
-        onCancel={() => setOpen(false)}
-        allowMultiple
-      />
+      <Button onClick={handleSelectProducts}>Select Products</Button>
       <p>Selected IDs: {selected.join(", ")}</p>
     </>
   );

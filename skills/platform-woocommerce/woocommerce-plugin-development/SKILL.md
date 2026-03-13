@@ -219,6 +219,8 @@ Build custom WooCommerce plugins that extend store functionality using WordPress
            global $post;
            echo '<div id="mwe_custom_product_data" class="panel woocommerce_options_panel">';
 
+           wp_nonce_field('mwe_save_product_meta', 'mwe_product_meta_nonce');
+
            woocommerce_wp_text_input([
                'id'          => '_mwe_custom_field',
                'label'       => __('Custom Field', 'my-woo-extension'),
@@ -241,6 +243,12 @@ Build custom WooCommerce plugins that extend store functionality using WordPress
        }
 
        public function save_product_meta(int $post_id): void {
+           // Verify nonce before processing $_POST data
+           if (!isset($_POST['mwe_product_meta_nonce']) ||
+               !wp_verify_nonce($_POST['mwe_product_meta_nonce'], 'mwe_save_product_meta')) {
+               return;
+           }
+
            $custom_field = sanitize_text_field($_POST['_mwe_custom_field'] ?? '');
            update_post_meta($post_id, '_mwe_custom_field', $custom_field);
 

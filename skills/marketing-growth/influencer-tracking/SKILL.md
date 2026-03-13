@@ -20,12 +20,23 @@ Influencer marketing drives significant e-commerce revenue but is notoriously di
 
 ## When to Use This Skill
 
+> **Note:** For full influencer campaign management, see @influencer-marketplace-integration. This skill focuses purely on attribution and analytics.
+
 - When managing 10+ influencer partnerships and tracking them manually in a spreadsheet
 - When needing to prove ROI of influencer spend to leadership with first-party data
 - When building a creator portal where influencers can generate their own tracking links
 - When running gifting campaigns and needing to separate organic versus paid influencer posts
 - When combining UTM tracking with unique promo codes to capture offline/app conversions
 - When comparing performance across platforms (Instagram, TikTok, YouTube) in a single dashboard
+
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, UTM tracking setup, analytics platform (GA4 or similar), discount/coupon code generation
 
 ## Core Instructions
 

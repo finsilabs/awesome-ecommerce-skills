@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-13T00:38:14.789Z",
+  "generatedAt": "2026-03-13T01:36:20.031Z",
   "total": 178,
   "skills": [
     {
@@ -7,7 +7,7 @@
       "name": "Accounts Payable Management",
       "description": "Manage supplier invoices and vendor payments with automated receipt matching, payment scheduling, early discount optimization, and reconciliation workflows",
       "category": "business-operations",
-      "risk": "safe",
+      "risk": "critical",
       "source": "curated",
       "date_added": "2026-03-12",
       "tags": [
@@ -397,7 +397,7 @@
       "name": "Cogs Tracking Allocation",
       "description": "Track cost of goods sold with FIFO/LIFO/weighted average inventory valuation, landed cost allocation for imports, and variance analysis against standard costs",
       "category": "catalog-inventory",
-      "risk": "safe",
+      "risk": "critical",
       "source": "curated",
       "date_added": "2026-03-12",
       "tags": [
@@ -823,7 +823,7 @@
     {
       "id": "customer-lifetime-value",
       "name": "Customer Lifetime Value",
-      "description": "Calculate and predict how much revenue each customer will generate over time, then automate retention strategies for your highest-value segments",
+      "description": "Calculate and predict the net profit value each customer will generate over their lifetime, then automate retention strategies for your highest-value segments",
       "category": "customer-crm",
       "risk": "safe",
       "source": "curated",
@@ -3757,24 +3757,19 @@
     {
       "id": "predictive-personalization",
       "name": "Predictive Personalization",
-      "description": "Use machine learning models to predict customer preferences and dynamically personalize product recommendations, search results, and content across your store",
+      "description": "Use machine learning models to predict customer preferences and deliver personalized product recommendations, content, and offers based on behavioral signals",
       "category": "marketing-growth",
       "risk": "safe",
       "source": "curated",
       "date_added": "2026-03-12",
       "tags": [
         "personalization",
-        "machine-learning",
-        "recommendations",
-        "ai",
-        "customer-experience"
+        "ml",
+        "recommendations"
       ],
       "triggers": [
-        "personalize recommendations",
-        "predict customer preferences",
-        "ML product recommendations",
-        "dynamic personalization",
-        "personalized shopping experience"
+        "add AI personalization",
+        "predictive recommendations"
       ],
       "tools": [
         "claude-code",
@@ -5714,7 +5709,7 @@
       "name": "Coupon Management",
       "description": "Build a coupon system with percentage and fixed discounts, usage limits per customer, expiration dates, and bulk unique-code generation",
       "category": "pricing-promotions",
-      "risk": "safe",
+      "risk": "critical",
       "source": "curated",
       "date_added": "2026-03-12",
       "tags": [
@@ -6170,7 +6165,9 @@
         "cursor",
         "gemini-cli",
         "copilot",
-        "codex-cli"
+        "codex-cli",
+        "kiro",
+        "opencode"
       ],
       "path": "skills/security-compliance/financial-audit-trail",
       "platforms": [
@@ -6201,7 +6198,9 @@
         "cursor",
         "gemini-cli",
         "copilot",
-        "codex-cli"
+        "codex-cli",
+        "kiro",
+        "opencode"
       ],
       "path": "skills/security-compliance/financial-compliance-sox",
       "platforms": [

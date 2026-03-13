@@ -26,6 +26,15 @@ Build a flexible pricing rule engine that evaluates multiple promotions against 
 - When building a promotion scheduler that activates and deactivates rules at configured times
 - When you need an audit log that shows exactly which rules were applied and why for customer service queries
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
+**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
+
 ## Core Instructions
 
 1. **Define the rule schema**
@@ -127,6 +136,7 @@ Build a flexible pricing rule engine that evaluates multiple promotions against 
          if (line) {
            // Each rule discounts from the running (already-discounted) price
            // This implements "rules apply sequentially" semantics
+           line.currentPrice = line.currentPrice - (application.discountAmount / line.quantity);
          }
        }
      }

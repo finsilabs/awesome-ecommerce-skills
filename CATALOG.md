@@ -2,7 +2,7 @@
 
 > 178 skills across 17 categories
 
-*Generated at 2026-03-13T00:38:14.789Z*
+*Generated at 2026-03-13T01:36:20.031Z*
 
 ## Business Operations `business-operations`
 
@@ -39,7 +39,7 @@
 | Skill | Description | Difficulty | Platforms |
 |-------|-------------|------------|-----------|
 | `customer-accounts` | Let shoppers register, manage their profile, save multiple addresses, and view their full order history in a personal account portal | beginner | platform-agnostic |
-| `customer-lifetime-value` | Calculate and predict how much revenue each customer will generate over time, then automate retention strategies for your highest-value segments | advanced | platform-agnostic |
+| `customer-lifetime-value` | Calculate and predict the net profit value each customer will generate over their lifetime, then automate retention strategies for your highest-value segments | advanced | platform-agnostic |
 | `customer-segmentation` | Segment customers by purchase recency, frequency, and spend (RFM) or behavioral signals to power targeted marketing and personalization | advanced | platform-agnostic |
 | `customer-support-integration` | Connect Zendesk or Intercom to your store so support agents see full order history and customer details without switching tools | intermediate | platform-agnostic |
 | `live-chat-commerce` | Add real-time chat to your storefront so agents can share product links, assist with cart questions, and close sales in the conversation | intermediate | platform-agnostic |
@@ -145,7 +145,7 @@
 | `marketing-attribution-dashboard` | Build multi-touch attribution dashboards tracking revenue by channel, campaign, and creative with blended ROAS analysis and budget allocation recommendations | advanced | platform-agnostic |
 | `marketplace-advertising` | Manage sponsored product ads across Amazon, eBay, and Walmart marketplace platforms with bid optimization, keyword targeting, and ACOS tracking | advanced | platform-agnostic |
 | `meta-ads-integration` | Set up and optimize Meta (Facebook/Instagram) ad campaigns with Conversions API server-side tracking, dynamic product ads, and catalog sync for ecommerce | advanced | platform-agnostic |
-| `predictive-personalization` | Use machine learning models to predict customer preferences and dynamically personalize product recommendations, search results, and content across your store | advanced | platform-agnostic |
+| `predictive-personalization` | Use machine learning models to predict customer preferences and deliver personalized product recommendations, content, and offers based on behavioral signals | advanced | platform-agnostic |
 | `product-launch-campaigns` | Plan and execute multi-channel product launches with pre-launch waitlists, early access for VIPs, launch day orchestration, and post-launch momentum | intermediate | platform-agnostic |
 | `push-notifications` | Send browser push notifications for price drops, back-in-stock alerts, and cart reminders to bring shoppers back without needing their email | beginner | platform-agnostic |
 | `referral-viral-loops` | Build referral mechanics with dual-sided rewards, unique tracking links, viral coefficient optimization, and anti-fraud controls for referral abuse | advanced | platform-agnostic |

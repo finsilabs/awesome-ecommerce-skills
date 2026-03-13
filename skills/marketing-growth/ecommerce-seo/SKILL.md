@@ -26,6 +26,15 @@ Implement technical SEO for e-commerce sites including product page meta tags, S
 - When generating XML sitemaps for a large catalog (10K+ products)
 - When optimizing Core Web Vitals for product and collection pages
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store with admin access, Google Search Console account, sitemap/structured-data tools
+
 ## Core Instructions
 
 1. **Set up meta tags for product pages**
@@ -285,7 +294,8 @@ Implement technical SEO for e-commerce sites including product page meta tags, S
 
    # Block faceted navigation duplicate content
    Disallow: /collections/*?sort=
-   Disallow: /collections/*?page=
+   # Do NOT disallow /collections/*?page= — Google recommends letting paginated pages be crawled
+   # with self-referencing canonicals rather than blocking them in robots.txt.
    Disallow: /search?
    Disallow: /cart
    Disallow: /checkout
@@ -419,8 +429,11 @@ async function regenerateSitemaps() {
     gzipSync(collectionSitemap)
   );
 
-  // 4. Ping search engines
-  await fetch('https://www.google.com/ping?sitemap=https://yourstore.com/sitemap.xml');
+  // 4. Notify Google of sitemap updates
+  // Note: Google deprecated the google.com/ping?sitemap= endpoint in 2023 — do not use it.
+  // Instead, submit or update your sitemap URL via the Google Search Console API:
+  // https://developers.google.com/webmaster-tools/v1/sitemaps/submit
+  // For automated submission use the `googleapis` package with a service account.
 
   console.log(`Sitemaps regenerated: ${totalProducts} products, ${collections.length} collections`);
 }

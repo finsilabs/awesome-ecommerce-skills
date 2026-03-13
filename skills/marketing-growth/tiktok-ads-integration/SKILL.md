@@ -27,6 +27,15 @@ TikTok has become a primary discovery channel for ecommerce, particularly for fa
 - When syncing your product catalog for Dynamic Showcase Ads
 - When wanting to leverage LIVE Shopping events for real-time commerce
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, TikTok Business account, TikTok Events API credentials, product catalog feed
+
 ## Core Instructions
 
 ### 1. Install TikTok Pixel (browser-side)
@@ -153,7 +162,7 @@ async function sendTikTokEvent(params: {
   };
 
   const response = await fetch(
-    `https://business-api.tiktok.com/open_api/v1.3/pixel/track/?business_id=YOUR_BUSINESS_ID`,
+    `https://business-api.tiktok.com/open_api/v1.3/pixel/track/?business_id=${process.env.TIKTOK_BUSINESS_ID}`,
     {
       method:  'POST',
       headers: {

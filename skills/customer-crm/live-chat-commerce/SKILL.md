@@ -27,6 +27,15 @@ Live chat for e-commerce goes beyond basic support — agents can actively assis
 - When measuring chat-to-conversion rate and revenue attributed to live chat
 - When a third-party chat widget does not support the custom commerce actions your agents need
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
+**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
+
 ## Core Instructions
 
 1. **Set up the WebSocket server for real-time chat**
@@ -265,6 +274,7 @@ function ProductCard({ productId }: { productId: string }) {
 - **Add connection heartbeats** — send a `ping` frame every 30 seconds to detect stale connections and reconnect customers automatically
 - **Use HTTPS and WSS** — always use `wss://` for WebSocket in production; `ws://` sends messages in plaintext
 - **Track agent first-response time** — the primary SLA metric for live chat is the time to first agent reply; alert when it exceeds your target
+- **Inform customers that chat conversations are recorded** — for EU customers, ensure consent is obtained and provide a mechanism to export or delete chat transcripts per GDPR Article 17; set a retention period for chat messages (e.g., 12 months)
 
 ## Common Pitfalls
 

@@ -26,6 +26,15 @@ Implement WCAG 2.1 Level AA compliance across core e-commerce flows: product bro
 - When keyboard-only users cannot navigate the checkout flow
 - When automated tools (axe, WAVE) surface critical issues that need remediation
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
+**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
+
 ## Core Instructions
 
 1. **Announce cart updates to screen readers with ARIA live regions**

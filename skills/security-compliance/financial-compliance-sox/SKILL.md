@@ -7,7 +7,7 @@ source: curated
 date_added: "2026-03-12"
 tags: [sox, financial-compliance, audit, controls]
 triggers: ["implement SOX compliance", "financial audit controls"]
-tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
+tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
 platforms: [platform-agnostic]
 difficulty: advanced
 ---
@@ -26,6 +26,15 @@ Implement Sarbanes-Oxley (SOX) Section 302 and 404 controls for ecommerce financ
 - When designing access controls for systems that feed financial statements (order management, payments, ERP)
 - When remediating a material weakness or significant deficiency identified by an auditor
 - When acquiring a company and assessing the target's financial control environment
+
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify handles PCI compliance, SSL, and infrastructure security. Focus on app-level security, GDPR consent (via Shopify Privacy API), and access controls.
+**WooCommerce**: You manage your own hosting security. Use security plugins (Wordfence, Sucuri), SSL certificate, and PCI-compliant payment gateways. GDPR handled via cookie consent plugins.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Understanding of your platform's security model, relevant compliance requirements
 
 ## Core Instructions
 

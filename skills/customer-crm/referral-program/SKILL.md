@@ -27,6 +27,15 @@ A referral program turns your existing customers into an acquisition channel by 
 - When implementing a waitlist with referral mechanics (move up the queue by referring friends)
 - When integrating referral tracking with post-purchase email flows
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
+**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
+
 ## Core Instructions
 
 1. **Generate unique referral codes and links**
@@ -171,7 +180,8 @@ A referral program turns your existing customers into an acquisition channel by 
      }
 
      // Referrer has multiple referrals from the same IP range
-     const ipRange = refereeId.split('.').slice(0, 3).join('.');
+     const refereeIp = referee.lastSignInIp ?? (await db.referralClicks.findRecentByReferee(refereeId))?.ip ?? '';
+     const ipRange = refereeIp.split('.').slice(0, 3).join('.');
      const ipReferrals = await db.referrals.countByIpRange(referrerId, ipRange, subDays(new Date(), 30));
      if (ipReferrals > 3) {
        signals.push({ signal: 'ip_cluster', block: false });

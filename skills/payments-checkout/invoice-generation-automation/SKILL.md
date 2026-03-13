@@ -32,6 +32,15 @@ The design prioritizes idempotency (re-generating the same invoice produces the 
 - When you need branded, professional PDFs rather than Stripe's default invoice styling
 - When selling in jurisdictions that require sequential invoice numbering for tax compliance
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
+**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+
 ## Core Instructions
 
 ### 1. Design the invoice template data model

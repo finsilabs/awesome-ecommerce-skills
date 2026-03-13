@@ -26,6 +26,20 @@ Hydrogen is Shopify's official React-based framework for building headless store
 - When integrating third-party services (loyalty, CMS, personalization) directly into the storefront
 - When you want a Shopify-managed backend with a completely custom frontend stack
 
+## Prerequisites & Platform Notes
+
+**This skill is written for custom/headless storefronts** (Node.js, Python, or similar backend). The code examples use TypeScript/Node.js and can be adapted to any stack.
+
+**Shopify**: Shopify Hydrogen is Shopify's headless framework. MACH/composable patterns apply when using Shopify as the commerce backend with a custom frontend, or when mixing Shopify with other best-of-breed services.
+**WooCommerce**: WooCommerce can serve as a headless backend via its REST API and WPGraphQL. These patterns apply when decoupling the frontend from WordPress.
+**Magento**: Magento's GraphQL API and PWA Studio support headless architectures. These composable patterns apply to Magento as a backend service in a MACH stack.
+
+**You'll need**:
+- Node.js 18+ (or adapt to your backend language)
+- Redis for caching/queues
+- An email sending service (SendGrid, AWS SES, or Postmark)
+- CDN (Cloudflare, CloudFront, or Fastly)
+
 ## Core Instructions
 
 1. **Scaffold a Hydrogen project**

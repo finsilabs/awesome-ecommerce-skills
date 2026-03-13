@@ -26,6 +26,15 @@ Build a vendor management system with a self-service supplier portal for order a
 - When preparing quarterly business reviews with suppliers and need performance metrics
 - When building a multi-vendor marketplace where each seller needs their own dashboard
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
+**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
+
 ## Core Instructions
 
 1. **Design the vendor schema**

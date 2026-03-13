@@ -27,6 +27,15 @@ Implement a robust analytics stack for e-commerce using Google Analytics 4 (GA4)
 - When troubleshooting missing or duplicate conversion events caused by ad blockers or client-side failures
 - When meeting privacy requirements that mandate server-side deduplication between browser and server events
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify supports webhooks, the Admin API, and app extensions for integrations. Use Shopify Flow or custom apps to connect third-party services.
+**WooCommerce**: Use WooCommerce REST API and WordPress hooks for integrations. Connect via plugins or custom PHP code.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: API credentials for both your store and the external service
+
 ## Core Instructions
 
 1. **Define a canonical data layer schema**
@@ -191,7 +200,38 @@ Implement a robust analytics stack for e-commerce using Google Analytics 4 (GA4)
 
    In your browser GTM container, update the GA4 Configuration tag transport URL to point to your server container URL (e.g., `https://gtm.yourdomain.com`).
 
-6. **Validate events with debug tooling**
+6. **Implement Google Consent Mode v2**
+
+   Consent Mode v2 is required for EU traffic as of March 2024. It controls which Google tags fire based on user consent, and enables privacy-safe conversion modeling when consent is denied.
+
+   ```javascript
+   // Initialize consent defaults BEFORE loading GTM or gtag.js
+   // This must be the first gtag() call on the page
+   window.dataLayer = window.dataLayer || [];
+   function gtag(){dataLayer.push(arguments);}
+
+   gtag('consent', 'default', {
+     ad_storage: 'denied',
+     ad_user_data: 'denied',
+     ad_personalization: 'denied',
+     analytics_storage: 'denied',
+     wait_for_update: 500,   // Wait up to 500ms for CMP to update consent
+   });
+
+   // After user accepts cookies via your Consent Management Platform (CMP):
+   function onConsentGranted(preferences) {
+     gtag('consent', 'update', {
+       ad_storage: preferences.marketing ? 'granted' : 'denied',
+       ad_user_data: preferences.marketing ? 'granted' : 'denied',
+       ad_personalization: preferences.marketing ? 'granted' : 'denied',
+       analytics_storage: preferences.analytics ? 'granted' : 'denied',
+     });
+   }
+   ```
+
+   In GTM, enable Consent Mode in your GA4 Configuration tag's settings and check "Require additional consent for ad features" to ensure `ad_user_data` and `ad_personalization` are respected.
+
+7. **Validate events with debug tooling**
 
    Before publishing, verify every event in GA4 DebugView and GTM Preview mode:
 

@@ -48,7 +48,7 @@ The Shopify Storefront API is a public-facing GraphQL API that provides read and
    `);
    ```
 
-   The token looks like `shpat_xxxxxxxx` and is safe to use in browser code — it only allows storefront-scoped operations.
+   Storefront Access Tokens do not use the `shpat_` prefix (that prefix is for Admin API tokens). Storefront tokens are opaque strings safe to use in browser code — they only allow storefront-scoped operations.
 
 2. **Set up the Storefront API client**
 
@@ -233,7 +233,7 @@ import { storefront } from "@/lib/shopify";
 async function getProduct(handle: string) {
   const { data } = await storefront.request(`
     query GetProduct($handle: String!) {
-      productByHandle(handle: $handle) {
+      product(handle: $handle) {
         id
         title
         descriptionHtml
@@ -258,7 +258,7 @@ async function getProduct(handle: string) {
       }
     }
   `, { variables: { handle } });
-  return data.productByHandle;
+  return data.product;
 }
 
 export default async function ProductPage({ params }: { params: { handle: string } }) {
@@ -319,7 +319,7 @@ export async function predictiveSearch(query: string) {
 | Rate limit errors (429) | Use private access token server-side and implement request batching; avoid N+1 product queries |
 | Cart ID lost after page reload | Persist `cartId` in `localStorage` or a cookie; create a new cart only if none exists |
 | Product prices show in wrong currency | Add `@inContext(country: $country)` directive and pass buyer's country via geolocation |
-| `productByHandle` returns null | Handle slugified handles correctly — Shopify handles are lowercase with hyphens; check exact slug |
+| `product(handle:)` returns null | Handle slugified handles correctly — Shopify handles are lowercase with hyphens; check exact slug |
 | Checkout redirect fails on mobile Safari | Use `window.location.href = checkoutUrl` inside a user gesture handler, not async callback |
 | Variant not found when selecting options | Use client-side filtering of `variants.edges` by matching all `selectedOptions`, not just one |
 

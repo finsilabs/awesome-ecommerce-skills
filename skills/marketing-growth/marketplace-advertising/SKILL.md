@@ -26,6 +26,15 @@ Marketplace advertising (Amazon Sponsored Products, Walmart Connect, eBay Promot
 - When moving from manual bids to automated bid adjustment logic
 - When launching a new product and needing an auto-campaign to harvest keywords
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Active marketplace seller accounts (Amazon, eBay, Walmart) with advertising access enabled, marketplace Advertising API credentials
+
 ## Core Instructions
 
 ### 1. Amazon Ads API setup
@@ -152,7 +161,7 @@ async function harvestKeywordsFromAutoCampaign(config: AmazonAdsConfig, autoCamp
   // Request a search term report
   const reportRequest = await amazonAdsRequest(config, 'POST', '/reporting/reports', {
     reportDate:  format(subDays(new Date(), 7), 'yyyyMMdd'),
-    metrics:     'impressions,clicks,cost,sales7d,acos7d',
+    metrics:     'impressions,clicks,cost,orders7d,sales7d,acos7d',
     recordType:  'targets',
     segment:     'query',
     campaignId:  autoCampaignId,
@@ -197,10 +206,12 @@ async function harvestKeywordsFromAutoCampaign(config: AmazonAdsConfig, autoCamp
   });
 }
 
-function calculateOptimalBid(row: { clicks: number; cost: number; sales7d: number }): number {
+function calculateOptimalBid(row: { clicks: number; cost: number; sales7d: number; orders7d: number }): number {
   const targetAcos = parseFloat(process.env.TARGET_ACOS ?? '0.30');
-  const convRate   = row.sales7d > 0 ? row.clicks / row.sales7d : 0.02;
-  const avgOrderValue = row.sales7d / (row.sales7d > 0 ? 1 : 1);  // simplification
+  // convRate = conversions / clicks (conversion rate)
+  const convRate      = row.clicks > 0 ? row.orders7d / row.clicks : 0.02;
+  // avgOrderValue = attributed revenue / number of orders
+  const avgOrderValue = row.orders7d > 0 ? row.sales7d / row.orders7d : 20;
   return Math.min(Math.max(targetAcos * convRate * avgOrderValue, 0.10), 5.00);  // clamp bid
 }
 ```

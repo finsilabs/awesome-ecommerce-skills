@@ -27,6 +27,15 @@ Web Push Notifications use the Push API and Service Workers to deliver timely, p
 - When email deliverability is poor and a supplemental channel is needed
 - When targeting mobile-first markets where push permission rates exceed email opt-in rates
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, push notification service (OneSignal, Klaviyo web push, or PushOwl), HTTPS storefront
+
 ## Core Instructions
 
 1. **Generate VAPID keys and configure the server**

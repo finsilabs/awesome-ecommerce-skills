@@ -50,14 +50,9 @@ Salesforce B2C Commerce provides two API families: the legacy Open Commerce API 
 
    // Step 1: Get PKCE code challenge for guest token
    function generateCodeChallenge(): { verifier: string; challenge: string } {
-     const verifier = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-       .map((b) => b.toString(16).padStart(2, "0"))
-       .join("");
-     const encoder = new TextEncoder();
-     const data = encoder.encode(verifier);
-     // In Node.js environment:
-     const crypto = require("crypto");
-     const hash = crypto.createHash("sha256").update(verifier).digest("base64url");
+     const nodeCrypto = require("crypto");
+     const verifier = nodeCrypto.randomBytes(32).toString("hex");
+     const hash = nodeCrypto.createHash("sha256").update(verifier).digest("base64url");
      return { verifier, challenge: hash };
    }
 

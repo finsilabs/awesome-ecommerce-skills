@@ -25,6 +25,15 @@ Implement the delivery and access control layer for downloadable digital goods: 
 - When building a subscription that gates access to a digital content library
 - When replacing publicly accessible download URLs with secure, expiring signed URLs
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
+**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with product catalog access, API credentials
+
 ## Core Instructions
 
 1. **Design the digital product delivery data model**

@@ -25,6 +25,15 @@ Implement real-time inventory tracking that prevents overselling through atomic 
 - When building backorder or pre-order functionality for out-of-stock products
 - When a flash sale or product launch will create thousands of concurrent checkout attempts for limited-stock items
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
+**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with product catalog access, API credentials
+
 ## Core Instructions
 
 1. **Design the inventory data model with version-based locking**

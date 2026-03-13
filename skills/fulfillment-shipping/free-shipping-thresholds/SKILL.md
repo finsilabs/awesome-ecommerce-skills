@@ -26,6 +26,15 @@ Implement configurable free shipping thresholds with real-time cart progress ind
 - When you want to surface "add $X more to unlock free shipping" messages dynamically
 - When free shipping rules should vary by shipping zone (domestic vs. international)
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Use Shopify Shipping (carrier-calculated rates), Shopify Fulfillment Network, or apps like ShipStation. The Fulfillment API handles custom fulfillment workflows.
+**WooCommerce**: Use WooCommerce Shipping or plugins (ShipStation, WooCommerce Table Rate Shipping). Extend with woocommerce_shipping_methods filter.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with shipping configured, carrier API accounts if using custom rates
+
 ## Core Instructions
 
 1. **Define shipping threshold rules**

@@ -26,6 +26,15 @@ Implement customer account management for e-commerce including registration, log
 - When converting guest checkout users into registered customers
 - When adding wishlist or saved-for-later functionality
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
+**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
+
 ## Core Instructions
 
 1. **Design the customer data model**
@@ -470,7 +479,7 @@ function AccountDashboard() {
 ## Best Practices
 
 - **Never return different error messages for existing vs. non-existing emails** — this enables email enumeration attacks; use generic "invalid email or password"
-- **Hash passwords with bcrypt (cost factor 12+)** — never store plaintext passwords; bcrypt is designed for password hashing with built-in salting
+- **Hash passwords with bcrypt (cost factor 12+)** — never store plaintext passwords; bcrypt is designed for password hashing with built-in salting. For production deployments, see @account-security for Argon2id hashing (preferred over bcrypt), short-lived access tokens with refresh token rotation, and brute-force protection.
 - **Always verify email ownership** — send a verification email before allowing password-based login to prevent account squatting
 - **Rate-limit login and registration endpoints** — prevent brute-force attacks with IP-based and email-based rate limiting
 - **Support guest checkout** — never force registration before purchase; offer post-purchase account creation instead

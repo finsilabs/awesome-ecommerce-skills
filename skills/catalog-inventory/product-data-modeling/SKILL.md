@@ -26,6 +26,15 @@ Design robust database schemas for e-commerce product catalogs that handle varia
 - When building a multi-tenant catalog that supports different product types with different attributes
 - When modeling product bundles, kits, or configurable products
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
+**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with product catalog access, API credentials
+
 ## Core Instructions
 
 1. **Design the core product and variant tables (PostgreSQL)**

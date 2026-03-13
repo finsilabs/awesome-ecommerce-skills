@@ -26,6 +26,15 @@ Design and implement a robust Order Management System (OMS) that handles the ful
 - When building the core order processing pipeline for a new platform that will support high order volume
 - When you need a complete audit trail of every order state change for customer service and finance
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
+**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
+
 ## Core Instructions
 
 1. **Order lifecycle state machine**
@@ -174,7 +183,7 @@ Design and implement a robust Order Management System (OMS) that handles the ful
          );
        }
 
-       const newStatus = plan.length > 1 ? 'awaiting_fulfillment' : 'awaiting_fulfillment';
+       const newStatus = plan.length > 1 ? 'partially_allocated' : 'awaiting_fulfillment';
        await tx.orders.update(orderId, { status: newStatus });
      });
    }

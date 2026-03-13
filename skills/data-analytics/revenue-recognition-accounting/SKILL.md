@@ -38,6 +38,15 @@ Getting revenue recognition right protects you from restatements, builds investo
 
 ---
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
+**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+
 ## Core Instructions
 
 ### Step 1 — Identify the Contract with the Customer
@@ -264,13 +273,16 @@ DR  Deferred Revenue                     $10.00
 
 **For bundled arrangement ($150 total: $100 product + $50 warranty):**
 ```
-At shipment:
-DR  Deferred Revenue — Warranty          $50.00
-DR  Deferred Revenue — Product          $100.00
-    CR  Revenue — Product Sales             $100.00
-    CR  Deferred Revenue — Warranty          $50.00  (already recorded)
+Step 1 — At payment (cash received before delivery):
+DR  Cash                                $150.00
+    CR  Deferred Revenue                    $150.00
 
-Monthly warranty recognition ($50 / 12 months):
+Step 2 — At shipment (product performance obligation satisfied):
+DR  Deferred Revenue                    $100.00
+    CR  Revenue — Product Sales             $100.00
+(The remaining $50.00 stays in Deferred Revenue for the warranty obligation.)
+
+Step 3 — Monthly warranty recognition ($50 / 12 months = $4.17/month):
 DR  Deferred Revenue — Warranty           $4.17
     CR  Revenue — Warranty Service           $4.17
 ```

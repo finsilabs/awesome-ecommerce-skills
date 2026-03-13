@@ -27,6 +27,15 @@ Content commerce bridges editorial content — blog posts, buying guides, lookbo
 - When building a lookbook or collection page with editorial text and shoppable product grids
 - When needing to track which content pieces drive the most revenue (content attribution)
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store with a blog/CMS, product catalog API access, analytics tracking
+
 ## Core Instructions
 
 1. **Design the content-product relationship model**

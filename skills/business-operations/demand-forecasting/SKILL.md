@@ -26,6 +26,15 @@ Build an inventory demand forecasting system that uses historical sales data, se
 - When you have 12+ months of sales history and want to extract meaningful demand patterns
 - When integrating with supplier lead times and purchase order workflows for end-to-end replenishment automation
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
+**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
+
 ## Core Instructions
 
 1. **Aggregate sales history into a daily demand time series**
@@ -72,7 +81,7 @@ Build an inventory demand forecasting system that uses historical sales data, se
    ```typescript
    interface ForecastComponents {
      trend: number;        // units/day long-term trend
-     seasonality: number[]; // 52-element array of weekly seasonal indices (1.0 = average week)
+     seasonality: number[]; // 7-element array of day-of-week seasonal indices (1.0 = average day)
      residualStdDev: number; // noise standard deviation for safety stock calculation
    }
 

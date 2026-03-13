@@ -2,7 +2,7 @@
 name: cogs-tracking-allocation
 description: "Track cost of goods sold with FIFO/LIFO/weighted average inventory valuation, landed cost allocation for imports, and variance analysis against standard costs"
 category: catalog-inventory
-risk: safe
+risk: critical
 source: curated
 date_added: "2026-03-12"
 tags: [cogs, inventory-valuation, cost-accounting]
@@ -25,6 +25,15 @@ Implement cost of goods sold (COGS) tracking that maintains a perpetual inventor
 - When your accounting team wants to switch from periodic (year-end inventory count) to perpetual (real-time) cost tracking
 - When building variance analysis reports to identify SKUs where actual purchase costs are drifting away from standard costs used in pricing decisions
 - When an ERP integration (QuickBooks, NetSuite, Xero) requires COGS journal entries at the time of sale, not end of month
+
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
+**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with product catalog access, API credentials
 
 ## Core Instructions
 
@@ -204,7 +213,7 @@ Implement cost of goods sold (COGS) tracking that maintains a perpetual inventor
 
      await db.cogsEntries.create({
        data: {
-         order_id: params.orderLineId,
+         order_id: params.orderId,
          order_line_id: params.orderLineId,
          variant_id: params.variantId,
          location_id: params.locationId,

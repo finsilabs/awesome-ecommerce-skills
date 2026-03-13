@@ -50,6 +50,7 @@ Shopify Checkout Extensions allow apps to render custom UI blocks inside Shopify
      reactExtension,
      useCartLines,
      useApplyCartLinesChange,
+     useSettings,
      BlockStack,
      Button,
      Image,
@@ -67,9 +68,11 @@ Shopify Checkout Extensions allow apps to render custom UI blocks inside Shopify
    function OrderUpsell() {
      const cartLines = useCartLines();
      const applyCartLinesChange = useApplyCartLinesChange();
+     const { upsell_variant_id: upsellVariantId } = useSettings();
 
-     // Only show upsell if cart doesn't already contain the upsell product
-     const upsellVariantId = "gid://shopify/ProductVariant/123456789";
+     // Only show upsell if a variant is configured and cart doesn't already contain it
+     if (!upsellVariantId) return null;
+
      const alreadyInCart = cartLines.some(
        (line) => line.merchandise.id === upsellVariantId
      );

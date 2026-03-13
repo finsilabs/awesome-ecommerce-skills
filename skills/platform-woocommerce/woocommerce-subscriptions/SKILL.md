@@ -39,7 +39,10 @@ WooCommerce Subscriptions (the official premium plugin) adds subscription produc
    $product->set_status('publish');
    $product->set_regular_price('29.99');
 
-   // Subscription-specific meta
+   // Save first so the product gets an ID
+   $product->save();
+
+   // Subscription-specific meta (product must be saved before setting post meta)
    update_post_meta($product->get_id(), '_subscription_price', '29.99');
    update_post_meta($product->get_id(), '_subscription_period', 'month');
    update_post_meta($product->get_id(), '_subscription_period_interval', '1');
@@ -47,8 +50,6 @@ WooCommerce Subscriptions (the official premium plugin) adds subscription produc
    update_post_meta($product->get_id(), '_subscription_trial_length', '14');
    update_post_meta($product->get_id(), '_subscription_trial_period', 'day');
    update_post_meta($product->get_id(), '_subscription_sign_up_fee', '0');
-
-   $product->save();
    ```
 
 2. **Hook into subscription lifecycle events**
@@ -88,7 +89,7 @@ WooCommerce Subscriptions (the official premium plugin) adds subscription produc
            $user = new WP_User($user_id);
            $user->remove_role('subscriber_member');
            // Send dunning email
-           WC_Subscriptions_Manager::put_subscription_on_hold_for_user($subscription);
+           $subscription->update_status('on-hold');
        }
    }, 10, 2);
 

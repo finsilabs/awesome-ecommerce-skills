@@ -26,6 +26,15 @@ Commerce sites face three major bot threats: scrapers that harvest pricing and i
 - When checkout funnel analytics show suspiciously fast completion times (sub-5-second checkout)
 - When your infrastructure is overwhelmed by bot traffic consuming catalog API resources
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify handles PCI compliance, SSL, and infrastructure security. Focus on app-level security, GDPR consent (via Shopify Privacy API), and access controls.
+**WooCommerce**: You manage your own hosting security. Use security plugins (Wordfence, Sucuri), SSL certificate, and PCI-compliant payment gateways. GDPR handled via cookie consent plugins.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Understanding of your platform's security model, relevant compliance requirements
+
 ## Core Instructions
 
 1. **Implement rate limiting at the edge**

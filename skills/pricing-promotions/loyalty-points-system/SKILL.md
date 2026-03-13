@@ -26,6 +26,15 @@ Build a customer loyalty program with points earned on purchases and other actio
 - When integrating points into a mobile app where customers check their balance and redeem at checkout
 - When running promotional campaigns that award bonus points for specific actions (reviews, referrals, first purchase)
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
+**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
+
 ## Core Instructions
 
 1. **Design the points ledger schema**
@@ -171,6 +180,12 @@ Build a customer loyalty program with points earned on purchases and other actio
 
    // Daily job: expire points
    async function expirePoints(): Promise<void> {
+     // IMPORTANT: The query below sums all earn transactions that are past their expiry date,
+     // but some of those earned points may already have been redeemed (spent via 'redemption'
+     // transactions). To avoid double-expiring already-spent points, we cap the amount to
+     // expire at the account's current available balance (see Math.min below).
+     // An alternative approach is to add an `is_expired` flag to each earn transaction and
+     // exclude already-redeemed earn rows from the expiration query entirely.
      const expiredGroups = await db.raw(`
        SELECT account_id, SUM(points) AS total_expiring
        FROM loyalty_transactions

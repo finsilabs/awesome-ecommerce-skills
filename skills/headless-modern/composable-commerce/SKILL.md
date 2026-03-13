@@ -26,6 +26,21 @@ Composable commerce is an architectural approach based on MACH principles — Mi
 - When entering new markets requiring different fulfillment, pricing, or tax providers per region
 - When building a platform that must support multiple storefronts (web, mobile, in-store, B2B portal) from a single backend
 
+## Prerequisites & Platform Notes
+
+**This skill is written for custom/headless storefronts** (Node.js, Python, or similar backend). The code examples use TypeScript/Node.js and can be adapted to any stack.
+
+**Shopify**: Shopify Hydrogen is Shopify's headless framework. MACH/composable patterns apply when using Shopify as the commerce backend with a custom frontend, or when mixing Shopify with other best-of-breed services.
+**WooCommerce**: WooCommerce can serve as a headless backend via its REST API and WPGraphQL. These patterns apply when decoupling the frontend from WordPress.
+**Magento**: Magento's GraphQL API and PWA Studio support headless architectures. These composable patterns apply to Magento as a backend service in a MACH stack.
+
+**You'll need**:
+- Node.js 18+ (or adapt to your backend language)
+- PostgreSQL (or your preferred relational database)
+- A search service (Algolia, Elasticsearch, or Typesense)
+- Stripe account and API keys
+- An email sending service (SendGrid, AWS SES, or Postmark)
+
 ## Core Instructions
 
 1. **Design service boundaries around commerce capabilities**

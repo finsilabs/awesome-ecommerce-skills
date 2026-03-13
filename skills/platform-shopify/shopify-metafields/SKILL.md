@@ -57,8 +57,8 @@ Metafields let you attach structured custom data to Shopify resources — produc
          ownerType: "PRODUCT",
          description: "Washing and care instructions for the product",
          visibleToStorefrontApi: true,
-         // Optional: pin to product admin UI
-         pin: true,
+         // Optional: pin to product admin UI (use pinnedPosition in API version 2023-10+)
+         pinnedPosition: 1,
        },
      },
    });
@@ -144,7 +144,7 @@ Metafields let you attach structured custom data to Shopify resources — produc
    // Query product with metafields in the Storefront API
    const { data } = await storefront.request(`
      query GetProductWithMetafields($handle: String!) {
-       productByHandle(handle: $handle) {
+       product(handle: $handle) {
          id
          title
          # Metafields must be explicitly requested by namespace + key

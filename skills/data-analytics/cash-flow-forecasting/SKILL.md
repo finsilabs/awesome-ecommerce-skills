@@ -36,6 +36,15 @@ This skill covers the full forecasting workflow: building a cash flow model stru
 
 ---
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
+**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+
 ## Core Instructions
 
 ### Step 1 — Structure the Cash Flow Model
@@ -275,13 +284,20 @@ def compute_runway_scenarios(
     """
     Compute cash runway under base, bear, and bull scenarios.
     Returns the week number at which cash would reach zero (or None if not depleted).
+
+    LIMITATION: The multiplier is currently applied to the entire weekly_net_cash_flow
+    (inflows minus outflows). This is a simplification — in reality only inflows scale
+    with revenue; outflows (fixed costs such as payroll, rent, software) remain constant
+    regardless of revenue. For more accurate scenario modeling, pass inflows and outflows
+    as separate Series and apply the multiplier only to inflows:
+        adjusted_flow = (weekly_inflows * multiplier) - weekly_outflows
     """
     results = {}
 
     for scenario_name, multiplier in [('base', 1.0), ('bear', bear_multiplier), ('bull', bull_multiplier)]:
         adjusted_flow = weekly_net_cash_flow * multiplier
-        # Outflows are not multiplied — they are fixed costs
-        # Only inflows scale with revenue
+        # NOTE: Outflows should not be multiplied — they are fixed costs.
+        # Only inflows scale with revenue. See function docstring for the correct approach.
         running_balance = opening_cash + adjusted_flow.cumsum()
         zero_crossing = running_balance[running_balance <= 0]
 

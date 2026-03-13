@@ -27,6 +27,15 @@ Social commerce integrates your product catalog with Instagram, TikTok, and Face
 - When tracking conversions from social checkout back to your internal order system
 - When needing real-time catalog sync (price/inventory changes reflected in <1 hour)
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, Meta Business account and/or TikTok Seller Central account, social platform API credentials for catalog sync
+
 ## Core Instructions
 
 1. **Generate a Meta-compatible product catalog feed**

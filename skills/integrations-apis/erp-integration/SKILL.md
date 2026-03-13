@@ -26,6 +26,15 @@ Build integrations between e-commerce platforms and ERP systems (SAP, NetSuite, 
 - When implementing product and pricing feeds from the ERP to the storefront
 - When designing a middleware layer to handle multiple integration points
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify supports webhooks, the Admin API, and app extensions for integrations. Use Shopify Flow or custom apps to connect third-party services.
+**WooCommerce**: Use WooCommerce REST API and WordPress hooks for integrations. Connect via plugins or custom PHP code.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: API credentials for both your store and the external service
+
 ## Core Instructions
 
 1. **Design the integration architecture**
@@ -125,6 +134,22 @@ Build integrations between e-commerce platforms and ERP systems (SAP, NetSuite, 
        const erpOrder = this.mapOrderToERP(order);
 
        try {
+         // Idempotency check against ERP: verify the order hasn't already been created
+         // (guards against retries that passed local sync log but created the ERP record)
+         const existingErpOrder = await this.erpAdapter.findOrderByExternalReference(order.orderNumber);
+         if (existingErpOrder) {
+           this.logger.info(`Order ${order.orderNumber} already exists in ERP as ${existingErpOrder.erpOrderId}, recording sync`);
+           await this.syncLog.upsert({
+             orderId,
+             orderNumber: order.orderNumber,
+             externalId: existingErpOrder.erpOrderId,
+             status: 'synced',
+             attempts: (existingSync?.attempts || 0) + 1,
+             syncedAt: new Date(),
+           });
+           return;
+         }
+
          const erpResponse = await this.erpAdapter.createSalesOrder(erpOrder);
 
          await this.syncLog.upsert({
@@ -353,6 +378,7 @@ Build integrations between e-commerce platforms and ERP systems (SAP, NetSuite, 
    interface ERPAdapter {
      // Orders
      createSalesOrder(order: ERPSalesOrder): Promise<{ erpOrderId: string }>;
+     findOrderByExternalReference(ref: string): Promise<{ erpOrderId: string } | null>;
      getOrderStatus(erpOrderId: string): Promise<ERPOrderStatus>;
      cancelOrder(erpOrderId: string): Promise<void>;
 

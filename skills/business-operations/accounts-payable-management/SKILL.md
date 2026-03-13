@@ -2,7 +2,7 @@
 name: accounts-payable-management
 description: "Manage supplier invoices and vendor payments with automated receipt matching, payment scheduling, early discount optimization, and reconciliation workflows"
 category: business-operations
-risk: safe
+risk: critical
 source: curated
 date_added: "2026-03-12"
 tags: [accounts-payable, vendor-payments, procurement]
@@ -26,6 +26,15 @@ Build an accounts payable system that ingests supplier invoices, matches them ag
 - When building multi-entity AP workflows where each legal entity has its own bank account and chart of accounts
 - When preparing for an ERP integration (NetSuite, SAP, QuickBooks) and need a clean AP data model to migrate from
 - When audit requirements demand an immutable record of every invoice approval, payment authorization, and GL posting
+
+## Prerequisites & Platform Notes
+
+**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
+**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
 
 ## Core Instructions
 

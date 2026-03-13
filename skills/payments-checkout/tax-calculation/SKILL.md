@@ -25,6 +25,15 @@ Integrate a tax calculation service (TaxJar or Avalara) to compute accurate sale
 - When implementing EU VAT compliance (IOSS, OSS, country-specific thresholds)
 - When building a checkout that needs to display accurate tax before the customer confirms payment
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
+**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+
 ## Core Instructions
 
 1. **Understand nexus before integrating**
@@ -166,9 +175,14 @@ Integrate a tax calculation service (TaxJar or Avalara) to compute accurate sale
    ```javascript
    // lib/vatCalculation.js
 
+   // GB is NOT in the EU since Brexit (January 2021) — handle UK VAT separately
    const EU_COUNTRIES = ['AT','BE','BG','CY','CZ','DE','DK','EE','ES','FI','FR',
                          'GR','HR','HU','IE','IT','LT','LU','LV','MT','NL','PL',
                          'PT','RO','SE','SI','SK'];
+   // UK VAT: UK sellers must register for UK VAT separately via HMRC.
+   // Non-UK sellers selling to UK consumers may need to register for UK VAT
+   // (threshold: £0 for non-established sellers, £85,000 for UK-established sellers).
+   const UK_COUNTRIES = ['GB'];
 
    export async function calculateVAT({ toAddress, lineItems, buyerVatNumber }) {
      const isEUDestination = EU_COUNTRIES.includes(toAddress.country);
@@ -206,9 +220,14 @@ Integrate a tax calculation service (TaxJar or Avalara) to compute accurate sale
    }
 
    // Country-specific VAT rates (simplified — use a maintained database in production)
+   // GB rate (20%) is for UK VAT — keep separate from EU_COUNTRIES rates above
+   // FI rate updated to 25.5% in September 2024 (previously 24%)
    const VAT_RATES = {
      DE: 0.19, FR: 0.20, IT: 0.22, ES: 0.21, NL: 0.21,
-     GB: 0.20, SE: 0.25, DK: 0.25, FI: 0.255,
+     SE: 0.25, DK: 0.25, FI: 0.255,
+   };
+   const UK_VAT_RATES = {
+     GB: 0.20,
    };
    async function getVATRateForCountry(countryCode) {
      return VAT_RATES[countryCode] ?? 0.20; // Default to 20% if unknown

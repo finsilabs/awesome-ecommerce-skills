@@ -36,6 +36,15 @@ This skill covers data modeling, metric definitions, query patterns, visualizati
 
 ---
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
+**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+
 ## Core Instructions
 
 ### Step 1 — Define the Data Model
@@ -251,21 +260,30 @@ Drill-down is the feature that turns a static financial statement into an action
 - **Time period:** Day, week, month, quarter, YTD, trailing 12 months
 
 ```python
-def build_pnl_query(filters: dict) -> str:
+def build_pnl_query(filters: dict) -> tuple[str, list]:
     """
     Dynamically build a P&L query with dimension filters.
+
+    WARNING: Never interpolate filter values directly into the SQL string using f-strings
+    (e.g., f"channel = '{filters['channel']}'") — this is vulnerable to SQL injection.
+    Always use parameterized queries. This function returns the query string with %s
+    placeholders alongside the corresponding list of parameter values.
     """
-    where_clauses = ["statement_type = 'pnl'", "fiscal_period = :period"]
+    where_clauses = ["statement_type = 'pnl'", "fiscal_period = %s"]
+    params: list = [filters.get('period')]
 
     if filters.get('channel'):
-        where_clauses.append(f"channel = '{filters['channel']}'")
+        where_clauses.append("channel = %s")
+        params.append(filters['channel'])
     if filters.get('product_category'):
-        where_clauses.append(f"product_category = '{filters['product_category']}'")
+        where_clauses.append("product_category = %s")
+        params.append(filters['product_category'])
     if filters.get('geography'):
-        where_clauses.append(f"geography = '{filters['geography']}'")
+        where_clauses.append("geography = %s")
+        params.append(filters['geography'])
 
     where_str = " AND ".join(where_clauses)
-    return f"""
+    query = f"""
         SELECT
             line_item,
             SUM(amount) AS total
@@ -274,6 +292,7 @@ def build_pnl_query(filters: dict) -> str:
         GROUP BY line_item
         ORDER BY line_item;
     """
+    return query, params
 ```
 
 ### Step 6 — Key Metrics and KPI Cards

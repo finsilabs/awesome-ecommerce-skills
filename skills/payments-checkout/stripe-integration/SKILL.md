@@ -26,6 +26,15 @@ Implement Stripe payment processing with Payment Intents API for one-time paymen
 - When setting up webhook handlers for order fulfillment automation
 - When adding subscription billing to an existing store
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
+**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+
 ## Core Instructions
 
 1. **Install Stripe SDK and configure keys**
@@ -191,6 +200,15 @@ const subscription = await stripe.subscriptions.create({
 - **Use metadata** — attach your `order_id` to every Payment Intent for easy reconciliation
 - **Test with Stripe's test cards** — use `4242424242424242` for success, `4000000000003220` for 3DS challenge
 - **Set up Stripe Tax** if selling to multiple jurisdictions — avoid building tax logic yourself
+
+### PCI DSS Scope
+
+Using Stripe Elements or Stripe Checkout significantly reduces your PCI DSS compliance burden:
+
+- **SAQ A** — applicable when using Stripe Checkout (hosted page) or Stripe.js/Elements where card data never touches your servers. This is the simplest self-assessment: ~22 requirements. Stripe Checkout qualifies most merchants for SAQ A.
+- **SAQ A-EP** — applicable when your checkout page is served from your own domain and Stripe.js is used to tokenize card data in the browser. Your server still never sees card numbers, but your web page is in scope. ~191 requirements.
+- You must complete the applicable SAQ annually and, depending on your payment volume, may require an Attestation of Compliance (AOC) from a Qualified Security Assessor (QSA).
+- See [Stripe's PCI compliance guide](https://stripe.com/docs/security/guide) for the full breakdown of which integration pattern maps to which SAQ level.
 
 ## Common Pitfalls
 

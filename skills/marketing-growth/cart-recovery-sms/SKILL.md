@@ -20,12 +20,23 @@ SMS cart abandonment recovery consistently achieves 20–35% recovery rates — 
 
 ## When to Use This Skill
 
+> **Note:** For multi-channel cart recovery (email + SMS + push), see @cart-abandonment-recovery. This skill focuses on SMS-only recovery.
+
 - When email-only cart recovery sequences plateau below a 10% recovery rate
 - When launching SMS as a new marketing channel and cart recovery is the highest-ROI starting point
 - When re-platforming to a new SMS provider and need to rebuild flows
 - When expanding to markets where SMS has higher deliverability than email
 - When A/B testing recovery channels to find the optimal message mix
 - When a high-value cart threshold warrants more aggressive recovery (carts > $100)
+
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, SMS provider account (Postscript, Attentive, or Twilio), TCPA-compliant opt-in mechanism
 
 ## Core Instructions
 

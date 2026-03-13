@@ -26,6 +26,15 @@ Implement multi-carrier shipment tracking that ingests carrier status events via
 - When aggregating tracking data across multiple carriers (UPS, FedEx, USPS, DHL) into a single interface
 - When integrating with a carrier aggregator like EasyPost or Shippo that provides a unified webhook feed
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Use Shopify Shipping (carrier-calculated rates), Shopify Fulfillment Network, or apps like ShipStation. The Fulfillment API handles custom fulfillment workflows.
+**WooCommerce**: Use WooCommerce Shipping or plugins (ShipStation, WooCommerce Table Rate Shipping). Extend with woocommerce_shipping_methods filter.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with shipping configured, carrier API accounts if using custom rates
+
 ## Core Instructions
 
 1. **Design the tracking schema**

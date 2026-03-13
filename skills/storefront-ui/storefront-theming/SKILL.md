@@ -25,6 +25,15 @@ Architect a theming system using design tokens and CSS custom properties that al
 - When implementing dark mode for a storefront
 - When a rebrand requires changing colors across thousands of component instances without hunt-and-replace
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
+**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
+
 ## Core Instructions
 
 1. **Define the token taxonomy in JSON**

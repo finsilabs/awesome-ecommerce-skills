@@ -26,6 +26,15 @@ Build a merchandising rules engine for e-commerce that controls product ranking 
 - When adding pinning (manual placement) and slot-based merchandising to collection pages
 - When measuring the revenue impact of different product ranking strategies
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
+**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
+
 ## Core Instructions
 
 1. **Define the merchandising rule data model**
@@ -424,6 +433,7 @@ Build a merchandising rules engine for e-commerce that controls product ranking 
              weight: 1 + (boost.weight / 100),  // Convert percentage to weight multiplier
            });
          }
+        }
 
        // Default: boost products that are in stock
        functions.push({

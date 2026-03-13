@@ -28,47 +28,24 @@ Google Ads is the primary paid search and shopping channel for ecommerce, captur
 - When diagnosing why Smart Bidding is not spending the budget efficiently
 - When needing server-side tagging via Google Tag Manager (sGTM)
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, Google Ads account, Google Merchant Center account for Shopping ads, Google tag/pixel setup
+
 ## Core Instructions
 
 ### 1. Set up Google Merchant Center (GMC) feed
 
 Register and verify your domain in Google Merchant Center, then generate a product feed. Google Ads Shopping and PMax both pull from GMC.
 
-```typescript
-async function generateGoogleShoppingFeed(outputPath: string) {
-  const products = await db.products.findAll({
-    where: { active: true },
-    include: ['images', 'variants', 'categories'],
-  });
+> **Note:** For complete Google Shopping feed generation and optimization, see @google-shopping-feed. This skill focuses on campaign structure and bidding.
 
-  const items = products.flatMap(p =>
-    p.variants.map(v => ({
-      'g:id':                    v.sku,
-      'g:title':                 `${p.name} - ${v.title}`.substring(0, 150),
-      'g:description':           p.description.replace(/<[^>]*>/g, '').substring(0, 5000),
-      'g:link':                  `${process.env.STORE_URL}/products/${p.slug}?variant=${v.id}`,
-      'g:image_link':            v.images?.[0]?.url ?? p.images[0]?.url,
-      'g:condition':             'new',
-      'g:availability':          v.stockQuantity > 0 ? 'in stock' : 'out of stock',
-      'g:price':                 `${v.price.toFixed(2)} USD`,
-      'g:sale_price':            v.compareAtPrice ? `${v.price.toFixed(2)} USD` : undefined,
-      'g:brand':                 p.brandName ?? process.env.STORE_NAME,
-      'g:gtin':                  v.gtin ?? undefined,
-      'g:mpn':                   v.mpn ?? undefined,
-      'g:google_product_category': p.gpcCategory,
-      'g:product_type':          p.categories.map(c => c.name).join(' > '),
-      'g:custom_label_0':        p.margin >= 0.4 ? 'high-margin' : 'low-margin',
-      'g:custom_label_1':        p.isNewArrival ? 'new-arrival' : 'core',
-    }))
-  );
-
-  // Write as XML RSS feed
-  const xml = buildXmlFeed(items);
-  await fs.writeFile(outputPath, xml, 'utf-8');
-}
-```
-
-Custom labels (`custom_label_0` through `custom_label_4`) are essential for campaign segmentation by margin, bestseller status, and seasonality.
+Custom labels (`custom_label_0` through `custom_label_4`) are essential for campaign segmentation by margin, bestseller status, and seasonality. When building the feed, populate these labels in your feed generator (see @google-shopping-feed) so you can target high-margin and new-arrival products with differentiated ROAS targets.
 
 ### 2. Install Google Tag (gtag.js) and configure conversion actions
 

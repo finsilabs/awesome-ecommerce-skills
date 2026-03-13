@@ -26,6 +26,15 @@ Video commerce transforms passive video content into direct purchase experiences
 - When UGC video content needs to be shoppable on product pages
 - When measuring the contribution of video content to purchase conversion rates
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
+**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A Shopify/WooCommerce store, video commerce platform (YouTube Shopping, TikTok Shop, or Firework), product catalog API access
+
 ## Core Instructions
 
 ### 1. Shoppable video data model

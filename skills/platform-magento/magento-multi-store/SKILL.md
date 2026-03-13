@@ -31,32 +31,9 @@ Magento's multi-store architecture has three levels: Website → Store → Store
 
 1. **Create the Website → Store → Store View hierarchy**
 
-   Via CLI (preferred for automation):
+   > **Note:** Core Magento does not ship `bin/magento store:website:create`, `store:group:create`, or `store:store:create` CLI commands. Create websites, stores, and store views either through **Admin → Stores → All Stores** or programmatically in PHP (shown below). Some third-party modules add CLI equivalents, but they are not part of the core.
 
-   ```bash
-   # Create a new website
-   bin/magento store:website:create --code=uk_site --name="UK Website" --sort-order=10
-
-   # Create a store (root category must exist first)
-   bin/magento store:group:create \
-     --website=uk_site \
-     --name="UK Store" \
-     --root-category-id=3 \
-     --code=uk_store \
-     --default-store-id=uk_en
-
-   # Create store views under the store
-   bin/magento store:store:create \
-     --website=uk_site \
-     --group=uk_store \
-     --name="UK English" \
-     --code=uk_en \
-     --locale=en_GB \
-     --sort-order=10 \
-     --is-active=1
-   ```
-
-   Via PHP programmatically:
+   Via PHP programmatically (primary method):
 
    ```php
    <?php

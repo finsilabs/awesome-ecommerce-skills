@@ -26,6 +26,15 @@ Generic infrastructure monitoring (CPU, memory, error rate) is insufficient for 
 - When business stakeholders want real-time visibility into checkout performance and payment failures
 - When diagnosing a drop in conversion rate that may be caused by a technical issue
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify manages infrastructure, CDN, and scaling. Focus on Liquid template performance, image optimization via Shopify's CDN, and app performance.
+**WooCommerce**: You manage hosting and performance. Use caching plugins (WP Rocket, Redis Object Cache), CDN (Cloudflare), and optimize database queries.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Access to your hosting/infrastructure, monitoring tools
+
 ## Core Instructions
 
 1. **Define commerce-specific SLOs and metrics**

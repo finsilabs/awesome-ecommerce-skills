@@ -269,11 +269,15 @@ export async function tagCustomer(customerId: number, tags: string[]) {
 ```typescript
 export async function adjustInventory(inventoryItemId: string, locationId: string, delta: number) {
   const response = await adminClient.request(`
-    mutation AdjustInventory($input: InventoryAdjustQuantityInput!) {
-      inventoryAdjustQuantity(input: $input) {
-        inventoryLevel {
-          available
-          location { name }
+    mutation AdjustInventory($input: InventoryAdjustQuantitiesInput!) {
+      inventoryAdjustQuantities(input: $input) {
+        inventoryAdjustmentGroup {
+          changes {
+            name
+            delta
+            item { id }
+            location { name }
+          }
         }
         userErrors { field message }
       }
@@ -281,13 +285,19 @@ export async function adjustInventory(inventoryItemId: string, locationId: strin
   `, {
     variables: {
       input: {
-        inventoryItemId,
-        locationId,
-        availableDelta: delta,
+        name: "available",
+        reason: "correction",
+        changes: [
+          {
+            inventoryItemId,
+            locationId,
+            delta,
+          },
+        ],
       },
     },
   });
-  return response.data.inventoryAdjustQuantity;
+  return response.data.inventoryAdjustQuantities;
 }
 ```
 

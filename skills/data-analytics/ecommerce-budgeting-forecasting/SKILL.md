@@ -36,6 +36,15 @@ This skill covers budget data structures, revenue forecasting methodology, expen
 
 ---
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
+**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+
 ## Core Instructions
 
 ### Step 1 — Define the Budget Dimensions and Structure
@@ -111,7 +120,7 @@ def build_revenue_budget(
         for (channel, category), annual_base in baseline.items():
             growth_rate = growth_assumptions.get(channel, 0.10)
             annual_budget = annual_base * (1 + growth_rate)
-            monthly_budget = annual_budget * seasonal_weight * 12  # scale weight to monthly
+            monthly_budget = annual_budget * seasonal_weight  # seasonal_weights must sum to 1.0
 
             budget_rows.append({
                 'period_id': month_str,

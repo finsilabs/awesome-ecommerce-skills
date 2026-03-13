@@ -26,6 +26,15 @@ E-commerce databases face distinct query patterns: high-cardinality product filt
 - When a `pg_stat_statements` or slow query log reveals queries with seq scans on large tables
 - When planning a database schema for a new e-commerce platform
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Shopify manages infrastructure, CDN, and scaling. Focus on Liquid template performance, image optimization via Shopify's CDN, and app performance.
+**WooCommerce**: You manage hosting and performance. Use caching plugins (WP Rocket, Redis Object Cache), CDN (Cloudflare), and optimize database queries.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: Access to your hosting/infrastructure, monitoring tools
+
 ## Core Instructions
 
 1. **Identify slow queries with `pg_stat_statements`**

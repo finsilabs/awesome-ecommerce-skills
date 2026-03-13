@@ -26,6 +26,15 @@ Implement an algorithmic pricing engine that adjusts product prices in real time
 - When building a revenue management system for perishable or time-sensitive inventory (event tickets, hotel rooms, last-minute flights)
 - When A/B testing price elasticity at scale and need a framework to safely roll out price changes
 
+## Prerequisites & Platform Notes
+
+**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
+**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
+**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
+**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
+
+**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
+
 ## Core Instructions
 
 1. **Model the pricing inputs and output schema**
