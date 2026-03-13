@@ -2,7 +2,7 @@
 
 > 178 skills across 17 categories
 
-*Generated at 2026-03-13T03:44:52.974Z*
+*Generated at 2026-03-13T10:29:32.644Z*
 
 ## Business Operations `business-operations`
 

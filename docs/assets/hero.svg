@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="50%" style="stop-color:#16213e"/>
+      <stop offset="100%" style="stop-color:#0f3460"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e94560"/>
+      <stop offset="100%" style="stop-color:#f5a623"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.12"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.04"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="400" fill="url(#bg)" rx="12"/>
+
+  <!-- Decorative grid dots -->
+  <g opacity="0.08" fill="white">
+    <circle cx="50" cy="50" r="2"/><circle cx="100" cy="50" r="2"/><circle cx="150" cy="50" r="2"/><circle cx="200" cy="50" r="2"/><circle cx="250" cy="50" r="2"/><circle cx="300" cy="50" r="2"/><circle cx="350" cy="50" r="2"/><circle cx="400" cy="50" r="2"/><circle cx="450" cy="50" r="2"/><circle cx="500" cy="50" r="2"/><circle cx="550" cy="50" r="2"/><circle cx="600" cy="50" r="2"/><circle cx="650" cy="50" r="2"/><circle cx="700" cy="50" r="2"/><circle cx="750" cy="50" r="2"/><circle cx="800" cy="50" r="2"/><circle cx="850" cy="50" r="2"/><circle cx="900" cy="50" r="2"/><circle cx="950" cy="50" r="2"/><circle cx="1000" cy="50" r="2"/><circle cx="1050" cy="50" r="2"/><circle cx="1100" cy="50" r="2"/><circle cx="1150" cy="50" r="2"/>
+    <circle cx="50" cy="100" r="2"/><circle cx="100" cy="100" r="2"/><circle cx="150" cy="100" r="2"/><circle cx="200" cy="100" r="2"/><circle cx="250" cy="100" r="2"/><circle cx="300" cy="100" r="2"/><circle cx="350" cy="100" r="2"/><circle cx="400" cy="100" r="2"/><circle cx="450" cy="100" r="2"/><circle cx="500" cy="100" r="2"/><circle cx="550" cy="100" r="2"/><circle cx="600" cy="100" r="2"/><circle cx="650" cy="100" r="2"/><circle cx="700" cy="100" r="2"/><circle cx="750" cy="100" r="2"/><circle cx="800" cy="100" r="2"/><circle cx="850" cy="100" r="2"/><circle cx="900" cy="100" r="2"/><circle cx="950" cy="100" r="2"/><circle cx="1000" cy="100" r="2"/><circle cx="1050" cy="100" r="2"/><circle cx="1100" cy="100" r="2"/><circle cx="1150" cy="100" r="2"/>
+    <circle cx="50" cy="150" r="2"/><circle cx="100" cy="150" r="2"/><circle cx="150" cy="150" r="2"/><circle cx="200" cy="150" r="2"/><circle cx="250" cy="150" r="2"/><circle cx="300" cy="150" r="2"/><circle cx="350" cy="150" r="2"/><circle cx="400" cy="150" r="2"/><circle cx="450" cy="150" r="2"/><circle cx="500" cy="150" r="2"/><circle cx="550" cy="150" r="2"/><circle cx="600" cy="150" r="2"/><circle cx="650" cy="150" r="2"/><circle cx="700" cy="150" r="2"/><circle cx="750" cy="150" r="2"/><circle cx="800" cy="150" r="2"/><circle cx="850" cy="150" r="2"/><circle cx="900" cy="150" r="2"/><circle cx="950" cy="150" r="2"/><circle cx="1000" cy="150" r="2"/><circle cx="1050" cy="150" r="2"/><circle cx="1100" cy="150" r="2"/><circle cx="1150" cy="150" r="2"/>
+    <circle cx="50" cy="350" r="2"/><circle cx="100" cy="350" r="2"/><circle cx="150" cy="350" r="2"/><circle cx="200" cy="350" r="2"/><circle cx="250" cy="350" r="2"/><circle cx="300" cy="350" r="2"/><circle cx="350" cy="350" r="2"/><circle cx="400" cy="350" r="2"/><circle cx="450" cy="350" r="2"/><circle cx="500" cy="350" r="2"/><circle cx="550" cy="350" r="2"/><circle cx="600" cy="350" r="2"/><circle cx="650" cy="350" r="2"/><circle cx="700" cy="350" r="2"/><circle cx="750" cy="350" r="2"/><circle cx="800" cy="350" r="2"/><circle cx="850" cy="350" r="2"/><circle cx="900" cy="350" r="2"/><circle cx="950" cy="350" r="2"/><circle cx="1000" cy="350" r="2"/><circle cx="1050" cy="350" r="2"/><circle cx="1100" cy="350" r="2"/><circle cx="1150" cy="350" r="2"/>
+  </g>
+
+  <!-- Shopping cart icon -->
+  <g transform="translate(80, 120)" opacity="0.9">
+    <path d="M0 0 L12 0 L28 80 L88 80 L100 24 L32 24" stroke="url(#accent)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="40" cy="100" r="10" fill="url(#accent)"/>
+    <circle cx="80" cy="100" r="10" fill="url(#accent)"/>
+  </g>
+
+  <!-- Plus sign -->
+  <g transform="translate(200, 165)" opacity="0.6">
+    <line x1="0" y1="15" x2="30" y2="15" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <line x1="15" y1="0" x2="15" y2="30" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- AI sparkle icon -->
+  <g transform="translate(250, 130)" opacity="0.9">
+    <path d="M40 0 L48 28 L80 40 L48 52 L40 80 L32 52 L0 40 L32 28 Z" fill="url(#accent)"/>
+    <path d="M70 0 L74 14 L88 18 L74 22 L70 36 L66 22 L52 18 L66 14 Z" fill="white" opacity="0.6"/>
+  </g>
+
+  <!-- Main title -->
+  <text x="380" y="145" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="800" fill="white" letter-spacing="-1">Awesome E-Commerce</text>
+  <text x="380" y="205" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="800" fill="url(#accent)" letter-spacing="-1">Skills</text>
+
+  <!-- Subtitle -->
+  <text x="380" y="248" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="white" opacity="0.7">178 practical workflow guides for Shopify, WooCommerce, and BigCommerce</text>
+
+  <!-- Platform pills -->
+  <g transform="translate(380, 275)">
+    <rect x="0" y="0" width="90" height="32" rx="16" fill="url(#card)" stroke="white" stroke-opacity="0.15"/>
+    <text x="45" y="21" font-family="system-ui, sans-serif" font-size="13" fill="white" opacity="0.9" text-anchor="middle">Shopify</text>
+
+    <rect x="100" y="0" width="130" height="32" rx="16" fill="url(#card)" stroke="white" stroke-opacity="0.15"/>
+    <text x="165" y="21" font-family="system-ui, sans-serif" font-size="13" fill="white" opacity="0.9" text-anchor="middle">WooCommerce</text>
+
+    <rect x="240" y="0" width="120" height="32" rx="16" fill="url(#card)" stroke="white" stroke-opacity="0.15"/>
+    <text x="300" y="21" font-family="system-ui, sans-serif" font-size="13" fill="white" opacity="0.9" text-anchor="middle">BigCommerce</text>
+
+    <rect x="370" y="0" width="90" height="32" rx="16" fill="url(#card)" stroke="white" stroke-opacity="0.15"/>
+    <text x="415" y="21" font-family="system-ui, sans-serif" font-size="13" fill="white" opacity="0.9" text-anchor="middle">Magento</text>
+
+    <rect x="470" y="0" width="100" height="32" rx="16" fill="url(#card)" stroke="white" stroke-opacity="0.15"/>
+    <text x="520" y="21" font-family="system-ui, sans-serif" font-size="13" fill="white" opacity="0.9" text-anchor="middle">Custom</text>
+  </g>
+
+  <!-- Stats row -->
+  <g transform="translate(380, 335)">
+    <text font-family="system-ui, sans-serif" font-size="14" fill="white" opacity="0.5">
+      <tspan x="0" font-size="22" font-weight="700" fill="url(#accent)" opacity="1">178</tspan>
+      <tspan dx="6">skills</tspan>
+      <tspan dx="24" font-size="22" font-weight="700" fill="url(#accent)" opacity="1">17</tspan>
+      <tspan dx="6">categories</tspan>
+      <tspan dx="24" font-size="22" font-weight="700" fill="url(#accent)" opacity="1">+31%</tspan>
+      <tspan dx="6">avg improvement</tspan>
+    </text>
+  </g>
+</svg>
