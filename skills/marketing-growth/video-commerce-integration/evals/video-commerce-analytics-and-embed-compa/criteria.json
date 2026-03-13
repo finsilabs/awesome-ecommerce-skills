@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements video commerce analytics with the correct KPI metrics, correctly identifies and fixes CORS issues for embedded shoppable video players, and documents iOS video encoding requirements (H.264/AAC, not VP9).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "hotspotCTR metric",
+      "max_score": 8,
+      "description": "getVideoCommerceMetrics() returns a hotspotCTR field calculated as hotspotClicks / views"
+    },
+    {
+      "name": "addToCartRate metric",
+      "max_score": 8,
+      "description": "getVideoCommerceMetrics() returns an addToCartRate field calculated as addToCarts / views"
+    },
+    {
+      "name": "purchaseRate / videoCVR",
+      "max_score": 8,
+      "description": "getVideoCommerceMetrics() returns a purchaseRate (or videoCVR) field calculated as purchases / views"
+    },
+    {
+      "name": "completionRate metric",
+      "max_score": 8,
+      "description": "getVideoCommerceMetrics() returns a completionRate or avgCompletion field measuring average watch-through percentage"
+    },
+    {
+      "name": "Parallel data fetching",
+      "max_score": 10,
+      "description": "getVideoCommerceMetrics() fetches the underlying data counts concurrently (e.g., using Promise.all) rather than sequentially awaiting each query"
+    },
+    {
+      "name": "CORS root cause",
+      "max_score": 10,
+      "description": "technical-report.md correctly identifies the root cause of add-to-cart failures as cross-origin request blocking (CORS) on the cart API endpoint"
+    },
+    {
+      "name": "CORS fix",
+      "max_score": 10,
+      "description": "technical-report.md recommends configuring the cart API to allow cross-origin requests from the embed domain (e.g., via CORS headers, Access-Control-Allow-Origin)"
+    },
+    {
+      "name": "iOS codec root cause",
+      "max_score": 10,
+      "description": "technical-report.md correctly identifies that VP9 codec is not supported on iOS Safari as the cause of video load failures"
+    },
+    {
+      "name": "H.264 + AAC requirement",
+      "max_score": 10,
+      "description": "technical-report.md recommends H.264 video codec AND AAC audio codec as the required encoding for iOS compatibility (both must be present)"
+    },
+    {
+      "name": "Views count included",
+      "max_score": 8,
+      "description": "getVideoCommerceMetrics() returns a raw views count field in addition to the rate metrics"
+    },
+    {
+      "name": "TypeScript return type",
+      "max_score": 10,
+      "description": "getVideoCommerceMetrics() is typed in TypeScript with a defined return shape (interface, type alias, or inline object type) that includes the named metric fields"
+    }
+  ]
+}

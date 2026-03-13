@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements TCPA/GDPR-compliant SMS consent infrastructure: correct disclosure wording, a complete consent schema, proper opt-out keyword handling with mandatory reply, HELP response, EU consent recency expiry, and an audit-trail retention policy.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "E.164 phone validation",
+      "max_score": 8,
+      "description": "Phone number is validated using libphonenumber-js (import or reference to the library appears in the code)"
+    },
+    {
+      "name": "Consent schema fields",
+      "max_score": 10,
+      "description": "Consent data model includes at minimum: phone, consentText (the exact disclosure text), ipAddress, userAgent, consentedAt, and jurisdiction fields"
+    },
+    {
+      "name": "TCPA disclosure wording",
+      "max_score": 12,
+      "description": "The disclosure string shown to the user contains all of: 'recurring automated marketing', 'not a condition of purchase', and 'Reply STOP to unsubscribe'"
+    },
+    {
+      "name": "Opt-out keyword coverage",
+      "max_score": 10,
+      "description": "The inbound handler recognises all five opt-out keywords: STOP, UNSUBSCRIBE, CANCEL, QUIT, and END (case-insensitive or normalised to uppercase)"
+    },
+    {
+      "name": "Mandatory opt-out reply",
+      "max_score": 10,
+      "description": "The handler returns a reply message after processing an opt-out (e.g. 'You have been unsubscribed...Reply START to resubscribe')"
+    },
+    {
+      "name": "HELP/INFO response",
+      "max_score": 8,
+      "description": "The inbound handler handles HELP or INFO keywords and returns a response containing store name, opt-out instructions, and support contact"
+    },
+    {
+      "name": "Jurisdiction field",
+      "max_score": 8,
+      "description": "The consent schema stores a jurisdiction value distinguishing at minimum US vs EU contacts"
+    },
+    {
+      "name": "EU consent recency check",
+      "max_score": 12,
+      "description": "The consent validity utility treats EU contacts who consented more than 18 months ago with no subsequent activity as having expired consent"
+    },
+    {
+      "name": "Opt-out timestamp recorded",
+      "max_score": 10,
+      "description": "When an opt-out keyword is received, the handler updates the consent record with an optedOutAt timestamp (not just a boolean flag)"
+    },
+    {
+      "name": "5-year retention policy",
+      "max_score": 12,
+      "description": "IMPLEMENTATION_NOTES.md states that consent records are retained for at least 5 years and lists IP address, timestamp, and disclosure text as captured fields"
+    }
+  ]
+}

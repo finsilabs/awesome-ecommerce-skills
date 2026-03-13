@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements idempotency (checking for existing invoice before creating), snapshots buyer/seller data on creation, correctly determines EU VAT invoice type, makes QuickBooks sync non-blocking with error handling, stores QB document ID in metadata, uses node-quickbooks package, and uses a billing@ sender address for invoice emails.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Idempotency check",
+      "max_score": 10,
+      "description": "generateAndSendInvoice checks for an existing non-void invoice for the same order_id before creating a new one, and returns the existing invoice if found"
+    },
+    {
+      "name": "Seller data snapshot",
+      "max_score": 8,
+      "description": "The invoice record creation includes seller_name, seller_address, and seller_tax_id fields populated from a company/settings source (not left null or omitted)"
+    },
+    {
+      "name": "Buyer data snapshot",
+      "max_score": 8,
+      "description": "The invoice record creation includes buyer_name, buyer_address, and buyer_tax_id (VAT number) fields populated from the customer/order source"
+    },
+    {
+      "name": "EU VAT type detection",
+      "max_score": 10,
+      "description": "Invoice type is determined by checking whether the customer's country is in a list of EU countries AND whether the seller is VAT-registered (not just one condition alone)"
+    },
+    {
+      "name": "EU_COUNTRIES constant",
+      "max_score": 5,
+      "description": "A named constant (e.g. EU_COUNTRIES) holds the array of EU country codes used for VAT detection"
+    },
+    {
+      "name": "Non-blocking accounting sync",
+      "max_score": 12,
+      "description": "The call to pushToAccounting (or equivalent) uses .catch() or try/catch such that a rejection/error does NOT propagate and reject the overall generateAndSendInvoice promise"
+    },
+    {
+      "name": "Sync failure logged",
+      "max_score": 7,
+      "description": "When the accounting sync fails, the error is logged (console.error or equivalent) with at least the invoice ID and error message — it is not silently swallowed"
+    },
+    {
+      "name": "node-quickbooks package",
+      "max_score": 10,
+      "description": "accounting-sync.js imports QuickBooks from 'node-quickbooks' (not a different QuickBooks client or a generic HTTP client)"
+    },
+    {
+      "name": "QB doc ID stored in metadata",
+      "max_score": 10,
+      "description": "After a successful QuickBooks sync, the QuickBooks invoice ID (from the API response) is saved into the invoice's metadata field (e.g. as qb_invoice_id)"
+    },
+    {
+      "name": "Billing sender address",
+      "max_score": 10,
+      "description": "The invoice email sender (From or Reply-To) is configured with a 'billing@' address — NOT a 'noreply@' address"
+    },
+    {
+      "name": "Invoice immutability noted",
+      "max_score": 10,
+      "description": "The code or comments indicate that sent invoices should not be edited and that corrections require a credit note (e.g. a comment, a guard, or a test case)"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements a 3-step post-purchase review request sequence with proper timing, channels, delivery-triggered start, job cancellation on review submission, and correct queue configuration options.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Delivery-triggered start",
+      "max_score": 10,
+      "description": "The scheduling function is described or documented as being triggered after confirmed delivery (not after order placement or payment), referencing shipment/delivery events or webhooks"
+    },
+    {
+      "name": "Three steps defined",
+      "max_score": 8,
+      "description": "Exactly 3 steps are defined in the schedule (no more, no fewer)"
+    },
+    {
+      "name": "Step 0: email at 7 days",
+      "max_score": 8,
+      "description": "Step 0 uses the 'email' channel and a delay of 7 days (604800000 ms or equivalent)"
+    },
+    {
+      "name": "Step 1: SMS at 14 days",
+      "max_score": 8,
+      "description": "Step 1 uses the 'sms' channel and a delay of 14 days (1209600000 ms or equivalent)"
+    },
+    {
+      "name": "Step 2: email at 21 days",
+      "max_score": 8,
+      "description": "Step 2 uses the 'email' channel and a delay of 21 days (1814400000 ms or equivalent)"
+    },
+    {
+      "name": "SMS conditional on no email open",
+      "max_score": 8,
+      "description": "DESIGN.md or code comments indicate step 1 SMS is only sent if the step 0 email was not opened"
+    },
+    {
+      "name": "jobId format",
+      "max_score": 8,
+      "description": "Queue jobs are given a jobId matching the pattern `review-request-{orderId}-step{i}` (or equivalent template using orderId and step index)"
+    },
+    {
+      "name": "removeOnComplete",
+      "max_score": 8,
+      "description": "Jobs are added with `removeOnComplete: true` (or equivalent setting to clean up completed jobs automatically)"
+    },
+    {
+      "name": "Cancel on review submitted",
+      "max_score": 10,
+      "description": "The `onReviewSubmitted` (or equivalent) function iterates all 3 step indices and removes/cancels the corresponding job from the queue"
+    },
+    {
+      "name": "Return check skips skips",
+      "max_score": 8,
+      "description": "Code or DESIGN.md mentions skipping review requests for orders with active return requests (does NOT send to returned orders)"
+    },
+    {
+      "name": "Step 2 photo incentive noted",
+      "max_score": 8,
+      "description": "DESIGN.md or code comments note that step 2 is the photo incentive ask (15% off or photo review framing)"
+    },
+    {
+      "name": "Step indices in job data",
+      "max_score": 8,
+      "description": "Job payload includes the step index (0, 1, or 2) so the consumer knows which message to send"
+    }
+  ]
+}

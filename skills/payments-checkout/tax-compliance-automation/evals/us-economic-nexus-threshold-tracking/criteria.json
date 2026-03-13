@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements US economic nexus tracking with state-specific thresholds (CA, TX, NY, default), fires an alert when nexus is triggered, sends early warnings at 80% of the threshold, and uses an upsert pattern to update running totals.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "CA/TX $500k threshold",
+      "max_score": 10,
+      "description": "California and Texas are assigned a $500,000 sales threshold (not the default $100,000)"
+    },
+    {
+      "name": "CA/TX no txn threshold",
+      "max_score": 8,
+      "description": "California and Texas have no transaction count threshold (null or not checked)"
+    },
+    {
+      "name": "NY $500k + 100 txns",
+      "max_score": 10,
+      "description": "New York uses $500,000 sales threshold AND 100 transaction count threshold"
+    },
+    {
+      "name": "Default $100k/200 txns",
+      "max_score": 8,
+      "description": "All other states default to $100,000 sales OR 200 transactions threshold"
+    },
+    {
+      "name": "Triggered alert subject",
+      "max_score": 10,
+      "description": "Alert email or log message when nexus is triggered includes text matching 'ACTION REQUIRED: Economic nexus triggered in {state}'"
+    },
+    {
+      "name": "80% early warning",
+      "max_score": 12,
+      "description": "An early warning alert is sent/logged when gross sales reach 80% of the sales threshold, before nexus is fully triggered"
+    },
+    {
+      "name": "Register at 80% guidance",
+      "max_score": 8,
+      "description": "README or code comments document that registration should happen at 80% of threshold, not after it's crossed, because nexus is retroactive from trigger date"
+    },
+    {
+      "name": "Upsert pattern",
+      "max_score": 8,
+      "description": "Threshold updates use an upsert-style operation (create record if not exists, increment if exists) keyed on state_code and tracking_year"
+    },
+    {
+      "name": "nexus_trigger_date recorded",
+      "max_score": 8,
+      "description": "When nexus is triggered, the trigger date/timestamp is recorded (not just a boolean flag)"
+    },
+    {
+      "name": "Zero-nexus tracking",
+      "max_score": 10,
+      "description": "When an order arrives from a state with no current nexus, the order is still tracked toward the threshold (totals are incremented)"
+    },
+    {
+      "name": "OR logic for thresholds",
+      "max_score": 8,
+      "description": "Nexus is triggered when EITHER the sales threshold OR the transaction count threshold is met (not requiring both to be met)"
+    }
+  ]
+}

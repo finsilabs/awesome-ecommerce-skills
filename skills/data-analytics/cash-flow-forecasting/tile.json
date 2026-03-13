@@ -1,0 +1,10 @@
+{
+  "name": "finsi/cash-flow-forecasting",
+  "version": "0.1.0",
+  "summary": "Forecast cash flow using historical sales patterns, payment terms, seasonal trends, and receivables modeling with scenario planning and runway tracking",
+  "skills": {
+    "cash-flow-forecasting": {
+      "path": "SKILL.md"
+    }
+  }
+}

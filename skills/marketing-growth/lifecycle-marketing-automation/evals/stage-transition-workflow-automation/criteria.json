@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements stage-transition workflows with the right actions per transition, proper flow cancellation on purchase, conditional win-back logic, and produces a transition matrix document.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Welcome series on subscriber",
+      "max_score": 8,
+      "description": "The transition to 'subscriber' stage triggers a welcome series (e.g. triggerWelcomeSeries or equivalent)"
+    },
+    {
+      "name": "Cancel welcome on first purchase",
+      "max_score": 10,
+      "description": "The transition to 'first-time-buyer' calls cancelFlow (or equivalent) to cancel the welcome series BEFORE scheduling the onboarding flow"
+    },
+    {
+      "name": "First-purchase onboarding scheduled",
+      "max_score": 8,
+      "description": "The transition to 'first-time-buyer' schedules a first-purchase onboarding flow (covering setup tips, product usage, and/or review request)"
+    },
+    {
+      "name": "Second-purchase milestone email",
+      "max_score": 10,
+      "description": "The transition to 'active' from 'first-time-buyer' specifically sends a milestone email for the second purchase (does NOT fire for all transitions to 'active')"
+    },
+    {
+      "name": "Loyal adds to VIP audience",
+      "max_score": 8,
+      "description": "The transition to 'loyal' calls addToVipAudience (or equivalent) in addition to a milestone email"
+    },
+    {
+      "name": "At-risk nudge without discount",
+      "max_score": 10,
+      "description": "The transition to 'at-risk' sends a retention/re-engagement message, and the code or documentation explicitly indicates no discount/incentive is offered at this stage"
+    },
+    {
+      "name": "Win-back only from at-risk",
+      "max_score": 10,
+      "description": "The win-back campaign (or escalated offer) on transition to 'lapsed' is conditional — it only fires when the previous stage was 'at-risk', not unconditionally"
+    },
+    {
+      "name": "Advocate reward triggered",
+      "max_score": 8,
+      "description": "The transition to 'advocate' stage triggers a reward (exclusive perks, referral bonus, or equivalent)"
+    },
+    {
+      "name": "Cancel all retention flows on purchase",
+      "max_score": 10,
+      "description": "The onOrderPaid (or equivalent purchase event handler) calls cancelAllRetentionFlows (or equivalent) to stop ALL competing win-back/re-engagement flows when a purchase occurs"
+    },
+    {
+      "name": "Transition matrix documented",
+      "max_score": 8,
+      "description": "A transition-matrix document exists showing for each destination stage what workflow fires, including the from-stage condition for the second-purchase milestone and the lapsed win-back"
+    },
+    {
+      "name": "previousStage used in logic",
+      "max_score": 10,
+      "description": "The workflow trigger function accepts or uses the 'from' (previous) stage parameter to make conditional decisions — not just the destination stage alone"
+    }
+  ]
+}

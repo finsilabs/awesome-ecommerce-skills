@@ -1,0 +1,10 @@
+{
+  "name": "finsi/referral-viral-loops",
+  "version": "0.1.0",
+  "summary": "Build referral mechanics with dual-sided rewards, unique tracking links, viral coefficient optimization, and anti-fraud controls for referral abuse",
+  "skills": {
+    "referral-viral-loops": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/ecommerce-budgeting-forecasting",
+  "version": "0.1.0",
+  "summary": "Build rolling operating budgets for marketing spend, inventory purchases, and operations with variance analysis, scenario modeling, and budget utilization alerts",
+  "skills": {
+    "ecommerce-budgeting-forecasting": {
+      "path": "SKILL.md"
+    }
+  }
+}

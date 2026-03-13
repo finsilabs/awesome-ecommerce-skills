@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly allocates a bundled transaction price using relative SSPs, applies point-in-time vs. over-time recognition for each obligation type, uses Decimal arithmetic, produces correct double-entry journal entries with obligation-type-separated accounts, and uses the prescribed SQL schema structure.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Relative SSP allocation",
+      "max_score": 10,
+      "description": "Allocates the $600 transaction price across obligations using relative standalone selling prices (hardware: $350, install: $100, monitoring: $200; total SSP $650), not equal split or raw prices"
+    },
+    {
+      "name": "Last-obligation rounding",
+      "max_score": 8,
+      "description": "The last obligation receives the remainder of the transaction price (transaction_price minus sum of others) rather than an independently rounded proportion, ensuring amounts sum exactly to $600"
+    },
+    {
+      "name": "Decimal arithmetic",
+      "max_score": 8,
+      "description": "Python monetary calculations use the `decimal.Decimal` type (not float), and cent-precision is maintained with `.quantize(Decimal('0.01'))` or equivalent"
+    },
+    {
+      "name": "Hardware point-in-time at delivery",
+      "max_score": 8,
+      "description": "Hardware/product obligation is recognized as point_in_time at delivery_confirmed trigger (March 1, 2026), NOT at cash receipt or order placement"
+    },
+    {
+      "name": "Installation point-in-time at completion",
+      "max_score": 8,
+      "description": "Installation obligation is recognized as point_in_time at installation_complete trigger (March 5, 2026)"
+    },
+    {
+      "name": "Monitoring over-time day-based",
+      "max_score": 10,
+      "description": "Monitoring/support obligation is recognized over_time using day-based straight-line pro-rating (days in period / total days of contract), not calendar-month approximation"
+    },
+    {
+      "name": "Separate GL accounts by type",
+      "max_score": 8,
+      "description": "Journal entries and/or schema use distinct account names or codes for product revenue, installation/service revenue, and warranty/subscription/monitoring revenue — not a single combined 'Revenue' account"
+    },
+    {
+      "name": "DR Cash CR Deferred at receipt",
+      "max_score": 8,
+      "description": "Initial cash receipt journal entry debits Cash (or Accounts Receivable) and credits Deferred Revenue — NOT directly crediting Revenue"
+    },
+    {
+      "name": "DR Deferred CR Revenue at recognition",
+      "max_score": 8,
+      "description": "Each recognition event debits the appropriate Deferred Revenue account and credits the corresponding Revenue account"
+    },
+    {
+      "name": "performance_obligations schema",
+      "max_score": 8,
+      "description": "schema.sql includes a performance_obligations table with at minimum: recognition_method column with a CHECK constraint limiting values to 'point_in_time' and 'over_time', standalone_ssp and allocated_price as NUMERIC columns"
+    },
+    {
+      "name": "revenue_recognition_entries schema",
+      "max_score": 8,
+      "description": "schema.sql includes a revenue_recognition_entries table with at minimum: obligation_id FK, accounting_date, amount_recognized, cumulative_recognized, remaining_deferred columns"
+    },
+    {
+      "name": "Correct allocated amounts shown",
+      "max_score": 8,
+      "description": "Journal entries show dollar amounts derived from the SSP allocation (hardware ≈ $323.08, installation ≈ $92.31, monitoring ≈ $184.61 — or equivalent correct rounding) rather than the raw standalone prices"
+    }
+  ]
+}

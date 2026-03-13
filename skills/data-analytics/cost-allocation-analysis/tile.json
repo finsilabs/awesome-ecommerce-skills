@@ -1,0 +1,10 @@
+{
+  "name": "finsi/cost-allocation-analysis",
+  "version": "0.1.0",
+  "summary": "Allocate COGS, shipping, marketing, and overhead costs across products, channels, and orders to calculate true per-unit and per-order profitability",
+  "skills": {
+    "cost-allocation-analysis": {
+      "path": "SKILL.md"
+    }
+  }
+}

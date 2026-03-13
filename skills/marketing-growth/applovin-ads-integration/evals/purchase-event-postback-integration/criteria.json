@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the AppLovin purchase postback correctly: using the right URL endpoint, formatting revenue as a decimal, passing AppLovin's proprietary device ID, using server-to-server delivery, and recommending an MMP for production.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Postback URL",
+      "max_score": 12,
+      "description": "Uses the URL https://d.applovin.com/postback/v1/purchase as the endpoint"
+    },
+    {
+      "name": "event_token parameter",
+      "max_score": 8,
+      "description": "Reads the AppLovin postback token from an environment variable (not hardcoded) and passes it as event_token query parameter"
+    },
+    {
+      "name": "event_name=purchase",
+      "max_score": 8,
+      "description": "Sets event_name query parameter to the string 'purchase'"
+    },
+    {
+      "name": "Revenue decimal format",
+      "max_score": 12,
+      "description": "Formats revenue as a decimal string (e.g. using .toFixed(2) or equivalent), NOT as an integer"
+    },
+    {
+      "name": "Required purchase params",
+      "max_score": 8,
+      "description": "Passes user_id, transaction_id (or order_id), and currency as query parameters"
+    },
+    {
+      "name": "AppLovin device ID",
+      "max_score": 12,
+      "description": "Accepts an AppLovin-specific device identifier and passes it as the device_id parameter (in addition to or instead of IDFA/GAID)"
+    },
+    {
+      "name": "Optional IDFA/GAID",
+      "max_score": 8,
+      "description": "Includes IDFA (idfa) and GAID (gaid) as optional parameters, only appending them when present"
+    },
+    {
+      "name": "Server-to-server delivery",
+      "max_score": 10,
+      "description": "architecture-note.md explains that server-side postbacks are preferred over client-side because client-side events can be spoofed and server postbacks give reliable ROAS signal"
+    },
+    {
+      "name": "MMP recommendation",
+      "max_score": 12,
+      "description": "architecture-note.md recommends using an MMP (names at least one of: Adjust, AppsFlyer, Singular) for production to handle deduplication and SKAdNetwork attribution"
+    },
+    {
+      "name": "HTTP error handling",
+      "max_score": 10,
+      "description": "Checks the HTTP response status and throws or returns an error when the postback request fails"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/social-proof-widgets",
+  "version": "0.1.0",
+  "summary": "Display real-time social proof including recent purchases, review counts, visitor counts, and verified buyer badges to build trust and boost conversions",
+  "skills": {
+    "social-proof-widgets": {
+      "path": "SKILL.md"
+    }
+  }
+}

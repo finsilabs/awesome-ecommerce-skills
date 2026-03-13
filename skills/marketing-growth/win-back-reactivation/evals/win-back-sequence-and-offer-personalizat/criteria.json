@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements offer selection based on LTV, product recommendation filtering, deduplication logic, discount code configuration, and a properly timed three-step email sequence with the right templates.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "LTV threshold $300",
+      "max_score": 9,
+      "description": "High-value classification uses ltv >= 300, where LTV is the sum of the last 5 orders' subtotals"
+    },
+    {
+      "name": "Soft offer for high-LTV",
+      "max_score": 7,
+      "description": "Soft + high-LTV customer gets { type: 'free_shipping', value: 0 }; soft + low-LTV gets null (no offer)"
+    },
+    {
+      "name": "Medium offer values",
+      "max_score": 7,
+      "description": "Medium + high-LTV gets 15% off; medium + low-LTV gets 10% off"
+    },
+    {
+      "name": "Strong offer values",
+      "max_score": 7,
+      "description": "Strong + high-LTV gets 20% off; strong + low-LTV gets 15% off"
+    },
+    {
+      "name": "Recommendation filters",
+      "max_score": 9,
+      "description": "Recommendations are drawn from the last 10 order line items, filtered to same categories, excluding already-purchased product IDs, active and in-stock only"
+    },
+    {
+      "name": "Recommendation ordering",
+      "max_score": 7,
+      "description": "Recommended products are ordered by unitsSold30d descending and limited to 3"
+    },
+    {
+      "name": "Deduplication check",
+      "max_score": 9,
+      "description": "triggerWinBackSequence checks for an existing active win-back job created within the last 30 days and returns early if one exists"
+    },
+    {
+      "name": "Discount: single-use, 14-day expiry",
+      "max_score": 9,
+      "description": "Discount codes are created with singleUse: true and expiresAt set to 14 days from now"
+    },
+    {
+      "name": "Step 0: no discount on first touch",
+      "max_score": 9,
+      "description": "Step 0 uses template 'winback-reconnect' with discountCode: null (no discount in the first message)"
+    },
+    {
+      "name": "Step 1: delay and template",
+      "max_score": 9,
+      "description": "Step 1 uses template 'winback-offer' with a delay of 5 days (5 * 86400000 ms) and includes both recommendations and the discount code"
+    },
+    {
+      "name": "Step 2: conditional and timing",
+      "max_score": 10,
+      "description": "Step 2 is only scheduled if a discountCode exists, uses template 'winback-last-chance' with a delay of 12 days (12 * 86400000 ms) and passes expiresInDays: 2"
+    },
+    {
+      "name": "Job ID naming",
+      "max_score": 8,
+      "description": "Queue jobs use IDs in the format `winback-${customerId}-step${n}` (e.g. winback-abc123-step0)"
+    }
+  ]
+}

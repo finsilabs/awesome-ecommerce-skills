@@ -1,0 +1,10 @@
+{
+  "name": "finsi/revenue-recognition-accounting",
+  "version": "0.1.0",
+  "summary": "Implement ASC 606 / IFRS 15 revenue recognition for subscriptions, bundles, and multi-element arrangements with deferred revenue tracking and journal entries",
+  "skills": {
+    "revenue-recognition-accounting": {
+      "path": "SKILL.md"
+    }
+  }
+}

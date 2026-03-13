@@ -1,0 +1,10 @@
+{
+  "name": "finsi/win-back-reactivation",
+  "version": "0.1.0",
+  "summary": "Re-engage lapsed customers with automated win-back campaigns using personalized comeback offers based on purchase history and inactivity windows",
+  "skills": {
+    "win-back-reactivation": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent uses SWR with revalidateOnFocus disabled, implements the responsive grid layout, tracks the correct analytics fields on add-to-cart, assigns A/B variants stably by customer ID hash, and documents the attribution rationale.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SWR used",
+      "max_score": 10,
+      "description": "CrossSellWidget.tsx uses useSWR (from the 'swr' package) to fetch recommendation data — not useEffect+fetch or another data-fetching approach"
+    },
+    {
+      "name": "revalidateOnFocus disabled",
+      "max_score": 10,
+      "description": "The useSWR call includes { revalidateOnFocus: false } in its options"
+    },
+    {
+      "name": "Grid layout classes",
+      "max_score": 8,
+      "description": "The product grid uses Tailwind classes grid, grid-cols-2, md:grid-cols-4, and gap-4 (or equivalent responsive 2→4 column layout)"
+    },
+    {
+      "name": "Empty/loading guard",
+      "max_score": 8,
+      "description": "Widget returns null (or equivalent no-render) when isLoading is true or when there are no recommendation results"
+    },
+    {
+      "name": "Analytics event name",
+      "max_score": 8,
+      "description": "The analytics tracking call uses the event name 'recommendation_added_to_cart' (exact string)"
+    },
+    {
+      "name": "Analytics recommendedProductId",
+      "max_score": 6,
+      "description": "The analytics event payload includes recommendedProductId (the ID of the product being added)"
+    },
+    {
+      "name": "Analytics sourceProductIds",
+      "max_score": 6,
+      "description": "The analytics event payload includes sourceProductIds (the product IDs that generated the recommendation context)"
+    },
+    {
+      "name": "Analytics position",
+      "max_score": 6,
+      "description": "The analytics event payload includes position (the 1-based index of the product card in the widget)"
+    },
+    {
+      "name": "Analytics algorithm",
+      "max_score": 6,
+      "description": "The analytics event payload includes the algorithm/reason field (the source of the recommendation: affinity, manual, trending, etc.)"
+    },
+    {
+      "name": "A/B customer-level hash",
+      "max_score": 10,
+      "description": "ab-testing.ts assigns variants using a hash derived from the customerId string — not a random value, session ID, or timestamp"
+    },
+    {
+      "name": "A/B stable assignment",
+      "max_score": 10,
+      "description": "widget-notes.md explains that variant assignment is based on customer ID so the same customer always receives the same variant across sessions/devices"
+    },
+    {
+      "name": "Attribution explained",
+      "max_score": 8,
+      "description": "widget-notes.md explains that the tracked fields allow measuring incremental AOV or attributing revenue to specific algorithms/placements"
+    },
+    {
+      "name": "Analytics type field",
+      "max_score": 4,
+      "description": "The analytics event payload includes the recommendation type (cross-sell, upsell, or frequently-bought-together)"
+    }
+  ]
+}

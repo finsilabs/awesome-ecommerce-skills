@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the correct fraud/spam flag conditions, the specific decision rules mapping flags to moderation outcomes, the automated 15-minute moderation queue, correct aggregate rating calculation, and CDN cache invalidation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "High-frequency flag",
+      "max_score": 8,
+      "description": "Raises 'high-frequency' flag when a customer has submitted more than 3 reviews within the past 1 hour"
+    },
+    {
+      "name": "Suspicious IP flag",
+      "max_score": 7,
+      "description": "Raises 'suspicious-ip' flag when more than 5 reviews have come from the same IP address within the past 7 days"
+    },
+    {
+      "name": "Too-short body flag",
+      "max_score": 7,
+      "description": "Raises 'too-short' flag when review body is fewer than 20 characters (NOT the same as the submission validation minimum of 10)"
+    },
+    {
+      "name": "Repetitive characters flag",
+      "max_score": 8,
+      "description": "Raises a repetitive-characters (or equivalent) flag using a regex that detects 4 or more consecutive identical characters (e.g., /(.){4,}/ or /(.\\1{3,})/)"
+    },
+    {
+      "name": "Incentive-disclosure-risk flag",
+      "max_score": 8,
+      "description": "Raises 'incentive-disclosure-risk' flag ONLY when rating is 5 AND the body contains the word 'discount' (case-insensitive)"
+    },
+    {
+      "name": "Profanity check",
+      "max_score": 7,
+      "description": "Calls checkProfanity (or equivalent profanity API/word-list) on the review body and adds a 'profanity' flag if found"
+    },
+    {
+      "name": "Rejected decision rule",
+      "max_score": 10,
+      "description": "Returns 'rejected' (only) when flags include 'profanity' OR 'high-frequency' — not for other flags alone"
+    },
+    {
+      "name": "Needs-human-review rule",
+      "max_score": 7,
+      "description": "Returns 'needs-human-review' when flags are present but neither 'profanity' nor 'high-frequency' is among them"
+    },
+    {
+      "name": "avgRating precision",
+      "max_score": 7,
+      "description": "avgRating is rounded/formatted to exactly 1 decimal place (toFixed(1) or Math.round to 1 decimal) before saving"
+    },
+    {
+      "name": "Published reviews only",
+      "max_score": 8,
+      "description": "Aggregate rating calculation filters to only reviews with status 'published' (excludes pending, needs-human-review, rejected)"
+    },
+    {
+      "name": "CDN cache invalidation",
+      "max_score": 8,
+      "description": "refreshProductRatingAggregate calls invalidateProductCache (or equivalent) after updating the product rating"
+    },
+    {
+      "name": "15-minute moderation schedule",
+      "max_score": 7,
+      "description": "MODERATION_RULES.md or code sets up the moderation queue to run automatically every 15 minutes (via cron, setInterval, or queue scheduler with 15-minute interval)"
+    },
+    {
+      "name": "Photo incentive on approval",
+      "max_score": 8,
+      "description": "When a review is approved and has a pending incentive, a unique discount code is created and a thank-you email is sent to the reviewer"
+    }
+  ]
+}

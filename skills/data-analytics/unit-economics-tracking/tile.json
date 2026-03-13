@@ -1,0 +1,10 @@
+{
+  "name": "finsi/unit-economics-tracking",
+  "version": "0.1.0",
+  "summary": "Track customer acquisition cost, lifetime value, payback period, and contribution margin by cohort and channel with profitability benchmarks and trend analysis",
+  "skills": {
+    "unit-economics-tracking": {
+      "path": "SKILL.md"
+    }
+  }
+}

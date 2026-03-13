@@ -1,0 +1,10 @@
+{
+  "name": "finsi/email-list-segmentation",
+  "version": "0.1.0",
+  "summary": "Create dynamic email segments based on purchase behavior, RFM scores, engagement signals, and lifecycle stage with automated rebalancing and list hygiene",
+  "skills": {
+    "email-list-segmentation": {
+      "path": "SKILL.md"
+    }
+  }
+}

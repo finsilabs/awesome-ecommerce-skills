@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements a tokenized, login-free review submission system with correct JWT expiry, pre-filled star rating, verified buyer marking, pending status, proper validation limits, and the photo incentive creation flow.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "JWT-based token",
+      "max_score": 8,
+      "description": "generateReviewToken uses jwt.sign() (or equivalent JWT library) to create a signed token — NOT a plain string or UUID"
+    },
+    {
+      "name": "Token 30-day expiry",
+      "max_score": 8,
+      "description": "The JWT payload sets an expiry of 30 days from creation (exp = now + 30 * 86400 or equivalent in seconds)"
+    },
+    {
+      "name": "No login required",
+      "max_score": 8,
+      "description": "GET /review/:token handler does NOT check session, cookies, or Authorization headers for authentication — token alone is sufficient"
+    },
+    {
+      "name": "Pre-filled rating",
+      "max_score": 8,
+      "description": "The form renderer reads a `rating` query parameter and passes it to the template as a pre-filled value (e.g., prefilledRating or equivalent)"
+    },
+    {
+      "name": "Token verify on POST",
+      "max_score": 8,
+      "description": "POST /review/:token verifies the JWT token before processing submission, returning 400/401 on invalid/expired tokens"
+    },
+    {
+      "name": "isVerifiedBuyer true",
+      "max_score": 8,
+      "description": "The created review record explicitly sets isVerifiedBuyer (or equivalent field) to true"
+    },
+    {
+      "name": "Status pending",
+      "max_score": 8,
+      "description": "The created review record is saved with status 'pending' (not 'published' or 'approved' directly)"
+    },
+    {
+      "name": "Rating validation 1–5",
+      "max_score": 8,
+      "description": "Submission rejects ratings outside the range 1–5 with a 400 error"
+    },
+    {
+      "name": "Body min length validation",
+      "max_score": 8,
+      "description": "Submission rejects a body shorter than 10 characters with a 400 error"
+    },
+    {
+      "name": "Title/body truncation",
+      "max_score": 8,
+      "description": "Title is truncated/limited to 100 characters AND body is truncated/limited to 2000 characters before saving"
+    },
+    {
+      "name": "Photo incentive created",
+      "max_score": 8,
+      "description": "When photos are present, a pending incentive record is created with type 'percent_off' and value 15 (NOT immediately issued as a discount code)"
+    },
+    {
+      "name": "Queue cancellation on submit",
+      "max_score": 8,
+      "description": "submitReview calls onReviewSubmitted (or equivalent) after saving, to cancel remaining review request queue jobs"
+    },
+    {
+      "name": "Token expiry/invalid handled",
+      "max_score": 4,
+      "description": "GET /review/:token renders an error page (not a 500) when the token is invalid or expired"
+    }
+  ]
+}

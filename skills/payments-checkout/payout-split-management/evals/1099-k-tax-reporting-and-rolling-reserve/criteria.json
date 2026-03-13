@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements 1099-K generation with the 2024 $600 threshold, reports gross_order_amount (not net earnings), uses upsert for idempotency, triggers W-9 requests at $400, applies 24% backup withholding for sellers without W-9, implements the daily reserve release job with a double-ledger entry, and stores only last 4 TIN digits in the app.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "1099-K threshold $600",
+      "max_score": 10,
+      "description": "The 1099-K eligibility threshold is set to $600 (not the old $20,000 threshold), and the code or notes attribute this to the 2024 IRS rule change"
+    },
+    {
+      "name": "Gross amount reported",
+      "max_score": 10,
+      "description": "The 1099-K gross_amount is populated from the gross order amount (before platform fees), NOT from the net seller earnings after deductions"
+    },
+    {
+      "name": "Upsert for 1099 records",
+      "max_score": 8,
+      "description": "The 1099 generation uses upsert (not plain insert) so that re-running the job updates existing draft records rather than creating duplicates"
+    },
+    {
+      "name": "W-9 collection trigger at $400",
+      "max_score": 9,
+      "description": "The notes or code specify that W-9 collection requests should be triggered when a seller's YTD earnings reach $400 (to collect the form before the $600 filing threshold)"
+    },
+    {
+      "name": "Backup withholding rate",
+      "max_score": 8,
+      "description": "Tax notes state that the IRS backup withholding rate is 24%, applied to sellers who have not submitted a W-9"
+    },
+    {
+      "name": "Reserve release checks today",
+      "max_score": 9,
+      "description": "The reserve release job queries for records where release_date is less than or equal to today (not strictly less than), and filters for status='held' and entry_type='reserve'"
+    },
+    {
+      "name": "Double-ledger reserve release",
+      "max_score": 9,
+      "description": "When releasing a reserve, the job both updates the existing 'reserve' entry to status='released' AND creates a new ledger entry with entry_type='release'"
+    },
+    {
+      "name": "Reserve release atomic",
+      "max_score": 8,
+      "description": "The reserve release operations (update ledger, create release entry, zero out rolling_reserve on order_earnings) are performed in a single database transaction"
+    },
+    {
+      "name": "SQL status column logic",
+      "max_score": 9,
+      "description": "The SQL query includes a computed status column that distinguishes sellers who: require a 1099 (>=600, W-9 collected), require W-9 collection (>=600, no W-9), or are below threshold"
+    },
+    {
+      "name": "TIN storage note",
+      "max_score": 8,
+      "description": "The notes or code mention that only the last 4 digits of the recipient TIN should be stored in the application database, with the full TIN kept in a secure vault"
+    },
+    {
+      "name": "YTD earnings used for threshold",
+      "max_score": 7,
+      "description": "The 1099 eligibility check uses the seller's ytd_earnings field (or an equivalent YTD aggregate) rather than recalculating from scratch each time"
+    },
+    {
+      "name": "form_type is 1099-K",
+      "max_score": 5,
+      "description": "The generated form records use form_type '1099-K' (not '1099-NEC' or other variants)"
+    }
+  ]
+}

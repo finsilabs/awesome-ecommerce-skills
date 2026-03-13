@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent designs the AP database schema using the correct conventions: monetary amounts in cents as BIGINT, UUID primary keys with gen_random_uuid(), correct status enumerations via CHECK constraints, proper unique constraints and partial indexes, credit memo type support, and the correct set of tables with their relationships.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cents storage",
+      "max_score": 12,
+      "description": "All monetary amount columns use BIGINT (not DECIMAL/NUMERIC/FLOAT) and are named with a _cents suffix (e.g., total_cents, subtotal_cents, paid_cents, amount_cents)"
+    },
+    {
+      "name": "UUID primary keys",
+      "max_score": 8,
+      "description": "Primary key columns use UUID type with gen_random_uuid() as the default value"
+    },
+    {
+      "name": "Invoice status enum",
+      "max_score": 10,
+      "description": "The invoice status column uses a CHECK constraint containing all of: 'received', 'processing', 'pending_approval', 'approved', 'scheduled', 'paid', 'disputed', 'void'"
+    },
+    {
+      "name": "Match status enum",
+      "max_score": 8,
+      "description": "A match_status column exists with a CHECK constraint containing all of: 'unmatched', 'partial', 'matched', 'exception'"
+    },
+    {
+      "name": "Payment method enum",
+      "max_score": 6,
+      "description": "A payment_method column uses a CHECK constraint containing at least: 'ach', 'wire', 'check', 'card'"
+    },
+    {
+      "name": "Payment status enum",
+      "max_score": 6,
+      "description": "A payments table status column uses a CHECK constraint containing at least: 'pending', 'submitted', 'cleared', 'returned', 'cancelled'"
+    },
+    {
+      "name": "Payment run status enum",
+      "max_score": 6,
+      "description": "A payment_runs table status column uses a CHECK constraint containing at least: 'draft', 'approved', 'submitted', 'completed'"
+    },
+    {
+      "name": "Duplicate invoice constraint",
+      "max_score": 10,
+      "description": "A UNIQUE constraint exists on (vendor_id, invoice_number) to prevent duplicate invoice entries"
+    },
+    {
+      "name": "Due-date partial index",
+      "max_score": 8,
+      "description": "A partial index exists on (due_date, status) with a WHERE clause filtering to status values 'approved' and/or 'scheduled'"
+    },
+    {
+      "name": "Vendor balance partial index",
+      "max_score": 8,
+      "description": "A partial index exists on (vendor_id, status) with a WHERE clause excluding 'paid' and 'void' statuses"
+    },
+    {
+      "name": "Credit memo support",
+      "max_score": 10,
+      "description": "A 'type' column exists on the invoices table with values including 'invoice' and 'credit_memo' (credit memos use negative amounts to offset open balances)"
+    },
+    {
+      "name": "Discount cents column",
+      "max_score": 8,
+      "description": "The payments table includes a discount_cents column (BIGINT) separate from the payment amount"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a shoppable video player with correct hotspot timing logic, percentage-based positioning for mobile responsiveness, pre-loaded product data to eliminate fetch latency during playback, appropriately sized overlay cards, and HLS-compatible video rendering.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Percentage positioning",
+      "max_score": 12,
+      "description": "Hotspot overlay card is positioned using percentage values (e.g., left: `${x}%`, top: `${y}%`) rather than pixel values (px) for both x and y coordinates"
+    },
+    {
+      "name": "Pre-load product data",
+      "max_score": 14,
+      "description": "Product data for all hotspots is fetched/loaded before or immediately at video load time (not lazily on first hotspot activation), so no fetch call is triggered during timeupdate when a hotspot becomes active"
+    },
+    {
+      "name": "Hotspot time window logic",
+      "max_score": 10,
+      "description": "Active hotspot detection compares the current video time against both `timestamp` (lower bound) AND `timestamp + displayDuration` (upper bound) to determine visibility"
+    },
+    {
+      "name": "Delayed hotspot trigger",
+      "max_score": 8,
+      "description": "Hotspot timestamps are set or documented to appear 1–2 seconds after the product appears on screen (notes.md acknowledges this timing principle, OR the component adds an offset, OR the sample data reflects this offset)"
+    },
+    {
+      "name": "Compact card size",
+      "max_score": 8,
+      "description": "The hotspot product card has a constrained width (200px or similar small value) and does not expand to fill the video width; notes.md or code comment references keeping cards small"
+    },
+    {
+      "name": "Dismissible hotspot card",
+      "max_score": 8,
+      "description": "The product hotspot card includes a close/dismiss button or mechanism that allows the viewer to hide it without pausing the video"
+    },
+    {
+      "name": "HLS video delivery",
+      "max_score": 10,
+      "description": "The component either uses hls.js (or an HLS-capable player library) OR notes.md explicitly states that HLS should be used for video delivery with a reference to hls.js"
+    },
+    {
+      "name": "HLS library (hls.js)",
+      "max_score": 8,
+      "description": "The code references or imports hls.js (or a wrapper like react-hls-player, video.js with HLS) specifically — not just a generic <video> tag with an .mp4 src"
+    },
+    {
+      "name": "Absolute positioning container",
+      "max_score": 8,
+      "description": "The video container uses `position: relative` and hotspot card uses `position: absolute` so overlays are positioned relative to the video element"
+    },
+    {
+      "name": "TypeScript types used",
+      "max_score": 7,
+      "description": "The implementation defines or references typed interfaces for at minimum the video and hotspot data (ShoppableVideo, VideoHotspot or equivalent named types)"
+    },
+    {
+      "name": "Notes explain decisions",
+      "max_score": 7,
+      "description": "notes.md contains at least two of: discussion of pre-loading strategy, hotspot timing offset reasoning, percentage positioning rationale, or card size constraint reasoning"
+    }
+  ]
+}

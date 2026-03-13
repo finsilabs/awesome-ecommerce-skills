@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent computes all required ROAS variants (platform, first-party, true, blended, MER, break-even), uses the correct default margin assumptions, distinguishes platform attribution from first-party attribution, and outputs a profitability verdict based on true ROAS vs break-even ROAS.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Platform ROAS computed",
+      "max_score": 6,
+      "description": "Computes platform_roas as platform_attributed_revenue divided by spend (not using first-party or gross revenue)"
+    },
+    {
+      "name": "First-party ROAS computed",
+      "max_score": 8,
+      "description": "Computes first_party_roas (or fp_roas) as first_party_attributed_revenue divided by spend, separately from platform ROAS"
+    },
+    {
+      "name": "True ROAS formula",
+      "max_score": 12,
+      "description": "Computes true_roas by first calculating gross_profit_attributed = first_party_attributed_revenue * (1 - cogs_rate - variable_costs_rate), then dividing by spend"
+    },
+    {
+      "name": "Default COGS rate",
+      "max_score": 6,
+      "description": "Uses cogs_rate of 0.45 (45%) when no explicit COGS is provided"
+    },
+    {
+      "name": "Default variable costs rate",
+      "max_score": 6,
+      "description": "Uses variable_costs_rate of 0.15 (15%) when no explicit variable cost rate is provided"
+    },
+    {
+      "name": "Break-even ROAS formula",
+      "max_score": 12,
+      "description": "Computes break_even_roas as 1 / (1 - cogs_rate - variable_costs_rate), i.e., 1 / contribution_margin_rate"
+    },
+    {
+      "name": "MER computed",
+      "max_score": 8,
+      "description": "Computes MER (Marketing Efficiency Ratio) as total gross revenue divided by total marketing spend across all channels"
+    },
+    {
+      "name": "Blended ROAS computed",
+      "max_score": 6,
+      "description": "Computes blended_roas as gross_revenue divided by total spend (not per-channel)"
+    },
+    {
+      "name": "Profitability verdict",
+      "max_score": 10,
+      "description": "Outputs an explicit is_profitable flag or verdict comparing true_roas against break_even_roas for each channel"
+    },
+    {
+      "name": "True vs platform ROAS comparison",
+      "max_score": 10,
+      "description": "Output explicitly shows or comments on the difference between platform-reported ROAS and true/first-party ROAS"
+    },
+    {
+      "name": "Division-by-zero guard",
+      "max_score": 8,
+      "description": "Protects against division by zero when spend is 0 (e.g., uses max(spend, 0.01) or equivalent guard)"
+    },
+    {
+      "name": "Profit over ROAS framing",
+      "max_score": 8,
+      "description": "Output includes or comments on total gross profit contribution (not just ROAS rank), making the case that absolute profit matters alongside efficiency ratio"
+    }
+  ]
+}

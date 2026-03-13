@@ -1,0 +1,10 @@
+{
+  "name": "finsi/accounts-receivable-automation",
+  "version": "0.1.0",
+  "summary": "Automate B2B accounts receivable with invoice generation, payment tracking, dunning sequences for past-due invoices, and aging analysis dashboards",
+  "skills": {
+    "accounts-receivable-automation": {
+      "path": "SKILL.md"
+    }
+  }
+}

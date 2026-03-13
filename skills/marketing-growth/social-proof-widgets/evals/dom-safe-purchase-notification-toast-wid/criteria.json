@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the purchase notification toast widget following the skill's DOM safety, timing, session cap, page restriction, and queue size rules.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "DOM createElement construction",
+      "max_score": 12,
+      "description": "Toast DOM nodes are built using document.createElement (not innerHTML or insertAdjacentHTML) for elements that display customer data"
+    },
+    {
+      "name": "textContent for customer data",
+      "max_score": 12,
+      "description": "Customer-derived strings (firstName, location, variantTitle) are assigned via .textContent — not via innerHTML, template literals injected into innerHTML, or string concatenation into innerHTML"
+    },
+    {
+      "name": "Auto-dismiss at 5000ms",
+      "max_score": 8,
+      "description": "Each toast is automatically dismissed after 5000ms (5 seconds)"
+    },
+    {
+      "name": "Gap between toasts 8000ms",
+      "max_score": 8,
+      "description": "There is an 8000ms (8 second) delay between showing consecutive toasts"
+    },
+    {
+      "name": "Max 3 toasts per session",
+      "max_score": 10,
+      "description": "The widget shows a maximum of 3 toasts per session (or widget-notes.md states 3 as the per-session cap)"
+    },
+    {
+      "name": "Not on cart/checkout",
+      "max_score": 8,
+      "description": "The code or widget-notes.md explicitly states the widget should NOT appear on cart or checkout pages"
+    },
+    {
+      "name": "Queue capped at 6",
+      "max_score": 8,
+      "description": "The toast queue is initialised with at most 6 items from the recentPurchases array (e.g. .slice(0, 6))"
+    },
+    {
+      "name": "data-product-id attribute",
+      "max_score": 8,
+      "description": "The product ID is read from a [data-product-id] DOM attribute (via querySelector or getAttribute), not from a hardcoded value or a different mechanism"
+    },
+    {
+      "name": "Conditional initialisation",
+      "max_score": 8,
+      "description": "The toast widget only initialises when a [data-product-id] element is present on the page"
+    },
+    {
+      "name": "Close button",
+      "max_score": 6,
+      "description": "Each toast includes a dismiss/close button that removes the toast when clicked"
+    },
+    {
+      "name": "timeAgo displayed",
+      "max_score": 5,
+      "description": "The toast displays the timeAgo value from the purchase data (how long ago the purchase was made)"
+    },
+    {
+      "name": "Widget notes completeness",
+      "max_score": 7,
+      "description": "widget-notes.md documents: per-session cap (3), gap between toasts (8000ms or 8s), auto-dismiss duration (5000ms or 5s), and the XSS prevention approach (textContent / DOM methods)"
+    }
+  ]
+}

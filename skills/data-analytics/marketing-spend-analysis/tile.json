@@ -1,0 +1,10 @@
+{
+  "name": "finsi/marketing-spend-analysis",
+  "version": "0.1.0",
+  "summary": "Track and analyze marketing spend across all channels with ROAS calculation, diminishing returns analysis, and budget reallocation recommendations by platform",
+  "skills": {
+    "marketing-spend-analysis": {
+      "path": "SKILL.md"
+    }
+  }
+}

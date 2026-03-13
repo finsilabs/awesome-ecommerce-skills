@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a financial audit logger service with correct tamper-detection hash chaining, a single write entry point, and proper before/after state capture. The agent is asked to write a TypeScript audit logger module for an ecommerce backend.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SHA-256 hash computation",
+      "max_score": 10,
+      "description": "The audit logger computes a SHA-256 hash for each event using Node's built-in 'crypto' module (createHash('sha256'))"
+    },
+    {
+      "name": "Hash input fields",
+      "max_score": 12,
+      "description": "The hash is computed from exactly these fields joined by '|': prev seq (or 0), occurred_at, event_type, aggregate_id, actor_id, JSON.stringify(after_state)"
+    },
+    {
+      "name": "prev_hash chaining",
+      "max_score": 10,
+      "description": "Each event stores the hash of the previous event for the same aggregate (prev_hash), retrieved by querying the last event ordered by seq DESC before inserting"
+    },
+    {
+      "name": "Single write method",
+      "max_score": 8,
+      "description": "All audit writes go through a single method (e.g. record() or similar) — no direct db.insert calls on the audit table outside this method"
+    },
+    {
+      "name": "before_state captured pre-mutation",
+      "max_score": 10,
+      "description": "The before_state snapshot is fetched BEFORE the mutation executes (not after), so it reflects the record's state prior to the change"
+    },
+    {
+      "name": "both before_state and after_state stored",
+      "max_score": 10,
+      "description": "Both before_state and after_state are stored on mutation events — not just the delta field alone"
+    },
+    {
+      "name": "actor_ip captured",
+      "max_score": 8,
+      "description": "The actor's IP address is recorded on audit events (actor_ip field), not just the user/actor ID"
+    },
+    {
+      "name": "correlation_id included",
+      "max_score": 8,
+      "description": "A correlation_id (derived from the HTTP request context) is stored on audit events to link events from the same request"
+    },
+    {
+      "name": "delta computed separately",
+      "max_score": 8,
+      "description": "The delta field contains only the changed fields (with from/to values), computed by comparing before_state and after_state keys"
+    },
+    {
+      "name": "seq used in hash",
+      "max_score": 8,
+      "description": "The previous event's seq number (not id/UUID) is used as part of the hash input to maintain ordering and gap-detection semantics"
+    },
+    {
+      "name": "typed event helpers",
+      "max_score": 8,
+      "description": "Typed domain-specific helper functions are provided for at least two common financial event types (e.g. orderCreated, paymentCaptured, refundIssued, manualPriceAdjustment)"
+    }
+  ]
+}

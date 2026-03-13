@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements consent recording with all required metadata fields, designs consent logs as append-only, captures consent server-side, notifies the ESP on GDPR erasure, suppresses customers from ad platforms on CCPA opt-out, and separates marketing consent from transactional email handling.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "IP address captured",
+      "max_score": 8,
+      "description": "recordConsent captures and stores the customer's IP address in the consent record"
+    },
+    {
+      "name": "User agent captured",
+      "max_score": 8,
+      "description": "recordConsent captures and stores the request's user agent string in the consent record"
+    },
+    {
+      "name": "Policy version captured",
+      "max_score": 8,
+      "description": "recordConsent captures and stores the privacy policy version in effect at the time of consent"
+    },
+    {
+      "name": "Consent method captured",
+      "max_score": 6,
+      "description": "recordConsent captures the method by which consent was given (e.g. 'checkbox', 'preference-center', 'double-opt-in')"
+    },
+    {
+      "name": "Append-only consent log",
+      "max_score": 10,
+      "description": "consent-manager.ts uses an insert/create operation (never update/patch/upsert) for storing consent records, and consent-design.md describes the logs as append-only"
+    },
+    {
+      "name": "No consent record deletion",
+      "max_score": 6,
+      "description": "consent-manager.ts does NOT call any delete/destroy/remove operation on consent log records"
+    },
+    {
+      "name": "ESP notified on erasure",
+      "max_score": 10,
+      "description": "handleErasureRequest calls a method on the email service client to delete or suppress the customer's profile (e.g. emailServiceClient.deleteProfile)"
+    },
+    {
+      "name": "CCPA suppresses Google Customer Match",
+      "max_score": 9,
+      "description": "handleCcpaOptOut calls a method to suppress the customer from Google Customer Match (e.g. adPlatformClient.suppressFromCustomerMatch)"
+    },
+    {
+      "name": "CCPA suppresses Meta Custom Audiences",
+      "max_score": 9,
+      "description": "handleCcpaOptOut calls a method to suppress the customer from Meta/Facebook Custom Audiences (e.g. adPlatformClient.suppressFromCustomAudiences)"
+    },
+    {
+      "name": "Marketing vs transactional separation",
+      "max_score": 10,
+      "description": "consent-design.md explicitly states that transactional emails (order confirmation, shipping) do not require marketing consent, and the code or documentation reflects this separation"
+    },
+    {
+      "name": "Server-side capture documented",
+      "max_score": 8,
+      "description": "consent-design.md states that consent is captured server-side (at the API layer), not purely client-side"
+    },
+    {
+      "name": "Consent type enum/union",
+      "max_score": 8,
+      "description": "recordConsent or ConsentRecord uses a typed consent type (e.g. 'marketing-email' | 'marketing-sms' | 'data-processing') rather than a plain untyped string"
+    }
+  ]
+}

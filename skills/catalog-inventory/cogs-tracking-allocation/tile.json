@@ -1,0 +1,10 @@
+{
+  "name": "finsi/cogs-tracking-allocation",
+  "version": "0.1.0",
+  "summary": "Track cost of goods sold with FIFO/LIFO/weighted average inventory valuation, landed cost allocation for imports, and variance analysis against standard costs",
+  "skills": {
+    "cogs-tracking-allocation": {
+      "path": "SKILL.md"
+    }
+  }
+}

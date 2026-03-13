@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the correct lifecycle stage taxonomy, classification logic with proper thresholds, a batch-safe nightly job, and a hysteresis mechanism to prevent stage thrashing.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "8 exact stage names",
+      "max_score": 8,
+      "description": "The LifecycleStage type includes all of: 'anonymous', 'subscriber', 'first-time-buyer', 'active', 'loyal', 'at-risk', 'lapsed', 'advocate' (no extra stages, no renamed stages)"
+    },
+    {
+      "name": "CustomerLifecycle interface shape",
+      "max_score": 8,
+      "description": "A CustomerLifecycle interface (or equivalent) exists with at minimum: customerId (string), stage, enteredStageAt (Date), previousStage (optional), and metadata fields"
+    },
+    {
+      "name": "Anonymous check uses emailVerified",
+      "max_score": 8,
+      "description": "The stage assignment checks customer.emailVerified (or equivalent) to return 'anonymous' — not absence of email address alone"
+    },
+    {
+      "name": "First-time-buyer 60-day threshold",
+      "max_score": 10,
+      "description": "The 'first-time-buyer' stage requires exactly 1 order AND the last order was placed within 60 days (daysSince <= 60)"
+    },
+    {
+      "name": "Loyal thresholds correct",
+      "max_score": 10,
+      "description": "The 'loyal' stage is assigned when LTV >= 500 OR order count >= 4 (both conditions handled as OR, not AND)"
+    },
+    {
+      "name": "At-risk uses purchase frequency",
+      "max_score": 10,
+      "description": "The 'at-risk' classification computes average purchase frequency and triggers when daysSince > avgFreq AND daysSince < avgFreq * 2"
+    },
+    {
+      "name": "Lapsed uses 2x frequency",
+      "max_score": 10,
+      "description": "The 'lapsed' classification triggers when daysSince > avgFreq * 2 (or no prior order exists)"
+    },
+    {
+      "name": "Nightly batch job present",
+      "max_score": 8,
+      "description": "An updateLifecycleStages (or equivalent) function exists that iterates all email-verified customers and re-evaluates their stage"
+    },
+    {
+      "name": "Batch chunking / pagination",
+      "max_score": 10,
+      "description": "The nightly batch job processes customers in chunks (e.g. batches of 1000) using cursor pagination rather than loading all records at once"
+    },
+    {
+      "name": "Hysteresis mechanism",
+      "max_score": 10,
+      "description": "The implementation includes a mechanism to require a stage to be stable across 2 consecutive evaluations before triggering a workflow transition (prevents daily stage flipping)"
+    },
+    {
+      "name": "Stage count <= 8",
+      "max_score": 8,
+      "description": "The implementation does NOT define more than 8 lifecycle stages (no micro-stages like 'new-subscriber', 'semi-loyal', etc.)"
+    }
+  ]
+}

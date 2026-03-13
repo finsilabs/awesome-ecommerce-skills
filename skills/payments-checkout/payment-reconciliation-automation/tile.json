@@ -1,0 +1,10 @@
+{
+  "name": "finsi/payment-reconciliation-automation",
+  "version": "0.1.0",
+  "summary": "Automate payment reconciliation across Stripe, PayPal, and bank accounts with exception handling, automated matching rules, and discrepancy alerting",
+  "skills": {
+    "payment-reconciliation-automation": {
+      "path": "SKILL.md"
+    }
+  }
+}

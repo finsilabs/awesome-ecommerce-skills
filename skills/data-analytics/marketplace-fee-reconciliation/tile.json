@@ -1,0 +1,10 @@
+{
+  "name": "finsi/marketplace-fee-reconciliation",
+  "version": "0.1.0",
+  "summary": "Reconcile and analyze seller fees from Amazon, eBay, Walmart, and Etsy with net revenue calculation, fee categorization, and optimization recommendations",
+  "skills": {
+    "marketplace-fee-reconciliation": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent implements the correct abandonment threshold, cron cadence, 3-step timing sequence, cart value gating, quiet-hours enforcement per recipient timezone (using the specified libraries), rescheduling behaviour, idempotency safeguards, and the sequence length limit.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "20-minute abandonment threshold",
+      "max_score": 8,
+      "description": "Cart is classified as abandoned after 20 minutes of inactivity from checkout start (not a shorter or longer default)"
+    },
+    {
+      "name": "5-minute cron cadence",
+      "max_score": 4,
+      "description": "DESIGN.md or code comments state the detection job runs every 5 minutes"
+    },
+    {
+      "name": "recoveryState field usage",
+      "max_score": 6,
+      "description": "The code filters candidates by recoveryState === 'pending' and updates it to sms1_sent / sms2_sent / sms3_sent after each send"
+    },
+    {
+      "name": "3-step timing sequence",
+      "max_score": 10,
+      "description": "The schedule configuration defines exactly 3 steps with delays of 20 minutes, 60 minutes, and 1440 minutes (24 hours) respectively"
+    },
+    {
+      "name": "Step 3 includes discount",
+      "max_score": 8,
+      "description": "The schedule marks step 3 (1440 min) with includeDiscount: true and steps 1 and 2 with includeDiscount: false"
+    },
+    {
+      "name": "Cart value threshold",
+      "max_score": 8,
+      "description": "Carts are only enqueued for recovery if their value is at or above a minimum threshold (any value between $30 and $50 inclusive)"
+    },
+    {
+      "name": "Quiet hours use correct libraries",
+      "max_score": 10,
+      "description": "sendWindow.ts imports or references all three of: libphonenumber-js (or parsePhoneNumber), countries-and-timezones (or getTimezone), and luxon (or DateTime)"
+    },
+    {
+      "name": "Quiet hours window 8am–9pm local",
+      "max_score": 8,
+      "description": "The send window is 08:00–20:59 in the recipient's local timezone (hour >= 8 and hour < 21)"
+    },
+    {
+      "name": "Quiet hours: per-recipient timezone",
+      "max_score": 8,
+      "description": "The timezone is derived from the recipient's phone number country, not from the server or a hardcoded timezone"
+    },
+    {
+      "name": "Reschedule on quiet hours block",
+      "max_score": 8,
+      "description": "When the send window check fails, the job is re-enqueued for the next available window rather than silently dropped"
+    },
+    {
+      "name": "Job queue retry config",
+      "max_score": 8,
+      "description": "Jobs are added to the queue with attempts: 3 and exponential backoff with a delay of 5000ms"
+    },
+    {
+      "name": "Pre-send consent re-check",
+      "max_score": 4,
+      "description": "sendRecoverySms checks that the phone number still has active consent immediately before sending (not relying solely on consent checked at sequence creation time)"
+    },
+    {
+      "name": "Idempotency / no double-send",
+      "max_score": 4,
+      "description": "DESIGN.md or code explicitly describes how duplicate sends are prevented (e.g. checking recoveryState or using idempotency keys before dispatching)"
+    },
+    {
+      "name": "Max 3-message sequence",
+      "max_score": 6,
+      "description": "The sequence contains no more than 3 steps; no fourth step is scheduled"
+    }
+  ]
+}

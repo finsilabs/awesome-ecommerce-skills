@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements churn risk thresholds relative to individual purchase frequency, uses the correct RetentionScore interface fields, applies a sensible default for single-purchase customers, segments customers into the four expected groups with correct filter criteria, and excludes subscription customers from the scoring logic.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "RetentionScore interface fields",
+      "max_score": 10,
+      "description": "The RetentionScore type/interface includes all of: customerId, churnRisk, daysSincePurchase, purchaseFrequency, expectedNextOrder, daysOverdue"
+    },
+    {
+      "name": "churnRisk enum values",
+      "max_score": 8,
+      "description": "The churnRisk field is typed as 'low' | 'medium' | 'high' | 'churned' (exactly these four values)"
+    },
+    {
+      "name": "Frequency-relative thresholds",
+      "max_score": 14,
+      "description": "Churn risk levels are determined by multiples of purchase frequency: 'churned' when daysOverdue > frequency*2, 'high' when > frequency*1, 'medium' when > frequency*0.5, 'low' otherwise"
+    },
+    {
+      "name": "Single-purchase default frequency",
+      "max_score": 8,
+      "description": "Customers with only one order are assigned a default purchase frequency of 60 days"
+    },
+    {
+      "name": "Subscription customer exclusion",
+      "max_score": 10,
+      "description": "Subscription customers are explicitly excluded from churn scoring (e.g. filtered out before scoring or documented as excluded in DESIGN_NOTES.md)"
+    },
+    {
+      "name": "highValueAtRisk segment",
+      "max_score": 8,
+      "description": "The highValueAtRisk segment filters for churnRisk==='high' AND customer LTV > 200"
+    },
+    {
+      "name": "earlyWarning segment",
+      "max_score": 7,
+      "description": "The earlyWarning segment contains customers with churnRisk==='medium'"
+    },
+    {
+      "name": "recentlyChurned segment",
+      "max_score": 8,
+      "description": "The recentlyChurned segment filters for churnRisk==='churned' AND daysSincePurchase < 90"
+    },
+    {
+      "name": "oneTimeBuyers segment",
+      "max_score": 9,
+      "description": "The oneTimeBuyers segment filters for churnRisk==='medium' AND order count === 1 (not all one-time buyers, only medium-risk ones)"
+    },
+    {
+      "name": "45-day one-time buyer minimum",
+      "max_score": 8,
+      "description": "DESIGN_NOTES.md or code comments mention or implement the 45-day minimum window before treating a single-purchase customer as at-risk"
+    },
+    {
+      "name": "Nightly scoring job and DB indexes",
+      "max_score": 10,
+      "description": "DESIGN_NOTES.md or code comments mention running the scoring job nightly and recommend database indexes on last_order_date and customer_id"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/financial-audit-trail",
+  "version": "0.1.0",
+  "summary": "Build immutable audit trails for all financial transactions with user attribution, change logging, tamper detection, and compliance-ready export for external audits",
+  "skills": {
+    "financial-audit-trail": {
+      "path": "SKILL.md"
+    }
+  }
+}

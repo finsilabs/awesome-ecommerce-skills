@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements keyword harvesting with the correct report parameters, filtering thresholds, weekly cadence, and the dual-write pattern (exact match to manual + negative exact to auto) as specified in the marketplace advertising skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Weekly harvest cadence",
+      "max_score": 10,
+      "description": "Code or comments indicate a weekly schedule (e.g., 7-day lookback window using subDays(new Date(), 7), or comment referencing weekly job)"
+    },
+    {
+      "name": "Report metrics parameter",
+      "max_score": 10,
+      "description": "Report request uses metrics string containing all of: impressions, clicks, cost, sales7d, acos7d"
+    },
+    {
+      "name": "Report recordType targets",
+      "max_score": 8,
+      "description": "Report request sets recordType to 'targets'"
+    },
+    {
+      "name": "Report segment query",
+      "max_score": 8,
+      "description": "Report request sets segment to 'query'"
+    },
+    {
+      "name": "Filter: sales > 0",
+      "max_score": 10,
+      "description": "Filters out queries where sales7d is 0 or less (requires at least one conversion)"
+    },
+    {
+      "name": "Filter: ACOS below target",
+      "max_score": 10,
+      "description": "Filters out queries where acos7d is greater than or equal to the target ACOS value"
+    },
+    {
+      "name": "Filter: minimum 5 clicks",
+      "max_score": 8,
+      "description": "Filters out queries with fewer than 5 clicks (minimum data threshold check)"
+    },
+    {
+      "name": "TARGET_ACOS env var",
+      "max_score": 8,
+      "description": "Reads target ACOS from process.env.TARGET_ACOS with a default fallback of 0.30"
+    },
+    {
+      "name": "Promote as exact match",
+      "max_score": 10,
+      "description": "Qualifying queries are added to the manual ad group as keywords with matchType 'exact'"
+    },
+    {
+      "name": "Negate in auto campaign",
+      "max_score": 10,
+      "description": "The same queries are also added to the auto campaign as negative keywords with matchType 'negativeExact'"
+    },
+    {
+      "name": "Deduplication check",
+      "max_score": 8,
+      "description": "Code checks for existing keywords in the manual campaign to avoid adding duplicates"
+    }
+  ]
+}

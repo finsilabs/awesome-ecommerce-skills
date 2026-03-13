@@ -1,0 +1,10 @@
+{
+  "name": "finsi/predictive-personalization",
+  "version": "0.1.0",
+  "summary": "Use machine learning models to predict customer preferences and dynamically personalize product recommendations, search results, and content across your store",
+  "skills": {
+    "predictive-personalization": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements all five fraud detection signals, the correct K-factor formula and interpretation thresholds, and the recommended configuration for anti-abuse limits.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Same-IP flag",
+      "max_score": 8,
+      "description": "Fraud check includes a 'same-ip' flag when referrer.lastLoginIp equals referee.lastLoginIp"
+    },
+    {
+      "name": "Instant-account flag",
+      "max_score": 8,
+      "description": "Fraud check includes an 'instant-account' flag when the referee account was created less than 1 day before the conversion"
+    },
+    {
+      "name": "Suspicious conversion rate flag",
+      "max_score": 10,
+      "description": "Fraud check includes a 'suspicious-conversion-rate' flag when conversions/clicks > 0.20 (20%) AND clicks > 10"
+    },
+    {
+      "name": "Shared-device flag",
+      "max_score": 8,
+      "description": "Fraud check includes a 'shared-device' flag based on a device fingerprint check between referrer and referee"
+    },
+    {
+      "name": "Rate-limit flag",
+      "max_score": 8,
+      "description": "Fraud check includes a 'rate-limit-exceeded' flag when the referrer's monthly conversion count meets or exceeds maxReferralsPerCustomer"
+    },
+    {
+      "name": "Under-review status on fraud",
+      "max_score": 8,
+      "description": "When any fraud flag is detected, the conversion status is updated to 'under-review' (not 'rejected' or 'flagged')"
+    },
+    {
+      "name": "Fraud team notification",
+      "max_score": 8,
+      "description": "When fraud is detected, notifyFraudTeam (or equivalent) is called with the conversion ID and the list of flags"
+    },
+    {
+      "name": "K-factor formula",
+      "max_score": 10,
+      "description": "K-factor is calculated as shareRate * conversionRate, where shareRate = totalReferrers / totalCustomers and conversionRate = totalConversions / totalReferrers"
+    },
+    {
+      "name": "K-factor thresholds",
+      "max_score": 10,
+      "description": "K-factor interpretation uses exactly these thresholds: >= 1.0 = viral/exponential, >= 0.5 = strong, >= 0.2 = moderate, below 0.2 = weak"
+    },
+    {
+      "name": "90-day default lookback",
+      "max_score": 8,
+      "description": "The viral coefficient calculation defaults to a 90-day lookback window when no period is specified"
+    },
+    {
+      "name": "Monthly referral cap range",
+      "max_score": 8,
+      "description": "Program configuration or documentation specifies a monthly cap of 5–10 referral conversions per customer"
+    },
+    {
+      "name": "Store credit for referrer",
+      "max_score": 6,
+      "description": "Recommendation or default configuration uses store_credit as the referrer reward type rather than discount codes"
+    }
+  ]
+}

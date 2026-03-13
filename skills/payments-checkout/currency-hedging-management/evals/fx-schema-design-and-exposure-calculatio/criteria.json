@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses the correct precision types for rates and currency codes, adds the prescribed unique constraints and indexes, correctly skips domestic orders, applies the right gain/loss formulas, and uses upsert for idempotent revaluations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "NUMERIC(18,8) for rates",
+      "max_score": 8,
+      "description": "FX rate columns use NUMERIC(18, 8) precision (not FLOAT, REAL, DECIMAL(10,4), or other lower-precision types)"
+    },
+    {
+      "name": "CHAR(3) currency codes",
+      "max_score": 7,
+      "description": "Currency code columns use CHAR(3) (not VARCHAR, TEXT, or CHAR with other length)"
+    },
+    {
+      "name": "Unique constraint on fx_rates",
+      "max_score": 8,
+      "description": "fx_rates table has a UNIQUE constraint covering (base_currency, quote_currency, rate_date, source)"
+    },
+    {
+      "name": "idx_fx_rates_lookup index",
+      "max_score": 8,
+      "description": "Creates an index on fx_rates(base_currency, quote_currency, rate_date DESC) — either named idx_fx_rates_lookup or covering those same columns in that order"
+    },
+    {
+      "name": "idx_exposures_status index",
+      "max_score": 7,
+      "description": "Creates an index on currency_exposures(status, transaction_currency)"
+    },
+    {
+      "name": "idx_exposures_date index",
+      "max_score": 7,
+      "description": "Creates an index on currency_exposures(exposure_date)"
+    },
+    {
+      "name": "Skip domestic orders",
+      "max_score": 10,
+      "description": "recordOrderExposure returns null/undefined (skips processing) when order.currency equals the functional currency"
+    },
+    {
+      "name": "Realized gain/loss formula",
+      "max_score": 12,
+      "description": "realized_gain_loss is computed as settlement_amount (actual functional amount) minus booked_amount"
+    },
+    {
+      "name": "Settlement rate formula",
+      "max_score": 10,
+      "description": "settlement_rate is computed as actualFunctionalAmount divided by original_amount (the foreign currency amount)"
+    },
+    {
+      "name": "Upsert for revaluations",
+      "max_score": 12,
+      "description": "runMonthEndRevaluation uses upsert (not plain create/insert) keyed on (revaluation_date, currency, functional_currency) to allow reruns without duplicates"
+    },
+    {
+      "name": "Unrealized gain/loss formula",
+      "max_score": 11,
+      "description": "unrealized_gain_loss is computed as current_balance_functional minus booked_balance_functional"
+    }
+  ]
+}

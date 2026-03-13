@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent applies the correct per-country EU VAT rates (standard and reduced), correctly identifies reduced-rate product categories, uses the OSS €10,000 threshold concept, aggregates OSS quarterly data by country, and documents the VAT-inclusive pricing norm for EU B2C.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "DE standard rate 19%",
+      "max_score": 7,
+      "description": "Germany's standard VAT rate is 0.19 (19%), not a different value"
+    },
+    {
+      "name": "FR standard rate 20%",
+      "max_score": 7,
+      "description": "France's standard VAT rate is 0.20 (20%)"
+    },
+    {
+      "name": "IT standard rate 22%",
+      "max_score": 7,
+      "description": "Italy's standard VAT rate is 0.22 (22%)"
+    },
+    {
+      "name": "ES standard rate 21%",
+      "max_score": 7,
+      "description": "Spain's standard VAT rate is 0.21 (21%)"
+    },
+    {
+      "name": "NL standard rate 21%",
+      "max_score": 7,
+      "description": "Netherlands' standard VAT rate is 0.21 (21%)"
+    },
+    {
+      "name": "Reduced rate categories",
+      "max_score": 12,
+      "description": "Reduced VAT rates are applied to items whose tax_category is one of: 'food', 'books', 'medicine', 'baby_products', 'newspapers'"
+    },
+    {
+      "name": "OSS €10k threshold mentioned",
+      "max_score": 8,
+      "description": "Code comments or documentation mention the €10,000 OSS threshold for EU B2C distance sales"
+    },
+    {
+      "name": "Error on unconfigured country",
+      "max_score": 8,
+      "description": "calculateEUVAT throws an error (or returns an error indicator) when the destination country does not have configured VAT rates"
+    },
+    {
+      "name": "OSS groups by country",
+      "max_score": 10,
+      "description": "generateOSSQuarterlyData groups/aggregates transactions by destination country, summing taxable amount and VAT amount per country"
+    },
+    {
+      "name": "VAT-inclusive pricing addressed",
+      "max_score": 8,
+      "description": "Documentation or code comments address whether prices are VAT-inclusive (EU B2C norm) or VAT-exclusive, and note this affects the order total calculation"
+    },
+    {
+      "name": "DE reduced rate 7%",
+      "max_score": 7,
+      "description": "Germany's reduced VAT rate is 0.07 (7%)"
+    },
+    {
+      "name": "FR reduced rate 5.5%",
+      "max_score": 7,
+      "description": "France's reduced VAT rate is 0.055 (5.5%)"
+    },
+    {
+      "name": "Line-item VAT breakdown",
+      "max_score": 5,
+      "description": "calculateEUVAT returns per-line-item VAT amounts (not just a total), including vat_rate and vat_amount per item"
+    }
+  ]
+}

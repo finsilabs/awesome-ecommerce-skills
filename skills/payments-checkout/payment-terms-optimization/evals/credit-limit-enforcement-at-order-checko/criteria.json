@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the credit check implementation enforces credit limits at order creation time (not invoicing), handles all rejection reasons with the correct response shape, reserves credit atomically, and releases it on cancellation. Based on the payment-terms-optimization skill's credit enforcement patterns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Credit hold rejection",
+      "max_score": 8,
+      "description": "When credit_hold is true, returns approved: false with reason 'credit_hold' (exact string)"
+    },
+    {
+      "name": "Credit hold checked first",
+      "max_score": 8,
+      "description": "Credit hold is checked before credit_status — a customer on hold with status 'approved' still gets rejected with reason 'credit_hold', not a status error"
+    },
+    {
+      "name": "Non-approved status rejection",
+      "max_score": 8,
+      "description": "When credit_status is not 'approved' (e.g. 'pending', 'suspended'), returns approved: false with reason that includes the credit_status value"
+    },
+    {
+      "name": "No credit profile rejection",
+      "max_score": 8,
+      "description": "When no credit profile exists for the customer, returns approved: false with reason 'no_credit_profile' and requiresApplication: true"
+    },
+    {
+      "name": "Insufficient credit rejection fields",
+      "max_score": 10,
+      "description": "When orderAmount exceeds available_credit, the response includes available_credit, requested amount, and shortfall (the difference)"
+    },
+    {
+      "name": "Credit reservation on approval",
+      "max_score": 12,
+      "description": "When credit is approved, available_credit is decremented by orderAmount and current_ar_balance is incremented by orderAmount immediately"
+    },
+    {
+      "name": "Approved response fields",
+      "max_score": 8,
+      "description": "Approved response includes payment_terms (the customer's payment_terms_code) and available_credit_after (post-reservation balance)"
+    },
+    {
+      "name": "releaseReservedCredit increments",
+      "max_score": 10,
+      "description": "releaseReservedCredit increments available_credit by the amount and decrements current_ar_balance by the same amount"
+    },
+    {
+      "name": "Order-level enforcement (not invoice)",
+      "max_score": 10,
+      "description": "The implementation checks and reserves credit at order creation time — credit state is mutated before the function returns, not deferred to a later step"
+    },
+    {
+      "name": "All decision paths tested",
+      "max_score": 8,
+      "description": "The test file exercises all rejection reasons: no_credit_profile, credit_hold, non-approved status, insufficient_credit, and a successful approval"
+    },
+    {
+      "name": "Results file present",
+      "max_score": 10,
+      "description": "results.txt exists and contains output showing the outcomes of each test case"
+    }
+  ]
+}

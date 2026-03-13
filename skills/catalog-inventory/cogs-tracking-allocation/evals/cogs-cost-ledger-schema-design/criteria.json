@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent designs the COGS cost ledger schema with the correct tables, column types (BIGINT cents), generated columns, CHECK constraints, and versioning pattern for standard costs.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "inventory_cost_layers table",
+      "max_score": 7,
+      "description": "Schema includes an inventory_cost_layers table (or equivalently named table) tracking cost per purchase receipt"
+    },
+    {
+      "name": "cogs_entries table",
+      "max_score": 7,
+      "description": "Schema includes a cogs_entries table (or equivalently named table) recording cost assigned at sale time"
+    },
+    {
+      "name": "standard_costs table",
+      "max_score": 7,
+      "description": "Schema includes a standard_costs table (or equivalently named table) for budgeted cost per variant"
+    },
+    {
+      "name": "landed_cost_shipments table",
+      "max_score": 7,
+      "description": "Schema includes a landed_cost_shipments table (or equivalently named table) tracking inbound shipment costs"
+    },
+    {
+      "name": "landed_cost_allocations table",
+      "max_score": 7,
+      "description": "Schema includes a landed_cost_allocations table (or equivalently named table) linking shipments to cost layers"
+    },
+    {
+      "name": "BIGINT cents for monetary fields",
+      "max_score": 12,
+      "description": "All monetary cost columns (purchase price, landed cost, standard cost, etc.) use BIGINT or equivalent integer type — NOT DECIMAL/FLOAT/NUMERIC"
+    },
+    {
+      "name": "Generated total_unit_cost column",
+      "max_score": 10,
+      "description": "inventory_cost_layers has a computed/generated column that sums unit cost and landed cost per unit (GENERATED ALWAYS AS or equivalent), rather than requiring application code to maintain this sum"
+    },
+    {
+      "name": "Costing method constraint",
+      "max_score": 10,
+      "description": "The costing_method column has a CHECK or ENUM constraint restricting values to exactly 'fifo', 'lifo', and 'weighted_avg' (or 'weighted_average')"
+    },
+    {
+      "name": "Landed cost allocation method constraint",
+      "max_score": 10,
+      "description": "The allocation_method column on landed_cost_shipments has a CHECK or ENUM constraint restricting values to 'value', 'weight', 'quantity', and 'volume'"
+    },
+    {
+      "name": "Shipment status constraint",
+      "max_score": 10,
+      "description": "The status column on landed_cost_shipments has a CHECK or ENUM constraint restricting values to 'pending', 'allocated', and 'posted'"
+    },
+    {
+      "name": "Standard cost versioning",
+      "max_score": 8,
+      "description": "standard_costs table has both effective_from and effective_to date columns, where effective_to is nullable (NULL means currently active)"
+    },
+    {
+      "name": "Standard cost uniqueness",
+      "max_score": 5,
+      "description": "standard_costs table has a UNIQUE constraint on (variant_id, effective_from) to prevent duplicate effective dates per variant"
+    }
+  ]
+}

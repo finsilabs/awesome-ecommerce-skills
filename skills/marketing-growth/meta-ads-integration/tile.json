@@ -1,0 +1,10 @@
+{
+  "name": "finsi/meta-ads-integration",
+  "version": "0.1.0",
+  "summary": "Set up and optimize Meta (Facebook/Instagram) ad campaigns with Conversions API server-side tracking, dynamic product ads, and catalog sync for ecommerce",
+  "skills": {
+    "meta-ads-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

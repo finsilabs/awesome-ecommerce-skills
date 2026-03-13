@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent designs the reconciliation schema with the correct table structure (canonical transactions table, matches table with confidence score and audit fields), creates proper indexes, implements the correct alert thresholds, sends alerts to the right Slack channel, and separates fee reconciliation as a distinct concern.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Canonical transactions table",
+      "max_score": 10,
+      "description": "schema.sql includes a transactions table with at minimum these columns: source, source_transaction_id, source_reference, transaction_type, gross_amount, fee_amount, net_amount, currency, transaction_date, settlement_date, status"
+    },
+    {
+      "name": "Matches table with confidence score",
+      "max_score": 8,
+      "description": "schema.sql includes a matches/reconciliation table with a confidence_score column (numeric, representing 0 to 1 range)"
+    },
+    {
+      "name": "Audit trail columns",
+      "max_score": 10,
+      "description": "The matches table includes both resolved_by (who resolved) and resolved_at (when resolved) columns for audit trail purposes"
+    },
+    {
+      "name": "Match type and status columns",
+      "max_score": 8,
+      "description": "The matches table includes separate match_type (e.g. exact, fuzzy, partial, manual) and match_status (e.g. matched, exception, under_review, resolved) columns"
+    },
+    {
+      "name": "Performance indexes",
+      "max_score": 8,
+      "description": "schema.sql creates at least 2 indexes: one on (source, transaction_date) or similar composite, and one on match_status or similar query-pattern column"
+    },
+    {
+      "name": "Single exception threshold",
+      "max_score": 10,
+      "description": "alerting.js alerts immediately for individual exceptions exceeding $100 (or a threshold in the $100 range, not $10 or $1000)"
+    },
+    {
+      "name": "Daily exception rate threshold",
+      "max_score": 10,
+      "description": "alerting.js triggers an alert when the daily exception rate exceeds 2% (0.02) of total transactions"
+    },
+    {
+      "name": "Daily net delta threshold",
+      "max_score": 8,
+      "description": "alerting.js triggers an alert when total unmatched amount exceeds $500 per day"
+    },
+    {
+      "name": "Slack #finance-alerts channel",
+      "max_score": 10,
+      "description": "alerting.js sends Slack notifications specifically to the '#finance-alerts' channel (exact channel name)"
+    },
+    {
+      "name": "Fee reconciliation separation",
+      "max_score": 10,
+      "description": "SCHEMA_NOTES.md or schema.sql explicitly addresses fee reconciliation as a separate concern from transaction matching (e.g. separate table, separate process note, or explicit comment explaining fees are aggregated per payout)"
+    },
+    {
+      "name": "Unique constraint on source+ID",
+      "max_score": 8,
+      "description": "schema.sql includes a UNIQUE constraint on (source, source_transaction_id) in the transactions table"
+    }
+  ]
+}

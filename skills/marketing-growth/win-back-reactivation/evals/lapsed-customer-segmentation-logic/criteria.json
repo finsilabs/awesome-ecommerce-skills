@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly defines three lapsed customer segments with the right day thresholds, offer strengths, and channel assignments, and queries customers with the correct filters and ordering.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Early-lapsed range",
+      "max_score": 8,
+      "description": "The early-lapsed segment uses minDaysSince=60 and maxDaysSince=120"
+    },
+    {
+      "name": "Mid-lapsed range",
+      "max_score": 8,
+      "description": "The mid-lapsed segment uses minDaysSince=121 and maxDaysSince=180"
+    },
+    {
+      "name": "Deep-lapsed range",
+      "max_score": 8,
+      "description": "The deep-lapsed segment uses minDaysSince=181 and maxDaysSince=365"
+    },
+    {
+      "name": "Early-lapsed channels",
+      "max_score": 7,
+      "description": "The early-lapsed segment has channel set to email only (no sms, no paid-retargeting)"
+    },
+    {
+      "name": "Mid-lapsed channels",
+      "max_score": 7,
+      "description": "The mid-lapsed segment has channel set to email and sms (no paid-retargeting)"
+    },
+    {
+      "name": "Deep-lapsed channels",
+      "max_score": 7,
+      "description": "The deep-lapsed segment has channel set to email, sms, and paid-retargeting"
+    },
+    {
+      "name": "Offer strength mapping",
+      "max_score": 8,
+      "description": "early-lapsed → soft, mid-lapsed → medium, deep-lapsed → strong"
+    },
+    {
+      "name": "emailVerified filter",
+      "max_score": 8,
+      "description": "The customer query filters for emailVerified: true"
+    },
+    {
+      "name": "SMS opt-in conditional",
+      "max_score": 10,
+      "description": "smsMarketingOptIn: true is applied only when the segment channel includes 'sms'; not applied for email-only segments"
+    },
+    {
+      "name": "Order by totalSpend",
+      "max_score": 10,
+      "description": "Customers are ordered by totalSpend descending (highest-value customers first)"
+    },
+    {
+      "name": "Date window calculation",
+      "max_score": 9,
+      "description": "The date window uses subDays(new Date(), maxDaysSince) as minDate and subDays(new Date(), minDaysSince) as maxDate, filtering lastOrderAt between them"
+    },
+    {
+      "name": "Three segments only",
+      "max_score": 10,
+      "description": "Exactly three segments are defined (early-lapsed, mid-lapsed, deep-lapsed) — no additional or missing segments"
+    }
+  ]
+}

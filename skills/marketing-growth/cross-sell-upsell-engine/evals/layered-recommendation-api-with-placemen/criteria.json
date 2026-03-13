@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements the three-layer recommendation strategy (manual overrides → affinity → trending fallback), correct placement configuration per page type, upsell price guardrails, exclusion of out-of-stock and source products, and correct score aggregation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Manual overrides first",
+      "max_score": 8,
+      "description": "getRecommendations queries manual overrides first and returns them with highest priority — if manual recs fill the limit, affinity layer is skipped"
+    },
+    {
+      "name": "Affinity layer second",
+      "max_score": 8,
+      "description": "Affinity-based results (from product_affinities or equivalent) are used as the second layer when manual overrides don't fill the limit"
+    },
+    {
+      "name": "Trending fallback third",
+      "max_score": 8,
+      "description": "A trending/bestseller fallback is added as the third layer when affinity results don't fill the limit"
+    },
+    {
+      "name": "Default limit is 4",
+      "max_score": 6,
+      "description": "When no limit is provided in the request, getRecommendations defaults to returning 4 results"
+    },
+    {
+      "name": "Exclude out-of-stock",
+      "max_score": 8,
+      "description": "Recommendations filter out products that are out of stock (stockQuantity <= 0 or inactive)"
+    },
+    {
+      "name": "Exclude source products",
+      "max_score": 8,
+      "description": "Source productIds (and any explict excludeIds) are excluded from the results — a product is never recommended alongside itself"
+    },
+    {
+      "name": "Over-fetch 3x",
+      "max_score": 8,
+      "description": "Affinity query fetches limit * 3 candidates to allow for deduplication before slicing to the final limit"
+    },
+    {
+      "name": "Score aggregation",
+      "max_score": 8,
+      "description": "When multiple source products produce the same target, scores are aggregated (summed) rather than taking just the first or highest individual score"
+    },
+    {
+      "name": "Upsell price range",
+      "max_score": 8,
+      "description": "getUpsellCandidates filters products priced between 110% and 150% of the source product price"
+    },
+    {
+      "name": "Upsell ordering",
+      "max_score": 6,
+      "description": "Upsell candidates are ordered by reviewScore descending, then salesCount descending"
+    },
+    {
+      "name": "Checkout limit and maxPrice",
+      "max_score": 8,
+      "description": "PLACEMENT_CONFIG checkout entry has limit of 2 AND a maxPrice of 30 (or equivalent low-price constraint)"
+    },
+    {
+      "name": "Placement types correct",
+      "max_score": 8,
+      "description": "PLACEMENT_CONFIG sets type 'frequently-bought-together' for pdp and 'cross-sell' for cart, checkout, and post-purchase"
+    },
+    {
+      "name": "Checkout risk documented",
+      "max_score": 8,
+      "description": "api-notes.md explains that checkout shows fewer, low-cost items to reduce cart abandonment risk"
+    }
+  ]
+}

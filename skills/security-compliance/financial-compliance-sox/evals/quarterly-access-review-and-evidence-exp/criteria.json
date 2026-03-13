@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the quarterly access review with correct dormancy threshold and SOD conflict detection, correctly separates the AUDITOR role from transaction roles, produces evidence exports with the required summary+detail structure, and documents the controls appropriately.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Dormancy threshold",
+      "max_score": 10,
+      "description": "An account is flagged as dormant when the last login is more than 90 days ago (or null/never logged in) — NOT a different threshold"
+    },
+    {
+      "name": "SOD conflict detection in review",
+      "max_score": 10,
+      "description": "The access review flags users with prohibited role combinations as having a SOD conflict; when run against the sample data, u003 (payment_initiator+payment_approver) is identified as conflicted"
+    },
+    {
+      "name": "Dormant accounts in exceptions",
+      "max_score": 10,
+      "description": "The access review report's exceptions list includes accounts that are dormant (90+ days no login); u002 (last login 2025-09-30) and u005 (null last login) should appear in exceptions"
+    },
+    {
+      "name": "Access review control ref",
+      "max_score": 8,
+      "description": "The access review function writes an audit log entry with controlRef 'SOX-ITGC-AC-002'"
+    },
+    {
+      "name": "Evidence export summary",
+      "max_score": 10,
+      "description": "The evidence export function returns (or writes) a summary section containing: total event count, and counts broken down by outcome (pass, fail, exception)"
+    },
+    {
+      "name": "Evidence export detail",
+      "max_score": 8,
+      "description": "The evidence export function returns (or writes) a detail section with individual event records including at minimum: timestamp, controlRef, actor, subject, and outcome"
+    },
+    {
+      "name": "AUDITOR role isolation documented",
+      "max_score": 9,
+      "description": "controls-documentation.md explicitly states that the AUDITOR role must NOT be combined with any transaction-creating or transaction-approving role, with a reason given"
+    },
+    {
+      "name": "Dormancy definition documented",
+      "max_score": 8,
+      "description": "controls-documentation.md states that a dormant account is one with no login for 90+ days (or never logged in)"
+    },
+    {
+      "name": "Quarterly review documented",
+      "max_score": 9,
+      "description": "controls-documentation.md documents the quarterly access review control including: who runs it, its frequency (quarterly), and what evidence it produces"
+    },
+    {
+      "name": "Report includes last-login dates",
+      "max_score": 9,
+      "description": "The access review report includes the last login date/timestamp for each user reviewed — not just a dormant flag"
+    },
+    {
+      "name": "All financial roles reviewed",
+      "max_score": 9,
+      "description": "The access review function filters for users with any financial role (order_entry, order_approver, cash_receipts, revenue_reporter, po_requester, po_approver, invoice_processor, payment_initiator, payment_approver, user_admin, auditor) — not a hardcoded subset"
+    }
+  ]
+}

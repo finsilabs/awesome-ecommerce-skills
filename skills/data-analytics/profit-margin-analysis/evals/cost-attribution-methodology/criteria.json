@@ -1,0 +1,51 @@
+{
+  "context": "Tests whether the agent correctly implements cost attribution calculations including dimensional weight shipping using the carrier-standard divisor, billable weight selection, landed cost (beyond invoice price), payment processing rates, Amazon settlement fee filtering, and documentation of assumptions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Dimensional weight divisor 139",
+      "max_score": 14,
+      "description": "The shipping estimation function uses 139 as the divisor in the dimensional weight formula: (length × width × height) / 139"
+    },
+    {
+      "name": "Billable weight = max(actual, dim)",
+      "max_score": 10,
+      "description": "The shipping function selects the billable weight as max(actual_weight_lbs, dim_weight_lbs), not just dimensional or just actual weight"
+    },
+    {
+      "name": "Landed cost components",
+      "max_score": 12,
+      "description": "The landed cost function includes at least freight and duties (in addition to invoice/purchase price) — not just the invoice price alone"
+    },
+    {
+      "name": "Payment rate ~2.9% + $0.30",
+      "max_score": 12,
+      "description": "The Stripe/payment processing fee function applies approximately 2.9% of the transaction amount plus a flat $0.30 fee (within ±0.2% of 2.9%)"
+    },
+    {
+      "name": "Amazon fee filter: amount < 0",
+      "max_score": 14,
+      "description": "The Amazon settlement aggregation function filters for fee line items using amount < 0 (fees are negative in settlement data), not amount > 0 or abs(amount)"
+    },
+    {
+      "name": "FBA fee breakdown",
+      "max_score": 10,
+      "description": "The Amazon fee function separately tracks at least two fee types (e.g., Commission and FBAPerUnitFulfillmentFee) rather than aggregating all fees into a single total"
+    },
+    {
+      "name": "ASSUMPTIONS constant documented",
+      "max_score": 12,
+      "description": "The file contains an ASSUMPTIONS string (or equivalent module-level docstring/comment block) that documents at least two cost attribution decisions made in the code"
+    },
+    {
+      "name": "Weighted average cost approach",
+      "max_score": 8,
+      "description": "The code uses or documents the use of weighted average cost (or FIFO) as the COGS methodology, rather than just the most recent purchase price"
+    },
+    {
+      "name": "Return rate in margin",
+      "max_score": 8,
+      "description": "At least one function or calculation accounts for product return rate when computing realized margin (e.g., adjusts revenue or margin by a return rate factor)"
+    }
+  ]
+}

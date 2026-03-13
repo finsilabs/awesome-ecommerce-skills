@@ -1,0 +1,10 @@
+{
+  "name": "finsi/seasonal-campaign-automation",
+  "version": "0.1.0",
+  "summary": "Automate seasonal marketing campaigns for Black Friday, holidays, and shopping events with templated workflows, countdown sequences, and year-round planning",
+  "skills": {
+    "seasonal-campaign-automation": {
+      "path": "SKILL.md"
+    }
+  }
+}

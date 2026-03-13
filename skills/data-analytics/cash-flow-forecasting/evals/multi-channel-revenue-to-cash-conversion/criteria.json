@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements channel-specific payment timing for multi-channel ecommerce, including exact payout lags, reserve rates, bad debt rates, Amazon bi-weekly disbursement logic, return cash outflows, and ad spend billing lag — rather than using naive averages.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Shopify payout lag",
+      "max_score": 8,
+      "description": "Shopify Payments channel uses a payout lag of exactly 3 days (not 2 or another value)"
+    },
+    {
+      "name": "Amazon FBA payout lag",
+      "max_score": 8,
+      "description": "Amazon FBA channel uses a payout lag of exactly 14 days"
+    },
+    {
+      "name": "Amazon bi-weekly disbursement",
+      "max_score": 10,
+      "description": "Amazon FBA cash dates are snapped to bi-weekly disbursement cycles (not treated as daily or weekly continuous payouts)"
+    },
+    {
+      "name": "eBay reserve holdback",
+      "max_score": 10,
+      "description": "eBay channel applies a 5% hold rate, reducing the expected cash received to 95% of gross revenue"
+    },
+    {
+      "name": "B2B Net-30 payout lag",
+      "max_score": 8,
+      "description": "B2B wholesale (Net-30) channel uses a payout lag of exactly 30 days"
+    },
+    {
+      "name": "B2B bad debt rate",
+      "max_score": 8,
+      "description": "B2B wholesale channel applies a bad debt reduction of 2% (collectable amount = gross * 0.98)"
+    },
+    {
+      "name": "Return cash outflow",
+      "max_score": 10,
+      "description": "Returns are modeled as negative cash entries (cash outflows), not merely deducted from inflows — they appear as separate negative rows in the cash schedule"
+    },
+    {
+      "name": "Return rate applied",
+      "max_score": 8,
+      "description": "Return outflows use the stated 18% return rate on the relevant channel/category revenue"
+    },
+    {
+      "name": "Ad spend billing lag",
+      "max_score": 10,
+      "description": "Ad spend outflow is dated to when the credit card payment clears (billing date + clearing days), not the date the spend was incurred"
+    },
+    {
+      "name": "Per-channel cash dates",
+      "max_score": 10,
+      "description": "Each revenue entry produces a cash receipt date computed as sale date + channel-specific payout lag (not a uniform lag applied to all channels)"
+    },
+    {
+      "name": "Weekly net cash summary",
+      "max_score": 10,
+      "description": "Output includes a weekly summary aggregating net cash (inflows minus outflows) by week"
+    }
+  ]
+}

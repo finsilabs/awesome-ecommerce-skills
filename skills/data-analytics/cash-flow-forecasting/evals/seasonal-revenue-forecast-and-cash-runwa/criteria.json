@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses Holt-Winters triple exponential smoothing with the correct parameters for seasonal ecommerce forecasting, generates bootstrap confidence intervals at the correct percentiles, and computes runway scenarios with the correct multipliers applied only to the revenue-driven (variable) portion of cash flows.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "statsmodels ExponentialSmoothing",
+      "max_score": 10,
+      "description": "Uses ExponentialSmoothing from statsmodels.tsa.holtwinters (not a different forecasting library or manual implementation)"
+    },
+    {
+      "name": "Additive trend",
+      "max_score": 8,
+      "description": "ExponentialSmoothing is initialized with trend='add'"
+    },
+    {
+      "name": "Additive seasonal",
+      "max_score": 8,
+      "description": "ExponentialSmoothing is initialized with seasonal='add'"
+    },
+    {
+      "name": "52 seasonal periods",
+      "max_score": 8,
+      "description": "seasonal_periods is set to 52 (weekly data, annual cycle)"
+    },
+    {
+      "name": "Damped trend",
+      "max_score": 8,
+      "description": "ExponentialSmoothing is initialized with damped_trend=True"
+    },
+    {
+      "name": "Bootstrap simulation",
+      "max_score": 8,
+      "description": "Confidence intervals are generated using fitted.simulate() with random_errors='bootstrap' (not analytical confidence intervals)"
+    },
+    {
+      "name": "1000 repetitions",
+      "max_score": 6,
+      "description": "The simulate() call uses repetitions=1000"
+    },
+    {
+      "name": "10th/90th percentile bounds",
+      "max_score": 8,
+      "description": "Bear case uses the 10th percentile (0.10 quantile) and bull case uses the 90th percentile (0.90 quantile) of the simulation"
+    },
+    {
+      "name": "Bear multiplier 0.70",
+      "max_score": 8,
+      "description": "Bear scenario applies a revenue multiplier of 0.70 (30% shortfall)"
+    },
+    {
+      "name": "Bull multiplier 1.20",
+      "max_score": 6,
+      "description": "Bull scenario applies a revenue multiplier of 1.20 (20% upside)"
+    },
+    {
+      "name": "Fixed costs not scaled",
+      "max_score": 12,
+      "description": "Fixed costs ($42,000/week: payroll, rent, software) are NOT multiplied by the scenario multiplier — only revenue-driven variable costs and inflows scale with the multiplier"
+    },
+    {
+      "name": "Runway output format",
+      "max_score": 10,
+      "description": "Results include runway_weeks (numeric or '>52 weeks'), minimum_balance, and minimum_balance_week for each scenario"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent creates the correct two-campaign structure for Amazon Sponsored Products with proper budget split, bid defaults, and keyword match types as specified in the marketplace advertising skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Two-campaign structure",
+      "max_score": 10,
+      "description": "Creates two separate campaigns: one with targetingType 'auto' and one with targetingType 'manual'"
+    },
+    {
+      "name": "Auto budget 30%",
+      "max_score": 10,
+      "description": "The auto campaign's dailyBudget is set to 30% of the total (e.g., totalBudget * 0.3 or equivalent fraction)"
+    },
+    {
+      "name": "Manual budget 70%",
+      "max_score": 10,
+      "description": "The manual campaign's dailyBudget is set to 70% of the total (e.g., totalBudget * 0.7 or equivalent fraction)"
+    },
+    {
+      "name": "Auto ad group bid 0.75",
+      "max_score": 8,
+      "description": "The auto campaign's ad group defaultBid is set to 0.75"
+    },
+    {
+      "name": "Manual ad group bid 1.20",
+      "max_score": 8,
+      "description": "The manual campaign's ad group defaultBid is set to 1.20"
+    },
+    {
+      "name": "Exact match keywords",
+      "max_score": 8,
+      "description": "Seed keywords are added to the manual campaign with matchType 'exact' at bid 1.20"
+    },
+    {
+      "name": "Phrase match keywords",
+      "max_score": 8,
+      "description": "Seed keywords are also added to the manual campaign with matchType 'phrase' at bid 0.90"
+    },
+    {
+      "name": "NA region endpoint",
+      "max_score": 6,
+      "description": "Uses the North America endpoint https://advertising-api.amazon.com (not EU or FE endpoints)"
+    },
+    {
+      "name": "Amazon-Advertising-API-ClientId header",
+      "max_score": 8,
+      "description": "API requests include the Amazon-Advertising-API-ClientId header"
+    },
+    {
+      "name": "Amazon-Advertising-API-Scope header",
+      "max_score": 8,
+      "description": "API requests include the Amazon-Advertising-API-Scope header set to the profileId"
+    },
+    {
+      "name": "OAuth2 refresh token auth",
+      "max_score": 8,
+      "description": "Obtains access token from https://api.amazon.com/auth/o2/token using grant_type 'refresh_token'"
+    },
+    {
+      "name": "Negative keywords at launch",
+      "max_score": 8,
+      "description": "Adds campaign-level negative keywords containing at least one of: 'free', 'diy', 'how to'"
+    }
+  ]
+}

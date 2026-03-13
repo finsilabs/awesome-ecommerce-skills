@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent computes ROI metrics correctly (ROAS, CPO, top performers), surfaces micro-influencer preference for ecommerce with evidence from the data, includes benchmark KPI guidance, discount code attribution rationale, and performance-based payment term recommendations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ROAS calculation",
+      "max_score": 8,
+      "description": "The roi-report.json includes a ROAS field calculated as totalRevenue divided by totalSpend"
+    },
+    {
+      "name": "CPO calculation",
+      "max_score": 8,
+      "description": "The roi-report.json includes a CPO (cost per order) field calculated as totalSpend divided by totalOrders"
+    },
+    {
+      "name": "totalSpend correct",
+      "max_score": 6,
+      "description": "The roi-report.json totalSpend sums all compensationPaid values (correct value: 14480)"
+    },
+    {
+      "name": "totalRevenue correct",
+      "max_score": 6,
+      "description": "The roi-report.json totalRevenue sums all revenue values from deliverable metrics (correct value: 15800)"
+    },
+    {
+      "name": "top performers ranked",
+      "max_score": 8,
+      "description": "The roi-report.json includes a topPerformers array sorted by revenue descending, showing at least the top 3 performers"
+    },
+    {
+      "name": "combined metrics structure",
+      "max_score": 8,
+      "description": "The data structures in roi-analysis.ts track both social metrics (views, likes, comments, shares) AND commerce metrics (clicks, orders, revenue) as separate concerns or combined in a metrics object"
+    },
+    {
+      "name": "micro-influencer recommendation",
+      "max_score": 10,
+      "description": "The strategy-recommendation.md explicitly recommends prioritizing micro-influencers (10k–100k) for ecommerce, not mega or macro influencers"
+    },
+    {
+      "name": "engagement/conversion evidence",
+      "max_score": 8,
+      "description": "The recommendation references the higher engagement or conversion rates of micro-influencers compared to mega-influencers (using the sample data or general guidance)"
+    },
+    {
+      "name": "discount code attribution",
+      "max_score": 8,
+      "description": "The strategy-recommendation.md mentions using unique discount codes per creator as the most reliable attribution method (not just UTM links)"
+    },
+    {
+      "name": "UTM link risk",
+      "max_score": 6,
+      "description": "The strategy-recommendation.md mentions the risk of UTM link modification by influencers and recommends short links or discount codes as mitigation"
+    },
+    {
+      "name": "performance-based payment",
+      "max_score": 8,
+      "description": "The strategy-recommendation.md recommends a partial-payment-on-delivery with full-payment-after-hitting-minimum-orders structure (or equivalent performance clause)"
+    },
+    {
+      "name": "benchmark KPIs",
+      "max_score": 8,
+      "description": "The strategy-recommendation.md recommends setting minimum acceptable KPIs (such as minimum ROAS, CPV, or engagement rate) before campaigns start"
+    },
+    {
+      "name": "roi-report.json generated",
+      "max_score": 8,
+      "description": "A roi-report.json file is present with at minimum totalSpend, totalRevenue, roas, cpo, and topPerformers fields"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent produces a TikTok ecommerce campaign strategy that follows the recommended campaign structure (three campaign types with correct objectives), bidding approach, creative specifications, audience exclusions, Spark Ads setup, and iOS attribution configuration.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Product Sales objective",
+      "max_score": 6,
+      "description": "Video Shopping Ads campaign uses 'Product Sales' as the campaign objective (not Traffic, Conversions, or Awareness)"
+    },
+    {
+      "name": "Conversions objective for Spark",
+      "max_score": 6,
+      "description": "Spark Ads campaign uses 'Conversions' as the campaign objective"
+    },
+    {
+      "name": "LIVE Shopping campaign",
+      "max_score": 6,
+      "description": "Strategy includes a LIVE Shopping Ads campaign (third campaign type) for live commerce events"
+    },
+    {
+      "name": "Lowest Cost bidding for prospecting",
+      "max_score": 8,
+      "description": "Prospecting ad groups start with Lowest Cost bidding (not Cost Cap) due to insufficient conversion history"
+    },
+    {
+      "name": "30-day purchaser exclusion",
+      "max_score": 8,
+      "description": "Prospecting campaigns exclude a custom audience of purchasers from the last 30 days"
+    },
+    {
+      "name": "9:16 vertical video",
+      "max_score": 8,
+      "description": "Creative specifications require 9:16 vertical video format (not horizontal or square)"
+    },
+    {
+      "name": "Creative refresh cadence",
+      "max_score": 8,
+      "description": "Strategy recommends refreshing creatives every 2-4 weeks to combat audience fatigue"
+    },
+    {
+      "name": "Hook-first creative requirement",
+      "max_score": 8,
+      "description": "Creative guidelines state that the first 2 seconds must be visually arresting and explicitly advise against logo cards or slow intros"
+    },
+    {
+      "name": "Spark Ad 30-day auth",
+      "max_score": 8,
+      "description": "Spark Ads setup notes that the authorization code expires after 30 days and requires renewal"
+    },
+    {
+      "name": "Spark Ads UGC rationale",
+      "max_score": 6,
+      "description": "Strategy recommends Spark Ads specifically for amplifying user-generated or authentic creator content"
+    },
+    {
+      "name": "Catalog-driven video ads",
+      "max_score": 6,
+      "description": "Strategy mentions testing auto-generated catalog-driven video ads (TikTok Dynamic Product Ads from catalog)"
+    },
+    {
+      "name": "iOS SKAdNetwork click window",
+      "max_score": 8,
+      "description": "iOS attribution section specifies a 7-day click-through window for SKAdNetwork"
+    },
+    {
+      "name": "iOS SKAdNetwork view window",
+      "max_score": 8,
+      "description": "iOS attribution section specifies a 1-day view-through window for SKAdNetwork"
+    },
+    {
+      "name": "Retargeting uses video viewers",
+      "max_score": 6,
+      "description": "Spark Ads / retargeting campaign targets video viewers (30-day) and/or website visitors"
+    }
+  ]
+}

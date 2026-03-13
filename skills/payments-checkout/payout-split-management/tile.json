@@ -1,0 +1,10 @@
+{
+  "name": "finsi/payout-split-management",
+  "version": "0.1.0",
+  "summary": "Manage complex payout splits for marketplaces and platforms with seller disbursements, commission calculation, tax withholding, and 1099 reporting",
+  "skills": {
+    "payout-split-management": {
+      "path": "SKILL.md"
+    }
+  }
+}

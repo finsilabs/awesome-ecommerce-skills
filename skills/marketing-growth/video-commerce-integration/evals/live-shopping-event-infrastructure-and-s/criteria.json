@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements live shopping event infrastructure using WebSocket broadcasting for real-time product featuring, recommends Redis pub/sub for WebSocket scaling, uses Mux or Cloudflare Stream for live streaming with RTMP, applies low-latency stream settings, sends subscriber notifications on event creation, and follows live event scheduling and duration best practices.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "WebSocket broadcasting",
+      "max_score": 10,
+      "description": "featureProductInLive() uses WebSocket broadcasting to push the featured product to all connected viewers (not polling, SSE, or HTTP push)"
+    },
+    {
+      "name": "Redis pub/sub scaling",
+      "max_score": 12,
+      "description": "architecture.md or code recommends/uses Redis pub/sub (or a named Redis adapter like socket.io-redis / ioredis) as the broadcast backend to support multiple Node processes"
+    },
+    {
+      "name": "Single process warning",
+      "max_score": 8,
+      "description": "architecture.md explicitly warns that a single Node.js process cannot handle the expected concurrent viewer count for WebSocket connections"
+    },
+    {
+      "name": "Mux or Cloudflare Stream",
+      "max_score": 10,
+      "description": "createLiveShoppingEvent() uses Mux or Cloudflare Stream API to create the live stream (not a self-hosted RTMP server or generic ffmpeg command)"
+    },
+    {
+      "name": "RTMP stream key",
+      "max_score": 8,
+      "description": "The live event data model includes a streamKey field (for OBS/Restream RTMP ingest) and a playbackUrl field (HLS for viewers)"
+    },
+    {
+      "name": "Low-latency setting",
+      "max_score": 10,
+      "description": "architecture.md or code references low-latency RTMP (5s target) or WHIP protocol to reduce delay between host product reveal and viewer display"
+    },
+    {
+      "name": "Subscriber notification",
+      "max_score": 8,
+      "description": "createLiveShoppingEvent() includes a call to notify subscribers (email, push, or equivalent) after creating the event"
+    },
+    {
+      "name": "Consistent scheduling",
+      "max_score": 8,
+      "description": "architecture.md recommends scheduling live events at consistent recurring times (specific days/times) rather than ad hoc scheduling to build audience"
+    },
+    {
+      "name": "Event duration guidance",
+      "max_score": 8,
+      "description": "architecture.md recommends keeping live shopping events under 60 minutes, referencing audience attention drop-off after 30–45 minutes"
+    },
+    {
+      "name": "Featuring tracked in DB",
+      "max_score": 8,
+      "description": "featureProductInLive() persists a record of the product featuring event (eventId, productId, timestamp) to the database"
+    },
+    {
+      "name": "WebSocket message types",
+      "max_score": 10,
+      "description": "The viewer client handles at minimum 'feature-product' and 'event-ended' WebSocket message types in a switch/if block"
+    }
+  ]
+}

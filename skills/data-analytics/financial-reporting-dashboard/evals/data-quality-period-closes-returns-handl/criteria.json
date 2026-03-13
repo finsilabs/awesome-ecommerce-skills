@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent builds a financial reporting layer that sources data from the GL (not raw platform APIs), avoids mixing cash and accrual basis, handles returns in the correct accounting period, locks closed periods, implements an audit trail, and builds a variance commentary workflow.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "GL as source of truth",
+      "max_score": 9,
+      "description": "The ETL or data pipeline design specifies reading financial figures from the accounting GL (QuickBooks, Xero, NetSuite, or equivalent), NOT directly from Shopify or platform APIs for final revenue numbers"
+    },
+    {
+      "name": "No cash+accrual mixing",
+      "max_score": 8,
+      "description": "The design explicitly separates or excludes cash-basis payment processor payouts (e.g., Stripe payouts) from accrual-basis GL figures — does NOT add them together in the same reporting line"
+    },
+    {
+      "name": "Returns in original period",
+      "max_score": 9,
+      "description": "Returns or refunds processed in a later month are attributed back to the original sale period (via an adjusting entry or contra-revenue accrual), not booked in the month the return was processed"
+    },
+    {
+      "name": "Returns reserve methodology",
+      "max_score": 7,
+      "description": "The design describes or implements a returns reserve (accrual) or equivalent contra-revenue mechanism, not just reversing the original transaction in the current period"
+    },
+    {
+      "name": "Period close lock",
+      "max_score": 8,
+      "description": "Closed/finalized periods are immutable — the implementation prevents or disallows updating historical period amounts once a period is marked as closed"
+    },
+    {
+      "name": "Adjusting entries in current period",
+      "max_score": 7,
+      "description": "Any corrections to closed periods are handled by posting adjusting journal entries in the current open period, not by modifying historical records"
+    },
+    {
+      "name": "Audit trail transaction panel",
+      "max_score": 9,
+      "description": "A transaction detail or audit trail panel is implemented (or designed) that allows a user to click on a line item amount and see the underlying source transactions"
+    },
+    {
+      "name": "Traceability to source",
+      "max_score": 8,
+      "description": "Each aggregated amount in the dashboard can be traced back to its source system and individual transactions (e.g., via source_system and transaction_id linkage)"
+    },
+    {
+      "name": "Commentary workflow",
+      "max_score": 9,
+      "description": "A variance commentary feature is implemented: finance team members can attach text notes or annotations to specific period variances or line items"
+    },
+    {
+      "name": "Commentary before sharing",
+      "max_score": 7,
+      "description": "The commentary workflow enforces or describes a review step — annotations are added before the dashboard is shared with leadership (e.g., a publish/approve step or status field)"
+    },
+    {
+      "name": "Variance annotation on data points",
+      "max_score": 7,
+      "description": "Annotations are associated with specific chart data points or P&L line items (not just a global dashboard comment field)"
+    },
+    {
+      "name": "Intercompany elimination mention",
+      "max_score": 6,
+      "description": "The design or documentation addresses intercompany elimination for multi-entity consolidation (even if described as out of scope with an explanation)"
+    },
+    {
+      "name": "Period close automation",
+      "max_score": 6,
+      "description": "A scheduled job, script, or trigger is described or implemented to automate the period snapshot/close process (not a purely manual step)"
+    }
+  ]
+}

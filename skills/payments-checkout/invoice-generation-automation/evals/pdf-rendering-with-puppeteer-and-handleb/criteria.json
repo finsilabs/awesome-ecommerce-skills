@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent uses Puppeteer for PDF rendering, Handlebars for templating, correct Puppeteer launch configuration, proper Handlebars helper registration, tax breakdown computation, and prominent payment instructions in the template.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses Puppeteer",
+      "max_score": 10,
+      "description": "The renderer imports and uses puppeteer (not another PDF library like pdfkit, jsPDF, or wkhtmltopdf)"
+    },
+    {
+      "name": "Uses Handlebars",
+      "max_score": 10,
+      "description": "The renderer imports and uses handlebars (not another templating engine like ejs, pug, or nunjucks)"
+    },
+    {
+      "name": "Puppeteer sandbox args",
+      "max_score": 8,
+      "description": "Puppeteer is launched with both '--no-sandbox' and '--disable-setuid-sandbox' in the args array"
+    },
+    {
+      "name": "networkidle0 wait",
+      "max_score": 8,
+      "description": "page.setContent() is called with { waitUntil: 'networkidle0' } (not 'load', 'domcontentloaded', or 'networkidle2')"
+    },
+    {
+      "name": "printBackground enabled",
+      "max_score": 7,
+      "description": "page.pdf() is called with printBackground: true"
+    },
+    {
+      "name": "20mm margins",
+      "max_score": 7,
+      "description": "page.pdf() sets margin with top, right, bottom, and left all equal to '20mm'"
+    },
+    {
+      "name": "Paper size from template",
+      "max_score": 7,
+      "description": "The paper size (format) passed to page.pdf() comes from the template object (e.g. template.paper_size) rather than being hardcoded"
+    },
+    {
+      "name": "formatCurrency helper",
+      "max_score": 8,
+      "description": "A Handlebars helper named 'formatCurrency' is registered using Intl.NumberFormat with style: 'currency'"
+    },
+    {
+      "name": "formatDate helper",
+      "max_score": 7,
+      "description": "A Handlebars helper named 'formatDate' is registered using Intl.DateTimeFormat"
+    },
+    {
+      "name": "multiply helper",
+      "max_score": 5,
+      "description": "A Handlebars helper named 'multiply' is registered"
+    },
+    {
+      "name": "Tax breakdown computation",
+      "max_score": 10,
+      "description": "A function computes a tax breakdown grouped by tax rate/name across line items (aggregating taxable_amount and tax_amount per group), and this breakdown is passed to the template"
+    },
+    {
+      "name": "Payment instructions prominent",
+      "max_score": 8,
+      "description": "The invoice HTML template includes a section for payment instructions (bank details, ACH routing, or pay-now link) that is visually prominent (e.g. has a distinct CSS class, heading, or is placed in the invoice footer/summary area)"
+    },
+    {
+      "name": "Tax breakdown in template",
+      "max_score": 5,
+      "description": "The invoice HTML template renders the tax breakdown (iterating over tax groups and showing name and amount), not just a single tax total"
+    }
+  ]
+}

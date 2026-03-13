@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent computes product affinity using the correct lift formula with confidence, applies the right minimum support threshold, excludes bulk orders, and schedules the job correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Lift formula",
+      "max_score": 12,
+      "description": "Affinity score is computed as lift = P(A∩B) / (P(A) * P(B)) — the code must divide the joint probability by the product of individual probabilities"
+    },
+    {
+      "name": "Confidence computed",
+      "max_score": 8,
+      "description": "Confidence P(B|A) = coCount / countA (or pAB / pA) is also computed and stored alongside lift"
+    },
+    {
+      "name": "Minimum support threshold",
+      "max_score": 12,
+      "description": "Pairs with fewer than 3 co-purchases are excluded from affinity records (coCount >= 3 or equivalent)"
+    },
+    {
+      "name": "Bulk order exclusion",
+      "max_score": 12,
+      "description": "Orders containing more than 15 line items are excluded from the co-purchase computation"
+    },
+    {
+      "name": "Bidirectional pairs stored",
+      "max_score": 8,
+      "description": "For each product pair (A, B), both (A→B) and (B→A) affinity records are written so either product can be used as the source lookup key"
+    },
+    {
+      "name": "Upsert on duplicate",
+      "max_score": 8,
+      "description": "Existing affinity records are upserted (updated) rather than duplicated — uses updateOnDuplicate or equivalent ON CONFLICT / upsert logic"
+    },
+    {
+      "name": "Nightly schedule",
+      "max_score": 10,
+      "description": "design-notes.md states the job runs nightly (e.g. via cron, scheduled job, or task scheduler) — not ad-hoc or on every request"
+    },
+    {
+      "name": "Only completed orders",
+      "max_score": 10,
+      "description": "The query filters for completed orders only (status = 'completed' or equivalent) — pending/cancelled orders are not included"
+    },
+    {
+      "name": "Design notes formula explanation",
+      "max_score": 10,
+      "description": "design-notes.md explains the lift formula (P(A∩B) / P(A)*P(B)) in plain language"
+    },
+    {
+      "name": "Minimum threshold rationale",
+      "max_score": 10,
+      "description": "design-notes.md explains WHY a minimum co-purchase count is required (noise/signal quality) — not just that it is applied"
+    }
+  ]
+}

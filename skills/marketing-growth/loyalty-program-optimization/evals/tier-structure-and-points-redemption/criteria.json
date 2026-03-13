@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements the 4-tier structure with proper thresholds and multipliers, redemption rate and constraints, rolling annual points for tier qualification, upgrade bonuses, and refund point reversals.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Silver threshold",
+      "max_score": 5,
+      "description": "LOYALTY_TIERS defines Silver tier with minPoints of exactly 500"
+    },
+    {
+      "name": "Gold threshold",
+      "max_score": 5,
+      "description": "LOYALTY_TIERS defines Gold tier with minPoints of exactly 1500"
+    },
+    {
+      "name": "Platinum threshold",
+      "max_score": 5,
+      "description": "LOYALTY_TIERS defines Platinum tier with minPoints of exactly 5000"
+    },
+    {
+      "name": "Tier multipliers",
+      "max_score": 8,
+      "description": "Multipliers are exactly: Member=1.0, Silver=1.5, Gold=2.0, Platinum=3.0"
+    },
+    {
+      "name": "Redemption rate",
+      "max_score": 8,
+      "description": "Uses a redemption rate of 100 points per $1 (e.g. pointsToRedeem / 100 to calculate discount value)"
+    },
+    {
+      "name": "Minimum redemption",
+      "max_score": 8,
+      "description": "Throws an error or rejects redemption requests below 500 points"
+    },
+    {
+      "name": "Balance validation",
+      "max_score": 8,
+      "description": "Throws an error (e.g. 'Insufficient points balance') when pointsToRedeem exceeds customer's current loyaltyPoints"
+    },
+    {
+      "name": "Single-use discount code",
+      "max_score": 8,
+      "description": "Creates the discount code with singleUse: true (or equivalent flag preventing reuse)"
+    },
+    {
+      "name": "Discount code expiry",
+      "max_score": 8,
+      "description": "Sets the discount code to expire 30 days from creation (not some other duration)"
+    },
+    {
+      "name": "Rolling 12-month earn for tier",
+      "max_score": 12,
+      "description": "Tier qualification uses points EARNED over the last 365 days (not current balance), e.g. sumEarnedInPeriod with since: subDays(new Date(), 365)"
+    },
+    {
+      "name": "Upgrade bonus points",
+      "max_score": 8,
+      "description": "When a tier upgrade occurs, awards bonus points (e.g. calls earnPoints with reason 'signup' for the bonus)"
+    },
+    {
+      "name": "Refund point reversal",
+      "max_score": 11,
+      "description": "Implements a reverseOrderPoints (or equivalent) function that debits/removes points earned from a refunded order"
+    },
+    {
+      "name": "Tier upgrade email",
+      "max_score": 6,
+      "description": "Calls sendTierUpgradeEmail (or equivalent) when a customer upgrades tiers"
+    }
+  ]
+}

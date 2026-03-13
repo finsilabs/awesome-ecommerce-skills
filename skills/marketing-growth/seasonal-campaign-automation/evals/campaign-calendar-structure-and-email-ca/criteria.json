@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements the SeasonalCampaign and SeasonalEmailStep TypeScript interfaces with correct field names and value types, applies the correct audience segmentation strategy (VIPs get early access, lapsed customers get re-engagement framing, prospects get maximum discount), caps email volume appropriately, uses a sitewide single discount code, and plans the campaign timeline sufficiently in advance.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SeasonalCampaign interface shape",
+      "max_score": 8,
+      "description": "The campaign object includes all required fields: id, name, type, startDate, endDate, discountType, discountValue, segments, channels, cadence, status"
+    },
+    {
+      "name": "discountType enum value",
+      "max_score": 8,
+      "description": "discountType is set to 'percent_off' (not a custom string like 'percentage' or 'pct')"
+    },
+    {
+      "name": "status field value",
+      "max_score": 5,
+      "description": "status is set to one of: 'planned', 'active', 'completed', or 'paused' — not a freeform string"
+    },
+    {
+      "name": "campaign type field value",
+      "max_score": 5,
+      "description": "type field is set to one of: 'sale', 'launch', 'gifting', or 'awareness'"
+    },
+    {
+      "name": "SeasonalEmailStep interface shape",
+      "max_score": 8,
+      "description": "Each cadence step includes: offsetDays (number), template (string), subject (string), incentive (boolean); segment is optional"
+    },
+    {
+      "name": "offsetDays convention",
+      "max_score": 8,
+      "description": "Steps before the sale start use negative offsetDays values; steps during or after use zero or positive values"
+    },
+    {
+      "name": "VIP early access step",
+      "max_score": 10,
+      "description": "At least one cadence step targets a VIP or loyalty segment with early access (incentive: true and a VIP-specific segment override)"
+    },
+    {
+      "name": "Lapsed customer re-engagement framing",
+      "max_score": 8,
+      "description": "planning-notes.md or campaign config acknowledges lapsed customers as a distinct segment with re-engagement framing (not the same messaging as general subscribers)"
+    },
+    {
+      "name": "Email volume cap",
+      "max_score": 10,
+      "description": "The cadence contains no more than 4 email steps that send to the general audience during the sale period (i.e., from day -1 through day +4 of the sale)"
+    },
+    {
+      "name": "Single sitewide discount code strategy",
+      "max_score": 8,
+      "description": "planning-notes.md or code comments specify using a single sitewide discount code (not unique per-customer codes)"
+    },
+    {
+      "name": "Multi-channel definition",
+      "max_score": 5,
+      "description": "channels array includes at least two of: 'email', 'sms', 'push', 'paid-social' (uses the canonical string literals from the interface)"
+    },
+    {
+      "name": "Campaign template lead time",
+      "max_score": 10,
+      "description": "planning-notes.md mentions building/finalising campaign templates at least 6-8 weeks before the sale date (i.e., in December for a February sale), not in the week before"
+    },
+    {
+      "name": "Domain warmup plan",
+      "max_score": 7,
+      "description": "planning-notes.md includes a domain warm-up recommendation: increasing send volume gradually (e.g., 10% per week) starting at least 4 weeks before the sale"
+    }
+  ]
+}

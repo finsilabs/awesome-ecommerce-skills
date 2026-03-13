@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent uses contribution margin (not gross revenue) for LTV, segments LTV by acquisition channel separately, employs cohort-based monthly analysis, compares cohort curves to detect degradation, and correctly handles reacquired customers as distinct from new customers.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Contribution margin basis",
+      "max_score": 12,
+      "description": "LTV calculations use gross profit or contribution margin figures, NOT gross revenue or net revenue alone as the numerator/basis for LTV"
+    },
+    {
+      "name": "Channel-level LTV segmentation",
+      "max_score": 10,
+      "description": "LTV is computed separately for each acquisition channel (e.g., paid_social, organic, email), producing distinct LTV values per channel rather than a single blended figure"
+    },
+    {
+      "name": "Monthly cohort grouping",
+      "max_score": 8,
+      "description": "Customers are grouped into monthly acquisition cohorts (cohort defined by month of first order), not annual or other period groupings"
+    },
+    {
+      "name": "Cumulative per-customer LTV curve",
+      "max_score": 10,
+      "description": "Output includes cumulative LTV per customer at each time period (e.g., month 1, 3, 6, 12, 24) for each cohort, not just a single LTV endpoint"
+    },
+    {
+      "name": "Cross-cohort curve comparison",
+      "max_score": 10,
+      "description": "The solution explicitly compares LTV curves across different cohorts (e.g., by computing or displaying how later cohorts compare to earlier cohorts at the same months-since-acquisition)"
+    },
+    {
+      "name": "Cohort degradation flag",
+      "max_score": 10,
+      "description": "The solution identifies or flags when newer cohorts have lower LTV than older cohorts at equivalent time points (cohort degradation detection)"
+    },
+    {
+      "name": "Reacquired customer separation",
+      "max_score": 10,
+      "description": "The solution distinguishes between first-time new customers and reacquired/returning customers (those with a prior lapse), treating them as separate segments rather than combining them"
+    },
+    {
+      "name": "Reactivation cost inclusion",
+      "max_score": 8,
+      "description": "When computing LTV for reacquired customers, the solution accounts for win-back campaign costs or reactivation discounts as a cost reducing their net LTV"
+    },
+    {
+      "name": "No gross revenue LTV",
+      "max_score": 10,
+      "description": "Does NOT compute LTV using ARPU (average revenue per user) or total revenue per customer as the primary LTV metric — uses contribution margin or gross profit instead"
+    },
+    {
+      "name": "Normalization by cohort size",
+      "max_score": 12,
+      "description": "Cumulative LTV metrics are normalized per customer (divided by cohort size), not reported as aggregate cohort totals"
+    }
+  ]
+}

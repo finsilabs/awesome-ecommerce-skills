@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a complete UGC content moderation pipeline with the correct APIs, thresholds, flag names, moderation score formula, routing logic, and human review queue.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Vision SafeSearch API",
+      "max_score": 8,
+      "description": "Code calls a Vision Safe Search API (callVisionSafeSearchAPI or equivalent) to check image content rather than a different image analysis service"
+    },
+    {
+      "name": "adult-content flag",
+      "max_score": 10,
+      "description": "Flags submission as 'adult-content' when adult result is 'LIKELY' or 'VERY_LIKELY' (both thresholds, not just one)"
+    },
+    {
+      "name": "violence flag",
+      "max_score": 8,
+      "description": "Flags submission as 'violence' when violence result is 'LIKELY'"
+    },
+    {
+      "name": "Perspective API",
+      "max_score": 8,
+      "description": "Uses Perspective API (callPerspectiveAPI or equivalent) to check caption toxicity"
+    },
+    {
+      "name": "Toxicity threshold 0.8",
+      "max_score": 10,
+      "description": "Flags caption as 'toxic-language' only when toxicity score is greater than 0.8 (not a different threshold)"
+    },
+    {
+      "name": "Competitor detection",
+      "max_score": 8,
+      "description": "Reads competitor brands from COMPETITOR_BRANDS environment variable (comma-separated) and flags captions containing any competitor name as 'competitor-mention'"
+    },
+    {
+      "name": "Moderation score formula",
+      "max_score": 8,
+      "description": "Calculates moderation score as flags.length divided by 5 (not a different normalization formula)"
+    },
+    {
+      "name": "Zero-flag approval only",
+      "max_score": 8,
+      "description": "Auto-approves submissions ONLY when the flag count is 0 (not when score is below some other threshold)"
+    },
+    {
+      "name": "Hard reject for adult/violence",
+      "max_score": 10,
+      "description": "Submissions with 'adult-content' OR 'violence' flags are set to status 'rejected' and NOT sent to human review"
+    },
+    {
+      "name": "Human review queue",
+      "max_score": 10,
+      "description": "Submissions with non-zero flags that are not adult/violence are added to a human moderation queue (not auto-rejected or silently dropped)"
+    },
+    {
+      "name": "Rights request after approval",
+      "max_score": 12,
+      "description": "When a submission is auto-approved (zero flags), the code triggers a rights request for that submission"
+    }
+  ]
+}

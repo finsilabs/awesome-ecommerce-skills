@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements TikTok server-side Events API alongside browser Pixel tracking, with proper PII hashing, deduplication via matching event_id, and correct user signal fields (ttclid, ip, user_agent) for maximum match rate.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SHA-256 email hash",
+      "max_score": 10,
+      "description": "Hashes the email field using SHA-256 before sending to Events API (not plaintext)"
+    },
+    {
+      "name": "SHA-256 phone hash",
+      "max_score": 8,
+      "description": "Hashes the phone number field using SHA-256 before sending to Events API (not plaintext)"
+    },
+    {
+      "name": "SHA-256 external_id hash",
+      "max_score": 8,
+      "description": "Hashes the external/customer ID using SHA-256 before sending to Events API"
+    },
+    {
+      "name": "Lowercase + trim before hashing",
+      "max_score": 8,
+      "description": "Applies .toLowerCase().trim() to values before SHA-256 hashing (not raw string hash)"
+    },
+    {
+      "name": "Matching event_id",
+      "max_score": 12,
+      "description": "The event_id used in the server-side Events API call matches the event_id fired with the browser Pixel for the same event"
+    },
+    {
+      "name": "CompletePayment event name",
+      "max_score": 8,
+      "description": "Uses 'CompletePayment' as the event name (not 'Purchase' or another variant)"
+    },
+    {
+      "name": "ttclid included",
+      "max_score": 8,
+      "description": "Includes ttclid (TikTok click ID) in the user object sent to the Events API"
+    },
+    {
+      "name": "ip and user_agent included",
+      "max_score": 8,
+      "description": "Includes both ip address and user_agent in the Events API user object"
+    },
+    {
+      "name": "Access-Token header",
+      "max_score": 8,
+      "description": "Sends the Events API request with an 'Access-Token' header (not Authorization Bearer)"
+    },
+    {
+      "name": "data array payload",
+      "max_score": 8,
+      "description": "Wraps the event payload inside a 'data' array when sending to the Events API endpoint"
+    },
+    {
+      "name": "Both Pixel and EAPI",
+      "max_score": 8,
+      "description": "Implementation fires BOTH the browser-side Pixel event AND the server-side Events API for the same purchase conversion"
+    },
+    {
+      "name": "Token expiry handling",
+      "max_score": 6,
+      "description": "Code or documentation acknowledges that access tokens expire and includes error handling for token expiry (e.g. catches 40100 error code or implements refresh logic)"
+    }
+  ]
+}

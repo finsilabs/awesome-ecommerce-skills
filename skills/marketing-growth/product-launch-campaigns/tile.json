@@ -1,0 +1,10 @@
+{
+  "name": "finsi/product-launch-campaigns",
+  "version": "0.1.0",
+  "summary": "Plan and execute multi-channel product launches with pre-launch waitlists, early access for VIPs, launch day orchestration, and post-launch momentum",
+  "skills": {
+    "product-launch-campaigns": {
+      "path": "SKILL.md"
+    }
+  }
+}

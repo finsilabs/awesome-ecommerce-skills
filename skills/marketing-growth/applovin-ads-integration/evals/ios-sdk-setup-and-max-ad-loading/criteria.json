@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly sets up AppLovin MAX on iOS using CocoaPods, initializes the SDK with the required settings, handles interstitial ad lifecycle properly by preloading after dismiss, implements ATT requirements, and recommends in-app bidding over traditional waterfall.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "AppLovinSDK pod",
+      "max_score": 7,
+      "description": "Podfile includes pod 'AppLovinSDK'"
+    },
+    {
+      "name": "Adapter pods",
+      "max_score": 7,
+      "description": "Podfile includes at least the Google AdMob adapter (AppLovinMediationGoogleAdMobAdapter) and Meta/Facebook adapter (AppLovinMediationMetaAudienceNetworkAdapter)"
+    },
+    {
+      "name": "mediationProvider set to max",
+      "max_score": 10,
+      "description": "AppDelegate sets ALSdk.shared().mediationProvider = \"max\" before initializeSdk"
+    },
+    {
+      "name": "userIdentifier assigned",
+      "max_score": 8,
+      "description": "AppDelegate sets ALSdk.shared().userIdentifier to an internal user ID before calling initializeSdk"
+    },
+    {
+      "name": "ATT prompt requirement",
+      "max_score": 10,
+      "description": "integration-notes.md or AppDelegate mentions NSUserTrackingUsageDescription in Info.plist AND implementing the ATT (App Tracking Transparency) prompt before SDK initialization"
+    },
+    {
+      "name": "Interstitial delegate implemented",
+      "max_score": 8,
+      "description": "CartViewController conforms to MAAdDelegate (or implements equivalent delegate methods): didLoad and didFailToLoadAd are present"
+    },
+    {
+      "name": "Preload on didHide",
+      "max_score": 12,
+      "description": "Calls interstitialAd.load() inside the didHide(_:) callback (NOT didDisplay) to preload the next ad immediately after dismissal"
+    },
+    {
+      "name": "Retry on failure",
+      "max_score": 8,
+      "description": "didFailToLoadAd callback includes logic for retry with exponential backoff (e.g. uses DispatchQueue.asyncAfter, increasing delay, or mentions exponential backoff)"
+    },
+    {
+      "name": "isReady guard before show",
+      "max_score": 8,
+      "description": "Checks interstitialAd.isReady before calling show() to avoid showing an unloaded ad"
+    },
+    {
+      "name": "In-app bidding preference",
+      "max_score": 12,
+      "description": "integration-notes.md explains that in-app bidding (simultaneous auction) is preferred over traditional waterfall because it achieves higher eCPM"
+    },
+    {
+      "name": "SDK init in application(_:didFinishLaunchingWithOptions:)",
+      "max_score": 10,
+      "description": "SDK initialization is performed inside application(_:didFinishLaunchingWithOptions:) in AppDelegate"
+    }
+  ]
+}

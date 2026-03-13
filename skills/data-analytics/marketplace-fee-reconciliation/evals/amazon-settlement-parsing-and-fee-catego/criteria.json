@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly parses Amazon flat-file settlement data using the prescribed format and column mappings, and applies the correct fee category mapping to produce a categorized fee summary per SKU.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Tab-separated parsing",
+      "max_score": 8,
+      "description": "The parsing code uses tab as the separator (sep='\\t') when reading the settlement file"
+    },
+    {
+      "name": "UTF-8 encoding",
+      "max_score": 8,
+      "description": "The parsing code specifies UTF-8 encoding when reading the file"
+    },
+    {
+      "name": "Thousands separator handling",
+      "max_score": 6,
+      "description": "The parsing code includes thousands=',' to handle comma-formatted numbers"
+    },
+    {
+      "name": "Marketplace column set",
+      "max_score": 6,
+      "description": "The normalized output includes a 'marketplace' column set to 'amazon'"
+    },
+    {
+      "name": "FBA fulfillment fee mapping",
+      "max_score": 8,
+      "description": "FBAPerUnitFulfillmentFee, FBAPerOrderFulfillmentFee, FBAWeightBasedFee, and/or 'FBA transaction fees' are mapped to the 'fulfillment' category"
+    },
+    {
+      "name": "Referral fee mapping",
+      "max_score": 8,
+      "description": "Commission, VariableClosingFee, and/or 'Selling fees' are mapped to the 'referral_fee' category"
+    },
+    {
+      "name": "Storage fee mapping",
+      "max_score": 8,
+      "description": "FBAStorageFee is mapped to 'storage' and FBALongTermStorageFee is mapped to 'storage_long_term'"
+    },
+    {
+      "name": "Advertising fee mapping",
+      "max_score": 8,
+      "description": "'Sponsored Products' and 'Sponsored Brands' are mapped to the 'advertising' category"
+    },
+    {
+      "name": "Advertising vs transaction separation",
+      "max_score": 10,
+      "description": "The output or analysis separates advertising fees (advertising category) from transaction fees (referral_fee, fulfillment categories) — they are not summed together without distinction"
+    },
+    {
+      "name": "Refund fee mapping",
+      "max_score": 6,
+      "description": "RefundCommission is mapped to 'refund_fee' category"
+    },
+    {
+      "name": "SKU-level fee summary",
+      "max_score": 10,
+      "description": "The output produces a per-SKU breakdown of fees by category (aggregated amounts per fee category per SKU)"
+    },
+    {
+      "name": "Fee category column present",
+      "max_score": 6,
+      "description": "The parsed/processed data includes a fee_category column (or equivalent) derived from the fee_type mapping"
+    },
+    {
+      "name": "Numeric amount coercion",
+      "max_score": 8,
+      "description": "The code converts the amount/fee column to numeric, handling non-numeric values gracefully (e.g., errors='coerce' or equivalent)"
+    }
+  ]
+}

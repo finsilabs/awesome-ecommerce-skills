@@ -1,0 +1,10 @@
+{
+  "name": "finsi/applovin-ads-integration",
+  "version": "0.1.0",
+  "summary": "Integrate AppLovin MAX mediation and ad campaigns for mobile commerce apps with user acquisition, retargeting, and in-app purchase event tracking",
+  "skills": {
+    "applovin-ads-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

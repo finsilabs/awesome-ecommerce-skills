@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the TikTok Shop API client with proper authentication (HMAC signature construction, query parameter layout, required headers), product field mapping (title truncation, price formatting, COD flag), and inventory update function. Also checks that the integration notes document image requirements correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Correct API base URL",
+      "max_score": 8,
+      "description": "Uses 'https://open-api.tiktokglobalshop.com' as the base URL (not a different TikTok domain or placeholder)"
+    },
+    {
+      "name": "HMAC-SHA256 signature",
+      "max_score": 10,
+      "description": "Signature is built by concatenating appKey + timestamp + JSON.stringify(body) and then computing an HMAC-SHA256 digest using the app secret"
+    },
+    {
+      "name": "Signature in URL query params",
+      "max_score": 8,
+      "description": "The computed sign value is passed as a query parameter in the request URL (not in the body or a header)"
+    },
+    {
+      "name": "Required URL query params",
+      "max_score": 8,
+      "description": "The request URL includes all four query parameters: app_key, timestamp, sign, and shop_id"
+    },
+    {
+      "name": "x-tts-access-token header",
+      "max_score": 8,
+      "description": "Every API request includes the 'x-tts-access-token' header populated with an access token"
+    },
+    {
+      "name": "Error detection on non-zero code",
+      "max_score": 8,
+      "description": "The client checks result.code !== 0 and throws an error containing the code and message when it is non-zero"
+    },
+    {
+      "name": "Title truncation to 255 chars",
+      "max_score": 10,
+      "description": "The product title/name is truncated to a maximum of 255 characters before being sent to the API"
+    },
+    {
+      "name": "Price formatted to 2 decimal places",
+      "max_score": 10,
+      "description": "SKU original_price is formatted with exactly two decimal places (e.g. using toFixed(2))"
+    },
+    {
+      "name": "COD flag set to false",
+      "max_score": 8,
+      "description": "The is_cod_open field is explicitly set to false in the product creation payload"
+    },
+    {
+      "name": "Image format guidance",
+      "max_score": 8,
+      "description": "INTEGRATION_NOTES.md states that product images should be square or 9:16 (portrait) aspect ratio — NOT landscape"
+    },
+    {
+      "name": "Image background guidance",
+      "max_score": 8,
+      "description": "INTEGRATION_NOTES.md mentions that product images should have a white or clean background and should avoid text overlays"
+    },
+    {
+      "name": "Inventory update endpoint",
+      "max_score": 6,
+      "description": "The updateInventory function calls the /api/products/stocks endpoint (not the main products endpoint)"
+    }
+  ]
+}

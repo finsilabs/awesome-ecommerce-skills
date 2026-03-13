@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements SKAdNetwork conversion value tiers, uses the iOS 16.1+ SKAdNetwork 4.0 API with fallback, updates conversion values at the right point in the purchase flow, exports retargeting audiences with the right user segment and fields, and configures campaigns with correct ROAS targets, budget minimums, geo/age targeting, frequency caps, and dashboard SKAN alignment.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SKAN conversion value tiers",
+      "max_score": 10,
+      "description": "skan-tracker.swift maps order value ranges to the correct integer tiers: 0-25 → 10, 25-50 → 20, 50-100 → 30, 100-200 → 40, 200-500 → 50, 500+ → 63"
+    },
+    {
+      "name": "iOS 16.1+ SKAN 4.0 API",
+      "max_score": 10,
+      "description": "skan-tracker.swift uses #available(iOS 16.1, *) check and calls SKAdNetwork.updatePostbackConversionValue(_:coarseValue:lockWindow:) for iOS 16.1+"
+    },
+    {
+      "name": "Fallback SKAN API",
+      "max_score": 8,
+      "description": "skan-tracker.swift calls SKAdNetwork.updateConversionValue(_:) in the else branch for iOS versions before 16.1"
+    },
+    {
+      "name": "Update after final purchase",
+      "max_score": 10,
+      "description": "campaign-guide.md or code comments specify that updateConversionValue must be called after the final purchase confirmation, not after payment intent"
+    },
+    {
+      "name": "SKAN dashboard alignment",
+      "max_score": 8,
+      "description": "campaign-guide.md mentions that the same conversion value schema must be configured in AppLovin's SKAN configuration panel so AppLovin can decode the postbacks"
+    },
+    {
+      "name": "Retargeting user segment",
+      "max_score": 10,
+      "description": "retargeting-export.ts filters for users where: lastOpenedAt is between 7 and 30 days ago, hasPlacedOrder is false, and hasAddedToCart is true"
+    },
+    {
+      "name": "Audience export fields",
+      "max_score": 8,
+      "description": "retargeting-export.ts outputs records with idfa (from idfaHash) and gaid (from advertisingId) fields for AppLovin Audience Manager upload"
+    },
+    {
+      "name": "ROAS bid strategy",
+      "max_score": 8,
+      "description": "campaign-guide.md specifies Target ROAS bid strategy starting at 200%, ramping up after reaching 50+ purchase events per day"
+    },
+    {
+      "name": "Daily budget minimum",
+      "max_score": 6,
+      "description": "campaign-guide.md specifies a minimum daily budget of $200 for ROAS-optimized campaigns"
+    },
+    {
+      "name": "Geo targeting",
+      "max_score": 6,
+      "description": "campaign-guide.md lists tier-1 countries (at least US, CA, GB, AU) as the recommended geographic targets for highest ROAS"
+    },
+    {
+      "name": "Age targeting",
+      "max_score": 6,
+      "description": "campaign-guide.md recommends targeting age range 25-54 as the demographic that skews toward mobile spenders"
+    },
+    {
+      "name": "Retargeting frequency cap",
+      "max_score": 10,
+      "description": "campaign-guide.md specifies capping retargeting ad frequency to 3 impressions per user per day"
+    }
+  ]
+}

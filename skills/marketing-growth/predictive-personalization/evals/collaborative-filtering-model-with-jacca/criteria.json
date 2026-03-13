@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent uses item-item collaborative filtering with the correct time window, Jaccard similarity normalization, appropriate limits on stored items, daily cache refresh, and a nightly batch rebuild pattern as specified by the personalization skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Item-item collaborative filtering",
+      "max_score": 10,
+      "description": "The implementation builds product-to-product similarity by finding co-occurring products in the same session (item-item approach), not user-item matrix factorization"
+    },
+    {
+      "name": "90-day event window",
+      "max_score": 10,
+      "description": "The query for building the co-occurrence matrix filters events to those within the last 90 days (not 30, 60, 180, or all-time)"
+    },
+    {
+      "name": "Session co-occurrence basis",
+      "max_score": 8,
+      "description": "Co-occurrence is grouped by session (not by user) and requires at least 2 distinct products per session"
+    },
+    {
+      "name": "Jaccard similarity formula",
+      "max_score": 12,
+      "description": "Similarity is computed as coCount / (countA + countB - coCount) — the Jaccard formula — not cosine, Pearson, or a raw count"
+    },
+    {
+      "name": "Top 50 similar items stored",
+      "max_score": 9,
+      "description": "For each product, only the top 50 most similar products are stored (not top 10, 20, 100, or all)"
+    },
+    {
+      "name": "24-hour Redis cache expiry",
+      "max_score": 10,
+      "description": "Similarity data in Redis is set with an expiry of 24 hours (86400 seconds), refreshed daily"
+    },
+    {
+      "name": "Nightly batch rebuild",
+      "max_score": 9,
+      "description": "The nightly-rebuild.ts job file shows the co-occurrence build triggered on a scheduled/nightly basis (not on every request or in real-time)"
+    },
+    {
+      "name": "Design notes: similarity metric",
+      "max_score": 8,
+      "description": "design-notes.md identifies the similarity metric used (Jaccard) and explains the choice"
+    },
+    {
+      "name": "Design notes: history window",
+      "max_score": 8,
+      "description": "design-notes.md states that purchase history from the last 90 days is used"
+    },
+    {
+      "name": "Design notes: cache TTL",
+      "max_score": 8,
+      "description": "design-notes.md mentions that similarity results are cached for 24 hours before being refreshed"
+    },
+    {
+      "name": "Purchase and cart events used",
+      "max_score": 8,
+      "description": "The co-occurrence query uses both 'purchase' and 'add_to_cart' event types (not views alone, not purchases alone)"
+    }
+  ]
+}

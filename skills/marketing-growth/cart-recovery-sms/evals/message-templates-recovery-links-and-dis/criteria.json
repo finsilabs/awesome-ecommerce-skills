@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent produces correct message templates with first-name personalization and STOP opt-out footer on every message, generates recovery links with nanoid tokens and proper UTM parameters, applies discounts only on step 3 above the cart value threshold, generates correctly formatted single-use codes, keeps messages under 160 characters, and avoids carrier-filter pitfalls.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "First-name personalisation",
+      "max_score": 8,
+      "description": "All three message templates reference the customer first name (e.g. firstName or customer.firstName), with a fallback to 'there' when unavailable"
+    },
+    {
+      "name": "Step 1 content: item + value",
+      "max_score": 8,
+      "description": "The step 1 template includes both the item name (or item count when > 1) and the cart value in the message body"
+    },
+    {
+      "name": "Step 2 content: social proof",
+      "max_score": 8,
+      "description": "The step 2 template references a viewer or popularity signal (e.g. 'X people viewed it today') rather than just repeating cart contents"
+    },
+    {
+      "name": "Step 3 content: last chance + discount",
+      "max_score": 8,
+      "description": "The step 3 template includes an urgency phrase (e.g. 'last chance', 'expires soon') and conditionally inserts the discount code when one is present"
+    },
+    {
+      "name": "STOP footer on every message",
+      "max_score": 8,
+      "description": "All three message templates end with an opt-out instruction containing 'STOP' (e.g. 'Reply STOP to opt out.')"
+    },
+    {
+      "name": "nanoid token generation",
+      "max_score": 8,
+      "description": "Recovery link uses nanoid (imported from the 'nanoid' package) to generate the token, with a length of 16 characters"
+    },
+    {
+      "name": "UTM parameters in recovery link",
+      "max_score": 8,
+      "description": "The recovery link URL includes all three UTM params: utm_source=sms, utm_medium=cart_recovery, utm_campaign=abandoned_cart"
+    },
+    {
+      "name": "48-hour token TTL",
+      "max_score": 6,
+      "description": "The recovery token expiry is set to 48 hours from creation (not shorter)"
+    },
+    {
+      "name": "Discount only on step 3",
+      "max_score": 8,
+      "description": "DESIGN.md or code explicitly states that discount codes are generated exclusively for the final step of the sequence (step 3 / last_chance)"
+    },
+    {
+      "name": "Discount cart value threshold",
+      "max_score": 8,
+      "description": "generateDiscount returns null (or equivalent) when the cart value is below the configured minimum (default $50 or SMS_DISCOUNT_MIN_VALUE)"
+    },
+    {
+      "name": "Discount code format",
+      "max_score": 6,
+      "description": "The generated discount code follows the pattern SAVE10-{LAST6} where LAST6 is the last 6 characters of the cart sessionId in uppercase"
+    },
+    {
+      "name": "Single-use discount enforcement",
+      "max_score": 8,
+      "description": "The discount is created with usage_limit: 1 and once_per_customer: true (or DESIGN.md explicitly describes these constraints)"
+    },
+    {
+      "name": "Message length under 160 chars",
+      "max_score": 6,
+      "description": "The code includes a check, comment, or test verifying that messages stay under 160 characters, OR all three template strings are demonstrably under 160 characters in their typical form"
+    },
+    {
+      "name": "Carrier filter avoidance",
+      "max_score": 2,
+      "description": "Message templates do NOT use all-caps words (beyond standard abbreviations) and do NOT reference free URL shortener domains (bit.ly, tinyurl.com, etc.)"
+    }
+  ]
+}

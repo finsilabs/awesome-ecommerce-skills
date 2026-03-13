@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent designs a campaign structure that correctly uses campaign priorities (Standard Shopping high, PMax low), excludes brand from PMax, applies correct tROAS ramp strategy, uses audience signals (not restrictions) in PMax, organizes PMax asset groups by product category, sets up a Brand Search campaign with TIS, adds negative keywords in the right places, and prescribes enabling Enhanced Conversions before Smart Bidding.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Standard Shopping priority: High",
+      "max_score": 7,
+      "description": "Standard Shopping campaign is assigned High priority (not medium or low)"
+    },
+    {
+      "name": "PMax priority: Low",
+      "max_score": 7,
+      "description": "Performance Max campaign is assigned Low priority (so Standard Shopping wins auctions first)"
+    },
+    {
+      "name": "Brand excluded from PMax",
+      "max_score": 8,
+      "description": "Brand terms (e.g., 'NovaPet') are added as negative keywords at the PMax campaign level OR a separate high-priority brand Search campaign is recommended to prevent PMax from consuming branded budget"
+    },
+    {
+      "name": "Negative brand keywords on Shopping",
+      "max_score": 9,
+      "description": "Brand name negative keywords are added to the Standard Shopping campaign to route brand queries to the Search campaign"
+    },
+    {
+      "name": "PMax asset groups by category",
+      "max_score": 8,
+      "description": "Performance Max campaign contains multiple asset groups organized by product category (e.g., one for premium food/subscriptions and one for accessories, or similar category-based segmentation)"
+    },
+    {
+      "name": "Audience signals not restrictions",
+      "max_score": 8,
+      "description": "PMax audience configuration uses audience signals (to inform the algorithm) rather than audience restrictions — the document explicitly distinguishes between signals and restrictions, or instructs to use signals only"
+    },
+    {
+      "name": "Brand Search TIS 95%+",
+      "max_score": 7,
+      "description": "Brand Search campaign uses Target Impression Share bidding strategy with a target of 95% or higher at top of page"
+    },
+    {
+      "name": "Category Search negative keywords",
+      "max_score": 8,
+      "description": "Category/non-brand Search campaigns include negative keywords for irrelevant traffic (e.g., jobs, careers, free, DIY, homemade, or similar)"
+    },
+    {
+      "name": "tROAS ramp-down plan",
+      "max_score": 8,
+      "description": "The Smart Bidding ramp plan starts tROAS above the actual goal and reduces it incrementally (e.g., week 1 higher, week 2 lower, settling at target by week 4)"
+    },
+    {
+      "name": "30-50 conversion threshold",
+      "max_score": 8,
+      "description": "The document states that Target ROAS / Smart Bidding should only be enabled after accumulating at least 30–50 conversions in the prior 30 days"
+    },
+    {
+      "name": "Enhanced Conversions before Smart Bidding",
+      "max_score": 8,
+      "description": "Enhanced Conversions setup is listed as a prerequisite or pre-launch step that must be completed before activating Smart Bidding / tROAS"
+    },
+    {
+      "name": "Conversion Value Rules for new customers",
+      "max_score": 8,
+      "description": "The architecture includes Conversion Value Rules (or equivalent) that boost the reported value of new customer conversions by 20–50% to prioritize new customer acquisition"
+    },
+    {
+      "name": "High-margin SKU segmentation",
+      "max_score": 6,
+      "description": "Standard Shopping ad groups or PMax asset groups are segmented to give higher bids or higher tROAS to high-margin products versus low-margin ones"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/tax-compliance-automation",
+  "version": "0.1.0",
+  "summary": "Automate multi-jurisdiction sales tax, VAT, and GST compliance with nexus tracking, exemption certificates, filing automation, and audit-ready reports",
+  "skills": {
+    "tax-compliance-automation": {
+      "path": "SKILL.md"
+    }
+  }
+}

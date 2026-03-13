@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent builds the social proof API endpoint following the skill's specific patterns: a unified endpoint using parallel DB/Redis queries, correct PII anonymization, Redis sorted-set visitor tracking with the right window and key expiry, the correct isLow threshold, the Math.max floor for activeVisitors, and the random boost for very low counts.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Unified endpoint path",
+      "max_score": 5,
+      "description": "The route handler is for GET /api/products/:id/social-proof (or equivalent parameterised path with the id segment)"
+    },
+    {
+      "name": "Parallel data fetching",
+      "max_score": 10,
+      "description": "The handler uses Promise.all (or equivalent concurrent await) to fetch recentOrders/purchases, activeVisitors, reviewSummary, and stockLevel in parallel rather than sequentially"
+    },
+    {
+      "name": "PII anonymization — fields",
+      "max_score": 10,
+      "description": "Each purchase entry in the response contains only firstName and a city/state or city/country location string — no full names, email addresses, or order IDs"
+    },
+    {
+      "name": "PII anonymization — no order IDs",
+      "max_score": 5,
+      "description": "The response/design-notes explicitly states that order IDs are NOT included in purchase notification data"
+    },
+    {
+      "name": "Redis sorted-set visitor tracking",
+      "max_score": 10,
+      "description": "The trackProductPageView function uses redis.zadd to record session presence and redis.zremrangebyscore to prune stale entries"
+    },
+    {
+      "name": "5-minute sliding window",
+      "max_score": 8,
+      "description": "The visitor tracking uses a 5-minute window (300,000 ms or 5 * 60 * 1000) for active visitor detection"
+    },
+    {
+      "name": "Redis key expiry 600s",
+      "max_score": 7,
+      "description": "redis.expire is called on the visitor key with 600 seconds"
+    },
+    {
+      "name": "Math.max floor for activeVisitors",
+      "max_score": 8,
+      "description": "The API response applies Math.max(count, 1) (or equivalent) so activeVisitors is never returned as 0"
+    },
+    {
+      "name": "Random boost for low counts",
+      "max_score": 8,
+      "description": "When the raw visitor count is below 3, a small random offset (e.g. Math.floor(Math.random() * 3)) is added to the count"
+    },
+    {
+      "name": "isLow threshold",
+      "max_score": 10,
+      "description": "The isLow flag in the stock level response is true when stockLevel > 0 AND stockLevel <= 5 (not 3, not 10 — specifically 5)"
+    },
+    {
+      "name": "24-hour purchase window",
+      "max_score": 7,
+      "description": "Recent orders are fetched using a 24-hour lookback window (last 24h from now)"
+    },
+    {
+      "name": "Async loading noted",
+      "max_score": 7,
+      "description": "design-notes.md mentions that the social proof data should be loaded asynchronously / after page load, not blocking the critical rendering path"
+    },
+    {
+      "name": "timeAgo included",
+      "max_score": 5,
+      "description": "Each purchase entry includes a timeAgo field (human-readable elapsed time) rather than a raw timestamp"
+    }
+  ]
+}

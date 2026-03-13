@@ -1,0 +1,10 @@
+{
+  "name": "finsi/financial-analytics-dashboard",
+  "version": "0.1.0",
+  "summary": "Build interactive financial KPI dashboards with customizable metrics, drill-down analysis, variance explanations, and automated threshold-based alerting",
+  "skills": {
+    "financial-analytics-dashboard": {
+      "path": "SKILL.md"
+    }
+  }
+}

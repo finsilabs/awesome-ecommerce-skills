@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent designs the correct four-table cost allocation schema with time-effective cost records, integer-cent monetary storage, returns reserve, variant-level costs, and proper separation of fixed vs variable costs.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Four separate cost tables",
+      "max_score": 12,
+      "description": "Schema includes all four separate tables for the distinct cost categories: one for per-unit product/COGS costs, one for per-order fulfillment costs, one for channel marketing spend, and one for shared overhead allocations"
+    },
+    {
+      "name": "Time-effective cost columns",
+      "max_score": 12,
+      "description": "The product costs table has both an effective_from date column AND an effective_to date column (nullable, indicating currently active when NULL) — not just a single date or timestamp"
+    },
+    {
+      "name": "Integer cents for monetary amounts",
+      "max_score": 10,
+      "description": "Monetary amount columns use INTEGER (or BIGINT) data type with a '_cents' naming convention, NOT DECIMAL, FLOAT, NUMERIC, or MONEY types"
+    },
+    {
+      "name": "Returns reserve column",
+      "max_score": 10,
+      "description": "The per-order fulfillment costs table includes a column for returns reserve (e.g. returns_reserve_cents) as a distinct cost component"
+    },
+    {
+      "name": "Variant-level product costs",
+      "max_score": 10,
+      "description": "The product costs table has a foreign key or reference to product variants (variant_id), not just to products, enabling variant-specific cost records"
+    },
+    {
+      "name": "Overhead allocation_basis column",
+      "max_score": 8,
+      "description": "The overhead allocations table includes an allocation_basis column that records how overhead should be spread (e.g. 'revenue_share', 'order_count', 'unit_count') rather than hard-coding a single allocation method"
+    },
+    {
+      "name": "Per-order fulfillment breakdown",
+      "max_score": 8,
+      "description": "The per-order fulfillment costs table separates at least two variable cost components (e.g. shipping label cost and pick/pack cost as distinct columns) rather than lumping them into one column"
+    },
+    {
+      "name": "Channel marketing attribution columns",
+      "max_score": 8,
+      "description": "The channel marketing costs table includes both a spend amount column AND an orders_attributed (or similar) count column to enable CPA calculation"
+    },
+    {
+      "name": "design_notes mentions cents rationale",
+      "max_score": 8,
+      "description": "design_notes.md explicitly states the reason for using integer cents (avoiding floating-point precision errors in monetary arithmetic)"
+    },
+    {
+      "name": "design_notes mentions historical cost preservation",
+      "max_score": 14,
+      "description": "design_notes.md explicitly explains that cost changes are recorded as new INSERT rows with a new effective_from date rather than updating existing records, to preserve historical margin accuracy"
+    }
+  ]
+}

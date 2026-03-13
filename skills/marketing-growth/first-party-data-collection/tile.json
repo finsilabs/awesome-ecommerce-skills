@@ -1,0 +1,10 @@
+{
+  "name": "finsi/first-party-data-collection",
+  "version": "0.1.0",
+  "summary": "Build a first-party data strategy with progressive profiling, zero-party surveys, preference centers, and quiz-based product recommendations",
+  "skills": {
+    "first-party-data-collection": {
+      "path": "SKILL.md"
+    }
+  }
+}

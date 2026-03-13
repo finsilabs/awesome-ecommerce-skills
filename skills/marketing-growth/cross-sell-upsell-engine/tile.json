@@ -1,0 +1,10 @@
+{
+  "name": "finsi/cross-sell-upsell-engine",
+  "version": "0.1.0",
+  "summary": "Recommend complementary and premium products at checkout, in cart, and post-purchase using purchase patterns, browsing history, and margin optimization",
+  "skills": {
+    "cross-sell-upsell-engine": {
+      "path": "SKILL.md"
+    }
+  }
+}

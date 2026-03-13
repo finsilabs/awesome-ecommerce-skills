@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements Google Ads purchase conversion tracking including deduplication via transaction_id, Enhanced Conversions with user_data set before the conversion fires, new customer flagging, email normalization, and server-side sGTM tracking with the correct endpoint and payload.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "transaction_id present",
+      "max_score": 10,
+      "description": "The gtag conversion event includes a transaction_id field set to the order ID (prevents duplicate conversions from page refreshes)"
+    },
+    {
+      "name": "new_customer flag",
+      "max_score": 8,
+      "description": "The gtag purchase conversion event includes a new_customer field set to a boolean or value derived from whether the order is the customer's first"
+    },
+    {
+      "name": "user_data set before conversion",
+      "max_score": 12,
+      "description": "gtag('set', 'user_data', {...}) is called BEFORE the gtag('event', 'conversion', ...) call on the confirmation page (not after, not in a separate async flow)"
+    },
+    {
+      "name": "user_data email field",
+      "max_score": 8,
+      "description": "The user_data object passed to gtag includes an email field"
+    },
+    {
+      "name": "user_data phone and address",
+      "max_score": 8,
+      "description": "The user_data object includes both phone and address fields (with address containing at minimum first_name, last_name, and postal_code or similar subfields)"
+    },
+    {
+      "name": "Email normalized lowercase",
+      "max_score": 10,
+      "description": "The email value passed into user_data is converted to lowercase and/or trimmed (e.g., using .toLowerCase().trim()) before being sent"
+    },
+    {
+      "name": "sGTM /data endpoint",
+      "max_score": 10,
+      "description": "The server-side tracking function sends a POST request to a URL ending in '/data' on the sGTM container URL (e.g., `${SGTM_CONTAINER_URL}/data`)"
+    },
+    {
+      "name": "sGTM purchase payload",
+      "max_score": 8,
+      "description": "The sGTM POST payload includes transaction_id, value, currency, and an items array with item-level details"
+    },
+    {
+      "name": "sGTM Enhanced Conversions fields",
+      "max_score": 8,
+      "description": "The sGTM payload includes email and phone fields alongside the standard purchase event data"
+    },
+    {
+      "name": "gtag loaded on page",
+      "max_score": 5,
+      "description": "The order confirmation HTML includes the Google Tag script tag loading gtag.js in the <head>"
+    },
+    {
+      "name": "Correct conversion label",
+      "max_score": 5,
+      "description": "The send_to parameter in the conversion event uses the format 'AW-CONVERSION_ID/CONVERSION_LABEL' with the account and label values provided in the task"
+    },
+    {
+      "name": "sGTM event_name field",
+      "max_score": 8,
+      "description": "The sGTM POST body includes an event_name field (set to 'purchase' or equivalent)"
+    }
+  ]
+}

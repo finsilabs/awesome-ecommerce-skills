@@ -1,0 +1,10 @@
+{
+  "name": "finsi/marketplace-advertising",
+  "version": "0.1.0",
+  "summary": "Manage sponsored product ads across Amazon, eBay, and Walmart marketplace platforms with bid optimization, keyword targeting, and ACOS tracking",
+  "skills": {
+    "marketplace-advertising": {
+      "path": "SKILL.md"
+    }
+  }
+}

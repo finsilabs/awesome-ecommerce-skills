@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements promotional pricing with original price preservation, uses a database-level scheduled job (not in-memory queue) for pricing rollback so it survives server restarts, applies the correct discount calculation logic for each discount type, adds expiresAt to discount codes, and uses a cron-based deactivation strategy.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Original price stored",
+      "max_score": 10,
+      "description": "pricing.ts creates a priceOverrides (or equivalent) record that stores the originalPrice before applying the sale price — not just updating the product price in place"
+    },
+    {
+      "name": "priceOverrides schema fields",
+      "max_score": 8,
+      "description": "The override record includes: productId, campaignId, originalPrice, salePrice, and date range fields (activeFrom/activeTo or equivalent)"
+    },
+    {
+      "name": "Database-level rollback job",
+      "max_score": 14,
+      "description": "The rollback is scheduled via a database-level mechanism (e.g., a jobs/scheduled_tasks table, pg_cron, database-backed queue) — NOT an in-memory setTimeout or in-process scheduler that would be lost on server restart"
+    },
+    {
+      "name": "Rollback scheduled before launch",
+      "max_score": 8,
+      "description": "The rollback job is scheduled during pricing activation (at campaign start), not manually triggered after the sale ends"
+    },
+    {
+      "name": "percent_off calculation",
+      "max_score": 8,
+      "description": "applyDiscount for 'percent_off' computes: price * (1 - value/100), rounded to 2 decimal places"
+    },
+    {
+      "name": "fixed_amount calculation",
+      "max_score": 8,
+      "description": "applyDiscount for 'fixed_amount' uses Math.max(0, price - value) to prevent negative prices, rounded to 2 decimal places"
+    },
+    {
+      "name": "free_shipping handling",
+      "max_score": 8,
+      "description": "applyDiscount for 'free_shipping' returns the original price unchanged (free shipping is handled at order level, not by changing product price)"
+    },
+    {
+      "name": "expiresAt on discount codes",
+      "max_score": 10,
+      "description": "discount-codes.md specifies that discount codes must include an expiresAt (or equivalent expiry/end date) field set to the campaign end date"
+    },
+    {
+      "name": "Cron deactivation strategy",
+      "max_score": 10,
+      "description": "discount-codes.md describes using a cron job (or scheduled task) to automatically deactivate or expire codes at the end date — not relying on manual deactivation"
+    },
+    {
+      "name": "2 decimal precision",
+      "max_score": 8,
+      "description": "Discount calculations use parseFloat(...toFixed(2)) or equivalent to ensure prices are stored with exactly 2 decimal places"
+    },
+    {
+      "name": "Rollback job ID",
+      "max_score": 8,
+      "description": "The pricing rollback job uses a deterministic job ID tied to the campaign (e.g., 'pricing-rollback-{campaignId}') to prevent duplicate rollback jobs"
+    }
+  ]
+}

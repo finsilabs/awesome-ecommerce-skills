@@ -1,0 +1,10 @@
+{
+  "name": "finsi/influencer-marketplace-integration",
+  "version": "0.1.0",
+  "summary": "Connect to influencer networks to discover creators, manage campaign briefs, track deliverables, and measure ROI across Instagram, TikTok, and YouTube",
+  "skills": {
+    "influencer-marketplace-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

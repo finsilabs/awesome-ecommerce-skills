@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements FBA overcharge detection using dimensional weight (LxWxH/139), size tier classification, $10 threshold, and generates prioritized optimization recommendations using the correct category/priority/threshold logic.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Dimensional weight formula",
+      "max_score": 8,
+      "description": "Dimensional weight is computed as (length * width * height) / 139"
+    },
+    {
+      "name": "Billable weight as max",
+      "max_score": 8,
+      "description": "Billable weight is taken as the maximum of actual weight (lbs) and dimensional weight — not just actual weight"
+    },
+    {
+      "name": "Small standard tier",
+      "max_score": 8,
+      "description": "small_standard size tier criteria: longest <= 15, median <= 12, shortest <= 0.75, weight_lbs <= 0.75"
+    },
+    {
+      "name": "Large standard tier",
+      "max_score": 8,
+      "description": "large_standard size tier criteria: longest <= 18, median <= 14, shortest <= 8, weight_lbs <= 20"
+    },
+    {
+      "name": "Overcharge threshold $10",
+      "max_score": 8,
+      "description": "Overcharges are only flagged when the variance (charged - expected) exceeds $10.00 per settlement period"
+    },
+    {
+      "name": "Submit reimbursement action",
+      "max_score": 8,
+      "description": "Flagged overcharge records include an action field or recommendation indicating reimbursement claim submission"
+    },
+    {
+      "name": "Long-term storage threshold",
+      "max_score": 8,
+      "description": "SKUs with long-term storage fees greater than $100 are flagged for inventory liquidation (high priority)"
+    },
+    {
+      "name": "FBM switch threshold",
+      "max_score": 8,
+      "description": "SKUs where FBA fee rate exceeds 20% of revenue are flagged for FBM switch evaluation"
+    },
+    {
+      "name": "Pricing review threshold",
+      "max_score": 8,
+      "description": "SKUs with net margin below 5% are flagged for pricing review (high priority)"
+    },
+    {
+      "name": "Priority ordering",
+      "max_score": 6,
+      "description": "Optimization recommendations are sorted with 'high' priority items listed before 'medium' items"
+    },
+    {
+      "name": "FBM priority logic",
+      "max_score": 6,
+      "description": "FBM switch recommendation is 'medium' priority when net_margin > 0, and 'high' priority when net_margin <= 0"
+    },
+    {
+      "name": "Overcharges output file",
+      "max_score": 8,
+      "description": "Results are written to a file (CSV or JSON) containing the flagged overcharges with sku, expected vs charged amounts, and variance"
+    },
+    {
+      "name": "Recommendations output file",
+      "max_score": 8,
+      "description": "Optimization recommendations are written to a file (CSV or JSON) listing each recommendation with sku, category, priority, and recommendation text"
+    }
+  ]
+}

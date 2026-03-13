@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent implements server-side touchpoint collection with the correct session/cookie logic, the specified channel classification rules, anonymous ID persistence, and post-login identity stitching.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Server-side middleware",
+      "max_score": 6,
+      "description": "trackTouchpoint is implemented as an Express middleware (accepts req, res, next) rather than as client-side JavaScript"
+    },
+    {
+      "name": "Conditional touchpoint creation",
+      "max_score": 10,
+      "description": "Touchpoint record is only created when either a UTM source is present OR the session has not been tracked yet (not on every request)"
+    },
+    {
+      "name": "Session cookie maxAge",
+      "max_score": 8,
+      "description": "The session-tracking cookie (_session_tracked or equivalent) is set with maxAge of 1800 seconds (30 minutes)"
+    },
+    {
+      "name": "Anonymous ID persistence",
+      "max_score": 8,
+      "description": "Anonymous visitor ID cookie is set with a 1-year maxAge (365 days / 31536000 seconds / equivalent) rather than a session-only cookie"
+    },
+    {
+      "name": "paid-search classification",
+      "max_score": 8,
+      "description": "Visits with utm_medium of 'cpc' or 'paid' are classified as 'paid-search'"
+    },
+    {
+      "name": "paid-social classification",
+      "max_score": 8,
+      "description": "Visits with utm_medium of 'paid-social' OR a source matching meta, facebook, instagram, or tiktok are classified as 'paid-social'"
+    },
+    {
+      "name": "organic-search classification",
+      "max_score": 8,
+      "description": "Visits where the HTTP referrer matches google, bing, or yahoo (and no paid UTM medium) are classified as 'organic-search'"
+    },
+    {
+      "name": "direct classification",
+      "max_score": 6,
+      "description": "Visits with no referrer or a same-domain referrer are classified as 'direct'"
+    },
+    {
+      "name": "email classification",
+      "max_score": 6,
+      "description": "Visits with utm_medium of 'email' are classified as 'email'"
+    },
+    {
+      "name": "Post-login identity stitching",
+      "max_score": 10,
+      "description": "Code includes a function or logic that links pre-login anonymous touchpoints to a customer ID after the customer is identified (checkout or login event)"
+    },
+    {
+      "name": "TouchpointEvent fields",
+      "max_score": 8,
+      "description": "Touchpoint records include anonymousId, channel, source, medium, campaign, landingPage, eventType, deviceType, and isNewVisitor fields"
+    },
+    {
+      "name": "Classification test output",
+      "max_score": 8,
+      "description": "classification-test-output.txt exists and shows test results for at least 8 channel classification scenarios"
+    },
+    {
+      "name": "Direct re-attribution logic",
+      "max_score": 6,
+      "description": "Code includes logic or comment indicating that direct sessions immediately following an ad click should be re-attributed to the originating channel rather than direct"
+    }
+  ]
+}

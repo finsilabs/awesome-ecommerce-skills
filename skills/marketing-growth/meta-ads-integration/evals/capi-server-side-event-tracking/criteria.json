@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements a Meta Conversions API (CAPI) server-side purchase event handler using the official Node.js SDK, with proper deduplication, identity signals, and event structure.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Official SDK package",
+      "max_score": 10,
+      "description": "Uses 'facebook-nodejs-business-sdk' (not a custom HTTP client, axios-based approach, or unofficial package)"
+    },
+    {
+      "name": "SDK initialization",
+      "max_score": 8,
+      "description": "Calls FacebookAdsApi.init() with the access token before making any API calls"
+    },
+    {
+      "name": "action_source set to website",
+      "max_score": 8,
+      "description": "Sets action_source (or calls setActionSource) to 'website' on the ServerEvent"
+    },
+    {
+      "name": "eventTime in Unix seconds",
+      "max_score": 8,
+      "description": "Sets eventTime as Unix epoch seconds (e.g. Math.floor(Date.now() / 1000)), NOT milliseconds"
+    },
+    {
+      "name": "eventId present",
+      "max_score": 8,
+      "description": "Sets a unique eventId (or event_id) on the CAPI event for deduplication purposes"
+    },
+    {
+      "name": "fbp cookie passed",
+      "max_score": 8,
+      "description": "Includes the _fbp cookie value in the userData (via setFbp or fbp field)"
+    },
+    {
+      "name": "fbc cookie passed",
+      "max_score": 8,
+      "description": "Includes the _fbc cookie value in the userData (via setFbc or fbc field)"
+    },
+    {
+      "name": "clientIpAddress passed",
+      "max_score": 8,
+      "description": "Includes the client IP address in userData (via setClientIpAddress or equivalent)"
+    },
+    {
+      "name": "clientUserAgent passed",
+      "max_score": 8,
+      "description": "Includes the User-Agent header value in userData (via setClientUserAgent or equivalent)"
+    },
+    {
+      "name": "Webhook-triggered CAPI",
+      "max_score": 8,
+      "description": "CAPI event is fired from a webhook/server-side handler, not from browser-only code"
+    },
+    {
+      "name": "Subtotal used for value",
+      "max_score": 8,
+      "description": "Uses order subtotal (not the total including tax/shipping) as the value field in customData"
+    },
+    {
+      "name": "EventRequest execution",
+      "max_score": 10,
+      "description": "Creates an EventRequest with the pixel ID and calls execute() (or equivalent) to send the event"
+    }
+  ]
+}

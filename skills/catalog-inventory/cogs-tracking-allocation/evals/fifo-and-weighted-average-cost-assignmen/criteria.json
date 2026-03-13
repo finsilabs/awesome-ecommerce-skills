@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements FIFO and weighted average COGS assignment following the required patterns: transactional FIFO with correct layer ordering, explicit error on insufficient stock, dynamically computed weighted average using SQL aggregation, and null cost_layer_id for weighted average entries.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "FIFO uses transaction",
+      "max_score": 8,
+      "description": "The FIFO cost assignment function wraps all database operations (layer updates and COGS entry creation) inside a single database transaction"
+    },
+    {
+      "name": "FIFO layer ordering",
+      "max_score": 10,
+      "description": "The FIFO function orders cost layers by receipt_date ASC (oldest first), with a secondary sort on created_at ASC or equivalent tiebreaker"
+    },
+    {
+      "name": "FIFO filters remaining quantity",
+      "max_score": 8,
+      "description": "The FIFO function filters cost layers to only those with quantity_remaining > 0"
+    },
+    {
+      "name": "FIFO explicit error on stockout",
+      "max_score": 12,
+      "description": "The FIFO function throws or returns an error (does NOT silently skip or return 0) when there are insufficient cost layers to cover the requested quantity"
+    },
+    {
+      "name": "Weighted avg uses SQL aggregation",
+      "max_score": 12,
+      "description": "The weighted average function computes the average cost by querying the database (SUM of quantity_remaining * unit_cost / SUM of quantity_remaining), NOT by reading a pre-stored cached average field"
+    },
+    {
+      "name": "Weighted avg division safety",
+      "max_score": 8,
+      "description": "The weighted average SQL uses NULLIF or equivalent guard on the denominator to avoid division-by-zero, and COALESCE or equivalent to return 0 when there is no inventory"
+    },
+    {
+      "name": "Weighted avg cost_layer_id is null",
+      "max_score": 10,
+      "description": "The COGS entry created by the weighted average function sets cost_layer_id to null (since no single layer is being consumed)"
+    },
+    {
+      "name": "COGS at line level",
+      "max_score": 8,
+      "description": "Both functions accept and record an order_line_id (not just an order_id) on the COGS entry, enabling per-line margin analysis"
+    },
+    {
+      "name": "FIFO sets costing_method field",
+      "max_score": 6,
+      "description": "COGS entries created by the FIFO function set costing_method to 'fifo'"
+    },
+    {
+      "name": "Weighted avg sets costing_method field",
+      "max_score": 6,
+      "description": "COGS entries created by the weighted average function set costing_method to 'weighted_avg' (or 'weighted_average')"
+    },
+    {
+      "name": "FIFO consumes layers iteratively",
+      "max_score": 12,
+      "description": "The FIFO function iterates through multiple layers when a single layer does not have enough units, consuming from each layer in order until the full quantity is assigned"
+    }
+  ]
+}

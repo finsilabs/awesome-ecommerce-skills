@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly models a referral program with dual-sided rewards and generates unique, shareable referral links using the right code format, idempotency, and URL parameters.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ReferralProgram fields",
+      "max_score": 8,
+      "description": "ReferralProgram interface/type includes all 7 required fields: id, name, referrerReward, refereeReward, minimumOrderValue, cookieWindowDays, maxReferralsPerCustomer"
+    },
+    {
+      "name": "Reward type union",
+      "max_score": 8,
+      "description": "Reward type field is a union of exactly these 4 values: 'percent_off', 'fixed_amount', 'store_credit', 'free_product'"
+    },
+    {
+      "name": "ReferralLink fields",
+      "max_score": 8,
+      "description": "ReferralLink interface/type includes: id, customerId, code, shortUrl, clicks, conversions, revenue, createdAt"
+    },
+    {
+      "name": "Idempotent generation",
+      "max_score": 12,
+      "description": "Link generation checks for an existing link (by customerId + programId) and returns it if found, rather than creating a duplicate"
+    },
+    {
+      "name": "Code format",
+      "max_score": 12,
+      "description": "Referral code format is: customer's first name (non-alpha chars stripped, uppercased, max 8 chars) concatenated with a 3-digit random number (100–999)"
+    },
+    {
+      "name": "Uniqueness loop",
+      "max_score": 8,
+      "description": "Code generation includes a loop to regenerate the code if the generated code already exists in the database"
+    },
+    {
+      "name": "UTM parameters",
+      "max_score": 12,
+      "description": "The referral long URL includes all three UTM parameters: utm_source=referral, utm_medium=share, and utm_campaign set to the program ID"
+    },
+    {
+      "name": "Dual-sided reward structure",
+      "max_score": 10,
+      "description": "ReferralProgram model includes BOTH a referrerReward field AND a refereeReward field (not just one of them)"
+    },
+    {
+      "name": "Store credit for referrer",
+      "max_score": 12,
+      "description": "In any example, default configuration, or documentation: the referrer's reward type is set to 'store_credit' rather than 'percent_off' or 'fixed_amount'"
+    },
+    {
+      "name": "Short shareable code",
+      "max_score": 10,
+      "description": "Code field comment or documentation describes the code as short and shareable (e.g., 'SARAH123' format), not a UUID or long random string"
+    }
+  ]
+}

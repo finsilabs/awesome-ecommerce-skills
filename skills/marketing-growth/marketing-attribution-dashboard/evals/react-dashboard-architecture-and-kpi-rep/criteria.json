@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent builds the React attribution dashboard with the correct data-fetching setup, KPI cards, visualizations, model comparison, and correctly documents multi-touch revenue discrepancy handling, model explainers, and channel segmentation approach.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SWR for data fetching",
+      "max_score": 8,
+      "description": "AttributionDashboard.tsx uses useSWR (from the 'swr' package) for data fetching rather than useEffect/fetch or another library"
+    },
+    {
+      "name": "SWR refresh interval",
+      "max_score": 8,
+      "description": "SWR is configured with refreshInterval of 3600000 (1 hour in milliseconds)"
+    },
+    {
+      "name": "Default model is position-based",
+      "max_score": 8,
+      "description": "The default selected attribution model is 'position-based' (useState default or equivalent initialisation)"
+    },
+    {
+      "name": "Default period is 30d",
+      "max_score": 6,
+      "description": "The default selected time period is '30d' rather than '7d' or another value"
+    },
+    {
+      "name": "Four KPI cards",
+      "max_score": 10,
+      "description": "Dashboard includes all four KPI summary cards: Total Attributed Revenue, Total Ad Spend, Blended ROAS, and New Customer CAC"
+    },
+    {
+      "name": "Customer journey visualization",
+      "max_score": 8,
+      "description": "Dashboard includes a Sankey chart or flow/path visualization component for common customer journey sequences"
+    },
+    {
+      "name": "Model comparison section",
+      "max_score": 8,
+      "description": "Dashboard includes a section (component or UI element) that shows how different attribution models compare for the same orders"
+    },
+    {
+      "name": "Model explainers in UI",
+      "max_score": 8,
+      "description": "dashboard-spec.md includes plain-language explainer text for at least 3 attribution models (describing what each model does for a non-technical audience)"
+    },
+    {
+      "name": "Multi-touch revenue disclosure",
+      "max_score": 8,
+      "description": "dashboard-spec.md explicitly documents that per-channel attributed revenue sum can exceed actual total revenue and that both figures are shown in the UI"
+    },
+    {
+      "name": "Channel + source segmentation",
+      "max_score": 8,
+      "description": "dashboard-spec.md or AttributionDashboard.tsx indicates that channel metrics are broken down by both channel AND source (not channel alone)"
+    },
+    {
+      "name": "New vs returning revenue split",
+      "max_score": 6,
+      "description": "Channel metrics include separate fields or display for new customer revenue and returning customer revenue"
+    },
+    {
+      "name": "Journey path limit",
+      "max_score": 6,
+      "description": "dashboard-spec.md states that the journey path query limit is 20 (top 20 paths by revenue)"
+    },
+    {
+      "name": "Nightly precompute strategy",
+      "max_score": 8,
+      "description": "dashboard-spec.md mentions that aggregated metrics are precomputed nightly (or on a scheduled basis) into a summary table rather than queried directly from raw events"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements a 13-week cash flow model with the right inventory purchase timing logic, treats sales tax as a scheduled outflow, builds a one-time payment calendar, uses known transactions for near-term weeks, and keeps capital expenditures separate from operating cash flows.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "13-week / 91-day window",
+      "max_score": 8,
+      "description": "Forecast covers exactly 13 weeks (91 days forward), not a different horizon such as 12 weeks or 6 months"
+    },
+    {
+      "name": "Inventory lead time",
+      "max_score": 8,
+      "description": "Inventory purchase order receipt date is computed as PO date + lead_time_days (45 days), not as payment date directly"
+    },
+    {
+      "name": "Inventory payment after receipt",
+      "max_score": 8,
+      "description": "Inventory payment date is receipt date + payment_terms_days (30 days), not directly from PO date"
+    },
+    {
+      "name": "Target weeks of stock = 8",
+      "max_score": 8,
+      "description": "The inventory reorder logic targets 8 weeks of forward stock coverage (target_weeks_of_stock = 8)"
+    },
+    {
+      "name": "Sales tax as scheduled outflow",
+      "max_score": 10,
+      "description": "Sales tax remittance ($22,000) is modeled as a scheduled cash outflow in the outflow schedule, NOT deducted from inflows or treated as a revenue reduction"
+    },
+    {
+      "name": "One-time payment calendar",
+      "max_score": 10,
+      "description": "Software renewal ($28,000 at week 6) and trade show expense ($15,000 at week 9) are included as discrete one-time outflow entries in specific weeks"
+    },
+    {
+      "name": "Near-term known transactions",
+      "max_score": 12,
+      "description": "Weeks 1–4 use the specified known transaction amounts (confirmed PO payment week 2 = $95,000, confirmed customer payments week 3 = $67,000) rather than model-derived estimates for those entries"
+    },
+    {
+      "name": "Running cash balance",
+      "max_score": 8,
+      "description": "Running cash balance is computed as opening_cash + cumulative sum of net weekly cash flows (not recalculated from scratch each week)"
+    },
+    {
+      "name": "Outflow categorization",
+      "max_score": 8,
+      "description": "Output table separates outflows into at least two categories (e.g. operating/recurring vs one-time, or operating vs inventory vs one-time)"
+    },
+    {
+      "name": "CapEx separation",
+      "max_score": 10,
+      "description": "Capital expenditures are kept in a separate section or variable from operating cash flows — NOT mixed into the operating outflow total"
+    },
+    {
+      "name": "Opening balance carried forward",
+      "max_score": 10,
+      "description": "The $450,000 opening balance is used as the starting point for the running cash balance calculation"
+    }
+  ]
+}

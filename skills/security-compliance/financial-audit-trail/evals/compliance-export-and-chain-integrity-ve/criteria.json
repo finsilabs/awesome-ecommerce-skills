@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements compliance-ready audit export and tamper-detection chain integrity verification, including correct hash recomputation, multi-format export with the required columns, and a scheduled integrity monitoring job.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Hash recomputation in verifier",
+      "max_score": 12,
+      "description": "The integrity verification function recomputes each event's expected hash using the same formula (prev seq, occurred_at, event_type, aggregate_id, actor_id, after_state joined by '|') and compares it to the stored hash"
+    },
+    {
+      "name": "Tampered events reported",
+      "max_score": 8,
+      "description": "The integrity verifier returns a report that includes the seq, aggregate_id, expected hash, and actual hash for any tampered events"
+    },
+    {
+      "name": "Events ordered by seq ASC in verifier",
+      "max_score": 8,
+      "description": "When walking the event chain for verification, events are retrieved ordered by seq ASC (not DESC or unordered)"
+    },
+    {
+      "name": "Export includes Hash column",
+      "max_score": 10,
+      "description": "The compliance export output includes a 'Hash' column (or equivalent field containing the tamper-detection hash for each row)"
+    },
+    {
+      "name": "Export supports multiple formats",
+      "max_score": 8,
+      "description": "The export function supports at least two of: JSON, CSV, and XLSX output formats"
+    },
+    {
+      "name": "Export flattened columns",
+      "max_score": 8,
+      "description": "The export flattens JSONB fields (before_state, after_state, delta) into string columns rather than embedding raw nested objects without any serialization"
+    },
+    {
+      "name": "Export ordered by seq",
+      "max_score": 8,
+      "description": "Exported rows are ordered by seq ASC for chronological ordering during compliance review"
+    },
+    {
+      "name": "Nightly integrity job",
+      "max_score": 8,
+      "description": "A scheduled/nightly integrity check job is implemented that samples recent events across aggregates and calls the integrity verifier"
+    },
+    {
+      "name": "Alert on tampered events",
+      "max_score": 8,
+      "description": "The nightly integrity job sends an alert (to a security/ops channel) when tampered events are detected, rather than silently ignoring failures"
+    },
+    {
+      "name": "Integrity check logged as audit event",
+      "max_score": 8,
+      "description": "The nightly integrity check itself is recorded as an audit event (e.g. 'audit.integrity_check_completed') with the results"
+    },
+    {
+      "name": "Table partitioning by date",
+      "max_score": 6,
+      "description": "The implementation or documentation addresses partitioning the audit table by occurred_at (monthly or similar) for scalability at high event volumes"
+    },
+    {
+      "name": "Export filtered by date range",
+      "max_score": 8,
+      "description": "The export function accepts date range parameters (from/to) to limit the events returned for a compliance period"
+    }
+  ]
+}

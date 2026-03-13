@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements referral attribution middleware and conversion processing including cookie settings, click tracking, fraud guards, status management, and the timing/format of reward fulfillment.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cookie name",
+      "max_score": 6,
+      "description": "Attribution cookie is named exactly 'referral_code'"
+    },
+    {
+      "name": "Cookie httpOnly flag",
+      "max_score": 6,
+      "description": "Cookie is set with httpOnly: true"
+    },
+    {
+      "name": "Cookie sameSite setting",
+      "max_score": 6,
+      "description": "Cookie is set with sameSite: 'lax'"
+    },
+    {
+      "name": "Cookie duration",
+      "max_score": 8,
+      "description": "Cookie maxAge is set to 30 days expressed as 30 * 86400 * 1000 milliseconds (or equivalent numeric value 2592000000)"
+    },
+    {
+      "name": "Click tracking",
+      "max_score": 8,
+      "description": "Middleware increments the click count in the database when a referral code is present in the request"
+    },
+    {
+      "name": "Self-referral prevention",
+      "max_score": 10,
+      "description": "Attribution logic checks that the referral link's owner (customerId) is NOT the same as the ordering customer, and skips attribution if they match"
+    },
+    {
+      "name": "Minimum order value check",
+      "max_score": 8,
+      "description": "Attribution skips (returns early) if the order subtotal is below the program's minimumOrderValue"
+    },
+    {
+      "name": "One referral per email",
+      "max_score": 10,
+      "description": "Code checks for an existing conversion with the same refereeEmail AND programId combination and skips if one exists"
+    },
+    {
+      "name": "Conversion pending status",
+      "max_score": 8,
+      "description": "Newly created conversion records are set to status 'pending' (not 'approved' or 'completed')"
+    },
+    {
+      "name": "Referee reward immediate",
+      "max_score": 10,
+      "description": "Referee reward is granted synchronously (awaited) immediately when a conversion is recorded"
+    },
+    {
+      "name": "Referrer reward delayed 7 days",
+      "max_score": 12,
+      "description": "Referrer reward is scheduled with a delay of 7 days (7 * 86400000 ms or 604800000 ms) via a queue, NOT granted immediately"
+    },
+    {
+      "name": "Discount rewards single-use",
+      "max_score": 8,
+      "description": "When creating discount codes (percent_off or fixed_amount rewards), singleUse is set to true"
+    }
+  ]
+}

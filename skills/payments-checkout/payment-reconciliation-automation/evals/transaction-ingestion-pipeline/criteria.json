@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent builds the Stripe and PayPal ingesters correctly, using the right Stripe API (balance transactions), filtering PayPal to settled-only, implementing idempotent upserts, mapping transaction types correctly, ingesting T-1 data, and running ingesters in parallel.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Stripe balance transactions API",
+      "max_score": 15,
+      "description": "The Stripe ingester calls stripe.balanceTransactions.list() (or equivalent balance transactions endpoint), NOT stripe.charges.list(), stripe.paymentIntents.list(), or other endpoints"
+    },
+    {
+      "name": "PayPal settled-only filter",
+      "max_score": 12,
+      "description": "The PayPal ingester filters to only settled transactions (e.g. transaction_status: 'S' or equivalent settled status parameter), not all transaction statuses"
+    },
+    {
+      "name": "Upsert on composite key",
+      "max_score": 12,
+      "description": "Both ingesters use an upsert/insert-or-update operation (not a plain insert) keyed on (source, source_transaction_id) to prevent duplicates on re-runs"
+    },
+    {
+      "name": "T-1 date selection",
+      "max_score": 12,
+      "description": "The orchestration job targets yesterday's date (T-1), not today's date, as the ingestion window for both processors"
+    },
+    {
+      "name": "Parallel ingestion",
+      "max_score": 10,
+      "description": "The orchestration script runs Stripe and PayPal ingestion concurrently (e.g. Promise.all or equivalent), not sequentially"
+    },
+    {
+      "name": "Stripe transaction type mapping",
+      "max_score": 10,
+      "description": "The Stripe ingester maps Stripe-specific types (e.g. 'dispute' → 'chargeback', 'reserve_transaction' → 'reserve_release', 'stripe_fee' → 'fee') to normalized internal types"
+    },
+    {
+      "name": "PayPal transaction type mapping",
+      "max_score": 8,
+      "description": "The PayPal ingester maps PayPal event codes to normalized types (e.g. T00x → 'charge', T11x → 'refund', T12x → 'chargeback', T20x → 'payout')"
+    },
+    {
+      "name": "Gross/fee/net amounts stored",
+      "max_score": 8,
+      "description": "Both ingesters store gross_amount, fee_amount, and net_amount separately (not just a single amount field)"
+    },
+    {
+      "name": "Implementation notes explains Stripe choice",
+      "max_score": 8,
+      "description": "IMPLEMENTATION_NOTES.md explicitly states WHY balance transactions were chosen over charges/payment intents (e.g. mentions fees, refunds, payouts in same feed, or authoritative record)"
+    },
+    {
+      "name": "No currency conversion",
+      "max_score": 5,
+      "description": "Neither ingester performs currency conversion — amounts are stored in the transaction's original currency"
+    }
+  ]
+}

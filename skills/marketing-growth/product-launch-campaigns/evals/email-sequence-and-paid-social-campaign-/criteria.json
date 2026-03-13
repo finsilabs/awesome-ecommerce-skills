@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent implements email scheduling with correct segments, timing, and subjects; paid social campaigns with correct budgets and audience types; launch analytics with parallel fetching; and email deliverability best practices including domain warm-up and off-peak send timing.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "VIP email subject format",
+      "max_score": 8,
+      "description": "VIP early access email subject follows the pattern '[Early Access] {product name} is yours — 24 hours before everyone else'"
+    },
+    {
+      "name": "Public launch email subject",
+      "max_score": 8,
+      "description": "Public launch email subject follows the pattern 'Introducing {product name} — available now'"
+    },
+    {
+      "name": "Non-converters at 72h",
+      "max_score": 8,
+      "description": "Waitlist non-converter follow-up email is scheduled at 72 hours (3 days) AFTER the launch date — not before"
+    },
+    {
+      "name": "Non-converters urgency subject",
+      "max_score": 6,
+      "description": "Waitlist non-converter email subject follows the pattern '{product name} — don't miss out'"
+    },
+    {
+      "name": "Pre-launch retargeting $50/day",
+      "max_score": 7,
+      "description": "Pre-launch retargeting campaign has a budget of $50 per day"
+    },
+    {
+      "name": "Pre-launch audience type",
+      "max_score": 6,
+      "description": "Pre-launch retargeting campaign targets email list and web visitors (combined audience)"
+    },
+    {
+      "name": "Launch day $200/day lookalike",
+      "max_score": 7,
+      "description": "Launch day prospecting campaign has a budget of $200 per day and uses a lookalike audience (1% lookalike of purchasers)"
+    },
+    {
+      "name": "Post-launch DPA $100/day",
+      "max_score": 7,
+      "description": "Post-launch DPA retargeting campaign has a budget of $100 per day and targets product page viewers"
+    },
+    {
+      "name": "Analytics parallel fetch",
+      "max_score": 9,
+      "description": "getLaunchMetrics fetches all KPIs (waitlistSize, day1Revenue, day7Revenue, influencerRevenue, reviews30d) in parallel using Promise.all"
+    },
+    {
+      "name": "Analytics metric set",
+      "max_score": 7,
+      "description": "getLaunchMetrics returns all five metrics: waitlistSize, day1Revenue, day7Revenue, influencerRevenue, and reviews30d"
+    },
+    {
+      "name": "Plain-text launch email",
+      "max_score": 8,
+      "description": "pre-launch-checklist.md mentions using a plain-text email template for the launch email to avoid the promotions/spam folder"
+    },
+    {
+      "name": "Domain warm-up timing",
+      "max_score": 7,
+      "description": "pre-launch-checklist.md mentions warming up the sending domain at least 2 weeks before launch"
+    },
+    {
+      "name": "Dedicated IP and off-peak send",
+      "max_score": 8,
+      "description": "pre-launch-checklist.md mentions using a dedicated IP and scheduling the launch email send during off-peak hours (6-8am) and/or staggering large lists"
+    },
+    {
+      "name": "Staggered review requests",
+      "max_score": 4,
+      "description": "Code or checklist mentions staggering review request emails to prevent all reviews arriving on the same day"
+    }
+  ]
+}

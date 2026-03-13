@@ -1,0 +1,10 @@
+{
+  "name": "finsi/accounts-payable-management",
+  "version": "0.1.0",
+  "summary": "Manage supplier invoices and vendor payments with automated receipt matching, payment scheduling, early discount optimization, and reconciliation workflows",
+  "skills": {
+    "accounts-payable-management": {
+      "path": "SKILL.md"
+    }
+  }
+}

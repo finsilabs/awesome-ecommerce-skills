@@ -1,0 +1,10 @@
+{
+  "name": "finsi/review-generation-engine",
+  "version": "0.1.0",
+  "summary": "Automatically request and collect product reviews post-purchase with timed email/SMS sequences, photo incentives, and fraud detection for fake reviews",
+  "skills": {
+    "review-generation-engine": {
+      "path": "SKILL.md"
+    }
+  }
+}

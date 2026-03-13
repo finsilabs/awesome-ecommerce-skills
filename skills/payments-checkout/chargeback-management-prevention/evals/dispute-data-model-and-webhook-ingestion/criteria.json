@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the correct chargeback database schema (tables, columns, indexes), handles all three Stripe dispute webhook event types, calculates network-specific response deadlines, and uses Stripe charge metadata to link disputes to orders.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "chargebacks table columns",
+      "max_score": 12,
+      "description": "schema.sql includes a chargebacks table with at least these columns: processor_dispute_id (unique), network, reason_code, reason_category, disputed_amount, currency, chargeback_date, response_due_date, status, win_probability_score, auto_submitted, evidence_submitted_at"
+    },
+    {
+      "name": "chargeback_evidence table",
+      "max_score": 8,
+      "description": "schema.sql includes a chargeback_evidence table with at least: chargeback_id (FK to chargebacks), evidence_type, content or file_url, and collected_at"
+    },
+    {
+      "name": "Three database indexes",
+      "max_score": 8,
+      "description": "schema.sql creates at least three indexes on the chargebacks table: one on (status, response_due_date), one on order_id, and one on chargeback_date"
+    },
+    {
+      "name": "All three webhook events handled",
+      "max_score": 10,
+      "description": "webhook-handler.js (or equivalent) explicitly handles charge.dispute.created, charge.dispute.updated, AND charge.dispute.closed — all three event types"
+    },
+    {
+      "name": "Amex deadline: 20 days",
+      "max_score": 8,
+      "description": "Amex disputes are assigned a response window of 20 days"
+    },
+    {
+      "name": "Discover deadline: 45 days",
+      "max_score": 8,
+      "description": "Discover disputes are assigned a response window of 45 days"
+    },
+    {
+      "name": "Visa/MC fraud deadline: 30 days",
+      "max_score": 8,
+      "description": "Visa/Mastercard disputes with a fraud reason are assigned a 30-day response window; non-fraud reasons get 20 days"
+    },
+    {
+      "name": "Expand payment_intent metadata",
+      "max_score": 8,
+      "description": "When retrieving the Stripe charge, the code expands payment_intent AND payment_intent.metadata to extract the order_id"
+    },
+    {
+      "name": "order_id in Stripe metadata",
+      "max_score": 8,
+      "description": "design-notes.md or code comments note that order_id must be passed in Stripe payment_intent metadata at order creation time so disputes can be auto-linked"
+    },
+    {
+      "name": "Score-based dispute routing",
+      "max_score": 10,
+      "description": "After scoring, the code auto-submits when score is high AND days remaining is sufficient, notifies team for manual review for mid-range scores, and sends a low-win-probability notification for very low scores"
+    },
+    {
+      "name": "Status is 'open' on creation",
+      "max_score": 5,
+      "description": "Newly created chargeback records have status defaulting to 'open'"
+    },
+    {
+      "name": "win_probability_score persisted",
+      "max_score": 7,
+      "description": "After evidence collection and scoring, the win_probability_score is stored on the chargeback record"
+    }
+  ]
+}

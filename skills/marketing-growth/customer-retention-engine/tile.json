@@ -1,0 +1,10 @@
+{
+  "name": "finsi/customer-retention-engine",
+  "version": "0.1.0",
+  "summary": "Build automated retention campaigns targeting at-risk customers with behavioral triggers, personalized offers, and churn prevention workflows",
+  "skills": {
+    "customer-retention-engine": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent designs the financial audit trail database schema with the correct column types, indexes, and immutability enforcement. The agent is asked to produce the SQL DDL for a new audit trail system for a fintech startup.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "BIGSERIAL seq column",
+      "max_score": 10,
+      "description": "The schema includes a BIGSERIAL (or equivalent auto-incrementing bigint) seq column, separate from the UUID primary key, for gap detection"
+    },
+    {
+      "name": "actor_ip INET type",
+      "max_score": 8,
+      "description": "The actor_ip column uses the PostgreSQL INET data type (not VARCHAR or TEXT)"
+    },
+    {
+      "name": "JSONB for state columns",
+      "max_score": 8,
+      "description": "before_state, after_state, and delta columns use the JSONB data type (not JSON or TEXT)"
+    },
+    {
+      "name": "hash and prev_hash columns",
+      "max_score": 10,
+      "description": "Both a hash column and a prev_hash column are present in the schema (VARCHAR(64) or equivalent)"
+    },
+    {
+      "name": "INSERT SELECT only grant",
+      "max_score": 12,
+      "description": "The SQL includes a GRANT statement that gives the application role only INSERT and SELECT privileges — does NOT grant UPDATE or DELETE"
+    },
+    {
+      "name": "No UPDATE/DELETE to app role",
+      "max_score": 10,
+      "description": "There is no GRANT of UPDATE or DELETE on the audit table to the application role (a comment explicitly revoking or noting their absence also satisfies this)"
+    },
+    {
+      "name": "Aggregate lookup index",
+      "max_score": 8,
+      "description": "An index on (aggregate_type, aggregate_id, occurred_at DESC) is created for efficient per-entity lookups"
+    },
+    {
+      "name": "Actor activity index",
+      "max_score": 8,
+      "description": "An index on (actor_id, occurred_at DESC) is created for actor activity timeline queries"
+    },
+    {
+      "name": "Seq-only index",
+      "max_score": 8,
+      "description": "A separate index on the seq column alone is created for chronological scans and compliance exports"
+    },
+    {
+      "name": "Event type index",
+      "max_score": 8,
+      "description": "An index on (event_type, occurred_at DESC) is created for filtering by event type"
+    },
+    {
+      "name": "Separate schema or DB",
+      "max_score": 10,
+      "description": "The DDL places the table in a separate schema (e.g. CREATE TABLE audit.financial_audit_events) or the SQL includes a comment/statement indicating a separate database or schema should be used"
+    }
+  ]
+}

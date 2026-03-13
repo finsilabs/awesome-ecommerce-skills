@@ -1,0 +1,10 @@
+{
+  "name": "finsi/tiktok-ads-integration",
+  "version": "0.1.0",
+  "summary": "Launch TikTok ad campaigns for ecommerce with Events API server-side tracking, Spark Ads, catalog sync, and shopping ads for product discovery",
+  "skills": {
+    "tiktok-ads-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

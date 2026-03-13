@@ -1,0 +1,10 @@
+{
+  "name": "finsi/tiktok-shop-integration",
+  "version": "0.1.0",
+  "summary": "Sync your product catalog to TikTok Shop, manage orders and inventory, and enable shoppable content with live shopping and affiliate creator programs",
+  "skills": {
+    "tiktok-shop-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

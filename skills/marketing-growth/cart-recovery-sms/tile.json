@@ -1,0 +1,10 @@
+{
+  "name": "finsi/cart-recovery-sms",
+  "version": "0.1.0",
+  "summary": "Recover abandoned carts with targeted SMS sequences including urgency messaging, product reminders, discount incentives, and TCPA-compliant opt-in flows",
+  "skills": {
+    "cart-recovery-sms": {
+      "path": "SKILL.md"
+    }
+  }
+}

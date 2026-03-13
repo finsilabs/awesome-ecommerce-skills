@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the points earn engine with correct earn rates, non-purchase earn amounts, birthday multiplier logic, transaction logging, tier evaluation trigger, and minimum order threshold.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Base earn rate",
+      "max_score": 10,
+      "description": "Uses a base earn rate of 1 point per $1 of order value for purchase transactions (e.g. Math.floor(orderValue * 1))"
+    },
+    {
+      "name": "Review points amount",
+      "max_score": 8,
+      "description": "Awards exactly 50 points for 'review' reason (not a calculated value based on order amount)"
+    },
+    {
+      "name": "Referral points amount",
+      "max_score": 8,
+      "description": "Awards exactly 200 points for 'referral' reason"
+    },
+    {
+      "name": "Signup points amount",
+      "max_score": 8,
+      "description": "Awards exactly 100 points for 'signup' reason"
+    },
+    {
+      "name": "Birthday multiplier doubling",
+      "max_score": 10,
+      "description": "During birthday month, multiplies the tier multiplier by 2 (e.g. tier.multiplier * 2), not a fixed bonus"
+    },
+    {
+      "name": "Transaction balanceBefore",
+      "max_score": 8,
+      "description": "Logs the customer's points balance BEFORE the transaction in the loyaltyTransactions record"
+    },
+    {
+      "name": "Transaction balanceAfter",
+      "max_score": 8,
+      "description": "Logs the customer's points balance AFTER the transaction in the loyaltyTransactions record"
+    },
+    {
+      "name": "Transaction reason field",
+      "max_score": 6,
+      "description": "Logs the earn reason (e.g. 'purchase', 'review', 'referral', 'signup') in the transaction record"
+    },
+    {
+      "name": "Tier evaluation triggered",
+      "max_score": 10,
+      "description": "Calls evaluateTierStatus (or equivalent) after awarding points so tier upgrades are immediately assessed"
+    },
+    {
+      "name": "Minimum order threshold",
+      "max_score": 12,
+      "description": "Enforces a minimum order value for earning points on purchases (e.g. $15 minimum), and does NOT award points for orders below this threshold"
+    },
+    {
+      "name": "loyaltyPointsEarned update",
+      "max_score": 12,
+      "description": "Updates both the customer's current balance (loyaltyPoints) AND their lifetime earned counter (loyaltyPointsEarned) when points are awarded"
+    }
+  ]
+}

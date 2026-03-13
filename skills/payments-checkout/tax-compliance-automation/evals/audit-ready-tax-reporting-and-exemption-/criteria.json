@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent generates audit-ready tax reports with the correct fields and formatting, excludes voided transactions, uses the correct jurisdiction format, implements fail-open tax calculation error handling, and validates exemption certificates before applying exemptions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Provider field in report",
+      "max_score": 8,
+      "description": "Each row in the audit report includes a 'provider' field (e.g. 'taxjar', 'avalara', 'vertex', 'manual')"
+    },
+    {
+      "name": "provider_transaction_id in report",
+      "max_score": 8,
+      "description": "Each row in the audit report includes a 'provider_transaction_id' (or equivalent column) field"
+    },
+    {
+      "name": "Tax rate as percentage string",
+      "max_score": 10,
+      "description": "Tax rate in the report is formatted as a percentage string with 4 decimal places (e.g. '8.7500%'), not as a raw decimal"
+    },
+    {
+      "name": "Exempt flag Y/N",
+      "max_score": 8,
+      "description": "The exemption indicator in the report rows uses 'Y' or 'N' (not true/false or 1/0)"
+    },
+    {
+      "name": "Voided transactions excluded",
+      "max_score": 10,
+      "description": "Transactions with a non-null voided_at are excluded from the report (voided rows do NOT appear in the output CSV or row array)"
+    },
+    {
+      "name": "Jurisdiction format US-XX",
+      "max_score": 8,
+      "description": "Jurisdiction codes use the 'US-CA' style format (country code hyphen state code) for US states, not just the state abbreviation alone"
+    },
+    {
+      "name": "Summary includes 4 fields",
+      "max_score": 8,
+      "description": "The summary object returned by generateTaxReport includes all four fields: total_taxable_amount, total_tax_collected, transaction_count, and exempt_count"
+    },
+    {
+      "name": "Fail-open on errors",
+      "max_score": 12,
+      "description": "When the tax calculation function throws an error, the system does NOT propagate the error to the caller; it logs the failure and returns a zero-tax result instead of blocking the order"
+    },
+    {
+      "name": "Exemption cert check before tax",
+      "max_score": 10,
+      "description": "checkExemptionCertificate (or equivalent) is called and its result checked before invoking the tax calculation API — exemption check happens first in the flow"
+    },
+    {
+      "name": "Active cert validation",
+      "max_score": 10,
+      "description": "Exemption certificate check verifies that the certificate status is 'active', valid_from is in the past, and valid_until is either null or in the future"
+    },
+    {
+      "name": "Transaction date formatted",
+      "max_score": 8,
+      "description": "The transaction_date column in report rows is formatted as a date-only string (YYYY-MM-DD), not a full ISO timestamp"
+    }
+  ]
+}

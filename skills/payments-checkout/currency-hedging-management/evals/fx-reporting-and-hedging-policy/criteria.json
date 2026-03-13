@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly separates FX gain/loss from revenue, recommends mid-market rates, applies natural hedging before financial instruments, limits hedging to firm commitments, addresses hedge accounting designation requirements, uses the correct account code structure, handles rounding differences properly, and mandates effective rate tracking and hedge settlement offsetting.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "FX gain/loss separated from revenue",
+      "max_score": 10,
+      "description": "The report explicitly states that FX gains and losses must NOT be included in or adjust the revenue line — they are reported as a separate line item"
+    },
+    {
+      "name": "fx_gain_loss account code",
+      "max_score": 9,
+      "description": "Recommends a dedicated fx_gain_loss (or equivalent foreign exchange gain/loss) account code in the chart of accounts, separate from any revenue account"
+    },
+    {
+      "name": "Mid-market rate source",
+      "max_score": 10,
+      "description": "Recommends using ECB rates, Open Exchange Rates, or another mid-market/neutral source for booking — explicitly NOT the payment processor's rate (which includes a spread)"
+    },
+    {
+      "name": "Natural hedging first",
+      "max_score": 10,
+      "description": "Recommends offsetting EUR revenue against EUR payables/expenses as the primary risk mitigation step before considering forward contracts or other instruments"
+    },
+    {
+      "name": "Firm commitments only",
+      "max_score": 10,
+      "description": "States that only confirmed orders or signed contracts (firm commitments) should be hedged — projected or forecast revenue should NOT be hedged"
+    },
+    {
+      "name": "Hedge accounting designation",
+      "max_score": 9,
+      "description": "Mentions that hedging instruments must be designated and documented at inception to qualify for hedge accounting treatment (references ASC 815 or IAS 39)"
+    },
+    {
+      "name": "Monthly revaluation requirement",
+      "max_score": 8,
+      "description": "States that open FX positions must be revalued at month-end for GAAP or IFRS compliance"
+    },
+    {
+      "name": "Effective rate tracking",
+      "max_score": 9,
+      "description": "Includes tracking the spread between the contracted (booked) rate and the actual settlement rate per transaction or per currency corridor as a cost metric"
+    },
+    {
+      "name": "Hedge settlement offsetting",
+      "max_score": 9,
+      "description": "States that forward contract settlements create realized gain/loss that must be offset against (matched to) the original booked exposure they were hedging"
+    },
+    {
+      "name": "Rounding to FX adjustment account",
+      "max_score": 8,
+      "description": "Mentions posting small rounding differences (e.g. < 0.1%) between the booked rate and settlement rate to a 'foreign exchange adjustment' account rather than revenue"
+    },
+    {
+      "name": "Written treasury policy produced",
+      "max_score": 8,
+      "description": "A treasury-policy.md (or equivalent named file) is produced that documents the hedging rules, instruments, and accounting approach"
+    }
+  ]
+}

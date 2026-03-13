@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the correct variance classification thresholds (dual absolute+percentage for 'material', percentage-only for 'notable'), the correct budget utilization alert thresholds (pace_ratio > 1.20 triggers overspend, pace_ratio < 0.50 at mid-month triggers underspend), severity assignment logic, and alert sorting.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Material variance threshold",
+      "max_score": 10,
+      "description": "variance_flag = 'material' when BOTH percentage > 10% AND absolute value > $10,000"
+    },
+    {
+      "name": "Notable variance threshold",
+      "max_score": 10,
+      "description": "variance_flag = 'notable' when percentage > 5% (and not already classified as material)"
+    },
+    {
+      "name": "Within tolerance label",
+      "max_score": 8,
+      "description": "variance_flag = 'within_tolerance' for all other rows (not 'ok', 'normal', or other label)"
+    },
+    {
+      "name": "Variance absolute calculation",
+      "max_score": 8,
+      "description": "variance_absolute is computed as actual_amount MINUS budget_amount (actuals minus budget, not budget minus actuals)"
+    },
+    {
+      "name": "Overspend alert trigger",
+      "max_score": 10,
+      "description": "An overspend alert is generated when pace_ratio > 1.20 (where pace_ratio = actual_utilization_pct / expected_utilization_pct)"
+    },
+    {
+      "name": "Underspend alert trigger",
+      "max_score": 10,
+      "description": "An underspend alert is generated when pace_ratio < 0.50 AND expected_utilization_pct > 0.50 (i.e., after mid-month only)"
+    },
+    {
+      "name": "Warning vs critical severity",
+      "max_score": 10,
+      "description": "Overspend severity is 'warning' when pace_ratio is between 1.20 and 1.40, and 'critical' when pace_ratio >= 1.40"
+    },
+    {
+      "name": "Info severity for underspend",
+      "max_score": 8,
+      "description": "Underspend alert severity is 'info' (not 'warning' or 'low')"
+    },
+    {
+      "name": "Alert sort order",
+      "max_score": 10,
+      "description": "Returned alert list is sorted with 'critical' alerts first, before 'warning' and 'info'"
+    },
+    {
+      "name": "Paid Social flagged in sample",
+      "max_score": 8,
+      "description": "sample_alerts.json contains an alert for Paid Social (pace_ratio = (85/50)/(20/30) = 2.55, which is critical)"
+    },
+    {
+      "name": "Influencer flagged in sample",
+      "max_score": 8,
+      "description": "sample_alerts.json contains an underspend alert for Influencer (pace_ratio = (5/30)/(20/30) = 0.25, below 0.50 threshold at mid-month)"
+    }
+  ]
+}

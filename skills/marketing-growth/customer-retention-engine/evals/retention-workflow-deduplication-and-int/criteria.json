@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements correct deduplication guards for each workflow type, uses the correct discount parameters, recommends sending complementary products to one-time buyers, enforces a contact frequency cap, cancels pending jobs on purchase, and schedules the runner at the right time.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Daily 9am schedule",
+      "max_score": 6,
+      "description": "The workflow runner is described or configured to run daily at 9am local timezone (in code comment, cron expression, or WORKFLOW_NOTES.md)"
+    },
+    {
+      "name": "Early-warning active-job dedup",
+      "max_score": 10,
+      "description": "For early-warning workflow, code or notes show checking for an existing active retentionJob record for the customer before sending and skipping if one exists"
+    },
+    {
+      "name": "Early-warning product count",
+      "max_score": 7,
+      "description": "Early-warning email is sent with 3 recommended products (not 1, 2, or 5)"
+    },
+    {
+      "name": "High-value 14-day dedup window",
+      "max_score": 9,
+      "description": "For high-value at-risk workflow, the deduplication check covers the last 14 days specifically (not 7, not 30)"
+    },
+    {
+      "name": "15% discount with 7-day expiry",
+      "max_score": 9,
+      "description": "The discount created for high-value customers is 15% off with an expiry of 7 days"
+    },
+    {
+      "name": "CS task creation",
+      "max_score": 8,
+      "description": "A follow-up task (e.g. 'follow-up-call') is queued for the CS team for high-value at-risk customers in addition to the automated email"
+    },
+    {
+      "name": "One-time buyer complementary products",
+      "max_score": 9,
+      "description": "The one-time buyer repurchase-reminder email uses complementary products derived from the previous order's line items (not generic recommendations)"
+    },
+    {
+      "name": "Contact frequency cap",
+      "max_score": 10,
+      "description": "A maximum of one retention touchpoint per week per customer (across all workflows) is documented or enforced"
+    },
+    {
+      "name": "Cancel on order.paid",
+      "max_score": 10,
+      "description": "WORKFLOW_NOTES.md or code documents that pending retention jobs should be cancelled when a customer places a new order (order.paid event or equivalent)"
+    },
+    {
+      "name": "Last purchase date pre-check",
+      "max_score": 10,
+      "description": "WORKFLOW_NOTES.md or code shows checking the customer's last purchase date before enqueueing any retention email to avoid sending to customers who just bought"
+    },
+    {
+      "name": "Discount only at high churn probability",
+      "max_score": 12,
+      "description": "WORKFLOW_NOTES.md or code notes that discount codes should only be offered when churn probability is sufficiently high (mentions 70% threshold or equivalent propensity scoring approach)"
+    }
+  ]
+}

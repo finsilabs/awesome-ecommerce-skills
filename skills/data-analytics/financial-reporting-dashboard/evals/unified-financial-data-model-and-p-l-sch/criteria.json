@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent correctly designs the unified financial data model for an ecommerce P&L dashboard, including the correct table schema, index strategy, P&L line item structure, period-over-period query pattern, and support for actuals vs. budget separation and fiscal calendar.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "financial_facts table defined",
+      "max_score": 4,
+      "description": "Schema includes a financial_facts (or equivalently-named unified fact) table rather than separate tables per statement type"
+    },
+    {
+      "name": "statement_type constraint",
+      "max_score": 8,
+      "description": "The statement_type column has a CHECK constraint restricting values to 'pnl', 'balance_sheet', and 'cash_flow' (or equivalent set)"
+    },
+    {
+      "name": "fiscal_period column format",
+      "max_score": 4,
+      "description": "The fiscal_period column stores period in VARCHAR format (e.g., '2026-03'), not as a raw DATE"
+    },
+    {
+      "name": "dimension columns present",
+      "max_score": 8,
+      "description": "The fact table includes channel, product_category, and geography as nullable dimension columns"
+    },
+    {
+      "name": "amount precision",
+      "max_score": 8,
+      "description": "The amount column uses NUMERIC(14,2) or equivalent fixed-precision type, not FLOAT or DECIMAL without precision"
+    },
+    {
+      "name": "Indexes on query dimensions",
+      "max_score": 8,
+      "description": "Indexes are created on at least fiscal_period, line_item, and channel columns"
+    },
+    {
+      "name": "P&L line items",
+      "max_score": 8,
+      "description": "The P&L structure includes: Net Revenue, COGS, Gross Profit, Gross Margin %, EBITDA, EBIT, and Net Income as distinct line items (in SQL, documentation, or code)"
+    },
+    {
+      "name": "Ecommerce-specific COGS sub-items",
+      "max_score": 5,
+      "description": "COGS breakdown includes product cost, inbound freight or shipping, and duties/tariffs (not just a single COGS line)"
+    },
+    {
+      "name": "Period-over-period query pattern",
+      "max_score": 8,
+      "description": "Period comparison query uses two CTEs (or subqueries) joined on line_item, computing both an absolute variance and a percentage variance"
+    },
+    {
+      "name": "NULL-safe variance_pct",
+      "max_score": 6,
+      "description": "Variance percentage calculation guards against division by zero (using NULLIF, CASE WHEN, or equivalent) and returns NULL rather than an error when prior period is zero"
+    },
+    {
+      "name": "version column for actuals/budget",
+      "max_score": 9,
+      "description": "The data model includes a 'version' column (or equivalent field) that distinguishes 'actuals' from 'budget' or 'forecast' variants"
+    },
+    {
+      "name": "Fiscal calendar dimension table",
+      "max_score": 9,
+      "description": "A separate fiscal calendar or dim_date table is defined (or described) rather than deriving fiscal periods from calendar dates inline"
+    },
+    {
+      "name": "Pre-aggregated summary table",
+      "max_score": 8,
+      "description": "A monthly or period-level summary/aggregate table is defined alongside the raw fact table to serve dashboard queries efficiently"
+    },
+    {
+      "name": "Chart of accounts mapping",
+      "max_score": 7,
+      "description": "A chart of accounts or account mapping table/structure is included to translate platform-specific categories to standard GL account codes"
+    }
+  ]
+}

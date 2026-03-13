@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the UGC collection pipeline (three channels, data model, post-purchase email timing) and the product page display API (filtering, ordering, response shape, pagination defaults).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Three collection channels",
+      "max_score": 8,
+      "description": "Implementation references or supports all three collection channels: post-purchase email requests, hashtag monitoring, and direct upload widget (not just one or two)"
+    },
+    {
+      "name": "UGCSubmission source values",
+      "max_score": 8,
+      "description": "The source field type includes all four values: 'hashtag', 'email-request', 'widget', 'review-photo'"
+    },
+    {
+      "name": "UGCSubmission status values",
+      "max_score": 8,
+      "description": "The status field type includes all five values: 'pending', 'approved', 'rejected', 'rights-requested', 'rights-granted'"
+    },
+    {
+      "name": "14-day email delay",
+      "max_score": 10,
+      "description": "Post-purchase UGC request email is scheduled with a 14-day delay after delivery (not a different delay period)"
+    },
+    {
+      "name": "Email incentive text",
+      "max_score": 8,
+      "description": "Post-purchase email payload includes an incentive referencing 10% off for approved posts"
+    },
+    {
+      "name": "Duplicate ingest prevention",
+      "max_score": 8,
+      "description": "Hashtag ingestion checks whether a post with the same external ID already exists before creating a new submission record"
+    },
+    {
+      "name": "Display: rights-granted only",
+      "max_score": 10,
+      "description": "The product UGC display API filters submissions to only those with status 'rights-granted'"
+    },
+    {
+      "name": "Display: engagementScore order",
+      "max_score": 8,
+      "description": "The display API orders results by engagementScore descending"
+    },
+    {
+      "name": "Display: default limit=12",
+      "max_score": 8,
+      "description": "The display API uses a default limit of 12 items per page (not another number)"
+    },
+    {
+      "name": "Display: thumbnailUrl in response",
+      "max_score": 8,
+      "description": "The display API response includes thumbnailUrl for each item"
+    },
+    {
+      "name": "Display: contentUrl in response",
+      "max_score": 8,
+      "description": "The display API response includes contentUrl (the original post URL) for each item"
+    },
+    {
+      "name": "Display: total count included",
+      "max_score": 8,
+      "description": "The display API response includes a total count of rights-granted submissions for that product (not just the paginated items)"
+    }
+  ]
+}

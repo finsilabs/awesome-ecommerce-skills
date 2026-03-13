@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements points expiry with advance warning and scheduled jobs, annual tier downgrade with advance communication, correct analytics metrics, post-purchase email content guidance, double-points promotions preference, and the 20% redemption rate diagnostic threshold.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "12-month expiry cutoff",
+      "max_score": 8,
+      "description": "expireStalePoints uses a cutoff of 365 days (12 months) to identify expirable points, not a shorter or longer period"
+    },
+    {
+      "name": "Monthly cadence comment",
+      "max_score": 5,
+      "description": "expireStalePoints includes a comment or documentation indicating it should be run monthly (not daily or weekly)"
+    },
+    {
+      "name": "30-day expiry warning",
+      "max_score": 10,
+      "description": "Sends expiry warning notification 30 days before points actually expire (e.g. calls sendPointsExpiryWarning with addDays(new Date(), 30))"
+    },
+    {
+      "name": "Expiry job scheduling",
+      "max_score": 8,
+      "description": "Creates a loyaltyPointExpiryJobs record (or equivalent deferred job) with expiresAt 30 days from now — does NOT immediately delete the points"
+    },
+    {
+      "name": "Annual tier review",
+      "max_score": 8,
+      "description": "Implements a runAnnualTierReview (or equivalent) function that re-evaluates tier status for customers"
+    },
+    {
+      "name": "Downgrade advance notice",
+      "max_score": 10,
+      "description": "Communicates tier downgrades 30 days in advance (e.g. sends notification/email before applying downgrade, or schedules downgrade for 30 days later)"
+    },
+    {
+      "name": "Active members metric",
+      "max_score": 8,
+      "description": "getLoyaltyMetrics counts active members as customers where loyaltyEnrolledAt is not null AND loyaltyPoints > 0"
+    },
+    {
+      "name": "30-day redemption rate metric",
+      "max_score": 8,
+      "description": "getLoyaltyMetrics retrieves redemption rate scoped to the last 30 days (not all-time)"
+    },
+    {
+      "name": "Post-purchase email balance disclosure",
+      "max_score": 8,
+      "description": "loyalty-recommendations.md recommends including both points earned on the order AND the running total balance (with dollar equivalent) in post-purchase emails"
+    },
+    {
+      "name": "Double points preference",
+      "max_score": 10,
+      "description": "loyalty-recommendations.md recommends point multiplier events (double points / bonus points) over discount codes for the product launch campaign"
+    },
+    {
+      "name": "20% redemption threshold",
+      "max_score": 9,
+      "description": "loyalty-recommendations.md identifies a redemption rate below 20% as the trigger to consider lowering the redemption threshold or simplifying the process"
+    },
+    {
+      "name": "Incremental revenue metric",
+      "max_score": 8,
+      "description": "getLoyaltyMetrics includes an incrementalRevenue calculation (e.g. calls calculateIncrementalLoyaltyRevenue or equivalent)"
+    }
+  ]
+}

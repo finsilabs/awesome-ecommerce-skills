@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds a normalized unified spend data model with the correct schema, stores and uses platform-specific attribution windows, tracks new customer vs returning customer campaigns separately, normalizes spend to per-day rates for period comparison, builds a spend pacing calculation, computes channel concentration, and produces a weekly marketing report with the expected fields.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Unified schema columns",
+      "max_score": 8,
+      "description": "Data model or output includes all of: spend_date, platform, channel_type, campaign_id/name, spend_amount, impressions, clicks, platform_conversions, platform_revenue, attribution_window"
+    },
+    {
+      "name": "Attribution windows stored",
+      "max_score": 10,
+      "description": "Stores or labels data with platform-specific attribution windows: Meta as '7d_click_1d_view', Google as 'last_click_30d', TikTok as '7d_click'"
+    },
+    {
+      "name": "New vs returning split",
+      "max_score": 10,
+      "description": "Separates new customer acquisition campaigns from retention/remarketing campaigns, reporting ROAS or CAC for each segment distinctly"
+    },
+    {
+      "name": "Per-day spend normalization",
+      "max_score": 8,
+      "description": "Normalizes spend to per-day rates (spend / number_of_days) rather than using raw period totals for period comparisons"
+    },
+    {
+      "name": "Spend pacing calculation",
+      "max_score": 10,
+      "description": "Computes spend pacing: tracks cumulative spend vs monthly budget, showing how much of the monthly budget has been consumed relative to elapsed days in the month"
+    },
+    {
+      "name": "MER computed",
+      "max_score": 6,
+      "description": "Computes MER (total revenue / total marketing spend across all channels) as a portfolio-level metric"
+    },
+    {
+      "name": "Channel concentration metric",
+      "max_score": 8,
+      "description": "Computes channel concentration or share-of-spend per platform, flagging if any single platform exceeds a majority share (e.g., 50%+) of total spend"
+    },
+    {
+      "name": "Weekly report fields",
+      "max_score": 10,
+      "description": "Formatted weekly report includes: total spend, total attributed revenue, blended ROAS, and a per-channel table with spend, ROAS, and week-over-week delta"
+    },
+    {
+      "name": "Channel status flag",
+      "max_score": 8,
+      "description": "Weekly report marks each channel as 'OK' or 'REVIEW' based on whether its ROAS meets a break-even or target threshold"
+    },
+    {
+      "name": "Branded vs non-branded separation",
+      "max_score": 10,
+      "description": "Google search campaigns are split into branded and non-branded segments, with separate ROAS reported for each"
+    },
+    {
+      "name": "Prospecting CAC computed",
+      "max_score": 6,
+      "description": "Computes Customer Acquisition Cost (CAC = spend / conversions) specifically for prospecting/new-customer campaigns, as a distinct metric from ROAS"
+    },
+    {
+      "name": "Attribution window note",
+      "max_score": 6,
+      "description": "Output or code includes a note or comment that direct cross-platform ROAS comparison is affected by differing attribution windows, recommending first-party standardization"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the correct evidence scoring weights, applies Visa CE 3.0 with the correct eligibility conditions and lookback window, uses appropriate score thresholds for routing, submits evidence to Stripe correctly with file uploads, and updates the chargeback record accurately after submission.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Delivery weight 0.35",
+      "max_score": 8,
+      "description": "The delivery_confirmed evidence factor is assigned a weight of 0.35 (or 35%) in the win probability score calculation"
+    },
+    {
+      "name": "Customer communication weight 0.25",
+      "max_score": 8,
+      "description": "The customer_communication evidence factor is assigned a weight of 0.25 (or 25%)"
+    },
+    {
+      "name": "CE 3.0 prior transactions weight 0.30",
+      "max_score": 8,
+      "description": "The Visa CE 3.0 prior undisputed transactions factor is assigned a weight of 0.30 (or 30%)"
+    },
+    {
+      "name": "Policy accepted weight 0.10",
+      "max_score": 8,
+      "description": "The refund policy acceptance factor is assigned a weight of 0.10 (or 10%)"
+    },
+    {
+      "name": "CE 3.0 Visa+fraud only",
+      "max_score": 8,
+      "description": "The CE 3.0 logic is only triggered when the dispute network is 'visa' AND the reason_category is 'fraud'"
+    },
+    {
+      "name": "CE 3.0 requires 2+ prior transactions",
+      "max_score": 8,
+      "description": "CE 3.0 eligibility requires at least 2 prior undisputed transactions (not 1, not 3+)"
+    },
+    {
+      "name": "CE 3.0 lookback 120 days",
+      "max_score": 8,
+      "description": "Prior undisputed transactions are searched within a 120-day lookback window"
+    },
+    {
+      "name": "Auto-submit threshold 0.65",
+      "max_score": 8,
+      "description": "Evidence is auto-submitted when win_probability_score >= 0.65 (and sufficient days remain)"
+    },
+    {
+      "name": "Low-probability threshold 0.25",
+      "max_score": 8,
+      "description": "Disputes with win_probability_score < 0.25 trigger a low-win-probability notification rather than auto-submission"
+    },
+    {
+      "name": "File upload with dispute_evidence purpose",
+      "max_score": 8,
+      "description": "File evidence is uploaded to Stripe using stripe.files.create with purpose set to 'dispute_evidence'"
+    },
+    {
+      "name": "Stripe submission with submit: true",
+      "max_score": 8,
+      "description": "Evidence is submitted via stripe.disputes.update with submit: true"
+    },
+    {
+      "name": "Post-submission status update",
+      "max_score": 12,
+      "description": "After submission, the chargeback record is updated with status = 'evidence_submitted', evidence_submitted_at timestamp, and auto_submitted = true"
+    }
+  ]
+}

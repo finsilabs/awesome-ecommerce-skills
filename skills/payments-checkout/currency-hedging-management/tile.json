@@ -1,0 +1,10 @@
+{
+  "name": "finsi/currency-hedging-management",
+  "version": "0.1.0",
+  "summary": "Manage foreign exchange risk for multi-currency ecommerce with FX rate tracking, hedging strategies, and realized/unrealized gain-loss accounting",
+  "skills": {
+    "currency-hedging-management": {
+      "path": "SKILL.md"
+    }
+  }
+}

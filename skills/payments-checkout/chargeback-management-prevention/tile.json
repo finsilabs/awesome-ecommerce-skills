@@ -1,0 +1,10 @@
+{
+  "name": "finsi/chargeback-management-prevention",
+  "version": "0.1.0",
+  "summary": "Prevent and manage chargebacks with fraud scoring, compelling evidence automation, Visa CE 3.0 / Mastercom integration, and win-rate optimization",
+  "skills": {
+    "chargeback-management-prevention": {
+      "path": "SKILL.md"
+    }
+  }
+}

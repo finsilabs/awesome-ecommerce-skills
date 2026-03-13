@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the correct per-stage campaign configuration (channels, frequency, incentive levels), re-validates stage at send time, correctly triggers advocate promotion via review count threshold, and builds an analytics dashboard with the required metrics.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Config covers all 8 stages",
+      "max_score": 8,
+      "description": "The STAGE_CAMPAIGN_CONFIG (or equivalent) has entries for all 8 lifecycle stages: anonymous, subscriber, first-time-buyer, active, loyal, at-risk, lapsed, advocate"
+    },
+    {
+      "name": "Anonymous uses push channel",
+      "max_score": 8,
+      "description": "The anonymous stage config specifies push (not email or SMS) as the primary channel"
+    },
+    {
+      "name": "Lapsed has high incentive",
+      "max_score": 8,
+      "description": "The lapsed stage config specifies 'high' as the incentive level (the highest available, reflecting win-back offer strategy)"
+    },
+    {
+      "name": "First-time-buyer triggered-only",
+      "max_score": 8,
+      "description": "The first-time-buyer stage config specifies 'triggered-only' frequency (not weekly or biweekly)"
+    },
+    {
+      "name": "Loyal no discount needed",
+      "max_score": 8,
+      "description": "The loyal stage config specifies incentiveLevel 'none' or 'low' (does NOT specify 'high' — loyal customers don't need heavy discounts)"
+    },
+    {
+      "name": "Active no incentive",
+      "max_score": 6,
+      "description": "The active stage config specifies incentiveLevel 'none' (active customers don't need incentives)"
+    },
+    {
+      "name": "Stage re-validated at send time",
+      "max_score": 12,
+      "description": "The campaign send function (or equivalent) fetches the customer's CURRENT lifecycle stage at the time of sending and aborts/skips the send if the stage has changed from the expected stage"
+    },
+    {
+      "name": "Advocate at 2+ reviews",
+      "max_score": 10,
+      "description": "The onReviewSubmitted handler checks the review count and promotes the customer to 'advocate' when count >= 2 (not 1, not 3)"
+    },
+    {
+      "name": "Dashboard includes stageDistribution",
+      "max_score": 6,
+      "description": "The analytics dashboard returns a stageDistribution showing customer counts per stage"
+    },
+    {
+      "name": "Dashboard includes stageMoveRate",
+      "max_score": 8,
+      "description": "The analytics dashboard includes stage transition rates (at minimum: subscriberToFirstBuyer and atRiskSaved conversions)"
+    },
+    {
+      "name": "Dashboard includes avgTimeInStage and stageLTV",
+      "max_score": 10,
+      "description": "The analytics dashboard returns both avgTimeInStage and average LTV broken down by lifecycle stage"
+    },
+    {
+      "name": "Config has frequency field",
+      "max_score": 8,
+      "description": "The campaign config for each stage includes a frequency field distinguishing weekly/biweekly/triggered-only stages"
+    }
+  ]
+}

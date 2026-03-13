@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a per-day contact frequency cap of 2 emails, monitors complaint rate against a 0.08% threshold, builds a server-side countdown timer with customer timezone support and no-cache headers, handles the expired countdown case correctly, and measures campaign performance using year-over-year comparison and pull-forward incrementality analysis.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Daily frequency cap: 2 emails",
+      "max_score": 10,
+      "description": "email-safety.ts enforces a maximum of 2 emails per customer per day (not 3, not 1, specifically 2)"
+    },
+    {
+      "name": "Complaint rate threshold",
+      "max_score": 10,
+      "description": "email-safety.ts or a related monitoring function checks the complaint rate against a 0.08% threshold and pauses or flags sending when this threshold is exceeded"
+    },
+    {
+      "name": "Complaint rate: numeric precision",
+      "max_score": 8,
+      "description": "The complaint rate threshold is 0.08% (i.e., 0.0008 as a decimal) — not 0.8% or 8%"
+    },
+    {
+      "name": "Countdown timer: server-side rendering",
+      "max_score": 8,
+      "description": "countdown-timer.ts calculates the remaining time on the server at request time — does NOT rely on client-side JavaScript or a fixed pre-rendered image"
+    },
+    {
+      "name": "Countdown timer: timezone from request",
+      "max_score": 10,
+      "description": "The countdown timer handler reads the timezone from the request query parameters (or headers) — does NOT hardcode a timezone like 'America/New_York'"
+    },
+    {
+      "name": "Countdown timer: no-cache headers",
+      "max_score": 8,
+      "description": "The countdown timer response includes Cache-Control: 'no-cache, no-store' (or equivalent) so each email open fetches a fresh countdown image"
+    },
+    {
+      "name": "Expired countdown redirect",
+      "max_score": 8,
+      "description": "When the sale has ended (diff <= 0), the countdown handler redirects to a static 'sale ended' image rather than showing a negative or zero countdown"
+    },
+    {
+      "name": "YoY comparison",
+      "max_score": 10,
+      "description": "campaign-report.ts compares current campaign revenue against the same date range in the prior year (year-over-year) — not a week-over-week or month-over-month comparison"
+    },
+    {
+      "name": "Incrementality vs pull-forward",
+      "max_score": 10,
+      "description": "analytics-notes.md or campaign-report.ts addresses whether revenue is truly incremental vs. demand pulled forward from a subsequent period (e.g., comparing December revenue in sale years vs. non-sale years)"
+    },
+    {
+      "name": "Parallel DB queries",
+      "max_score": 8,
+      "description": "campaign-report.ts fetches current revenue, prior year revenue, and email metrics in parallel (Promise.all or equivalent) rather than sequentially awaiting each"
+    },
+    {
+      "name": "Email metrics in report",
+      "max_score": 10,
+      "description": "campaign-report.ts returns at least: revenue, yoyGrowth percentage, email open rate or click rate, and revenue per email sent"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly builds a pre-campaign suppression system that excludes unengaged, bounced, spam-complaint, and unsubscribed contacts, enforces GDPR consent rules, protects the champions segment from discount campaigns, and validates minimum segment size.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Suppress unengaged (totalSent >= 5)",
+      "max_score": 9,
+      "description": "Suppression logic excludes subscribers classified as 'unengaged' who have received at least 5 emails (totalSent >= 5), not just any unengaged subscriber"
+    },
+    {
+      "name": "Suppress bounced",
+      "max_score": 8,
+      "description": "Suppression logic excludes subscribers flagged as bounced"
+    },
+    {
+      "name": "Suppress spam complaints",
+      "max_score": 8,
+      "description": "Suppression logic excludes subscribers with a spam complaint flag"
+    },
+    {
+      "name": "Suppress unsubscribed",
+      "max_score": 8,
+      "description": "Suppression logic excludes subscribers where unsubscribedAt is set (not null)"
+    },
+    {
+      "name": "Champions excluded from discount",
+      "max_score": 10,
+      "description": "The solution explicitly excludes the 'champions' segment from any discount or promotional campaign audience"
+    },
+    {
+      "name": "Minimum segment size check",
+      "max_score": 9,
+      "description": "Code includes a guard or validation that prevents sending to segments with fewer than 200 contacts"
+    },
+    {
+      "name": "marketingConsent filter",
+      "max_score": 9,
+      "description": "All segment queries filter on marketingConsent: true and exclude records where unsubscribedAt is set"
+    },
+    {
+      "name": "GDPR consent basis enforcement",
+      "max_score": 10,
+      "description": "For EU contacts, the solution uses 'consent' as the lawful basis for marketing emails and does NOT accept 'legitimate-interest' as a valid basis for sending marketing emails"
+    },
+    {
+      "name": "Engagement tier thresholds",
+      "max_score": 10,
+      "description": "Engagement tier classification uses openRate > 0.3 with daysSinceClick < 60 for 'champion', and openRate > 0.15 with daysSinceOpen < 90 for 'active'"
+    },
+    {
+      "name": "Suppression applied before send",
+      "max_score": 10,
+      "description": "The suppression list is built and deduplicated against the target segment list before producing the final sendable audience — not as an afterthought"
+    },
+    {
+      "name": "Deliverable output artifact",
+      "max_score": 9,
+      "description": "The solution produces a file or output (e.g., sendable list, suppression report, or validation results) that shows the final audience after suppression is applied"
+    }
+  ]
+}

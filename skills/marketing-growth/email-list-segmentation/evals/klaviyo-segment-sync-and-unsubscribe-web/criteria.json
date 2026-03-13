@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent builds a Klaviyo segment sync service using the correct package, API method, and batching, handles real-time unsubscribe events without waiting for nightly sync, and uses engagement tier signals (not just RFM) when determining deliverability-sensitive segment membership.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "klaviyo-api package used",
+      "max_score": 10,
+      "description": "Code imports from 'klaviyo-api' package (not a different Klaviyo client such as 'klaviyo', 'klaviyo-node', or a raw HTTP call library)"
+    },
+    {
+      "name": "KLAVIYO_PRIVATE_KEY env var",
+      "max_score": 8,
+      "description": "API key is sourced from the KLAVIYO_PRIVATE_KEY environment variable (not hardcoded or from a differently named variable)"
+    },
+    {
+      "name": "Batch size of 1000",
+      "max_score": 10,
+      "description": "Profiles are sent to Klaviyo in batches of exactly 1000 per API call (not a different batch size)"
+    },
+    {
+      "name": "subscribeProfiles API method",
+      "max_score": 10,
+      "description": "Uses profiles.subscribeProfiles() method with type 'profile-subscription-bulk-create-job' (not a list import or other method)"
+    },
+    {
+      "name": "Segment property on profiles",
+      "max_score": 8,
+      "description": "Each profile sent to Klaviyo includes a segment property in its attributes to identify which segment it belongs to"
+    },
+    {
+      "name": "Nightly sync scheduled",
+      "max_score": 9,
+      "description": "Solution includes a nightly scheduled job (cron, scheduler, or documentation of schedule) to sync all segments"
+    },
+    {
+      "name": "Event-triggered sync",
+      "max_score": 9,
+      "description": "Sync is also triggered on key events (at minimum: order placed and/or unsubscribe/opt-out), not only on the nightly schedule"
+    },
+    {
+      "name": "Unsubscribe processed immediately",
+      "max_score": 10,
+      "description": "Unsubscribe webhook handler processes the opt-out synchronously/immediately (updates the record right away) rather than deferring to the nightly batch"
+    },
+    {
+      "name": "Engagement tier for deliverability",
+      "max_score": 8,
+      "description": "When building the audience for deliverability-sensitive or inbox-placement segments, the solution filters or prioritizes by engagementTier (champion or active) rather than exclusively by RFM segment"
+    },
+    {
+      "name": "Behavioral tags in segmentation",
+      "max_score": 9,
+      "description": "Solution defines or uses at least one behavioral tag (e.g., 'sale-shopper', 'high-aov', 'frequent-buyer') as a segment criterion alongside RFM/engagement fields"
+    },
+    {
+      "name": "marketingConsent and unsubscribedAt filter",
+      "max_score": 9,
+      "description": "All segment queries applied before syncing to Klaviyo filter to marketingConsent: true and unsubscribedAt: null"
+    }
+  ]
+}

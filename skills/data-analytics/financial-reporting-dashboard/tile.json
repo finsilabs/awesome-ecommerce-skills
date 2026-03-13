@@ -1,0 +1,10 @@
+{
+  "name": "finsi/financial-reporting-dashboard",
+  "version": "0.1.0",
+  "summary": "Build P&L, balance sheet, and cash flow dashboards for ecommerce with drill-down by product, channel, and time period for management and investor reporting",
+  "skills": {
+    "financial-reporting-dashboard": {
+      "path": "SKILL.md"
+    }
+  }
+}

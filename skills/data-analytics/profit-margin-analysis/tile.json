@@ -1,0 +1,10 @@
+{
+  "name": "finsi/profit-margin-analysis",
+  "version": "0.1.0",
+  "summary": "Analyze gross and net profit margins by product, category, channel, and customer segment with cost attribution, benchmarking, and trend visualization",
+  "skills": {
+    "profit-margin-analysis": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly generates UTM tracking links with the exact required parameters, generates discount codes following the HANDLE15 naming pattern, sets up the CampaignBrief structure with FTC compliance, and creates participant records with the correct initial status.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "utm_source value",
+      "max_score": 8,
+      "description": "The generated tracking links include utm_source=influencer (not a brand name or other value)"
+    },
+    {
+      "name": "utm_medium value",
+      "max_score": 6,
+      "description": "The generated tracking links include utm_medium=social"
+    },
+    {
+      "name": "utm_campaign format",
+      "max_score": 8,
+      "description": "The utm_campaign parameter is the campaign name lowercased with spaces replaced by dashes (e.g., 'spring-glow')"
+    },
+    {
+      "name": "utm_content per creator",
+      "max_score": 8,
+      "description": "The utm_content parameter uses the creator's Instagram handle (or falls back to their ID), making each tracking link unique"
+    },
+    {
+      "name": "discount code format",
+      "max_score": 10,
+      "description": "Discount codes follow the HANDLE15 pattern — the Instagram handle uppercased (without @) followed by '15' (e.g., GLOWWITHSARAH15)"
+    },
+    {
+      "name": "five unique discount codes",
+      "max_score": 8,
+      "description": "All 5 participants have distinct discount codes based on their individual Instagram handles"
+    },
+    {
+      "name": "participant initial status",
+      "max_score": 8,
+      "description": "Each participant record has status set to 'briefed' (not 'active', 'pending', or any other value)"
+    },
+    {
+      "name": "compensationDue field",
+      "max_score": 6,
+      "description": "Each participant record includes a compensationDue field set to 500"
+    },
+    {
+      "name": "FTC disclosure in brief",
+      "max_score": 10,
+      "description": "The brief or brief-summary includes a requirement for #ad or #sponsored disclosure on all posts"
+    },
+    {
+      "name": "mandatoryTags in brief",
+      "max_score": 6,
+      "description": "The CampaignBrief structure includes a mandatoryTags field (as an array)"
+    },
+    {
+      "name": "forbiddenContent in brief",
+      "max_score": 6,
+      "description": "The CampaignBrief structure includes a forbiddenContent field (as an array)"
+    },
+    {
+      "name": "compensationType field",
+      "max_score": 6,
+      "description": "The brief uses one of the valid compensationType values: 'gifting', 'flat-fee', 'commission', or 'hybrid'"
+    },
+    {
+      "name": "participants.json generated",
+      "max_score": 10,
+      "description": "A participants.json file is present with an array of 5 objects, one per creator"
+    }
+  ]
+}

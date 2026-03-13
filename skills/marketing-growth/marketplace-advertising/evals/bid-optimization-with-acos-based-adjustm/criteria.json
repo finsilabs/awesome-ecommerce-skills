@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the correct ACOS-based bid adjustment thresholds, multipliers, data minimums, bid clamping, and change filtering as specified in the marketplace advertising skill, plus exponential backoff for API rate limiting.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "High ACOS threshold 1.2x",
+      "max_score": 8,
+      "description": "Bid reduction is triggered when currentAcos exceeds targetAcos multiplied by 1.2"
+    },
+    {
+      "name": "Bid reduction multiplier 0.85",
+      "max_score": 8,
+      "description": "When ACOS is too high, the bid is reduced by multiplying by 0.85 (a 15% reduction)"
+    },
+    {
+      "name": "Low ACOS threshold 0.8x",
+      "max_score": 8,
+      "description": "Bid increase is triggered when currentAcos is below targetAcos multiplied by 0.8"
+    },
+    {
+      "name": "Bid increase multiplier 1.10",
+      "max_score": 8,
+      "description": "When ACOS is very low, the bid is increased by multiplying by 1.10 (a 10% increase)"
+    },
+    {
+      "name": "Impression threshold for increase",
+      "max_score": 8,
+      "description": "Bid increase is only applied when impressions exceed 1000 (in addition to the low ACOS check)"
+    },
+    {
+      "name": "Minimum 10 clicks threshold",
+      "max_score": 8,
+      "description": "Keywords with fewer than 10 clicks are skipped / excluded from optimization (insufficient data)"
+    },
+    {
+      "name": "Bid floor $0.10",
+      "max_score": 8,
+      "description": "Bids are clamped to a minimum of $0.10 after adjustment"
+    },
+    {
+      "name": "Bid ceiling $10.00",
+      "max_score": 8,
+      "description": "Bids are clamped to a maximum of $10.00 after adjustment"
+    },
+    {
+      "name": "Change threshold $0.01",
+      "max_score": 8,
+      "description": "Bid updates are only submitted when the absolute change in bid is greater than $0.01"
+    },
+    {
+      "name": "Exponential backoff",
+      "max_score": 12,
+      "description": "API calls include retry logic with exponential backoff (increasing delays between retries, not fixed-interval polling)"
+    },
+    {
+      "name": "TARGET_ACOS env var",
+      "max_score": 8,
+      "description": "Reads target ACOS from process.env.TARGET_ACOS with a default fallback of 0.30"
+    },
+    {
+      "name": "30-day performance window",
+      "max_score": 8,
+      "description": "Bid decisions are based on 30-day performance data (not 7-day or other windows)"
+    }
+  ]
+}

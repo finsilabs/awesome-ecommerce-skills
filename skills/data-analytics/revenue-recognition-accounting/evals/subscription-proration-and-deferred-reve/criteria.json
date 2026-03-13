@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements day-based straight-line proration for subscription revenue recognition (not calendar-month approximation), maintains a proper deferred revenue roll-forward schedule with cash/recognized/ending-balance columns, uses Decimal arithmetic for monetary precision, and produces results.txt showing actual computed numbers.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Exact-day proration",
+      "max_score": 15,
+      "description": "Revenue recognition per period is computed as (days of subscription active in period / total days in subscription month) × monthly_fee — using the actual number of calendar days in each month, not a fixed 28, 30, or 31"
+    },
+    {
+      "name": "Partial first month handled",
+      "max_score": 10,
+      "description": "Subscribers starting mid-month (e.g., Carol starting Feb 10) receive partial revenue in that first month based on days remaining, not the full $30"
+    },
+    {
+      "name": "Decimal arithmetic used",
+      "max_score": 8,
+      "description": "Monetary calculations use the `decimal.Decimal` type (not float) to avoid floating-point rounding errors"
+    },
+    {
+      "name": "Roll-forward structure",
+      "max_score": 12,
+      "description": "Monthly summary table includes at minimum: new deferred revenue (cash received that month), revenue released/recognized, and ending deferred balance"
+    },
+    {
+      "name": "Ending balance is cumulative",
+      "max_score": 10,
+      "description": "The ending deferred balance for each month equals the prior month's ending balance plus cash received minus revenue recognized (running cumulative, not just the period net)"
+    },
+    {
+      "name": "Subscription classified over_time",
+      "max_score": 8,
+      "description": "Subscription periods are treated as over-time obligations (ratably recognized), not recognized in full at the start of the billing period"
+    },
+    {
+      "name": "Per-subscriber breakdown",
+      "max_score": 8,
+      "description": "Output shows recognized and deferred amounts broken down per subscriber (not just aggregate totals)"
+    },
+    {
+      "name": "results.txt present",
+      "max_score": 10,
+      "description": "A results.txt file exists containing the actual printed output of the script with numeric values (not empty, not placeholder text)"
+    },
+    {
+      "name": "March proration correct for Eve",
+      "max_score": 10,
+      "description": "Eve (subscription start 2026-03-05) has a partial March recognition of approximately $27.10 (27/31 × $30) rather than the full $30, demonstrating exact-day logic for the same month the script is run"
+    },
+    {
+      "name": "No float monetary arithmetic",
+      "max_score": 9,
+      "description": "Does NOT use Python float arithmetic (e.g., 30.0 * days / total_days) for final monetary amounts — uses Decimal or integer cent arithmetic throughout"
+    }
+  ]
+}

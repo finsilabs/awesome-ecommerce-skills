@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements behavioral triggers at the correct thresholds, uses the correct lookback and product counts, withholds the right fraction of customers as a control group, calculates lift correctly, avoids aggressive discounting for VIP customers, and tracks unsubscribes separately.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Inactivity trigger at 21 days",
+      "max_score": 10,
+      "description": "The inactive-customer trigger fires at exactly 21 days of inactivity (not 14, not 30) and fires only once at that specific mark"
+    },
+    {
+      "name": "Browse-reactivation vs whats-new branching",
+      "max_score": 8,
+      "description": "When triggered by inactivity: if the customer has recently viewed products, send a browse-reactivation email with those products; otherwise send a whats-new email"
+    },
+    {
+      "name": "6 new arrivals in whats-new",
+      "max_score": 7,
+      "description": "The whats-new fallback email includes 6 new arrivals (not 3, not 10)"
+    },
+    {
+      "name": "Order value drop threshold",
+      "max_score": 10,
+      "description": "The order-value-drop trigger fires when the latest order value is less than 50% of the customer's average order value"
+    },
+    {
+      "name": "Average order value lookback",
+      "max_score": 8,
+      "description": "Average order value for the drop trigger is calculated over the last 5 orders specifically"
+    },
+    {
+      "name": "Value-recovery email content",
+      "max_score": 8,
+      "description": "The value-recovery email includes the customer's top 3 most-purchased products (not generic recommendations)"
+    },
+    {
+      "name": "10% control group",
+      "max_score": 12,
+      "description": "The measurement module withholds 10% of at-risk customers as a control group (documented in ANALYTICS_NOTES.md or implemented in code)"
+    },
+    {
+      "name": "Lift calculation",
+      "max_score": 10,
+      "description": "Retention lift is calculated as ((campaignRepurchaseRate - controlRepurchaseRate) / controlRepurchaseRate) * 100, or equivalent percentage formula"
+    },
+    {
+      "name": "Revenue recovered metric",
+      "max_score": 8,
+      "description": "The measurement function also computes and returns revenue recovered from retained campaign customers (not just repurchase rate)"
+    },
+    {
+      "name": "No reflexive VIP discounting",
+      "max_score": 10,
+      "description": "ANALYTICS_NOTES.md documents that high-LTV customers who are only slightly overdue should receive a soft nudge rather than an automatic discount offer"
+    },
+    {
+      "name": "Separate unsubscribe tracking",
+      "max_score": 9,
+      "description": "ANALYTICS_NOTES.md describes tracking unsubscribes per campaign separately to detect messaging/timing problems before scaling"
+    }
+  ]
+}

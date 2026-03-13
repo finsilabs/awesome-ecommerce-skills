@@ -1,0 +1,46 @@
+{
+  "context": "Tests whether the agent implements sequential invoice numbering using PostgreSQL advisory locks inside a database transaction, produces the correct PREFIX-YEAR-NNNNNN format with 6-digit zero-padding, excludes proforma invoices from the main series, and implements credit notes with a separate CN- prefix series.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Advisory lock used",
+      "max_score": 15,
+      "description": "The generateInvoiceNumber function executes a PostgreSQL advisory lock — specifically calls pg_advisory_xact_lock (not a row-level lock, application mutex, or other mechanism)"
+    },
+    {
+      "name": "Transaction wrapping",
+      "max_score": 12,
+      "description": "The advisory lock and count query are both inside a database transaction (e.g. db.$transaction or equivalent), not called sequentially outside a transaction"
+    },
+    {
+      "name": "6-digit zero-padded sequence",
+      "max_score": 10,
+      "description": "The sequence number is zero-padded to 6 digits (e.g. padStart(6, '0')) producing values like 000001, 000042"
+    },
+    {
+      "name": "PREFIX-YEAR-NNNNNN format",
+      "max_score": 10,
+      "description": "The returned invoice number follows the pattern {prefix}-{year}-{paddedSequence} (e.g. INV-2026-000001)"
+    },
+    {
+      "name": "Proforma excluded from series",
+      "max_score": 15,
+      "description": "When counting existing invoices to determine the next sequence number, proforma invoice types are excluded from the count (filter: invoice_type not equal to 'proforma')"
+    },
+    {
+      "name": "Credit note separate series",
+      "max_score": 15,
+      "description": "generateCreditNoteNumber produces numbers with the 'CN-' prefix (e.g. CN-2026-000001), counting only existing credit_note type invoices — NOT mixed with regular invoices"
+    },
+    {
+      "name": "No-gaps explanation",
+      "max_score": 8,
+      "description": "The code includes a comment or the README includes a section explaining why the advisory lock prevents gaps (not just that it prevents duplicates)"
+    },
+    {
+      "name": "count + 1 sequence logic",
+      "max_score": 15,
+      "description": "The sequence number is derived by counting existing invoices with the same prefix-year pattern and adding 1 (not using a separate counter table or application-level state)"
+    }
+  ]
+}

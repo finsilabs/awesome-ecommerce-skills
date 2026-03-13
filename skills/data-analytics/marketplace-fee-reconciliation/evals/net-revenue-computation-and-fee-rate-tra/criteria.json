@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent computes net marketplace proceeds using the correct formula (subtracting all fee components from net sales), tracks fee rates as percentages of revenue rather than absolute amounts, and correctly treats gross sales as revenue (not the net payout amount).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Net sales calculation",
+      "max_score": 8,
+      "description": "net_sales is computed as gross_revenue minus refunds (not using net payout as a proxy for gross sales)"
+    },
+    {
+      "name": "Gross sales as revenue",
+      "max_score": 10,
+      "description": "Gross selling price / gross_revenue is used as the revenue figure, NOT the net payout deposited (i.e., the script does not treat the net amount already deducted of fees as revenue)"
+    },
+    {
+      "name": "Net proceeds formula",
+      "max_score": 10,
+      "description": "net_marketplace_proceeds = net_sales - (referral_fees + fulfillment_fees + storage_fees + long_term_storage_fees + advertising_fees + refund_fees)"
+    },
+    {
+      "name": "All fee components subtracted",
+      "max_score": 8,
+      "description": "The net proceeds calculation subtracts ALL of: referral_fees, fulfillment_fees, storage_fees, long_term_storage_fees, advertising_fees, and refund_fees"
+    },
+    {
+      "name": "Total fee rate percentage",
+      "max_score": 8,
+      "description": "total_fee_rate_pct is computed as a percentage: (sum of fees / net_sales) * 100, rounded to 1 decimal place"
+    },
+    {
+      "name": "Net margin percentage",
+      "max_score": 8,
+      "description": "net_margin_pct is computed as (net_marketplace_proceeds / net_sales) * 100, rounded to 1 decimal place"
+    },
+    {
+      "name": "Division by zero guard",
+      "max_score": 6,
+      "description": "The percentage calculations guard against division by zero (e.g., using NULLIF, conditional check, or equivalent)"
+    },
+    {
+      "name": "Per-SKU breakdown",
+      "max_score": 8,
+      "description": "Output is broken down per SKU (and optionally per marketplace), not just as a single aggregate total"
+    },
+    {
+      "name": "Fee rate vs absolute",
+      "max_score": 8,
+      "description": "Output includes fee rate percentages (not just absolute fee amounts) — at minimum total_fee_rate_pct or equivalent percentage columns are present"
+    },
+    {
+      "name": "Separate fee categories in output",
+      "max_score": 8,
+      "description": "Output shows referral_fees, fulfillment_fees, storage_fees, and advertising_fees as separate columns rather than a single 'total_fees' lump sum"
+    },
+    {
+      "name": "Period grouping",
+      "max_score": 6,
+      "description": "Results are grouped by time period (month or settlement period) in addition to SKU"
+    },
+    {
+      "name": "Output file produced",
+      "max_score": 6,
+      "description": "A CSV or structured output file containing the net revenue analysis is written to disk"
+    },
+    {
+      "name": "FBA rate tracked separately",
+      "max_score": 6,
+      "description": "FBA fulfillment fee rate as a percentage of revenue is computed separately from referral fee rate (not merged into a single fee bucket)"
+    }
+  ]
+}

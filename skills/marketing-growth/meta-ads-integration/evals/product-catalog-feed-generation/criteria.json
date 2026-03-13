@@ -1,0 +1,86 @@
+{
+  "context": "Tests whether the agent generates a Meta-compliant product catalog feed CSV with the correct required fields, proper data transformations (title/description limits, price format, HTML stripping), and appropriate scheduling configuration.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "csv-writer package",
+      "max_score": 9,
+      "description": "Uses the 'csv-writer' package (createObjectCsvWriter) rather than a custom CSV serializer or a different CSV library"
+    },
+    {
+      "name": "id field present",
+      "max_score": 6,
+      "description": "Feed includes an 'id' column (product SKU or unique identifier)"
+    },
+    {
+      "name": "title field present",
+      "max_score": 5,
+      "description": "Feed includes a 'title' column"
+    },
+    {
+      "name": "description field present",
+      "max_score": 5,
+      "description": "Feed includes a 'description' column"
+    },
+    {
+      "name": "availability field present",
+      "max_score": 5,
+      "description": "Feed includes an 'availability' column with values like 'in stock' or 'out of stock'"
+    },
+    {
+      "name": "condition field present",
+      "max_score": 5,
+      "description": "Feed includes a 'condition' column"
+    },
+    {
+      "name": "price field present",
+      "max_score": 5,
+      "description": "Feed includes a 'price' column"
+    },
+    {
+      "name": "link field present",
+      "max_score": 5,
+      "description": "Feed includes a 'link' column (product URL)"
+    },
+    {
+      "name": "image_link field present",
+      "max_score": 5,
+      "description": "Feed includes an 'image_link' column"
+    },
+    {
+      "name": "brand field present",
+      "max_score": 5,
+      "description": "Feed includes a 'brand' column"
+    },
+    {
+      "name": "google_product_category field",
+      "max_score": 5,
+      "description": "Feed includes a 'google_product_category' column"
+    },
+    {
+      "name": "Title truncated to 150 chars",
+      "max_score": 8,
+      "description": "Title values are truncated to a maximum of 150 characters"
+    },
+    {
+      "name": "Description HTML stripped",
+      "max_score": 8,
+      "description": "HTML tags are stripped from description values before writing to the feed"
+    },
+    {
+      "name": "Description truncated to 5000 chars",
+      "max_score": 8,
+      "description": "Description values are truncated to a maximum of 5000 characters"
+    },
+    {
+      "name": "Price format X.XX USD",
+      "max_score": 8,
+      "description": "Price values are formatted as '<amount> USD' with exactly 2 decimal places (e.g. '19.99 USD'), not just a number"
+    },
+    {
+      "name": "4-hour schedule",
+      "max_score": 8,
+      "description": "Feed regeneration is scheduled to run every 4 hours (e.g. cron expression '0 */4 * * *' or equivalent)"
+    }
+  ]
+}

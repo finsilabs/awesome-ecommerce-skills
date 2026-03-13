@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent designs the CustomerProfile schema with GDPR-appropriate fields, includes the correct fields for progressive profiling completeness, and implements the profiling logic with the right triggers and completeness computation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "birthMonth not full DOB",
+      "max_score": 8,
+      "description": "The CustomerProfile interface uses birthMonth (a number) rather than a full date-of-birth or birthDate field"
+    },
+    {
+      "name": "profileCompleteness field",
+      "max_score": 7,
+      "description": "The CustomerProfile interface includes a profileCompleteness field of numeric type (0–100)"
+    },
+    {
+      "name": "consentVersion field",
+      "max_score": 8,
+      "description": "The CustomerProfile interface includes a consentVersion field (string type) representing the privacy policy version at consent time"
+    },
+    {
+      "name": "dataSource array field",
+      "max_score": 7,
+      "description": "The CustomerProfile interface includes a dataSource field typed as a string array (e.g. string[])"
+    },
+    {
+      "name": "Completeness uses 7 specific fields",
+      "max_score": 12,
+      "description": "computeProfileCompleteness calculates the score using exactly these fields: firstName, birthMonth, preferredCategories, clothingSize, emailFrequency, shoppingFrequency, primaryUseCase"
+    },
+    {
+      "name": "One-question-at-a-time pattern",
+      "max_score": 8,
+      "description": "getNextProfileQuestion returns only a single next question (not a list), finding the first unanswered field"
+    },
+    {
+      "name": "Trigger-based profiling config",
+      "max_score": 10,
+      "description": "PROFILE_QUESTIONS config array associates each question with a specific trigger event (e.g. 'post-signup', 'post-first-order', 'second-visit', 'pdp-apparel-visit')"
+    },
+    {
+      "name": "Post-signup firstName trigger",
+      "max_score": 8,
+      "description": "firstName is the first profiling question and is triggered at 'post-signup'"
+    },
+    {
+      "name": "README documents completeness fields",
+      "max_score": 8,
+      "description": "README lists which specific fields are used to compute the profile completeness score"
+    },
+    {
+      "name": "README explains DOB choice",
+      "max_score": 8,
+      "description": "README mentions a privacy or GDPR-related reason for using birth month rather than a full date of birth"
+    },
+    {
+      "name": "Declared preferences fields present",
+      "max_score": 8,
+      "description": "CustomerProfile includes zero-party/declared preference fields: at minimum preferredCategories, shoppingFrequency, budgetRange, and primaryUseCase"
+    },
+    {
+      "name": "Consent fields present",
+      "max_score": 8,
+      "description": "CustomerProfile includes gdprConsent, ccpaOptOut, and smsConsent fields"
+    }
+  ]
+}

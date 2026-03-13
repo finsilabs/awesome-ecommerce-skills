@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the exact risk scoring algorithm (with specific score adjustments for on-time rate and average days late) and the three-tier collections escalation policy with the correct day thresholds and action sequences from the payment-terms-optimization skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "No-history default",
+      "max_score": 6,
+      "description": "A customer with no payment history gets score=50, tier='medium', and recommended terms 'net_30'"
+    },
+    {
+      "name": "On-time rate scoring",
+      "max_score": 10,
+      "description": "Score adjustment for on_time_pct: +25 if >=0.95, +10 if >=0.80 (but <0.95), -10 otherwise"
+    },
+    {
+      "name": "Avg days late scoring",
+      "max_score": 10,
+      "description": "Score adjustment for avgDaysLate: +15 if <=3, +5 if <=10 (but >3), -15 otherwise"
+    },
+    {
+      "name": "Payment count scoring",
+      "max_score": 8,
+      "description": "Score adjustment for totalPayments: +10 if >=12, +5 if >=6 (but <12), +0 otherwise"
+    },
+    {
+      "name": "Score clamped 0-100",
+      "max_score": 5,
+      "description": "Final score is clamped between 0 and 100 inclusive"
+    },
+    {
+      "name": "Risk tier thresholds",
+      "max_score": 8,
+      "description": "Tier assignment: 'low' for score >=75, 'medium' for score >=50 (but <75), 'high' for score <50"
+    },
+    {
+      "name": "Terms recommendations",
+      "max_score": 10,
+      "description": "Low risk -> 'net_60' with limit_multiplier 3.0; medium risk -> 'net_30' with limit_multiplier 1.5; high risk -> 'net_15' with limit_multiplier 0.75"
+    },
+    {
+      "name": "Low-risk collections steps",
+      "max_score": 8,
+      "description": "Low risk collections policy: reminder_email at 5 days, second_notice at 15 days, account_manager_call at 30 days, credit_hold at 45 days"
+    },
+    {
+      "name": "Medium-risk collections steps",
+      "max_score": 8,
+      "description": "Medium risk collections policy: reminder_email at 3 days, second_notice at 10 days, credit_hold at 20 days, collections_referral at 45 days"
+    },
+    {
+      "name": "High-risk collections steps",
+      "max_score": 8,
+      "description": "High risk collections policy: reminder_email at 1 day, credit_hold at 7 days, collections_referral at 21 days"
+    },
+    {
+      "name": "Already-taken actions skipped",
+      "max_score": 10,
+      "description": "getNextCollectionsAction does not return an action that appears in the actionsTaken list — it finds the next untaken action at or past the daysOverdue threshold"
+    },
+    {
+      "name": "Results file present",
+      "max_score": 9,
+      "description": "results.txt exists and shows scoring results for at least 3 different customer profiles and collections escalation for at least 2 risk tiers"
+    }
+  ]
+}

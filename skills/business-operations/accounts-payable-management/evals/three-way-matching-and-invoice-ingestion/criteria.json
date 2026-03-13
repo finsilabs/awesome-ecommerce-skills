@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements invoice ingestion and three-way matching following the skill's specific conventions: filtering attachment types, vendor resolution with fallback to manual review, due date calculation from net-day terms, 1% matching tolerance, correct exception logic, match status derivation rules, currency preservation, and invoice locking after approval.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Attachment type filter",
+      "max_score": 7,
+      "description": "Email ingestion only processes attachments with content types in: application/pdf, image/png, image/jpeg (skips all others)"
+    },
+    {
+      "name": "Vendor resolution with fallback",
+      "max_score": 8,
+      "description": "Vendor lookup uses BOTH email sender domain AND extracted vendor name; unknown vendors are flagged for manual review and the email is skipped (not thrown as an error)"
+    },
+    {
+      "name": "Due date from net terms",
+      "max_score": 8,
+      "description": "Due date is calculated by parsing vendor payment terms as 'net{N}' (e.g., 'net30' → 30 days), with a default of 30 days when terms don't match"
+    },
+    {
+      "name": "Original currency preserved",
+      "max_score": 9,
+      "description": "Invoice is saved with the extracted original currency (e.g., EUR, GBP) rather than converting to USD on ingest"
+    },
+    {
+      "name": "No-PO exception",
+      "max_score": 7,
+      "description": "Three-way match returns exception status immediately when no PO is linked to the invoice"
+    },
+    {
+      "name": "1% tolerance applied",
+      "max_score": 10,
+      "description": "Invoice-to-PO total comparison uses a tolerance of 1% of the PO cost (not hard equality) — variances within 1% do NOT generate an exception"
+    },
+    {
+      "name": "Line-level quantity check",
+      "max_score": 8,
+      "description": "Match logic checks that quantity_received (from goods receipt) is not less than invoice line quantity for each matched line"
+    },
+    {
+      "name": "Line-level price check",
+      "max_score": 8,
+      "description": "Match logic checks for unit price mismatches between invoice lines and corresponding PO lines"
+    },
+    {
+      "name": "No-receipt exception",
+      "max_score": 7,
+      "description": "When no goods receipt is linked to the invoice, an exception is added (e.g., 'No goods receipt on file') rather than silently passing"
+    },
+    {
+      "name": "Match status derivation",
+      "max_score": 9,
+      "description": "Final match_status is derived as: 'matched' when no exceptions, 'partial' when exceptions exist but variance is 0, 'exception' otherwise"
+    },
+    {
+      "name": "Invoice lock enforcement",
+      "max_score": 9,
+      "description": "The lock function prevents modifications to total_cents, due_date, and vendor_id after an invoice reaches 'approved' status (throws or rejects edit attempts on these fields)"
+    },
+    {
+      "name": "AP event logging",
+      "max_score": 10,
+      "description": "The three-way match result is logged using logApEvent (or equivalent audit trail call) with the match status, variance, and exceptions"
+    }
+  ]
+}

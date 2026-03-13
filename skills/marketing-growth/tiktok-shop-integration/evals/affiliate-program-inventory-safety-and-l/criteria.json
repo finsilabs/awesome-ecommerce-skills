@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent applies the correct affiliate commission rates for open vs. targeted collaboration, documents safe inventory practices (sub-5-minute sync, immediate order lock), prescribes the 48-hour fulfilment window, recommends LIVE Shopping for the product launch, advises on image requirements, and includes brand-safety UGC monitoring guidance.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Open collaboration commission 10-15%",
+      "max_score": 10,
+      "description": "The open-collaboration commission rate in affiliate-setup.ts is set to a value between 0.10 and 0.15 (10%–15%), not higher or lower"
+    },
+    {
+      "name": "Targeted invitation commission 20%",
+      "max_score": 10,
+      "description": "The targeted creator invitation function uses a commission rate of 0.20 (20%), not a different value"
+    },
+    {
+      "name": "Inventory sync within 5 minutes",
+      "max_score": 8,
+      "description": "PLAYBOOK.md states that TikTok Shop inventory must be updated within 5 minutes of any order or stock change across all channels"
+    },
+    {
+      "name": "Immediate inventory lock on order creation",
+      "max_score": 10,
+      "description": "PLAYBOOK.md describes locking/reserving inventory on TikTok Shop at the moment an order is created (before fulfilment confirmation), not after"
+    },
+    {
+      "name": "48-hour fulfilment target",
+      "max_score": 8,
+      "description": "PLAYBOOK.md specifies a 48-hour fulfilment window for TikTok Shop orders"
+    },
+    {
+      "name": "Late shipment rate threshold",
+      "max_score": 6,
+      "description": "PLAYBOOK.md mentions that exceeding a 2% late shipment rate triggers seller account warnings"
+    },
+    {
+      "name": "LIVE Shopping for product launch",
+      "max_score": 8,
+      "description": "PLAYBOOK.md recommends using a LIVE Shopping event specifically for the new product launch (not just general advice about going live)"
+    },
+    {
+      "name": "Products Active before going live",
+      "max_score": 8,
+      "description": "PLAYBOOK.md states that products must have 'Active' status in TikTok Shop before a LIVE event, and notes the 24-48 hour review period"
+    },
+    {
+      "name": "Image aspect ratio guidance",
+      "max_score": 6,
+      "description": "PLAYBOOK.md specifies square or 9:16 (portrait) aspect ratio for TikTok Shop product images, and advises against landscape"
+    },
+    {
+      "name": "Image background and overlay rules",
+      "max_score": 6,
+      "description": "PLAYBOOK.md states images should have a white or clean background and should NOT include text overlays"
+    },
+    {
+      "name": "Lock product prices for affiliates",
+      "max_score": 6,
+      "description": "PLAYBOOK.md advises locking product prices or warns that price changes force creator content to be re-tagged"
+    },
+    {
+      "name": "UGC monitoring for brand safety",
+      "max_score": 6,
+      "description": "PLAYBOOK.md includes a step to regularly review affiliate/UGC content and have a content reporting process, noting creators post without prior approval in Open Collaboration"
+    },
+    {
+      "name": "Free shipping minimum cart value",
+      "max_score": 8,
+      "description": "PLAYBOOK.md recommends setting a minimum cart value for free shipping to reduce abandonment driven by visible shipping costs"
+    }
+  ]
+}

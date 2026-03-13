@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the FX rate ingestion service using the prescribed HTTP client, rate provider, environment configuration, currency list, inverse rate storage, idempotency pattern, and fallback strategy.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "axios HTTP client",
+      "max_score": 10,
+      "description": "Uses axios (not fetch, got, node-fetch, or other HTTP clients) for making requests to the rate API"
+    },
+    {
+      "name": "Open Exchange Rates URL",
+      "max_score": 10,
+      "description": "Fetches from openexchangerates.org (the URL contains 'openexchangerates.org')"
+    },
+    {
+      "name": "API key from env var",
+      "max_score": 8,
+      "description": "Reads the API key from process.env.OPEN_EXCHANGE_RATES_APP_ID (not hardcoded)"
+    },
+    {
+      "name": "FUNCTIONAL_CURRENCY env var",
+      "max_score": 8,
+      "description": "Reads the base/functional currency from process.env.FUNCTIONAL_CURRENCY"
+    },
+    {
+      "name": "USD default",
+      "max_score": 7,
+      "description": "Defaults FUNCTIONAL_CURRENCY to 'USD' when the environment variable is not set (uses ?? or || 'USD')"
+    },
+    {
+      "name": "All 10 tracked currencies",
+      "max_score": 10,
+      "description": "The tracked currency list includes all of: EUR, GBP, CAD, AUD, JPY, CHF, SEK, NOK, DKK, NZD"
+    },
+    {
+      "name": "Inverse rates stored",
+      "max_score": 12,
+      "description": "Stores inverse rates (quote→base direction, rate = 1 / direct_rate) alongside the direct rates in the same bulk insert"
+    },
+    {
+      "name": "skipDuplicates on insert",
+      "max_score": 10,
+      "description": "Bulk insert uses skipDuplicates: true (or equivalent ON CONFLICT DO NOTHING) to make the job idempotent"
+    },
+    {
+      "name": "7-day fallback window",
+      "max_score": 15,
+      "description": "getRate falls back to the most recent rate within 7 days before the requested date when an exact match is not found"
+    },
+    {
+      "name": "Same-currency short-circuit",
+      "max_score": 10,
+      "description": "getRate returns 1 immediately when fromCurrency equals toCurrency (no database lookup needed)"
+    }
+  ]
+}

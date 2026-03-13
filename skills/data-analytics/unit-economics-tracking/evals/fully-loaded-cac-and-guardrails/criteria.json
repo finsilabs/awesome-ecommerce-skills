@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly computes fully-loaded CAC (not just media spend), distinguishes paid channel CAC from blended CAC, derives max-CAC guardrails using the LTV:CAC ratio formula, and applies correct industry benchmark thresholds when assessing unit economics health.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Fully-loaded cost components",
+      "max_score": 12,
+      "description": "The CAC computation includes at least 4 of the following beyond raw media spend: agency fees, marketing technology costs, marketing/sales team payroll, first-order discount costs, or free trial costs"
+    },
+    {
+      "name": "Separate paid vs blended CAC",
+      "max_score": 10,
+      "description": "The solution produces both a blended CAC (all customers including organic) and a paid/channel-level CAC as distinct values, not a single combined figure"
+    },
+    {
+      "name": "Max CAC guardrail formula",
+      "max_score": 12,
+      "description": "Maximum allowable CAC is derived as LTV divided by a target LTV:CAC ratio (Max CAC = LTV / target_ratio), not a fixed arbitrary number"
+    },
+    {
+      "name": "LTV:CAC thresholds",
+      "max_score": 10,
+      "description": "LTV:CAC assessment uses thresholds of 2.0 (minimum viable), 3.0 (healthy), and 5.0 (excellent) — all three boundaries present in the classification logic"
+    },
+    {
+      "name": "CAC trend tracking",
+      "max_score": 8,
+      "description": "The solution tracks CAC across multiple periods (monthly or weekly) and computes period-over-period change, not just a single-period snapshot"
+    },
+    {
+      "name": "15% threshold alert",
+      "max_score": 10,
+      "description": "The solution explicitly flags or alerts when CAC increases by 15% or more versus a prior period"
+    },
+    {
+      "name": "Payback via contribution margin",
+      "max_score": 10,
+      "description": "Payback period is computed using contribution margin (not gross revenue), calculated as CAC divided by monthly contribution margin per customer"
+    },
+    {
+      "name": "12-month payback benchmark",
+      "max_score": 8,
+      "description": "Payback period assessment references 12 months as the 'healthy' threshold (and/or 6 months as excellent, 24 months as minimum viable)"
+    },
+    {
+      "name": "Channel-level breakdown output",
+      "max_score": 10,
+      "description": "Results are broken down or grouped by acquisition channel, not presented only as a single aggregate figure"
+    },
+    {
+      "name": "No media-only CAC for budget decisions",
+      "max_score": 10,
+      "description": "The solution does NOT use media-only spend as the sole input when computing CAC for budget guardrails or channel decisions — fully-loaded or paid channel CAC is used instead"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/invoice-generation-automation",
+  "version": "0.1.0",
+  "summary": "Generate professional invoices automatically with custom branding, payment terms, line item details, tax breakdowns, and integration with accounting systems",
+  "skills": {
+    "invoice-generation-automation": {
+      "path": "SKILL.md"
+    }
+  }
+}

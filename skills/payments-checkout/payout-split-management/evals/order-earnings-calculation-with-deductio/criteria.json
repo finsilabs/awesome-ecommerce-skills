@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements the earnings calculation formula with all deductions: commission (supporting percentage/flat/tiered types), Stripe processing fee pass-through, rolling reserve withholding, backup tax withholding, and net earnings clamping. Also verifies immutable commission rate snapshots and T+2 settlement timing.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Commission type branching",
+      "max_score": 10,
+      "description": "Code branches on commission_type, handling at least 'percentage', 'flat', and 'tiered' cases separately"
+    },
+    {
+      "name": "Stripe processing fee formula",
+      "max_score": 10,
+      "description": "Processing fee is calculated as 2.9% of order amount PLUS a fixed $0.30 (i.e., amount * 0.029 + 0.30)"
+    },
+    {
+      "name": "Rolling reserve deduction",
+      "max_score": 8,
+      "description": "A rolling reserve amount is withheld from net earnings, computed from a per-seller reserve percentage applied to the order subtotal"
+    },
+    {
+      "name": "Reserve release date",
+      "max_score": 7,
+      "description": "Reserve release date is set to the current date plus the seller's rolling_reserve_days (e.g. 90 days)"
+    },
+    {
+      "name": "Backup withholding rate",
+      "max_score": 10,
+      "description": "When backup withholding applies, the withheld amount is calculated at 24% of (subtotal minus commission), not 24% of the full order amount"
+    },
+    {
+      "name": "Net earnings formula",
+      "max_score": 10,
+      "description": "Net seller earnings is computed as: subtotal - commission - processing_fee - rolling_reserve - tax_withheld"
+    },
+    {
+      "name": "Non-negative earnings guard",
+      "max_score": 8,
+      "description": "Net earnings are clamped to a minimum of 0 (using Math.max(0, ...) or equivalent) to prevent negative values"
+    },
+    {
+      "name": "T+2 settlement timing",
+      "max_score": 7,
+      "description": "The available_date for funds is set to 2 days after the current date (T+2 ACH settlement)"
+    },
+    {
+      "name": "Commission rate snapshot",
+      "max_score": 10,
+      "description": "The commission_rate at the time of the order is stored on the earnings record (not re-read later); the notes or code explicitly states that historical rates must not be recomputed"
+    },
+    {
+      "name": "YTD totals updated",
+      "max_score": 10,
+      "description": "After creating the earnings record, seller ytd_earnings and ytd_transactions are incremented (using the gross order amount for ytd_earnings)"
+    },
+    {
+      "name": "Earnings at order time",
+      "max_score": 10,
+      "description": "The notes document states that earnings are calculated at order capture time, not at payout/disbursement time"
+    }
+  ]
+}

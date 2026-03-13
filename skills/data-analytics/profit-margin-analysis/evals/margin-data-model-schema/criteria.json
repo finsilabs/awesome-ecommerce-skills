@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the correct SQL schema for SKU-level profitability tracking, including the specific column types, generated computed columns, composite primary key, a margin analysis view with division-by-zero protection, and the correct four-level margin hierarchy.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "period_id VARCHAR(7)",
+      "max_score": 8,
+      "description": "The period identifier column is defined as VARCHAR(7) (not DATE, INTEGER, or other type)"
+    },
+    {
+      "name": "GENERATED ALWAYS AS STORED",
+      "max_score": 12,
+      "description": "At least two derived monetary columns (e.g., net_revenue, gross_profit, cogs_total) use GENERATED ALWAYS AS (...) STORED syntax rather than being computed only in a view or application layer"
+    },
+    {
+      "name": "Composite PRIMARY KEY",
+      "max_score": 10,
+      "description": "The fact table has a composite primary key on (period_id, sku, channel) — all three columns together"
+    },
+    {
+      "name": "Separate margin view",
+      "max_score": 8,
+      "description": "A CREATE VIEW statement is present that exposes computed margin percentages (not just the base table)"
+    },
+    {
+      "name": "NULLIF division guard",
+      "max_score": 8,
+      "description": "Margin percentage calculations in the view use NULLIF(net_revenue, 0) or equivalent to avoid division-by-zero errors"
+    },
+    {
+      "name": "Gross margin level",
+      "max_score": 10,
+      "description": "Schema or view includes gross profit = net_revenue - product cost - inbound freight (or equivalent) as a distinct margin level"
+    },
+    {
+      "name": "Fulfillment-adjusted margin level",
+      "max_score": 12,
+      "description": "Schema or view includes a fulfillment-adjusted profit level that subtracts outbound shipping, payment fees, marketplace fees, and packaging from gross profit"
+    },
+    {
+      "name": "Contribution margin level",
+      "max_score": 12,
+      "description": "Schema or view includes a contribution margin level that subtracts direct marketing spend from fulfillment-adjusted profit"
+    },
+    {
+      "name": "Net operating profit level",
+      "max_score": 10,
+      "description": "Schema or view includes a net operating profit level that subtracts overhead allocation from contribution margin"
+    },
+    {
+      "name": "Net revenue formula",
+      "max_score": 10,
+      "description": "Net revenue is computed as gross_revenue minus discounts minus returns (all three components), not just gross_revenue minus COGS"
+    }
+  ]
+}

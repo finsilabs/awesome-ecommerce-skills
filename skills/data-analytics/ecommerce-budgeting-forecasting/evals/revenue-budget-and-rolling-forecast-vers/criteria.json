@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the growth-from-base revenue budget method using trailing 12-month actuals, applies seasonality weights (not flat 1/12 splits), uses the correct account code and version naming convention, correctly locks actuals in rolling forecast updates, and separates the annual plan version from the rolling forecast version.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Trailing 12-month baseline",
+      "max_score": 8,
+      "description": "Revenue budget baseline is computed from the prior year's actuals (base_year = budget_year - 1), not from a top-down target"
+    },
+    {
+      "name": "Per-channel growth rates",
+      "max_score": 8,
+      "description": "Each channel's annual budget applies its own growth rate multiplier to the baseline (e.g. website gets 20%, amazon gets 10%)"
+    },
+    {
+      "name": "Seasonality weighting applied",
+      "max_score": 10,
+      "description": "Monthly budget amounts differ across months based on seasonality weights — November and December amounts are noticeably higher than January and February"
+    },
+    {
+      "name": "No flat monthly split",
+      "max_score": 8,
+      "description": "Monthly budget amounts are NOT uniform (i.e., not simply annual_total / 12 for every month)"
+    },
+    {
+      "name": "REV-NET account code",
+      "max_score": 10,
+      "description": "Revenue budget rows use account_code 'REV-NET' (not 'REVENUE', 'REV', or other variant)"
+    },
+    {
+      "name": "Annual plan version naming",
+      "max_score": 10,
+      "description": "Initial budget rows have version set to 'annual_plan_{budget_year}' (e.g. 'annual_plan_2026')"
+    },
+    {
+      "name": "Rolling forecast version",
+      "max_score": 10,
+      "description": "The rolling forecast output uses a different version value from the annual plan (e.g. 'rolling_forecast'), not overwriting the original"
+    },
+    {
+      "name": "Actuals locked for past periods",
+      "max_score": 12,
+      "description": "For periods up to and including current_period (2026-03), the forecast uses the actual_amount from actuals_to_date, not the original budget amount"
+    },
+    {
+      "name": "Growth revision applied to future only",
+      "max_score": 10,
+      "description": "The -5% growth_rate_revision is applied only to periods after current_period (2026-04 onwards), not to locked past periods"
+    },
+    {
+      "name": "period_id format",
+      "max_score": 8,
+      "description": "period_id values use the YYYY-MM format (e.g. '2026-01'), matching VARCHAR(7) convention"
+    },
+    {
+      "name": "Both functions present",
+      "max_score": 6,
+      "description": "revenue_budget.py contains both build_revenue_budget() and update_rolling_forecast() functions"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent designs the AR database schema with computed columns, correct status/payment-term enumerations, proper JSONB usage for dunning steps, and the required indexes on the invoices table.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "amount_due computed column",
+      "max_score": 10,
+      "description": "invoices table includes amount_due as a GENERATED ALWAYS AS (total_amount - amount_paid) STORED computed column, not a regular column"
+    },
+    {
+      "name": "available_credit computed column",
+      "max_score": 10,
+      "description": "customer_credit table includes available_credit as a GENERATED ALWAYS AS (credit_limit - current_balance) STORED computed column"
+    },
+    {
+      "name": "Invoice status values",
+      "max_score": 8,
+      "description": "Schema or comments define invoice status values that include all of: 'draft', 'sent', 'viewed', 'partially_paid', 'paid', 'overdue', 'written_off', 'void'"
+    },
+    {
+      "name": "Payment terms values",
+      "max_score": 8,
+      "description": "Schema or comments define payment_terms values that include 'net_30', 'net_60', 'net_90', 'due_on_receipt', and '2/10_net_30'"
+    },
+    {
+      "name": "Dunning steps as JSONB",
+      "max_score": 8,
+      "description": "dunning_sequences table stores steps as a JSONB column (not a separate steps table or plain text)"
+    },
+    {
+      "name": "Index on (customer_id, status)",
+      "max_score": 7,
+      "description": "An index on invoices(customer_id, status) is present"
+    },
+    {
+      "name": "Index on (due_date, status)",
+      "max_score": 7,
+      "description": "An index on invoices(due_date, status) is present"
+    },
+    {
+      "name": "Index on invoice_number",
+      "max_score": 7,
+      "description": "An index on invoices(invoice_number) is present"
+    },
+    {
+      "name": "Default dunning sequence steps",
+      "max_score": 10,
+      "description": "Seed data or example JSON for the default dunning sequence includes 5 steps: step at 1 day (gentle reminder email), 7 days (second notice email), 14 days (final notice email), 30 days (hold_account action), 60 days (collections warning email)"
+    },
+    {
+      "name": "Credit hold fields",
+      "max_score": 7,
+      "description": "customer_credit table includes both credit_hold (boolean) and credit_hold_reason (text) columns"
+    },
+    {
+      "name": "dunning_log table",
+      "max_score": 8,
+      "description": "A dunning_log table exists that references invoices and records step_number, action, template_name, and opened_at/clicked_at timestamps"
+    },
+    {
+      "name": "invoice_payments table",
+      "max_score": 10,
+      "description": "A separate invoice_payments table exists with payment_method, reference, and payment_date columns (payments stored separately, not aggregated into invoices)"
+    }
+  ]
+}

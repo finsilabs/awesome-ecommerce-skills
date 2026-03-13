@@ -1,0 +1,10 @@
+{
+  "name": "finsi/video-commerce-integration",
+  "version": "0.1.0",
+  "summary": "Enable shoppable video experiences with live shopping events, interactive product hotspots, and one-click checkout directly from video and livestream content",
+  "skills": {
+    "video-commerce-integration": {
+      "path": "SKILL.md"
+    }
+  }
+}

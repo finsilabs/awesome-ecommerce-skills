@@ -1,0 +1,10 @@
+{
+  "name": "finsi/loyalty-program-optimization",
+  "version": "0.1.0",
+  "summary": "Design and optimize tiered loyalty programs with points, rewards, exclusive perks, and member-only benefits that increase repeat purchase rates and CLV",
+  "skills": {
+    "loyalty-program-optimization": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent correctly implements the KPI card definitions (with correct metrics, query patterns, and benchmarks), builds a dynamic drill-down query function, applies the recommended visualization types for each statement, and shows percentage metrics alongside absolute values with a data freshness indicator.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Four KPI cards defined",
+      "max_score": 7,
+      "description": "Code or config defines exactly four headline KPIs: Net Revenue, Gross Margin %, EBITDA, and Cash Balance (all four present)"
+    },
+    {
+      "name": "Gross Margin % benchmark",
+      "max_score": 8,
+      "description": "The Gross Margin % KPI includes a benchmark or threshold value of 40.0 (percent) that triggers an alert or highlight when the metric falls below it"
+    },
+    {
+      "name": "Gross Margin % uses NULLIF",
+      "max_score": 7,
+      "description": "The Gross Margin % calculation uses NULLIF (or equivalent guard) on the net_revenue denominator to prevent division-by-zero errors"
+    },
+    {
+      "name": "Net Revenue and EBITDA use prior_period comparison",
+      "max_score": 7,
+      "description": "Net Revenue and EBITDA KPI definitions specify a prior period comparison (not just current value)"
+    },
+    {
+      "name": "Cash Balance from balance_sheet",
+      "max_score": 7,
+      "description": "The Cash Balance KPI query filters on statement_type = 'balance_sheet' (not 'pnl' or 'cash_flow')"
+    },
+    {
+      "name": "Dynamic drill-down function",
+      "max_score": 9,
+      "description": "A function or method is implemented that dynamically builds a P&L query based on optional filter parameters (channel, product_category, geography), adding WHERE clauses only when filters are provided"
+    },
+    {
+      "name": "P&L waterfall chart type",
+      "max_score": 7,
+      "description": "The P&L (income statement) overview is assigned a waterfall chart type, not a bar or line chart"
+    },
+    {
+      "name": "Revenue trend line chart",
+      "max_score": 6,
+      "description": "The revenue trend visualization is specified as a line chart (with prior year or bands), not a bar chart"
+    },
+    {
+      "name": "Expense breakdown donut or treemap",
+      "max_score": 6,
+      "description": "The operating expense breakdown uses a donut chart or treemap, not a pie chart or bar chart"
+    },
+    {
+      "name": "YTD vs budget uses bullet or gauge",
+      "max_score": 6,
+      "description": "The YTD vs. budget comparison uses a bullet chart or gauge visualization (not a simple bar or number card)"
+    },
+    {
+      "name": "Percentage alongside absolute values",
+      "max_score": 9,
+      "description": "Gross margin (and at least one other metric) is displayed with both the absolute dollar amount and the percentage, not just one of them"
+    },
+    {
+      "name": "Data freshness indicator",
+      "max_score": 8,
+      "description": "The dashboard output or component includes a last-updated timestamp field or data freshness indicator displayed alongside the metrics"
+    },
+    {
+      "name": "Drill-down dimensions covered",
+      "max_score": 7,
+      "description": "The drill-down implementation supports at least three of the five dimensions: channel, product_category, geography, customer_segment, time_period"
+    },
+    {
+      "name": "Cash flow bridge waterfall",
+      "max_score": 6,
+      "description": "The cash flow visualization is specified as a waterfall chart (cash flow bridge), not a line or bar chart"
+    }
+  ]
+}

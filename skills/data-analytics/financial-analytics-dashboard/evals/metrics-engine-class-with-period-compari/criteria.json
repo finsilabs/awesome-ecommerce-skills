@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds a FinancialMetricsEngine class following the prescribed interface, with correct period comparison logic, time-series SQL patterns, data freshness handling, and daily snapshot architecture.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "FinancialMetricsEngine class",
+      "max_score": 8,
+      "description": "Defines a class named FinancialMetricsEngine (not a standalone function or differently named class) that accepts db_connection in __init__"
+    },
+    {
+      "name": "compute_kpi signature",
+      "max_score": 8,
+      "description": "compute_kpi() accepts at minimum: kpi_name, start_date, end_date, dimensions (optional), and granularity parameters"
+    },
+    {
+      "name": "compute_period_comparison method",
+      "max_score": 8,
+      "description": "FinancialMetricsEngine exposes a compute_period_comparison() method (not a standalone function)"
+    },
+    {
+      "name": "DATE_TRUNC for time grouping",
+      "max_score": 10,
+      "description": "Time-series aggregation uses DATE_TRUNC with the granularity parameter (e.g. DATE_TRUNC('day', order_date)) rather than strftime or manual date truncation"
+    },
+    {
+      "name": "prior_period calculation",
+      "max_score": 10,
+      "description": "For compare_to='prior_period': prior period end is the day before current start, and prior period is of equal length to the current period"
+    },
+    {
+      "name": "prior_year calculation",
+      "max_score": 8,
+      "description": "For compare_to='prior_year': both prior start and end dates are offset by exactly 365 days (not calendar year subtraction)"
+    },
+    {
+      "name": "Variance output fields",
+      "max_score": 8,
+      "description": "compute_period_comparison() returns a dict with at minimum: kpi, current_value, prior_value, variance_absolute, and variance_pct"
+    },
+    {
+      "name": "NULLIF for pct calculation",
+      "max_score": 8,
+      "description": "Percentage variance calculation handles zero prior value using NULLIF or equivalent null-safe division"
+    },
+    {
+      "name": "Daily snapshot recommendation",
+      "max_score": 10,
+      "description": "Design notes or architecture doc mentions using daily snapshot tables rather than live transaction queries for dashboard loads"
+    },
+    {
+      "name": "Data freshness indicator",
+      "max_score": 10,
+      "description": "Code or design includes a data freshness check or indicator showing when data was last updated, rather than silently returning stale data"
+    },
+    {
+      "name": "Both absolute and pct variance",
+      "max_score": 8,
+      "description": "Period comparison output includes both absolute variance and percentage variance values (not just one)"
+    },
+    {
+      "name": "Raises on unknown compare_to",
+      "max_score": 4,
+      "description": "compute_period_comparison() raises a ValueError (or equivalent) for unrecognised compare_to values, not silently returning empty/wrong data"
+    }
+  ]
+}

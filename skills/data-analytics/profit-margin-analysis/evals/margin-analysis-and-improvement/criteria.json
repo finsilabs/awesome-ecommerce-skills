@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent prioritizes contribution margin as the primary metric, applies four-tier product segmentation with the correct dimension labels, uses a 13-month rolling window for trend analysis, compares channels/products on contribution (not gross) margin, flags negative-margin SKUs, builds a sensitivity model with the specified scenarios, ranks improvement opportunities by potential dollar gain (not just margin gap), and shows both percentage and absolute dollar metrics together.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Contribution margin primary metric",
+      "max_score": 10,
+      "description": "The analysis uses contribution margin (after direct marketing costs) as the primary profitability metric in the tier classification and improvement ranking — not just gross margin"
+    },
+    {
+      "name": "4-tier segmentation labels",
+      "max_score": 12,
+      "description": "The tier report uses exactly four tiers corresponding to high/low margin × high/low volume combinations; labels match Stars, Workhorses, Niche, and Dogs (or equivalent descriptions of all four quadrants)"
+    },
+    {
+      "name": "Trend window: 13 months",
+      "max_score": 10,
+      "description": "The trend report covers 13 months of data (current month plus the 12 prior months), not just 12 months or an arbitrary window"
+    },
+    {
+      "name": "Year-over-year comparison",
+      "max_score": 8,
+      "description": "The trend data includes a year-over-year (same month prior year) comparison column or annotation — not just month-over-month"
+    },
+    {
+      "name": "Negative margin flag printed",
+      "max_score": 10,
+      "description": "The script prints to stdout the identities of any SKUs whose contribution margin is negative over the most recent 30-day equivalent window"
+    },
+    {
+      "name": "Sensitivity: 3 scenarios",
+      "max_score": 12,
+      "description": "The sensitivity table includes all three scenarios: a 10% price increase, a 5% COGS reduction, AND a $2 shipping cost reduction — not just one or two"
+    },
+    {
+      "name": "Improvement: ranked by dollar gain",
+      "max_score": 10,
+      "description": "The improvement opportunities CSV is sorted by potential absolute profit gain in dollars (descending), not by margin gap percentage"
+    },
+    {
+      "name": "Priority classification: high/medium/low",
+      "max_score": 8,
+      "description": "The improvement opportunities CSV includes a priority column with 'high', 'medium', or 'low' values based on the size of potential profit gain"
+    },
+    {
+      "name": "Absolute + relative metrics together",
+      "max_score": 10,
+      "description": "At least one output file (tier_report or improvement_opportunities) shows both a margin percentage column and an absolute dollar profit column side by side for the same SKU"
+    },
+    {
+      "name": "Methodology documented",
+      "max_score": 10,
+      "description": "The analysis_notes.md file documents at least two methodology or assumption choices (e.g., how tiers were defined, what cost base was used for contribution margin, seasonality handling)"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements payment recording with atomic transactions, correct full-payment detection (floating point tolerance), credit hold lifting on full payment, validation of voided invoices, and credit limit enforcement at B2B checkout.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Atomic transaction",
+      "max_score": 10,
+      "description": "Payment recording uses a single database transaction that atomically creates the payment record, updates invoice status, and adjusts customer AR balance in one operation"
+    },
+    {
+      "name": "Floating point tolerance",
+      "max_score": 10,
+      "description": "The full-payment check uses a tolerance of 0.005 (e.g. newAmountPaid >= total_amount - 0.005) rather than strict equality"
+    },
+    {
+      "name": "Partial payment status",
+      "max_score": 8,
+      "description": "Invoice is set to 'partially_paid' status when the amount paid is less than the total (not 'overdue' or some other status)"
+    },
+    {
+      "name": "last_payment_date update",
+      "max_score": 7,
+      "description": "customer_credit.last_payment_date is updated when a payment is recorded"
+    },
+    {
+      "name": "Decrement AR balance",
+      "max_score": 8,
+      "description": "customer_credit.current_balance is decremented by the payment amount (not set to a recalculated value or left unchanged)"
+    },
+    {
+      "name": "Credit hold lifted on full payment",
+      "max_score": 10,
+      "description": "When an invoice is fully paid, the system checks and conditionally lifts the customer's credit hold (only if no other overdue invoices remain)"
+    },
+    {
+      "name": "Void invoice guard",
+      "max_score": 8,
+      "description": "Attempting to record a payment against a voided invoice throws an error or returns an error response"
+    },
+    {
+      "name": "Do not modify total_amount",
+      "max_score": 8,
+      "description": "Payment recording updates amount_paid (and status) but does NOT modify the total_amount field to reflect the payment"
+    },
+    {
+      "name": "credit-check uses available_credit",
+      "max_score": 8,
+      "description": "The credit check module reads available_credit (or computes credit_limit - current_balance) to determine if an order can proceed"
+    },
+    {
+      "name": "Order blocked at credit limit",
+      "max_score": 8,
+      "description": "The credit check blocks or flags orders where the order amount would cause the customer to exceed their credit limit"
+    },
+    {
+      "name": "Immediate status update",
+      "max_score": 7,
+      "description": "The notes or code make clear that invoice status is updated immediately when a payment is recorded, not deferred to a nightly job"
+    },
+    {
+      "name": "paid_at timestamp on full payment",
+      "max_score": 8,
+      "description": "When an invoice becomes fully paid, the paid_at timestamp is set on the invoice record"
+    }
+  ]
+}

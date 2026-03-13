@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent correctly implements multi-source recommendation scoring with specific weights, category diversity constraints, popular-item fallback, A/B test assignment via MD5 hash, correct A/B metrics and graduation criteria, serendipity slots, and privacy/GDPR opt-out as specified by the personalization skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "PDP signal weight 2.0",
+      "max_score": 7,
+      "description": "When the current product context (PDP) is used, similar-item scores are multiplied by 2.0 (not 1.0, 1.5, or 3.0)"
+    },
+    {
+      "name": "Recent-views signal weight 1.0",
+      "max_score": 7,
+      "description": "Scores from items similar to recent views are multiplied by 1.0 (no additional multiplier beyond the similarity score itself)"
+    },
+    {
+      "name": "Category affinity signal weight 0.1",
+      "max_score": 7,
+      "description": "Category-affinity-based candidate scores are multiplied by 0.1 (not 0.5, 1.0, or omitted)"
+    },
+    {
+      "name": "Recent views scope: top 10",
+      "max_score": 7,
+      "description": "Only the most recent 10 viewed products are used as seeds when sourcing candidates from recent views (not all views, not 5 or 20)"
+    },
+    {
+      "name": "Category scope: top 5",
+      "max_score": 6,
+      "description": "Only the top 5 categories by affinity score are used when generating category-based candidates (not top 3 or top 10)"
+    },
+    {
+      "name": "Exclude viewed and cart items",
+      "max_score": 7,
+      "description": "The final ranked list filters out products that appear in the user's recentViews AND products currently in the cart"
+    },
+    {
+      "name": "Popular-items fallback",
+      "max_score": 7,
+      "description": "When fewer personalized candidates than the requested limit exist, the result is topped up from a popular-products list"
+    },
+    {
+      "name": "Max 4 items per category diversity",
+      "max_score": 8,
+      "description": "The recommendation result enforces a maximum of 4 items from any single category (not 3 or 5 or unconstrained)"
+    },
+    {
+      "name": "20% serendipity slots",
+      "max_score": 7,
+      "description": "Approximately 20% of recommendation slots are reserved for serendipity (trending, new arrivals, or items from unexplored categories)"
+    },
+    {
+      "name": "MD5 hash for A/B assignment",
+      "max_score": 8,
+      "description": "The experiment.ts module uses MD5 hashing of userId to assign users to variants deterministically (not random, not SHA-256)"
+    },
+    {
+      "name": "50/50 experiment split",
+      "max_score": 7,
+      "description": "The A/B assignment splits users 50/50 into 'control' and 'personalized' variants (bucket < 50 = control)"
+    },
+    {
+      "name": "A/B metrics: CVR, AOV, RPV",
+      "max_score": 7,
+      "description": "design-notes.md mentions tracking conversion rate, average order value (AOV), and revenue per visitor as the primary A/B test metrics"
+    },
+    {
+      "name": "Graduation criteria: p<0.05 and 2+ weeks",
+      "max_score": 7,
+      "description": "design-notes.md states that personalization graduates to 100% only when p < 0.05 statistical significance is achieved over at least 2 weeks"
+    },
+    {
+      "name": "Privacy opt-out and data deletion",
+      "max_score": 8,
+      "description": "opt-out.ts implements user opt-out from personalization AND a GDPR-compliant user profile deletion function"
+    }
+  ]
+}

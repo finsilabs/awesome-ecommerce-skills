@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements the early payment discount eligibility check correctly (using issue_date + discount_days as the cutoff) and computes the annualized implied cost of credit using the correct formula from the payment-terms-optimization skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Discount cutoff calculation",
+      "max_score": 12,
+      "description": "Discount eligibility is determined by comparing paymentDate against (invoice.issue_date + terms.discount_days), not against due_date or any other date"
+    },
+    {
+      "name": "Strictly on or before cutoff",
+      "max_score": 8,
+      "description": "Discount applies when paymentDate <= discountCutoffDate (inclusive), and returns null when paymentDate > cutoffDate"
+    },
+    {
+      "name": "Discount amount calculation",
+      "max_score": 8,
+      "description": "Discount amount = invoice.total_amount * (discount_pct / 100); amount_due = total_amount - discount_amount"
+    },
+    {
+      "name": "EPD return shape",
+      "max_score": 8,
+      "description": "When eligible, the return object includes: eligible: true, discount_pct, discount_amount, amount_due_with_discount, discount_expires"
+    },
+    {
+      "name": "Null for zero-discount terms",
+      "max_score": 6,
+      "description": "calculateEarlyPaymentDiscount returns null when the terms have discount_pct === 0 or no discount terms exist"
+    },
+    {
+      "name": "Annualized cost formula",
+      "max_score": 15,
+      "description": "computeImpliedCostOfCredit uses the formula: (discountRate / (1 - discountRate)) * (365 / deferralDays) where deferralDays = net_days - discount_days"
+    },
+    {
+      "name": "Deferral days calculation",
+      "max_score": 8,
+      "description": "deferralDays is computed as net_days minus discount_days (not just net_days)"
+    },
+    {
+      "name": "2/10 net-30 APR near 36.7%",
+      "max_score": 12,
+      "description": "The computed annualized cost for '2_10_net_30' terms is approximately 36.7% (within 0.5% tolerance)"
+    },
+    {
+      "name": "Implied cost return shape",
+      "max_score": 8,
+      "description": "computeImpliedCostOfCredit returns an object with terms_code, discount_pct, deferral_days, and annualized_cost_pct (or equivalent_apr)"
+    },
+    {
+      "name": "Results file present",
+      "max_score": 7,
+      "description": "results.txt exists and contains output including at least one eligible discount case and the annualized cost for at least two discount-bearing terms"
+    },
+    {
+      "name": "Standard terms included",
+      "max_score": 8,
+      "description": "PAYMENT_TERMS configuration includes at minimum 2_10_net_30, 1_10_net_30, and 2_10_net_60"
+    }
+  ]
+}

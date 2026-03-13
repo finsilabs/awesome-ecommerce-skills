@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements revenue variance decomposition using the volume-effect/price-effect methodology, with correct filtering thresholds, SQL safety patterns, and result ordering.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Volume effect formula",
+      "max_score": 12,
+      "description": "Volume effect is calculated as (current_units - prior_units) × prior_ASP — not current ASP or average ASP"
+    },
+    {
+      "name": "Price effect formula",
+      "max_score": 12,
+      "description": "Price effect is calculated as prior_units × (current_ASP - prior_ASP) — not current units"
+    },
+    {
+      "name": "Variance minimum filter",
+      "max_score": 8,
+      "description": "Rows with total_variance absolute value below $1,000 are excluded from the output"
+    },
+    {
+      "name": "Effect minimum threshold",
+      "max_score": 8,
+      "description": "Volume and price effects are only reported in explanations when their absolute value exceeds $500"
+    },
+    {
+      "name": "NULLIF for division",
+      "max_score": 8,
+      "description": "Any SQL expressions dividing revenue by unit counts use NULLIF to avoid division-by-zero errors"
+    },
+    {
+      "name": "Order by absolute variance",
+      "max_score": 8,
+      "description": "Results are ordered by absolute variance descending (largest movers first)"
+    },
+    {
+      "name": "Result count limit",
+      "max_score": 8,
+      "description": "Output is limited to at most 20 channel/category combinations"
+    },
+    {
+      "name": "Channel and category breakdown",
+      "max_score": 8,
+      "description": "Variance is broken down by both channel and category dimensions (not just one dimension)"
+    },
+    {
+      "name": "Both absolute and pct shown",
+      "max_score": 8,
+      "description": "Output or explanation includes both absolute dollar variance and percentage variance — not just one"
+    },
+    {
+      "name": "Human-readable explanation",
+      "max_score": 10,
+      "description": "Output includes a plain-language explanation string per row (e.g. 'DTC / Apparel decreased by $12,400. Drivers: 230 lower units...')"
+    },
+    {
+      "name": "COALESCE for new segments",
+      "max_score": 10,
+      "description": "Query handles new channel/category combinations (present in current period but not prior) using COALESCE or LEFT JOIN to avoid null comparisons"
+    }
+  ]
+}

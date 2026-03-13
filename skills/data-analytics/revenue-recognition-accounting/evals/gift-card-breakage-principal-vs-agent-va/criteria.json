@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly applies variable consideration constraints for returns, proportional breakage recognition for gift cards (not at sale), and net commission recognition for marketplace/agent transactions — with correct accounting rationale for each treatment.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Gift card revenue at redemption",
+      "max_score": 10,
+      "description": "Gift card proceeds (TXN002) are NOT recognized as revenue at the time of sale — the function records them to a deferred revenue liability, and revenue is only recognized upon redemption"
+    },
+    {
+      "name": "Proportional breakage recognition",
+      "max_score": 10,
+      "description": "Gift card breakage is recognized proportionally as redemptions occur (e.g., recognizing 8% breakage pro-rated to the redeemed amount), NOT deferred until a remote-likelihood threshold"
+    },
+    {
+      "name": "Breakage not at sale",
+      "max_score": 8,
+      "description": "No revenue (including breakage) is recorded in recognize_gift_card_redemption when called with zero redemptions — breakage accrues only alongside actual redemptions"
+    },
+    {
+      "name": "Variable consideration constraint",
+      "max_score": 12,
+      "description": "Direct sale recognition applies a variable consideration constraint: recognized revenue is reduced by the expected return amount (sale_amount × return_rate) and a refund_liability is recorded for that amount — not reversing revenue after the fact"
+    },
+    {
+      "name": "Expected value method",
+      "max_score": 8,
+      "description": "The refund/return estimate uses a portfolio-level expected value approach (applying a rate to the transaction amount), not a transaction-by-transaction most-likely-amount approach"
+    },
+    {
+      "name": "Agent net commission only",
+      "max_score": 12,
+      "description": "recognize_marketplace_transaction returns only the commission amount (gross × commission_rate = $30 for TXN004), NOT the gross transaction amount ($200)"
+    },
+    {
+      "name": "Principal control rationale",
+      "max_score": 8,
+      "description": "accounting_memo.md explains that Bellwether is an agent for marketplace transactions because it does NOT control the inventory before transfer to the customer"
+    },
+    {
+      "name": "Gift card memo rationale",
+      "max_score": 8,
+      "description": "accounting_memo.md explains that gift card proceeds must be deferred because the performance obligation (redemption) has not yet been satisfied at the time of sale"
+    },
+    {
+      "name": "Variable consideration memo rationale",
+      "max_score": 8,
+      "description": "accounting_memo.md explains that variable consideration (return rate) must be estimated and constrained from day one, rather than reversing revenue after returns occur"
+    },
+    {
+      "name": "Correct sample output",
+      "max_score": 8,
+      "description": "sample_calculations.py produces output showing: direct sales TXN001 recognized revenue < $500 (approximately $440 after 12% return reserve), marketplace TXN004 recognized revenue = $30, and no revenue recognized for TXN002 (gift card issuance)"
+    },
+    {
+      "name": "Decimal arithmetic",
+      "max_score": 8,
+      "description": "Monetary calculations in revenue_policy.py use the `decimal.Decimal` type (not float) for all monetary arithmetic"
+    }
+  ]
+}

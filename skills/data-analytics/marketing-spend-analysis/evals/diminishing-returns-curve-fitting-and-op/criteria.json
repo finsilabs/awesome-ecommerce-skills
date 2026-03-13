@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent fits a Michaelis-Menten saturation curve to weekly spend/revenue data, computes marginal ROAS via the correct derivative formula, uses a target marginal ROAS of 1.5 to find optimal spend, and generates a budget recommendation based on comparing current vs optimal spend.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Michaelis-Menten curve used",
+      "max_score": 14,
+      "description": "Uses the saturation curve formula Revenue = (a * Spend) / (b + Spend) to model diminishing returns — NOT a linear or logarithmic model"
+    },
+    {
+      "name": "scipy curve_fit used",
+      "max_score": 8,
+      "description": "Uses scipy.optimize.curve_fit (or equivalent nonlinear least-squares) to fit the saturation curve parameters"
+    },
+    {
+      "name": "Marginal ROAS via derivative",
+      "max_score": 14,
+      "description": "Computes marginal ROAS at current spend using the analytical derivative: (a * b) / ((b + current_spend) ** 2)"
+    },
+    {
+      "name": "Target marginal ROAS = 1.5",
+      "max_score": 12,
+      "description": "Uses target_marginal_roas = 1.5 (not 1.0, 2.0, or another value) when computing optimal spend"
+    },
+    {
+      "name": "Optimal spend formula",
+      "max_score": 14,
+      "description": "Computes optimal_spend = sqrt(a * b / target_marginal_roas) - b"
+    },
+    {
+      "name": "Overspending detection",
+      "max_score": 8,
+      "description": "Explicitly flags whether the channel is overspending (current_spend > optimal_spend)"
+    },
+    {
+      "name": "Spend recommendation output",
+      "max_score": 8,
+      "description": "Outputs one of 'reduce', 'maintain', or 'increase' as the spend recommendation based on comparing current spend to optimal spend"
+    },
+    {
+      "name": "Saturation parameters reported",
+      "max_score": 6,
+      "description": "Reports the fitted saturation_revenue (parameter a) and half_saturation_spend (parameter b) in the output"
+    },
+    {
+      "name": "Curve fit error handling",
+      "max_score": 8,
+      "description": "Handles the case where curve fitting fails (e.g., RuntimeError from curve_fit) with an informative error message rather than a crash"
+    },
+    {
+      "name": "Visualization or tabular output",
+      "max_score": 8,
+      "description": "Produces either a plot of the saturation curve OR a table showing projected revenue/marginal ROAS at multiple spend levels"
+    }
+  ]
+}

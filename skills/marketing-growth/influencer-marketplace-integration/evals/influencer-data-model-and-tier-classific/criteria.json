@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct InfluencerProfile data model structure with the right field types, platform-specific metric shapes, and exact tier classification thresholds as defined in the skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "handle field type",
+      "max_score": 8,
+      "description": "The handle field is typed as a Record with exactly the keys 'instagram', 'tiktok', and 'youtube', each mapping to string or undefined"
+    },
+    {
+      "name": "niche as array",
+      "max_score": 6,
+      "description": "The niche field is typed as string[] (an array), not a single string"
+    },
+    {
+      "name": "four tier values",
+      "max_score": 8,
+      "description": "The tier field uses exactly the four string literal values: 'nano', 'micro', 'macro', 'mega'"
+    },
+    {
+      "name": "nano threshold",
+      "max_score": 8,
+      "description": "The tier classification function returns 'nano' for follower counts below 10,000"
+    },
+    {
+      "name": "micro threshold",
+      "max_score": 8,
+      "description": "The tier classification function returns 'micro' for follower counts from 10,000 up to (but not including) 100,000"
+    },
+    {
+      "name": "macro threshold",
+      "max_score": 8,
+      "description": "The tier classification function returns 'macro' for follower counts from 100,000 up to (but not including) 1,000,000"
+    },
+    {
+      "name": "per-platform metrics",
+      "max_score": 10,
+      "description": "Instagram and TikTok metrics include both engagementRate and avgViews; YouTube metrics use subscribers (not followers) and avgViews (no engagementRate field)"
+    },
+    {
+      "name": "status values",
+      "max_score": 8,
+      "description": "The status field uses exactly five string literal values: 'prospect', 'contacted', 'active', 'paused', 'blacklisted'"
+    },
+    {
+      "name": "demographics shape",
+      "max_score": 8,
+      "description": "The demographics field contains topCountry (string), ageRange (string), and genderSplit (Record<string, number>)"
+    },
+    {
+      "name": "tags field present",
+      "max_score": 6,
+      "description": "The profile includes a tags field typed as string[]"
+    },
+    {
+      "name": "notes field present",
+      "max_score": 6,
+      "description": "The profile includes a notes field typed as string"
+    },
+    {
+      "name": "four demo influencers",
+      "max_score": 16,
+      "description": "The demo or sample section includes at least 4 influencer instances, each in a different tier (nano, micro, macro, mega)"
+    }
+  ]
+}

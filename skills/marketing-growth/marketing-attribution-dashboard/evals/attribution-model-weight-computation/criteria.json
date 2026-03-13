@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the attribution model engine with the correct set of models, the specified time-decay half-life, the position-based weight distribution, and ensures weights always sum to 1.0. Also checks that position-based is the default model and edge cases (n=1, n=2) are handled correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "All five models present",
+      "max_score": 10,
+      "description": "Implementation supports all five model types: last-touch, first-touch, linear, time-decay, and position-based (code contains all five identifiers/cases)"
+    },
+    {
+      "name": "Time-decay half-life value",
+      "max_score": 10,
+      "description": "Time-decay model uses a half-life of exactly 7 days (code contains 7 * 24 * 60 * 60 * 1000 or equivalent 604800000 milliseconds)"
+    },
+    {
+      "name": "Time-decay formula",
+      "max_score": 8,
+      "description": "Time-decay weights are computed using Math.pow(0.5, ageMs / halfLifeMs) or an equivalent exponential decay formula with base 0.5"
+    },
+    {
+      "name": "Position-based 40/40/20 split",
+      "max_score": 10,
+      "description": "Position-based model assigns 0.4 to the first touchpoint, 0.4 to the last touchpoint, and splits the remaining 0.2 equally among middle touchpoints"
+    },
+    {
+      "name": "Position-based n=1 edge case",
+      "max_score": 6,
+      "description": "Position-based model returns [1] when there is only a single touchpoint"
+    },
+    {
+      "name": "Position-based n=2 edge case",
+      "max_score": 6,
+      "description": "Position-based model returns [0.5, 0.5] when there are exactly two touchpoints"
+    },
+    {
+      "name": "Default model is position-based",
+      "max_score": 10,
+      "description": "The default attribution model value, wherever a default is set (function parameter default, useState default, or exported constant), is 'position-based' — NOT 'linear' or 'last-touch'"
+    },
+    {
+      "name": "Weights sum to 1.0",
+      "max_score": 10,
+      "description": "demo-output.txt contains evidence (console output or assertion) that weights sum to 1.0 (within floating-point tolerance) for all model/order combinations tested"
+    },
+    {
+      "name": "AttributedConversion structure",
+      "max_score": 10,
+      "description": "attributeConversion output includes creditFraction and creditAmount per touchpoint (both fields present in returned credits array)"
+    },
+    {
+      "name": "Zero-touchpoint guard",
+      "max_score": 6,
+      "description": "attributeConversion handles the case of zero touchpoints (returns an empty credits array rather than throwing)"
+    },
+    {
+      "name": "Demo output file exists",
+      "max_score": 8,
+      "description": "A file named demo-output.txt is present and contains weight/credit output for multiple model combinations"
+    },
+    {
+      "name": "Linear model correctness",
+      "max_score": 6,
+      "description": "Linear model assigns equal weight 1/n to every touchpoint (code contains 1 / n or equivalent)"
+    }
+  ]
+}

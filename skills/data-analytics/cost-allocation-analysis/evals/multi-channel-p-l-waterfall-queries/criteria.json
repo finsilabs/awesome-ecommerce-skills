@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent builds the correct multi-channel P&L waterfall SQL with time-effective COGS lookups, overhead revenue-share allocation, marketing CPA-based allocation, marketplace fees modeled as a cost layer, NULLIF for safe division, and exclusion of cancelled orders.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Full waterfall sequence",
+      "max_score": 10,
+      "description": "Query output includes all major line items in sequence: gross_revenue, discounts or net_revenue, cogs, gross_profit, fulfillment_costs, marketing_costs, overhead_costs, and a final net_margin or net_contribution column"
+    },
+    {
+      "name": "Time-effective COGS join",
+      "max_score": 12,
+      "description": "The COGS calculation joins product_costs using both effective_from and effective_to conditions against the order date (point-in-time cost lookup), not just the latest cost record"
+    },
+    {
+      "name": "LATERAL subquery for COGS",
+      "max_score": 8,
+      "description": "The SQL uses LEFT JOIN LATERAL (or equivalent correlated subquery) to look up the product cost effective at the order date"
+    },
+    {
+      "name": "Marketplace fees as cost layer",
+      "max_score": 12,
+      "description": "Amazon (and/or Etsy/marketplace) fees are modeled as a separate cost deduction in the contribution margin calculation — NOT subtracted from revenue as a discount"
+    },
+    {
+      "name": "Marketing cost via CPA",
+      "max_score": 10,
+      "description": "Marketing costs are allocated to orders via a cost-per-acquired-order (CPA) calculation — dividing channel spend by orders attributed — and joined at the order level, not applied as a flat rate"
+    },
+    {
+      "name": "Overhead by revenue share",
+      "max_score": 10,
+      "description": "Overhead costs are pulled from order_overhead_allocations (or computed using total overhead / total revenue ratio applied to each order's revenue) rather than being omitted or split evenly per order"
+    },
+    {
+      "name": "Cancelled orders excluded",
+      "max_score": 8,
+      "description": "Query explicitly filters out cancelled orders using a condition equivalent to: status NOT IN ('cancelled')"
+    },
+    {
+      "name": "NULLIF in percentage calc",
+      "max_score": 8,
+      "description": "net_margin_pct (or any margin percentage column) uses NULLIF in the denominator to prevent division-by-zero errors"
+    },
+    {
+      "name": "query_notes marketplace rationale",
+      "max_score": 11,
+      "description": "query_notes.md explicitly states that marketplace fees are treated as a cost layer rather than a revenue discount"
+    },
+    {
+      "name": "query_notes cancelled order treatment",
+      "max_score": 11,
+      "description": "query_notes.md mentions that cancelled orders are excluded from all aggregations"
+    }
+  ]
+}

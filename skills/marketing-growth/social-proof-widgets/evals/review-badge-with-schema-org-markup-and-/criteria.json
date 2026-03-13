@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent implements the review badge with correct schema.org structured data and server-rendering rationale, returns empty for zero reviews, builds stars correctly, and implements the stock indicator with the exact numeric thresholds from the skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Empty string for zero reviews",
+      "max_score": 8,
+      "description": "renderReviewBadge returns an empty string (or equivalent no-output) when reviewCount === 0"
+    },
+    {
+      "name": "Stars with Math.round",
+      "max_score": 8,
+      "description": "The number of filled stars is determined by Math.round(avgRating), not Math.floor or Math.ceil"
+    },
+    {
+      "name": "5 star spans",
+      "max_score": 6,
+      "description": "The star display renders exactly 5 star elements (spans or equivalent), with filled vs empty distinction"
+    },
+    {
+      "name": "schema.org AggregateRating itemscope",
+      "max_score": 10,
+      "description": "The review badge HTML includes itemscope and itemtype=\"https://schema.org/AggregateRating\""
+    },
+    {
+      "name": "itemprop reviewCount",
+      "max_score": 8,
+      "description": "The review count element uses itemprop=\"reviewCount\""
+    },
+    {
+      "name": "itemprop ratingValue",
+      "max_score": 8,
+      "description": "The average rating is marked up with itemprop=\"ratingValue\" (via a meta tag or element attribute)"
+    },
+    {
+      "name": "bestRating=5",
+      "max_score": 6,
+      "description": "itemprop=\"bestRating\" with content=\"5\" is included in the badge markup"
+    },
+    {
+      "name": "Server-side rationale",
+      "max_score": 8,
+      "description": "widget-spec.md explains that the review badge should be server-rendered (not client-side only) for Google/search-engine indexing or rich snippet eligibility"
+    },
+    {
+      "name": "Sold-out tier",
+      "max_score": 5,
+      "description": "renderStockIndicator returns an out-of-stock message when stockLevel === 0"
+    },
+    {
+      "name": "Critical tier threshold ≤3",
+      "max_score": 8,
+      "description": "renderStockIndicator shows a 'only N left' or urgency message for stockLevel values 1, 2, and 3 (the critical tier cutoff is exactly 3)"
+    },
+    {
+      "name": "Low tier threshold ≤10",
+      "max_score": 8,
+      "description": "renderStockIndicator shows a 'low stock' message for stockLevel values 4–10 (the low tier cutoff is exactly 10)"
+    },
+    {
+      "name": "Empty above threshold",
+      "max_score": 6,
+      "description": "renderStockIndicator returns an empty string (or no output) when stockLevel > 10"
+    },
+    {
+      "name": "Numeric interpolation only",
+      "max_score": 5,
+      "description": "The stock indicator HTML only interpolates the numeric stockLevel value — no user-input strings are interpolated into the markup"
+    },
+    {
+      "name": "Visitor threshold noted",
+      "max_score": 6,
+      "description": "widget-spec.md or trust-widgets.ts references or documents that a visitor counter should only be displayed when the count exceeds a minimum threshold (e.g. 5)"
+    }
+  ]
+}

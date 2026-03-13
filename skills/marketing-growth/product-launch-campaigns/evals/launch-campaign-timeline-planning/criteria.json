@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent produces a launch plan with the correct three-phase structure, the specific pre-launch and post-launch touchpoint timing, influencer seeding lead time, waitlist targets, VIP early access timing, and post-launch content activities.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Three-phase structure",
+      "max_score": 6,
+      "description": "Plan explicitly organizes activities into three phases: a pre-launch phase, a launch day phase, and a post-launch phase"
+    },
+    {
+      "name": "Pre-launch starts T-21",
+      "max_score": 8,
+      "description": "Pre-launch phase begins at T-21 (21 days before launch) with a teaser communication"
+    },
+    {
+      "name": "T-14 reveal and influencer seeding",
+      "max_score": 8,
+      "description": "Plan includes a product reveal email or announcement at T-14 AND influencer seeding packages at T-14"
+    },
+    {
+      "name": "T-7 social content",
+      "max_score": 6,
+      "description": "Plan includes social content (TikTok and/or Instagram) going live at T-7"
+    },
+    {
+      "name": "T-3 paid retargeting",
+      "max_score": 8,
+      "description": "Paid social retargeting (targeting email list and/or site visitors) is scheduled to start at T-3"
+    },
+    {
+      "name": "T-1 SMS alert",
+      "max_score": 6,
+      "description": "An SMS notification to the SMS list is scheduled for T-1 (day before launch)"
+    },
+    {
+      "name": "VIP 24h before public",
+      "max_score": 10,
+      "description": "VIP or loyalty-tier customers receive early access exactly 24 hours before the public launch (not same day, not 48h)"
+    },
+    {
+      "name": "Influencer seeding lead time",
+      "max_score": 8,
+      "description": "Plan recommends seeding influencers at least 3 weeks before launch (or explicitly 3-4 weeks)"
+    },
+    {
+      "name": "Waitlist size target",
+      "max_score": 6,
+      "description": "Plan mentions a waitlist target of 2,000+ signups or recommends starting waitlist at least 2 weeks before launch"
+    },
+    {
+      "name": "Post-launch social proof email",
+      "max_score": 8,
+      "description": "Post-launch plan includes a 'sold X units' or first-week social proof email around T+7"
+    },
+    {
+      "name": "UGC gallery at T+21",
+      "max_score": 6,
+      "description": "Post-launch plan includes publishing a review compilation or UGC gallery around T+21"
+    },
+    {
+      "name": "T+30 retrospective",
+      "max_score": 6,
+      "description": "Plan includes a post-launch metrics review or retrospective at T+30"
+    },
+    {
+      "name": "Inventory buffer mentioned",
+      "max_score": 6,
+      "description": "Plan mentions having a back-order or inventory buffer mechanism for the case where demand exceeds forecasts"
+    },
+    {
+      "name": "Influencer embargo date",
+      "max_score": 8,
+      "description": "Influencer brief requirements mention including an embargo date or content release date"
+    }
+  ]
+}

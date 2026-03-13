@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements an RFM scoring pipeline using the correct data model, quintile-based scoring algorithm, score inversion for recency, and the prescribed segment classification logic and labels.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "SubscriberProfile data model",
+      "max_score": 8,
+      "description": "Defines a SubscriberProfile (or equivalent) type/interface that includes all three RFM-related fields: lastOrderDate (or equivalent recency), orderCount (or equivalent frequency), and totalRevenue (or equivalent monetary)"
+    },
+    {
+      "name": "Engagement fields in model",
+      "max_score": 7,
+      "description": "Data model includes openRate computed as totalOpened / totalSent (or equivalent), and clickRate computed as totalClicked / totalSent"
+    },
+    {
+      "name": "Quintile breakpoint computation",
+      "max_score": 10,
+      "description": "Scoring uses quintile breakpoints (percentiles at 20%, 40%, 60%, 80%) rather than manually chosen absolute thresholds to split the distribution"
+    },
+    {
+      "name": "R score inversion",
+      "max_score": 10,
+      "description": "Recency score is inverted so that a lower number of days since last order yields a higher score (e.g., score 5 for most recent)"
+    },
+    {
+      "name": "Scores on 1-5 scale",
+      "max_score": 8,
+      "description": "R, F, and M dimensions are each scored on a 1–5 integer scale"
+    },
+    {
+      "name": "Champions classification rule",
+      "max_score": 7,
+      "description": "Segment 'champions' is assigned when r >= 4 AND f >= 4 AND m >= 4"
+    },
+    {
+      "name": "cant-lose classification rule",
+      "max_score": 7,
+      "description": "Segment 'cant-lose' (or equivalent label) is assigned for subscribers with low recency score (r <= 2) but medium-high monetary score (m >= 3)"
+    },
+    {
+      "name": "All 8 RFM segment labels present",
+      "max_score": 8,
+      "description": "Code defines or uses all 8 segment labels: 'champions', 'loyal', 'potential-loyal', 'new-customers', 'at-risk', 'cant-lose', 'hibernating', 'lost'"
+    },
+    {
+      "name": "marketingConsent filter",
+      "max_score": 8,
+      "description": "RFM computation only processes subscribers where marketingConsent is true and unsubscribedAt is null/absent"
+    },
+    {
+      "name": "Currency normalization",
+      "max_score": 9,
+      "description": "Monetary values are normalized to a single base currency before computing the M score (e.g., the code handles or documents multi-currency normalization)"
+    },
+    {
+      "name": "Nightly recompute scheduling",
+      "max_score": 9,
+      "description": "The solution includes or documents a scheduled/nightly job to recompute RFM scores (e.g., cron, scheduled task, or comment specifying daily refresh)"
+    },
+    {
+      "name": "Bulk upsert output",
+      "max_score": 9,
+      "description": "Computed RFM scores are written to a persistent store (database upsert, output file, or returned collection) rather than just logged to console"
+    }
+  ]
+}

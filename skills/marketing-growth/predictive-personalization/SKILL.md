@@ -1,12 +1,12 @@
 ---
 name: predictive-personalization
-description: "Use machine learning models to predict customer preferences and dynamically personalize product recommendations, search results, and content across your store"
+description: "Use machine learning models to predict customer preferences and deliver personalized product recommendations, content, and offers based on behavioral signals"
 category: marketing-growth
 risk: safe
 source: curated
 date_added: "2026-03-12"
-tags: [personalization, machine-learning, recommendations, ai, customer-experience]
-triggers: ["personalize recommendations", "predict customer preferences", "ML product recommendations", "dynamic personalization", "personalized shopping experience"]
+tags: [personalization, ml, recommendations]
+triggers: ["add AI personalization", "predictive recommendations"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
 platforms: [platform-agnostic]
 difficulty: advanced

@@ -1,0 +1,10 @@
+{
+  "name": "finsi/lifecycle-marketing-automation",
+  "version": "0.1.0",
+  "summary": "Map customer journey stages from first visit to loyal advocate with personalized messaging, triggered workflows, and segment-based campaign automation",
+  "skills": {
+    "lifecycle-marketing-automation": {
+      "path": "SKILL.md"
+    }
+  }
+}

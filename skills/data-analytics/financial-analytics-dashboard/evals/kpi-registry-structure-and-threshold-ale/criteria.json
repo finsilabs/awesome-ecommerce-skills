@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent builds a KPI registry with the correct structure and an alerting system that follows the prescribed severity/action model, threshold naming conventions, and sorting behavior.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Central KPI registry",
+      "max_score": 8,
+      "description": "Defines a single central KPI_REGISTRY dict (or equivalent named structure) rather than scattering metric definitions across the code"
+    },
+    {
+      "name": "Registry fields present",
+      "max_score": 8,
+      "description": "Each KPI entry in the registry includes at minimum: display_name, description, unit, category, thresholds, visualization, and granularity fields"
+    },
+    {
+      "name": "Threshold key naming",
+      "max_score": 8,
+      "description": "Threshold configs use the keys critical_low, warning_low, warning_high, and/or critical_high (not 'red'/'amber' or other custom names)"
+    },
+    {
+      "name": "Percentage thresholds as decimals",
+      "max_score": 8,
+      "description": "Percentage-based threshold values are expressed as decimal fractions (e.g. -0.20 for -20%), not as whole numbers (e.g. -20)"
+    },
+    {
+      "name": "Alert dataclass fields",
+      "max_score": 8,
+      "description": "Alert objects include all of: kpi_name, display_name, current_value, threshold_value, severity, message, action, and timestamp"
+    },
+    {
+      "name": "AlertSeverity enum",
+      "max_score": 8,
+      "description": "Uses an enum (or equivalent) with at least CRITICAL and WARNING severity levels, not plain strings"
+    },
+    {
+      "name": "Critical action message",
+      "max_score": 8,
+      "description": "CRITICAL alerts include an action field that instructs immediate escalation to leadership (not just 'monitor')"
+    },
+    {
+      "name": "Warning action messages",
+      "max_score": 8,
+      "description": "WARNING alerts include an action field that prescribes root-cause documentation or monitoring — not escalation"
+    },
+    {
+      "name": "Alerts sorted by severity",
+      "max_score": 10,
+      "description": "The evaluate_kpi_thresholds function (or equivalent) returns alerts sorted by severity"
+    },
+    {
+      "name": "Threshold calibration guidance",
+      "max_score": 10,
+      "description": "Threshold values are set relative to historical volatility, not arbitrarily tight (e.g. for a metric with ±8% normal volatility, warning >= ±15% and critical >= ±25%)"
+    },
+    {
+      "name": "Alert history logging",
+      "max_score": 8,
+      "description": "Code or schema includes logging/storing of alert history with at minimum: metric value, threshold, and timestamp fields"
+    },
+    {
+      "name": "Versioned thresholds",
+      "max_score": 8,
+      "description": "Threshold configurations are stored with effective dates (in a DB table, file, or data structure) rather than hardcoded constants"
+    }
+  ]
+}

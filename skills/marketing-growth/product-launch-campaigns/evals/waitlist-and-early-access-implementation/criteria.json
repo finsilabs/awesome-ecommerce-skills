@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the WaitlistEntry interface with correct fields, the joinWaitlist function with duplicate detection and position tracking, the grantEarlyAccess function restricted to correct loyalty tiers, and the correct approach to early access page security.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "earlyAccess boolean field",
+      "max_score": 8,
+      "description": "WaitlistEntry interface includes an 'earlyAccess' field typed as boolean"
+    },
+    {
+      "name": "source union type",
+      "max_score": 8,
+      "description": "WaitlistEntry interface includes a 'source' field typed as a union of 'email' | 'social' | 'organic' | 'paid'"
+    },
+    {
+      "name": "Optional date fields",
+      "max_score": 6,
+      "description": "WaitlistEntry includes optional 'notifiedAt' and 'convertedAt' date fields (marked optional with ?)"
+    },
+    {
+      "name": "Duplicate check before insert",
+      "max_score": 8,
+      "description": "joinWaitlist checks whether the email+productId combination already exists in the waitlist before creating a new entry"
+    },
+    {
+      "name": "Position as count+1",
+      "max_score": 8,
+      "description": "New waitlist entry position is assigned as the current count of entries for that product plus 1"
+    },
+    {
+      "name": "Confirmation email earlyAccessNote",
+      "max_score": 8,
+      "description": "Confirmation email sent on join includes an earlyAccessNote communicating that VIP members get 24h early access"
+    },
+    {
+      "name": "Gold and Platinum tiers only",
+      "max_score": 10,
+      "description": "grantEarlyAccess filters customers by loyaltyTier restricted to 'Gold' and 'Platinum' — no other tiers included"
+    },
+    {
+      "name": "Upsert for VIP entries",
+      "max_score": 8,
+      "description": "grantEarlyAccess uses upsert (not insert) when adding VIP customers to the waitlist so existing waitlist entries are updated rather than duplicated"
+    },
+    {
+      "name": "Batch email for VIPs",
+      "max_score": 8,
+      "description": "Early access notification is sent via a batch email function (not individual emails in a loop) to all VIP customers"
+    },
+    {
+      "name": "accessEndsAt 24h from grant",
+      "max_score": 8,
+      "description": "Early access email includes an accessEndsAt value set to 24 hours from the time the email is sent"
+    },
+    {
+      "name": "JWT token page gating",
+      "max_score": 10,
+      "description": "implementation-notes.md or code comments state the early access page should be secured with a signed JWT token delivered in the email link — NOT just a hidden/secret URL"
+    },
+    {
+      "name": "24h before public timing",
+      "max_score": 10,
+      "description": "implementation-notes.md or code documents that early access is granted 24 hours before the public launch"
+    }
+  ]
+}

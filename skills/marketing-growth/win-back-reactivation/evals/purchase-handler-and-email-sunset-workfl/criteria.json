@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly cancels win-back jobs on purchase and marks them converted, implements the 30-day sunset check with correct suppression fields, sends a resubscription notice before suppression, and applies proper cooldown and pre-send safety checks.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cancel steps 0–3",
+      "max_score": 10,
+      "description": "onOrderPaid removes all four possible win-back queue jobs (step 0 through step 3) using job IDs matching `winback-${customerId}-step${n}`"
+    },
+    {
+      "name": "Mark job converted",
+      "max_score": 10,
+      "description": "onOrderPaid updates the active win-back job to status 'converted', setting convertedAt and convertedOrderId"
+    },
+    {
+      "name": "Sunset: 30-day window",
+      "max_score": 9,
+      "description": "runSunsetWorkflow targets win-back jobs with status 'active' and createdAt older than 30 days"
+    },
+    {
+      "name": "Engagement check",
+      "max_score": 9,
+      "description": "For each job, the workflow queries email events for opens or clicks (type in ['open', 'click']) created after the job's start time"
+    },
+    {
+      "name": "Suppression fields",
+      "max_score": 10,
+      "description": "Non-engaged customers are updated with emailMarketingStatus: 'suppressed', suppressedAt, and suppressionReason: 'win-back-no-engagement'"
+    },
+    {
+      "name": "Resubscription notice sent",
+      "max_score": 10,
+      "description": "Before suppressing, the workflow sends an 'email-suppression-notice' email warning the customer that emails will stop unless they click to stay subscribed, including a resubscribeUrl"
+    },
+    {
+      "name": "Job marked completed",
+      "max_score": 8,
+      "description": "After processing (whether engaged or not), the win-back job is marked as status 'completed'"
+    },
+    {
+      "name": "Email status pre-send check",
+      "max_score": 9,
+      "description": "The process notes or code describes/implements checking the customer's emailMarketingStatus before each send to skip unsubscribed customers"
+    },
+    {
+      "name": "Last purchase pre-send check",
+      "max_score": 8,
+      "description": "The process notes or code describes/implements verifying the customer has not purchased recently before sending each win-back message (in the worker, not just at enqueue time)"
+    },
+    {
+      "name": "60-day cooldown noted",
+      "max_score": 9,
+      "description": "The process notes or code mentions a 60-day cooldown period before re-enrolling a customer in a new win-back cycle after a completed campaign"
+    },
+    {
+      "name": "Correct suppression reason string",
+      "max_score": 8,
+      "description": "The suppressionReason is set to the exact string 'win-back-no-engagement'"
+    }
+  ]
+}

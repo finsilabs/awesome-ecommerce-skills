@@ -1,0 +1,10 @@
+{
+  "name": "finsi/ugc-campaign-management",
+  "version": "0.1.0",
+  "summary": "Source, curate, and display user-generated content at scale with rights management, brand safety moderation, and trust-building social proof galleries",
+  "skills": {
+    "ugc-campaign-management": {
+      "path": "SKILL.md"
+    }
+  }
+}

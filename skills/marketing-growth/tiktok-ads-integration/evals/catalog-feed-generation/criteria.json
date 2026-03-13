@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent generates a TikTok Catalog Manager-compatible product feed with the correct file format (JSONL), the required fields, proper price formatting, and correct handling of description length and HTML stripping.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "JSONL format",
+      "max_score": 12,
+      "description": "Output feed file uses JSON Lines format (one JSON object per line, NOT a JSON array)"
+    },
+    {
+      "name": "Price format",
+      "max_score": 12,
+      "description": "The price field is formatted as 'XX.XX USD' with a space between the numeric amount and currency code (e.g. '29.99 USD', not '29.99USD' or '$29.99')"
+    },
+    {
+      "name": "sku_id field",
+      "max_score": 8,
+      "description": "Each feed item includes a 'sku_id' field (not 'id', 'product_id', or 'variant_id')"
+    },
+    {
+      "name": "availability values",
+      "max_score": 8,
+      "description": "The availability field uses exactly 'in stock' or 'out of stock' (not 'available', 'true/false', or similar)"
+    },
+    {
+      "name": "condition field",
+      "max_score": 6,
+      "description": "Each feed item includes a 'condition' field set to 'new'"
+    },
+    {
+      "name": "HTML stripped from description",
+      "max_score": 8,
+      "description": "HTML tags are removed from the product description before including it in the feed"
+    },
+    {
+      "name": "Description max 1000 chars",
+      "max_score": 8,
+      "description": "Description is truncated to a maximum of 1000 characters"
+    },
+    {
+      "name": "image_link field",
+      "max_score": 6,
+      "description": "Each feed item includes an 'image_link' field (not 'image', 'image_url', or 'photo')"
+    },
+    {
+      "name": "google_product_category field",
+      "max_score": 6,
+      "description": "Each feed item includes a 'google_product_category' field"
+    },
+    {
+      "name": "24-hour sync setup",
+      "max_score": 8,
+      "description": "Documentation or instructions mention setting up auto-sync every 24 hours in TikTok Business Center"
+    },
+    {
+      "name": "Business Center registration",
+      "max_score": 8,
+      "description": "Documentation references registering the feed URL in TikTok Business Center under Catalogs"
+    },
+    {
+      "name": "Per-variant rows",
+      "max_score": 10,
+      "description": "Products with multiple variants generate one row per variant (not one row per product)"
+    }
+  ]
+}

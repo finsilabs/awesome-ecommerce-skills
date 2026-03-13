@@ -1,0 +1,51 @@
+{
+  "context": "Tests whether the agent implements the matching engine with the correct two-strategy approach (reference ID first, then amount+date), uses fixed dollar tolerances rather than percentage tolerances, applies the correct tolerance values, uses a ±2-day date window for fallback matching, handles four match types, and never auto-resolves exceptions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Reference ID first strategy",
+      "max_score": 12,
+      "description": "The matcher attempts to match on reference/order ID as the primary strategy before falling back to amount-based matching"
+    },
+    {
+      "name": "Amount fallback strategy",
+      "max_score": 8,
+      "description": "The matcher includes a fallback strategy that matches on amount (within a tolerance) when reference ID matching fails"
+    },
+    {
+      "name": "Fixed dollar tolerances",
+      "max_score": 15,
+      "description": "Amount tolerances are expressed as fixed dollar amounts (e.g. 0.005 and 1.00), NOT as percentages of the transaction amount"
+    },
+    {
+      "name": "Exact match tolerance value",
+      "max_score": 10,
+      "description": "The exact match tolerance is $0.005 (half a cent) for floating-point rounding"
+    },
+    {
+      "name": "Fuzzy match tolerance value",
+      "max_score": 10,
+      "description": "The fuzzy/loose match tolerance is $1.00 for known processor rounding differences"
+    },
+    {
+      "name": "Date window for fallback",
+      "max_score": 10,
+      "description": "The amount-based fallback matching uses a ±2 day date window around the transaction date"
+    },
+    {
+      "name": "No auto-resolve exceptions",
+      "max_score": 15,
+      "description": "Unmatched transactions are flagged as exceptions but NOT automatically resolved or closed — DESIGN.md or code comments explicitly state that exceptions require human approval"
+    },
+    {
+      "name": "Match type classification",
+      "max_score": 10,
+      "description": "The engine classifies matches into distinct types (at minimum exact and fuzzy/partial), based on the delta between matched amounts"
+    },
+    {
+      "name": "Design doc explains tolerance rationale",
+      "max_score": 10,
+      "description": "DESIGN.md explains WHY fixed dollar tolerances are used rather than percentage tolerances (e.g. mentions scaling issues with large transactions)"
+    }
+  ]
+}

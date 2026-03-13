@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the dunning engine with correct daily-cron design, invoice status filtering, step selection logic, hold_account behavior, email urgency levels, billing_email preference, and the correct default sequence configuration.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Daily cron design",
+      "max_score": 7,
+      "description": "The dunning processor is described or annotated as running daily (e.g. via cron), not triggered per-invoice or per-event"
+    },
+    {
+      "name": "Invoice status filter",
+      "max_score": 10,
+      "description": "The query filtering overdue invoices includes exactly these status values: 'sent', 'viewed', 'partially_paid', 'overdue' (not just 'overdue', and not including 'draft' or 'paid')"
+    },
+    {
+      "name": "void_at filter",
+      "max_score": 7,
+      "description": "The overdue invoice query also excludes invoices where void_at is not null"
+    },
+    {
+      "name": "Step selection logic",
+      "max_score": 10,
+      "description": "Step selection finds the first step where step.days_overdue <= daysOverdue AND step.step_number > lastStepSent (not just the step whose days_overdue matches exactly)"
+    },
+    {
+      "name": "hold_account sets credit_hold_reason",
+      "max_score": 8,
+      "description": "The hold_account action sets credit_hold=true AND sets credit_hold_reason that references the invoice number and number of days overdue"
+    },
+    {
+      "name": "Email urgency levels",
+      "max_score": 8,
+      "description": "Dunning email data includes an urgency field with three tiers: 'medium' (up to 30 days), 'high' (31-60 days), 'critical' (over 60 days)"
+    },
+    {
+      "name": "billing_email preference",
+      "max_score": 8,
+      "description": "Dunning emails are sent to billing_email when available, falling back to the general email address"
+    },
+    {
+      "name": "Payment link included",
+      "max_score": 7,
+      "description": "Dunning emails include a payment_link or payment URL so the customer can pay in a single click"
+    },
+    {
+      "name": "Default sequence step count",
+      "max_score": 7,
+      "description": "The default dunning_config.json contains exactly 5 steps"
+    },
+    {
+      "name": "Default sequence timing",
+      "max_score": 8,
+      "description": "The 5 default steps trigger at: 1 day, 7 days, 14 days, 30 days, and 60 days overdue"
+    },
+    {
+      "name": "hold_account at 30 days",
+      "max_score": 10,
+      "description": "The hold_account action is at step 4 / 30 days overdue (not at 90+ days)"
+    },
+    {
+      "name": "Tiered customer handling",
+      "max_score": 10,
+      "description": "The notes or code describe treating high-value accounts differently — account manager outreach rather than just automated emails"
+    }
+  ]
+}

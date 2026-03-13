@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements Stripe Connect disbursements including idempotency (create DB record first), stripe_account_status validation, cents conversion, transfer_group metadata, atomic DB transaction on success, failure recording, negative balance handling, and using stripe.transfers.create().",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Stripe Connect transfers used",
+      "max_score": 10,
+      "description": "Uses stripe.transfers.create() (or equivalent Stripe Transfers API) to route funds to sellers, not direct bank wires or Stripe Payouts API to the platform account"
+    },
+    {
+      "name": "Account status check",
+      "max_score": 9,
+      "description": "Code checks that stripe_account_status equals 'enabled' before attempting a transfer, and skips or throws for non-enabled accounts"
+    },
+    {
+      "name": "Disbursement record created first",
+      "max_score": 10,
+      "description": "A disbursement record is inserted into the database BEFORE calling the Stripe API, with status 'processing', to ensure idempotency"
+    },
+    {
+      "name": "Amount in cents",
+      "max_score": 9,
+      "description": "The Stripe transfer amount is converted to integer cents using Math.round(amount * 100) or equivalent before being passed to the API"
+    },
+    {
+      "name": "transfer_group set",
+      "max_score": 7,
+      "description": "The Stripe transfer includes a transfer_group parameter identifying the disbursement (e.g. 'payout_{disbursement_id}')"
+    },
+    {
+      "name": "Transfer metadata included",
+      "max_score": 7,
+      "description": "The Stripe transfer includes a metadata object with at least disbursement_id and seller_id fields"
+    },
+    {
+      "name": "Atomic success transaction",
+      "max_score": 10,
+      "description": "On successful transfer: earnings records are marked 'disbursed' AND the disbursement record is updated (status 'paid', stripe_transfer_id set) in a single atomic database transaction"
+    },
+    {
+      "name": "Failure recorded",
+      "max_score": 8,
+      "description": "On Stripe API failure, the disbursement record is updated to status 'failed' with the error message stored in failure_reason"
+    },
+    {
+      "name": "Negative/zero balance skip",
+      "max_score": 8,
+      "description": "If net amount is zero or negative, the disbursement is skipped without triggering a clawback or throwing an error; balance is carried forward"
+    },
+    {
+      "name": "Design doc: idempotency explained",
+      "max_score": 8,
+      "description": "The design document explicitly describes the idempotency strategy (create DB record first so a retry won't double-pay)"
+    },
+    {
+      "name": "Design doc: failure handling described",
+      "max_score": 7,
+      "description": "The design document describes how Stripe transfer failures are recorded and how the ops team is alerted (e.g., via webhook handling or monitoring)"
+    },
+    {
+      "name": "transfer.failed webhook mentioned",
+      "max_score": 7,
+      "description": "The design document or code comments mention handling the Stripe 'transfer.failed' webhook event to catch silent failures"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly allocates shipping costs proportionally by weight for SKU ranking, validates overhead allocation totals and missing orders, and flags overhead rates that deviate significantly from adjacent periods (rolling smoothing).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Weight-proportional shipping allocation",
+      "max_score": 14,
+      "description": "sku_ranking.sql allocates shipping cost to each SKU proportionally by (item_quantity * item_weight) divided by total order weight — NOT by splitting shipping equally per line item or per unit"
+    },
+    {
+      "name": "Per-unit contribution margin output",
+      "max_score": 8,
+      "description": "sku_ranking.sql computes contribution margin per unit sold (dividing total contribution margin by units_sold), and ranks SKUs by this per-unit metric"
+    },
+    {
+      "name": "Overhead total reconciliation check",
+      "max_score": 12,
+      "description": "The validation script compares SUM(order_overhead_allocations.overhead_amount) for a period against overhead_allocations.total_cents / 100 for the same period, and reports any discrepancy"
+    },
+    {
+      "name": "Missing orders detection",
+      "max_score": 12,
+      "description": "The validation script identifies orders that exist in the orders table for the period but are absent from order_overhead_allocations (i.e. skipped during the allocation run)"
+    },
+    {
+      "name": "Overhead rate smoothing / deviation flag",
+      "max_score": 14,
+      "description": "The validation script (or findings.md) computes overhead rates across multiple periods and flags or warns when any single period's rate deviates significantly from adjacent periods — rather than just checking a single month in isolation"
+    },
+    {
+      "name": "Individual order level analysis note",
+      "max_score": 8,
+      "description": "findings.md or comments in sku_ranking.sql mention that analyzing at the individual order or SKU level is necessary to detect unprofitable items hidden by channel/product averages"
+    },
+    {
+      "name": "Time-effective cost lookup in SKU ranking",
+      "max_score": 10,
+      "description": "sku_ranking.sql joins product_costs using effective_from / effective_to date range conditions against the order date — not using the latest cost record unconditionally"
+    },
+    {
+      "name": "Cancelled orders excluded in ranking",
+      "max_score": 8,
+      "description": "sku_ranking.sql filters out cancelled orders using a condition equivalent to: status NOT IN ('cancelled')"
+    },
+    {
+      "name": "NULLIF in weight division",
+      "max_score": 8,
+      "description": "sku_ranking.sql uses NULLIF (or equivalent null guard) in the denominator when dividing by total order weight to prevent division-by-zero"
+    },
+    {
+      "name": "findings.md reconciliation rationale",
+      "max_score": 6,
+      "description": "findings.md explains that the overhead reconciliation check catches the failure mode where orders were processed after the allocation run (or missed), causing the summed allocations to not equal the expected overhead total"
+    }
+  ]
+}

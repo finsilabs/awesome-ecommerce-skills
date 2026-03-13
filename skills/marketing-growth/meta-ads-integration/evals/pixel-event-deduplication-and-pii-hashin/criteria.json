@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent correctly implements browser-side Meta Pixel standard events with deduplication, uses subtotal for purchase value, and properly hashes PII for a customer audience sync function.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Pixel in <head>",
+      "max_score": 8,
+      "description": "The Meta Pixel base code is placed inside the HTML <head> element (not in the body or footer)"
+    },
+    {
+      "name": "ViewContent event",
+      "max_score": 6,
+      "description": "Fires fbq('track', 'ViewContent', ...) on the product detail page with content_ids and value fields"
+    },
+    {
+      "name": "AddToCart event",
+      "max_score": 6,
+      "description": "Fires fbq('track', 'AddToCart', ...) when a product is added to cart"
+    },
+    {
+      "name": "Purchase event",
+      "max_score": 6,
+      "description": "Fires fbq('track', 'Purchase', ...) on the order confirmation page"
+    },
+    {
+      "name": "content_type is 'product'",
+      "max_score": 8,
+      "description": "All standard events that include content_type use the value 'product' (not 'product_group' or other values)"
+    },
+    {
+      "name": "Subtotal not total for value",
+      "max_score": 8,
+      "description": "The Purchase event uses order subtotal (pre-tax) for the value field, not the total including tax/shipping"
+    },
+    {
+      "name": "eventID in Purchase pixel call",
+      "max_score": 9,
+      "description": "The Purchase fbq() call includes an eventID option (third argument object with eventID key) for deduplication"
+    },
+    {
+      "name": "Matching dedup IDs",
+      "max_score": 9,
+      "description": "The eventID passed to fbq() and the eventId passed to CAPI use the same value for the same Purchase event"
+    },
+    {
+      "name": "order_id in Purchase event",
+      "max_score": 8,
+      "description": "The Purchase pixel event includes order_id (or orderId) field in the event data"
+    },
+    {
+      "name": "SHA-256 PII hashing",
+      "max_score": 9,
+      "description": "Customer PII (email, phone, name) is hashed with SHA-256 before being sent to any Meta API"
+    },
+    {
+      "name": "Lowercase+trim before hashing",
+      "max_score": 9,
+      "description": "PII values are normalized to lowercase and trimmed of whitespace before SHA-256 hashing"
+    },
+    {
+      "name": "Phone normalization",
+      "max_score": 9,
+      "description": "Phone numbers have non-digit characters removed (or are normalized to E.164 format) before hashing"
+    },
+    {
+      "name": "CSP allows connect.facebook.net",
+      "max_score": 5,
+      "description": "The Content Security Policy configuration or documentation includes connect.facebook.net in an allowed domain list"
+    }
+  ]
+}

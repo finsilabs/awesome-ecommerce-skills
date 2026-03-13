@@ -1,0 +1,10 @@
+{
+  "name": "finsi/financial-compliance-sox",
+  "version": "0.1.0",
+  "summary": "Implement SOX-compliant financial controls for ecommerce with audit trails, segregation of duties, access controls, and compliance-ready transaction logging",
+  "skills": {
+    "financial-compliance-sox": {
+      "path": "SKILL.md"
+    }
+  }
+}

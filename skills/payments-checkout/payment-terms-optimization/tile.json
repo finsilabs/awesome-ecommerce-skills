@@ -1,0 +1,10 @@
+{
+  "name": "finsi/payment-terms-optimization",
+  "version": "0.1.0",
+  "summary": "Configure flexible payment terms for B2B customers with net-30/60/90 options, early payment discounts, credit limit management, and automated collections",
+  "skills": {
+    "payment-terms-optimization": {
+      "path": "SKILL.md"
+    }
+  }
+}

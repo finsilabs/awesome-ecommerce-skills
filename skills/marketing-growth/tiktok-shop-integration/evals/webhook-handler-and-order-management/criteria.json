@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements the TikTok Shop webhook handler with correct signature verification, the right JSON acknowledgement response, handling of all required event types, and a duplicate-safe order upsert strategy. Also checks webhook setup documentation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Signature verification",
+      "max_score": 12,
+      "description": "The handler reads the 'x-tts-signature' header and calls a signature verification function before processing the event body"
+    },
+    {
+      "name": "Rejects invalid signatures",
+      "max_score": 10,
+      "description": "If signature verification fails, the handler responds with a 401 (or 4xx) status and does NOT process the event"
+    },
+    {
+      "name": "Returns {\"code\": 0} on success",
+      "max_score": 12,
+      "description": "On successful processing, the handler responds with a JSON body containing exactly {\"code\": 0} (not a plain 200 with no body, not {\"status\": \"ok\"}, etc.)"
+    },
+    {
+      "name": "ORDER_STATUS_CHANGE handled",
+      "max_score": 10,
+      "description": "The handler has an explicit case or branch for the 'ORDER_STATUS_CHANGE' event type that triggers order syncing logic"
+    },
+    {
+      "name": "PRODUCT_STATUS_CHANGE handled",
+      "max_score": 8,
+      "description": "The handler has an explicit case or branch for the 'PRODUCT_STATUS_CHANGE' event type"
+    },
+    {
+      "name": "SETTLEMENT handled",
+      "max_score": 8,
+      "description": "The handler has an explicit case or branch for the 'SETTLEMENT' event type"
+    },
+    {
+      "name": "Upsert with externalId key",
+      "max_score": 10,
+      "description": "Order persistence uses an upsert pattern with the TikTok order ID stored as 'externalId' in the lookup key"
+    },
+    {
+      "name": "externalSource: 'tiktok-shop'",
+      "max_score": 10,
+      "description": "The upsert lookup key includes externalSource set to the string 'tiktok-shop' to namespace TikTok orders"
+    },
+    {
+      "name": "Webhook registration documented",
+      "max_score": 10,
+      "description": "WEBHOOK_SETUP.md mentions registering the webhook endpoint in TikTok Seller Center"
+    },
+    {
+      "name": "Public URL requirement documented",
+      "max_score": 10,
+      "description": "WEBHOOK_SETUP.md states that the webhook endpoint URL must be publicly accessible (not localhost)"
+    }
+  ]
+}

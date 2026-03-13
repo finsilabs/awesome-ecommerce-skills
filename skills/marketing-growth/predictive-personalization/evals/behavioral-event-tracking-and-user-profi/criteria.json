@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements behavioral event tracking with the right event types, anonymous user handling, user profile structure, category affinity weighting, recent-view sliding window, and Redis TTL as specified by the personalization skill.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Event type union",
+      "max_score": 8,
+      "description": "The event data structure defines eventType as a union of exactly these values: 'view', 'add_to_cart', 'purchase', 'search', 'wishlist', 'remove_from_cart' (all six present)"
+    },
+    {
+      "name": "Nullable userId field",
+      "max_score": 8,
+      "description": "The event data structure has a userId field typed as string | null (not string alone, not optional/undefined)"
+    },
+    {
+      "name": "Anonymous key uses sessionId",
+      "max_score": 9,
+      "description": "When userId is null, the Redis profile key falls back to a session-based key (e.g. 'anon:{sessionId}') rather than being skipped or using an empty string"
+    },
+    {
+      "name": "Sliding window size 50",
+      "max_score": 9,
+      "description": "Recent views are capped at 50 entries (array truncated when it exceeds 50, not some other number like 100 or 20)"
+    },
+    {
+      "name": "Category affinity weight for view",
+      "max_score": 7,
+      "description": "The 'view' event type contributes a weight of 1 to the category affinity score"
+    },
+    {
+      "name": "Category affinity weight for add_to_cart",
+      "max_score": 9,
+      "description": "The 'add_to_cart' event type contributes a weight of 3 to the category affinity score"
+    },
+    {
+      "name": "Category affinity weight for purchase",
+      "max_score": 9,
+      "description": "The 'purchase' event type contributes a weight of 5 to the category affinity score"
+    },
+    {
+      "name": "Category affinity weight for wishlist",
+      "max_score": 7,
+      "description": "The 'wishlist' event type contributes a weight of 2 to the category affinity score"
+    },
+    {
+      "name": "Redis profile TTL 30 days",
+      "max_score": 10,
+      "description": "User profiles are set with a TTL/expiry of exactly 30 days (2592000 seconds, i.e. 30 * 24 * 60 * 60) in Redis"
+    },
+    {
+      "name": "Profile stored in Redis",
+      "max_score": 8,
+      "description": "User profile data (recentViews and categoryScores) is persisted using Redis hash operations (hgetall/hmset or equivalent), not in-memory only"
+    },
+    {
+      "name": "Design notes: anonymous handling documented",
+      "max_score": 8,
+      "description": "design-notes.md explains how anonymous users are identified (session-based key) vs logged-in users (userId-based key)"
+    },
+    {
+      "name": "Design notes: TTL documented",
+      "max_score": 8,
+      "description": "design-notes.md states the data retention policy and mentions the 30-day expiry"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly models SOX segregation of duties using the prescribed FinancialRole enum, enforces all prohibited role combinations, throws exceptions on violations, logs role changes to an audit trail with the correct structure, and separates the AUDITOR role from transaction roles.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "FinancialRole enum",
+      "max_score": 8,
+      "description": "Defines financial roles using an enum (or equivalent constant map) that includes at minimum: order_entry, order_approver, cash_receipts, revenue_reporter, po_requester, po_approver, invoice_processor, payment_initiator, payment_approver, user_admin, auditor"
+    },
+    {
+      "name": "SOD: PO_REQUESTER+PO_APPROVER blocked",
+      "max_score": 8,
+      "description": "Assigning both po_requester and po_approver to the same user is detected as a conflict"
+    },
+    {
+      "name": "SOD: INVOICE_PROCESSOR+PAYMENT_INITIATOR blocked",
+      "max_score": 8,
+      "description": "Assigning both invoice_processor and payment_initiator to the same user is detected as a conflict"
+    },
+    {
+      "name": "SOD: PAYMENT_INITIATOR+PAYMENT_APPROVER blocked",
+      "max_score": 8,
+      "description": "Assigning both payment_initiator and payment_approver to the same user is detected as a conflict"
+    },
+    {
+      "name": "SOD: PO_REQUESTER+PAYMENT_APPROVER blocked",
+      "max_score": 8,
+      "description": "Assigning both po_requester and payment_approver to the same user is detected as a conflict"
+    },
+    {
+      "name": "Violation throws exception",
+      "max_score": 10,
+      "description": "When a prohibited role combination is detected during role assignment, the function throws an error (not just logs a warning) and does NOT complete the role assignment"
+    },
+    {
+      "name": "Audit log on role change",
+      "max_score": 10,
+      "description": "Successful role assignments are written to an audit log entry containing: event name (user_roles_changed or equivalent), actor (who made the change), subject (userId being changed), and the new roles"
+    },
+    {
+      "name": "Audit log controlRef",
+      "max_score": 8,
+      "description": "The audit log entry for role assignment includes the control reference 'SOX-ITGC-AC-001'"
+    },
+    {
+      "name": "Audit event outcome field",
+      "max_score": 8,
+      "description": "Audit log entries include an 'outcome' field with value 'pass', 'fail', or 'exception'"
+    },
+    {
+      "name": "AUDITOR role isolation",
+      "max_score": 8,
+      "description": "The design notes or code explicitly state/enforce that the auditor role must NOT be combined with any transaction role (order_entry, po_requester, payment_initiator, etc.)"
+    },
+    {
+      "name": "One-time SOD scan",
+      "max_score": 8,
+      "description": "Implements a scan function that checks existing user-role assignments and returns a list of users with SOD conflicts; when run against the provided input data, correctly identifies u003, u004, u005, and u009 as having conflicts"
+    },
+    {
+      "name": "Design notes present",
+      "max_score": 8,
+      "description": "A design-notes.md file exists and describes the prohibited role combinations and what happens when a violation is detected"
+    }
+  ]
+}

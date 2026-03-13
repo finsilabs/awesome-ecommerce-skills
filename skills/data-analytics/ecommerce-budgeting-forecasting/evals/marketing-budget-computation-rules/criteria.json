@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements the marketing budget computation rules including the six line items (paid_search_google, paid_social_meta, amazon_sponsored, email_sms_platform, influencer_content, affiliate), correct rates for each, min/max floor/cap enforcement, seasonal multipliers, and the account code naming convention.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "paid_search rate",
+      "max_score": 8,
+      "description": "paid_search_google budget is computed as 8% of website channel revenue (rate=0.08)"
+    },
+    {
+      "name": "paid_social rate",
+      "max_score": 8,
+      "description": "paid_social_meta budget is computed as 12% of website channel revenue (rate=0.12)"
+    },
+    {
+      "name": "amazon_sponsored rate",
+      "max_score": 8,
+      "description": "amazon_sponsored budget is computed as 10% of amazon channel revenue (rate=0.10)"
+    },
+    {
+      "name": "affiliate rate",
+      "max_score": 8,
+      "description": "affiliate budget is computed as 4% of website channel revenue (rate=0.04)"
+    },
+    {
+      "name": "email_sms fixed amount",
+      "max_score": 8,
+      "description": "email_sms_platform budget is a fixed $2,500 per month"
+    },
+    {
+      "name": "influencer base amount",
+      "max_score": 8,
+      "description": "influencer_content base fixed monthly amount is $15,000"
+    },
+    {
+      "name": "influencer seasonal Nov",
+      "max_score": 8,
+      "description": "influencer_content for November applies a 2.0x seasonal multiplier (resulting in $30,000 for the sample Nov output)"
+    },
+    {
+      "name": "paid_search min/max cap",
+      "max_score": 8,
+      "description": "paid_search_google enforces a minimum of $5,000 and maximum of $150,000 per month"
+    },
+    {
+      "name": "paid_social min/max cap",
+      "max_score": 8,
+      "description": "paid_social_meta enforces a minimum of $3,000 and maximum of $200,000 per month"
+    },
+    {
+      "name": "Account code format",
+      "max_score": 12,
+      "description": "Each line item's account_code follows the pattern MKT-{LINE_ITEM_UPPER_WITH_DASHES}, e.g. MKT-PAID-SEARCH-GOOGLE, MKT-EMAIL-SMS-PLATFORM"
+    },
+    {
+      "name": "version field value",
+      "max_score": 8,
+      "description": "Budget rows include a version field set to 'annual_plan' (not a custom name like 'budget_2026')"
+    },
+    {
+      "name": "All six line items present",
+      "max_score": 8,
+      "description": "sample_output.json contains exactly six line items: paid_search_google, paid_social_meta, amazon_sponsored, email_sms_platform, influencer_content, affiliate"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent uses a discounted cash flow approach for LTV prediction, produces confidence intervals alongside point estimates, clearly distinguishes observed from extrapolated LTV, models subscription and transactional customers separately, and includes a validation framework for comparing predictions to actuals.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "DCF LTV formula",
+      "max_score": 12,
+      "description": "LTV prediction uses a discounted cash flow formula where each period's margin is discounted by (1+r)^t, with a discount rate parameter (not an undiscounted simple sum)"
+    },
+    {
+      "name": "Survival/churn factor",
+      "max_score": 10,
+      "description": "The DCF LTV model applies a survival or retention factor per period — specifically (1 - churn_rate)^(t-1) or equivalent — to account for customer attrition over time"
+    },
+    {
+      "name": "Confidence interval output",
+      "max_score": 12,
+      "description": "LTV predictions include a confidence interval or uncertainty range (e.g., lower bound, upper bound, or +/- error margin) alongside the point estimate"
+    },
+    {
+      "name": "Separate subscription model",
+      "max_score": 10,
+      "description": "LTV for subscription customers is modeled using a distinct approach from transactional customers (e.g., using contracted MRR/ARR, different churn methodology, or separate function/class)"
+    },
+    {
+      "name": "Separate transactional model",
+      "max_score": 8,
+      "description": "LTV for transactional customers explicitly accounts for variable purchase frequency (e.g., purchases per year, order frequency) rather than a fixed monthly payment"
+    },
+    {
+      "name": "Observed vs extrapolated disclosure",
+      "max_score": 10,
+      "description": "The output clearly distinguishes how many months of LTV are based on observed actuals versus model extrapolation (e.g., 'observed: 12 months, extrapolated: months 13-36')"
+    },
+    {
+      "name": "Data horizon warning",
+      "max_score": 8,
+      "description": "The solution warns or flags when the LTV forecast horizon significantly exceeds the available data history (e.g., projecting 36 months when only 12-18 months of data exist)"
+    },
+    {
+      "name": "Prediction vs actuals validation",
+      "max_score": 10,
+      "description": "The solution includes a validation step that compares prior LTV predictions against actual observed cumulative margins for cohorts that have aged sufficiently"
+    },
+    {
+      "name": "Prediction error recalibration",
+      "max_score": 10,
+      "description": "The validation output computes prediction error (e.g., % error or absolute difference between predicted and actual LTV) and suggests or applies recalibration"
+    },
+    {
+      "name": "Contribution margin basis",
+      "max_score": 10,
+      "description": "LTV predictions are denominated in contribution margin or gross profit, NOT gross revenue"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent generates a valid Google Merchant Center XML RSS product feed with correct field formatting, title/description handling, price format, custom labels for segmentation, and proper availability/variant mapping.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "XML RSS format",
+      "max_score": 10,
+      "description": "The output feed file is valid XML in RSS feed format (contains <rss>, <channel>, and <item> elements)"
+    },
+    {
+      "name": "Title truncation",
+      "max_score": 8,
+      "description": "Product variant titles are truncated to a maximum of 150 characters (no g:title value exceeds 150 characters)"
+    },
+    {
+      "name": "Description HTML stripped",
+      "max_score": 8,
+      "description": "The g:description fields contain no HTML tags (all <p>, <strong>, <em> and other tags are stripped from descriptions)"
+    },
+    {
+      "name": "Description truncation",
+      "max_score": 5,
+      "description": "The g:description fields are truncated to a maximum of 5000 characters"
+    },
+    {
+      "name": "Price format",
+      "max_score": 10,
+      "description": "All g:price and g:sale_price values follow the format '<decimal>.toFixed(2) USD' (e.g., '129.99 USD', '59.95 USD')"
+    },
+    {
+      "name": "custom_label_0 margin",
+      "max_score": 12,
+      "description": "g:custom_label_0 is set to 'high-margin' or 'low-margin' based on product margin (products with margin >= 0.4 get 'high-margin', others get 'low-margin')"
+    },
+    {
+      "name": "custom_label_1 arrival",
+      "max_score": 12,
+      "description": "g:custom_label_1 is set to 'new-arrival' for new arrival products and 'core' for non-new-arrival products"
+    },
+    {
+      "name": "Availability mapping",
+      "max_score": 8,
+      "description": "g:availability is set to 'in stock' when stockQuantity > 0 and 'out of stock' when stockQuantity is 0"
+    },
+    {
+      "name": "GTIN and MPN included",
+      "max_score": 8,
+      "description": "g:gtin and g:mpn are included in item entries when available in the source data (not hardcoded empty or omitted entirely)"
+    },
+    {
+      "name": "Variant-level entries",
+      "max_score": 8,
+      "description": "Each product variant is represented as a separate feed item (e.g., prod-001 produces two entries: TRP-BLK-9 and TRP-BLU-10)"
+    },
+    {
+      "name": "Image fallback",
+      "max_score": 7,
+      "description": "For variants with no variant-level images, the parent product's image URL is used as the g:image_link fallback"
+    },
+    {
+      "name": "Brand in title",
+      "max_score": 4,
+      "description": "Product titles include meaningful identifiers such as color and/or size from the variant title (e.g., 'Trail Runner Pro - Black / Size 9')"
+    }
+  ]
+}

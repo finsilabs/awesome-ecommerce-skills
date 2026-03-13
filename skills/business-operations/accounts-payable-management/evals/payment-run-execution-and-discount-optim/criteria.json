@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent implements the payment run module following skill conventions: 10-day discount look-ahead horizon, sorting by discount value descending, inclusion of discount-eligible invoices alongside due invoices, separate discount_cents on payment records, atomic transaction for payment run creation, approved-only invoice selection, weekly cadence recommendation, remittance advice to vendors, segregation of duties, and bank account change verification.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "10-day discount horizon",
+      "max_score": 8,
+      "description": "Early payment opportunity lookup uses a 10-day look-ahead window (not 7, not 14) when filtering invoices with expiring discounts"
+    },
+    {
+      "name": "Discount sort order",
+      "max_score": 7,
+      "description": "Discount opportunities are sorted by discount value descending (highest savings first, not by deadline or invoice date)"
+    },
+    {
+      "name": "Discount invoices included",
+      "max_score": 9,
+      "description": "Payment run includes both (a) invoices due by run date AND (b) invoices with expiring discounts not yet at due date, merged without duplicates"
+    },
+    {
+      "name": "Approved-only filter",
+      "max_score": 9,
+      "description": "Payment run query filters for invoices with status='approved' only — does NOT include invoices in 'processing', 'pending_approval', 'disputed', or other non-approved states"
+    },
+    {
+      "name": "Discount cents separated",
+      "max_score": 8,
+      "description": "Each payment record stores discount_cents separately from the net amount_cents (discount is not simply subtracted without being recorded)"
+    },
+    {
+      "name": "Atomic transaction",
+      "max_score": 10,
+      "description": "Payment run creation (run record + payment records + invoice status updates to 'scheduled') executes inside a single database transaction"
+    },
+    {
+      "name": "Vendor discount fields",
+      "max_score": 8,
+      "description": "Discount rate and discount window days are read from vendor record fields (e.g., early_discount_rate, early_discount_days) rather than parsed from invoice notes or terms text"
+    },
+    {
+      "name": "Segregation of duties",
+      "max_score": 9,
+      "description": "Design notes or code comments explicitly state that the invoice approver and payment run initiator must be different roles/users; OR the code enforces this check programmatically"
+    },
+    {
+      "name": "Bank change verification",
+      "max_score": 8,
+      "description": "Invoices from vendors whose bank account was changed recently (within ~7 days) are flagged for manual verification and excluded from the automated payment batch"
+    },
+    {
+      "name": "Remittance advice sent",
+      "max_score": 8,
+      "description": "The vendor notification function sends a remittance listing each invoice number and the amount paid, not just a generic payment confirmation"
+    },
+    {
+      "name": "Weekly cadence mentioned",
+      "max_score": 8,
+      "description": "Design notes or code comments recommend or implement a fixed weekly payment cadence (not ad-hoc or daily runs)"
+    },
+    {
+      "name": "Discount window expiry check",
+      "max_score": 8,
+      "description": "Discount opportunities skip invoices where the discount deadline has already passed (discountDeadline < today is excluded)"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements a correct UGC rights management system including token generation, rights request messaging, status transitions, scope definition, and incentivized thank-you flow when rights are granted.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Status: rights-requested",
+      "max_score": 10,
+      "description": "Submission status is updated to 'rights-requested' (not just a generic pending/contacted state) after the rights request is sent"
+    },
+    {
+      "name": "Secure token generated",
+      "max_score": 8,
+      "description": "A unique token (rightsToken or equivalent) is generated and stored with the submission to enable the rights grant link"
+    },
+    {
+      "name": "Reply YES simplicity",
+      "max_score": 10,
+      "description": "The rights request message instructs the user to reply with a single word (e.g. 'YES') rather than directing them only to a form or complex process"
+    },
+    {
+      "name": "#ugcpermission hashtag",
+      "max_score": 8,
+      "description": "The rights request comment/DM includes the '#ugcpermission' hashtag"
+    },
+    {
+      "name": "Manage preferences link",
+      "max_score": 8,
+      "description": "The rights request message includes a link where the user can manage their preferences (a rights grant URL with the token)"
+    },
+    {
+      "name": "Status: rights-granted",
+      "max_score": 10,
+      "description": "Submission status is updated to 'rights-granted' (exact value) when the user approves"
+    },
+    {
+      "name": "Rights scope definition",
+      "max_score": 10,
+      "description": "Rights scope is recorded as covering website, ads, and email (all three) upon grant"
+    },
+    {
+      "name": "Thank-you discount code",
+      "max_score": 8,
+      "description": "A 10% discount code is sent to the author via email as a thank-you after rights are granted"
+    },
+    {
+      "name": "No publish without rights",
+      "max_score": 10,
+      "description": "The code that retrieves or displays UGC filters by status === 'rights-granted' and does NOT return/render content with any other status"
+    },
+    {
+      "name": "rightsRequestedAt timestamp",
+      "max_score": 8,
+      "description": "A timestamp (rightsRequestedAt or equivalent) is recorded when the rights request is sent"
+    },
+    {
+      "name": "rightsGrantedAt timestamp",
+      "max_score": 10,
+      "description": "A timestamp (rightsGrantedAt or equivalent) is recorded when rights are granted"
+    }
+  ]
+}

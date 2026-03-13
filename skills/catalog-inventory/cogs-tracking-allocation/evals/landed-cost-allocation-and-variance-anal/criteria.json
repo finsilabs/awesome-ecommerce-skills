@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent implements landed cost allocation (with status guard, correct proration formula, layer updates, allocation records, and status transition) and a variance report (with time-bounded standard cost join, absolute variance ordering, and favorable/unfavorable classification).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Pending status guard",
+      "max_score": 9,
+      "description": "The allocation function checks that the shipment's status is 'pending' before proceeding, and throws or returns an error if the shipment has already been allocated"
+    },
+    {
+      "name": "Proportional allocation formula",
+      "max_score": 9,
+      "description": "The allocation function computes each layer's share using (layer_basis / total_basis) * total_landed_cost, NOT by dividing total cost equally across layers"
+    },
+    {
+      "name": "Per-unit landed cost calculation",
+      "max_score": 9,
+      "description": "The allocated amount is further divided by the layer's quantity to produce a per-unit landed cost that is stored on the cost layer record"
+    },
+    {
+      "name": "Updates landed_cost_cents on layers",
+      "max_score": 9,
+      "description": "The allocation function updates the landed_cost_cents (or equivalent) field on each inventory_cost_layers record with the computed per-unit landed cost"
+    },
+    {
+      "name": "Creates allocation records",
+      "max_score": 8,
+      "description": "The allocation function inserts a row into landed_cost_allocations (or equivalent) for each layer, recording the shipment, layer, and allocated amount"
+    },
+    {
+      "name": "Marks shipment allocated",
+      "max_score": 8,
+      "description": "After processing all layers, the allocation function updates the shipment's status to 'allocated' (or 'posted')"
+    },
+    {
+      "name": "Variance SQL date-bounded standard cost join",
+      "max_score": 12,
+      "description": "The variance query joins standard_costs using a date range check: fulfilled_at date falls between effective_from and COALESCE(effective_to, a far-future date) — NOT a simple JOIN on variant_id alone"
+    },
+    {
+      "name": "Variance ordered by absolute difference",
+      "max_score": 10,
+      "description": "The variance query orders results by the absolute difference between actual and standard COGS (largest absolute variance first), NOT alphabetically or by volume"
+    },
+    {
+      "name": "Favorable/unfavorable classification",
+      "max_score": 10,
+      "description": "The variance report classifies each result as 'favorable' when actual cost is less than standard (negative variance), 'unfavorable' when actual exceeds standard (positive variance), and 'neutral' when equal"
+    },
+    {
+      "name": "Allocation inside transaction",
+      "max_score": 8,
+      "description": "The landed cost allocation function wraps the layer updates, allocation record inserts, and shipment status update inside a single database transaction"
+    },
+    {
+      "name": "Variance groups by variant",
+      "max_score": 8,
+      "description": "The variance query groups results by product variant (not by order or SKU batch), aggregating units_sold, actual COGS, and standard COGS at the variant level"
+    }
+  ]
+}

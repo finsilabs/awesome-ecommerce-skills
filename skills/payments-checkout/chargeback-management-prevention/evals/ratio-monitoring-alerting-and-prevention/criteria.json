@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct network-specific chargeback ratio thresholds, applies the same calendar-month calculation window as Visa, sends deadline reminders at the right intervals, flags repeat disputers with the correct lookback period and count, and recommends checkout-level friendly fraud prevention and reason-code-segmented win-rate analytics.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Visa warning threshold 0.65%",
+      "max_score": 10,
+      "description": "monitoring.js uses 0.0065 (0.65%) as the Visa early-warning threshold — NOT 1% or any other value"
+    },
+    {
+      "name": "Visa critical threshold 1.00%",
+      "max_score": 8,
+      "description": "monitoring.js uses 0.0100 (1.00%) as the Visa critical/monitoring-program threshold"
+    },
+    {
+      "name": "Mastercard warning threshold 1.00%",
+      "max_score": 8,
+      "description": "monitoring.js uses 0.0100 (1.00%) as the Mastercard early-warning threshold"
+    },
+    {
+      "name": "Mastercard critical threshold 1.50%",
+      "max_score": 8,
+      "description": "monitoring.js uses 0.0150 (1.50%) as the Mastercard critical/excessive-chargeback threshold"
+    },
+    {
+      "name": "Calendar-month ratio window",
+      "max_score": 8,
+      "description": "Chargeback ratio is computed as chargebacks in a calendar month divided by transactions in the same calendar month (not rolling 30 days or other window)"
+    },
+    {
+      "name": "Deadline reminder at T-5 days",
+      "max_score": 8,
+      "description": "deadline-alerts.js sends a reminder 5 days before the response_due_date for open disputes"
+    },
+    {
+      "name": "Deadline reminder at T-2 days",
+      "max_score": 8,
+      "description": "deadline-alerts.js sends a second reminder 2 days before the response_due_date"
+    },
+    {
+      "name": "Repeat disputer: 2+ in 12 months",
+      "max_score": 10,
+      "description": "repeat-disputer.js flags a customer when they have 2 or more chargebacks within the past 12 months — not 3+, not a different time window"
+    },
+    {
+      "name": "Checkout refund policy checkbox",
+      "max_score": 10,
+      "description": "design-doc.md recommends adding an explicit refund policy acceptance checkbox (with timestamp) at checkout to combat friendly fraud"
+    },
+    {
+      "name": "Win-rate by reason code",
+      "max_score": 10,
+      "description": "design-doc.md describes segmenting win-rate analytics by reason code (e.g. 10.4 vs 13.1, or 'item not received' vs 'not as described') rather than reporting a single aggregate win rate"
+    },
+    {
+      "name": "Respond to all disputes",
+      "max_score": 6,
+      "description": "design-doc.md or code notes that disputes should be responded to regardless of amount, since accepting chargebacks still counts against the ratio"
+    },
+    {
+      "name": "Escalation path awareness",
+      "max_score": 6,
+      "description": "design-doc.md describes the dispute escalation path (dispute → representment → pre-arbitration → arbitration) and notes that each step has fees, indicating when to concede"
+    }
+  ]
+}

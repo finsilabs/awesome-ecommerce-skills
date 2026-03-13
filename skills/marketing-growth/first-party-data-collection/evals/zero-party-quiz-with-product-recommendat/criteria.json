@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent builds a quiz with the correct number of questions, proper UX controls (progress bar, skip option), routes completions to a product results page rather than just collecting data, and implements the full zero-party data pipeline from quiz answers through to ESP properties.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Max 3 questions",
+      "max_score": 12,
+      "description": "The quiz implementation contains no more than 3 questions/steps"
+    },
+    {
+      "name": "Progress bar present",
+      "max_score": 8,
+      "description": "The quiz component renders a visible progress bar or step indicator that updates as the user advances"
+    },
+    {
+      "name": "Quiz is skippable",
+      "max_score": 10,
+      "description": "The quiz component includes a skip or close mechanism so users can opt out of completing it"
+    },
+    {
+      "name": "Post-completion redirect to results",
+      "max_score": 12,
+      "description": "On completing the quiz, the user is directed to a product results or recommendations page (not just a thank-you message or data collection confirmation)"
+    },
+    {
+      "name": "Results page with curated recommendations",
+      "max_score": 8,
+      "description": "quiz-design.md describes that quiz completion leads to a curated product results or recommendations page (not merely data storage)"
+    },
+    {
+      "name": "Quiz answer maps to profile field",
+      "max_score": 10,
+      "description": "Each quiz question maps its answer to a named CustomerProfile field (e.g. primaryUseCase, preferredCategories, budgetRange)"
+    },
+    {
+      "name": "Profile field used as recommendation filter",
+      "max_score": 10,
+      "description": "quiz-pipeline.ts uses the profile field value to filter or rank product recommendations"
+    },
+    {
+      "name": "Recommendation filter synced to ESP",
+      "max_score": 10,
+      "description": "quiz-pipeline.ts syncs the quiz answer or resulting profile field as a contact property in the ESP (email service provider)"
+    },
+    {
+      "name": "Value exchange explained",
+      "max_score": 8,
+      "description": "quiz-design.md or the component includes copy explaining what the customer gets from answering (e.g. personalized recommendations, relevant emails)"
+    },
+    {
+      "name": "Data flow documented",
+      "max_score": 8,
+      "description": "quiz-design.md includes a description or diagram of the data flow from quiz answer through to ESP property"
+    },
+    {
+      "name": "Skip rationale documented",
+      "max_score": 4,
+      "description": "quiz-design.md explicitly mentions that the quiz is skippable and provides the rationale"
+    }
+  ]
+}

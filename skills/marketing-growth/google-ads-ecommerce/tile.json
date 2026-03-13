@@ -1,0 +1,10 @@
+{
+  "name": "finsi/google-ads-ecommerce",
+  "version": "0.1.0",
+  "summary": "Build and optimize Google Ads campaigns for ecommerce with Performance Max, Shopping feeds, conversion tracking, and Smart Bidding strategies for ROAS",
+  "skills": {
+    "google-ads-ecommerce": {
+      "path": "SKILL.md"
+    }
+  }
+}

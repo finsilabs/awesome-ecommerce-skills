@@ -1,0 +1,10 @@
+{
+  "name": "finsi/marketing-attribution-dashboard",
+  "version": "0.1.0",
+  "summary": "Build multi-touch attribution dashboards tracking revenue by channel, campaign, and creative with blended ROAS analysis and budget allocation recommendations",
+  "skills": {
+    "marketing-attribution-dashboard": {
+      "path": "SKILL.md"
+    }
+  }
+}
