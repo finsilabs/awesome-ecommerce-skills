@@ -1,6 +1,6 @@
 ---
 name: cart-abandonment-recovery
-description: "Multi-channel abandonment recovery with timing sequences and incentive escalation"
+description: "Win back shoppers who leave with carts by sending timed email, SMS, and push sequences with escalating incentives to complete their purchase"
 category: marketing-growth
 risk: safe
 source: curated

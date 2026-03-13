@@ -1,6 +1,6 @@
 ---
 name: social-commerce
-description: "Shoppable posts, Instagram/TikTok catalog sync, and social checkout"
+description: "Sync your catalog to Instagram, TikTok, and Facebook to enable shoppable posts and in-app checkout directly from your social content"
 category: marketing-growth
 risk: safe
 source: curated

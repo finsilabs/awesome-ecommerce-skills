@@ -1,6 +1,6 @@
 ---
 name: shipping-rate-calculator
-description: "Real-time rate calculation with carrier APIs (UPS, FedEx, USPS, DHL)"
+description: "Show real-time shipping rates from UPS, FedEx, USPS, and DHL at checkout by integrating directly with each carrier's rate API"
 category: fulfillment-shipping
 risk: critical
 source: curated

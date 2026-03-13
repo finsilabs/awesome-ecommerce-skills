@@ -1,6 +1,6 @@
 ---
 name: shopify-storefront-api
-description: "Storefront API queries for headless builds with buy SDK"
+description: "Build a headless Shopify frontend using the GraphQL Storefront API for product queries, cart management, and checkout with the Buy SDK"
 category: platform-shopify
 risk: safe
 source: curated

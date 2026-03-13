@@ -1,6 +1,6 @@
 ---
 name: shopify-app-development
-description: "Shopify app scaffold with OAuth, App Bridge, and Polaris UI"
+description: "Build embedded Shopify apps using the Remix framework, App Bridge for UI integration, Polaris components, and OAuth authentication flow"
 category: platform-shopify
 risk: safe
 source: curated

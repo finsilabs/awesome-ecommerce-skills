@@ -1,6 +1,6 @@
 ---
 name: saleor-development
-description: "Saleor GraphQL API, app development, and dashboard customization"
+description: "Build and extend Saleor's GraphQL-based headless commerce platform with custom apps, webhook handlers, and dashboard UI customizations"
 category: headless-modern
 risk: safe
 source: curated

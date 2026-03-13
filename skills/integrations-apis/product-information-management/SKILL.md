@@ -1,6 +1,6 @@
 ---
 name: product-information-management
-description: "PIM integration (Akeneo, Salsify) for centralized product data"
+description: "Centralize product data in a PIM system like Akeneo or Salsify and syndicate enriched content to all your sales channels automatically"
 category: integrations-apis
 risk: safe
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: buy-now-pay-later
-description: "Integrate BNPL providers (Klarna, Afterpay, Affirm) with eligibility checks"
+description: "Offer Klarna, Afterpay, or Affirm installment payments at checkout to reduce purchase hesitation and increase average order value"
 category: payments-checkout
 risk: critical
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: referral-program
-description: "Refer-a-friend flows with unique links, reward tiers, and fraud prevention"
+description: "Grow your customer base with a refer-a-friend program featuring unique shareable links, tiered rewards, and built-in fraud prevention"
 category: customer-crm
 risk: safe
 source: curated

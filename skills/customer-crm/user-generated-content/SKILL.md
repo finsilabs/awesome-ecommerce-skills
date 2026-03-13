@@ -1,6 +1,6 @@
 ---
 name: user-generated-content
-description: "Customer photos, Q&A sections, and social proof widgets"
+description: "Let customers upload photos, ask and answer product questions, and share social proof that increases trust and conversion for new visitors"
 category: customer-crm
 risk: safe
 source: curated

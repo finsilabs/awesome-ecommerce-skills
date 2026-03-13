@@ -1,6 +1,6 @@
 ---
 name: search-autocomplete
-description: "Implement typeahead search with fuzzy matching, filters, and merchandising rules"
+description: "Speed up product discovery with instant search suggestions, fuzzy typo matching, and category-aware results powered by Algolia or Elasticsearch"
 category: storefront-ui
 risk: safe
 source: curated

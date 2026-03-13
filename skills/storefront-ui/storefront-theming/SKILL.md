@@ -1,6 +1,6 @@
 ---
 name: storefront-theming
-description: "Theme architecture with design tokens, CSS custom properties, and white-labeling"
+description: "Build a themeable storefront with design tokens and CSS custom properties that supports white-labeling, multi-brand variants, and dark mode"
 category: storefront-ui
 risk: safe
 source: curated

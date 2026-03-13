@@ -1,6 +1,6 @@
 ---
 name: webhook-architecture
-description: "Reliable webhook delivery with retries, signatures, dead-letter queues"
+description: "Build a reliable event delivery system with automatic retries, HMAC signature verification, and dead-letter queues so no webhook is ever lost"
 category: integrations-apis
 risk: safe
 source: curated

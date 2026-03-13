@@ -1,6 +1,6 @@
 ---
 name: live-chat-commerce
-description: "Real-time chat with product sharing, cart assistance, and agent tools"
+description: "Add real-time chat to your storefront so agents can share product links, assist with cart questions, and close sales in the conversation"
 category: customer-crm
 risk: safe
 source: curated

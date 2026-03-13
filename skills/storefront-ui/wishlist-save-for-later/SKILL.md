@@ -1,6 +1,6 @@
 ---
 name: wishlist-save-for-later
-description: "Persistent wishlists with sharing, back-in-stock alerts, and move-to-cart"
+description: "Let shoppers save products to a wishlist, share it with friends, and get notified when saved items come back in stock or drop in price"
 category: storefront-ui
 risk: safe
 source: curated

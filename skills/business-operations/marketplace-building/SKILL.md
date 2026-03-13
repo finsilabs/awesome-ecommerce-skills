@@ -1,6 +1,6 @@
 ---
 name: marketplace-building
-description: "Multi-vendor marketplace architecture — seller onboarding, commissions, payouts"
+description: "Launch a multi-vendor marketplace with seller onboarding, commission rules, automated payouts via Stripe Connect, and vendor dashboards"
 category: business-operations
 risk: critical
 source: curated

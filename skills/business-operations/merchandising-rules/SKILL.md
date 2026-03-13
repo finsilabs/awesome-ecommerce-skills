@@ -1,6 +1,6 @@
 ---
 name: merchandising-rules
-description: "Visual merchandising, product ranking rules, and automated collection curation"
+description: "Control which products appear first in collections using automated ranking rules, manual overrides, and performance-based sorting algorithms"
 category: business-operations
 risk: safe
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: multi-channel-selling
-description: "Unified catalog and inventory across DTC, wholesale, marketplace channels"
+description: "Sync your catalog and inventory across your own site, Amazon, eBay, and wholesale channels to sell everywhere from one system"
 category: business-operations
 risk: critical
 source: curated

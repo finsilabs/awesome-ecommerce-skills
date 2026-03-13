@@ -1,6 +1,6 @@
 ---
 name: image-zoom-360
-description: "Product image zoom, 360-degree views, and video integration"
+description: "Boost product confidence with high-res image zoom, 360-degree spin views, and inline video so shoppers can examine products closely before buying"
 category: storefront-ui
 risk: safe
 source: curated

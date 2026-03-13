@@ -1,6 +1,6 @@
 ---
 name: loyalty-points-system
-description: "Points earning, redemption rules, tier progression, and expiration policies"
+description: "Reward repeat customers with points they earn on every purchase, redeem for discounts, and accumulate to unlock higher-tier benefits"
 category: pricing-promotions
 risk: safe
 source: curated

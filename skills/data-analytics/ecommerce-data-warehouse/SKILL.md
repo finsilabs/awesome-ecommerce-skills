@@ -1,6 +1,6 @@
 ---
 name: ecommerce-data-warehouse
-description: "Data warehouse design for commerce — star schema, ETL pipelines, dbt models"
+description: "Build a commerce data warehouse with star-schema tables, ETL pipelines, and dbt models for BigQuery, Snowflake, or Redshift analytics"
 category: data-analytics
 risk: safe
 source: curated

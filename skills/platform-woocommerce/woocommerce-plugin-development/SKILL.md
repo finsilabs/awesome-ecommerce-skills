@@ -1,6 +1,6 @@
 ---
 name: woocommerce-plugin-development
-description: "Custom WooCommerce plugins with hooks, filters, and settings API"
+description: "Create custom WooCommerce plugins using action/filter hooks, the Settings API, and REST API extensions to add features without modifying core"
 category: platform-woocommerce
 risk: safe
 source: curated

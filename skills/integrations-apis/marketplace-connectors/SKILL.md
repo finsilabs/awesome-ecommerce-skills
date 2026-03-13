@@ -1,6 +1,6 @@
 ---
 name: marketplace-connectors
-description: "List products on Amazon, eBay, Walmart with inventory sync and order import"
+description: "List products on Amazon, eBay, and Walmart with two-way inventory sync, automated listing creation, and order import into your store"
 category: integrations-apis
 risk: critical
 source: curated

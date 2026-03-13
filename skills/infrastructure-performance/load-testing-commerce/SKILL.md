@@ -1,6 +1,6 @@
 ---
 name: load-testing-commerce
-description: "Load testing checkout and catalog with realistic shopping behavior simulation"
+description: "Simulate realistic shopper traffic on your checkout and catalog pages using k6 or Artillery to find performance bottlenecks before launch"
 category: infrastructure-performance
 risk: safe
 source: curated

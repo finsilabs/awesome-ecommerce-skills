@@ -1,6 +1,6 @@
 ---
 name: sfcc-business-manager
-description: "Business Manager configuration, import/export, and site preferences"
+description: "Configure Salesforce Commerce Cloud via Business Manager — manage catalogs, promotions, site preferences, and run XML import/export jobs"
 category: platform-salesforce-cc
 risk: safe
 source: curated

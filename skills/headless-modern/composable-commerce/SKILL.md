@@ -1,6 +1,6 @@
 ---
 name: composable-commerce
-description: "MACH architecture — microservices, API-first, cloud-native, headless patterns"
+description: "Architect a modern store using MACH principles — independent microservices, API-first integrations, cloud-native hosting, and headless frontend"
 category: headless-modern
 risk: safe
 source: curated

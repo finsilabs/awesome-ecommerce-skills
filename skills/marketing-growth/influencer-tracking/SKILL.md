@@ -1,6 +1,6 @@
 ---
 name: influencer-tracking
-description: "Influencer campaign attribution, UTM management, and ROI measurement"
+description: "Measure influencer campaign ROI by generating unique UTM links per creator, attributing sales, and reporting revenue against campaign spend"
 category: marketing-growth
 risk: safe
 source: curated

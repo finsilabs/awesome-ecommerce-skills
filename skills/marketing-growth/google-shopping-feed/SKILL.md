@@ -1,6 +1,6 @@
 ---
 name: google-shopping-feed
-description: "Product feed generation for Google Merchant Center with optimization rules"
+description: "Generate and optimize a product feed for Google Merchant Center so your products appear in Google Shopping ads with correct attributes"
 category: marketing-growth
 risk: safe
 source: curated

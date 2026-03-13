@@ -1,6 +1,6 @@
 ---
 name: shopify-webhooks
-description: "Webhook registration, verification, and reliable event processing"
+description: "Register, verify, and reliably process Shopify webhook events for orders, inventory, and customers with HMAC validation and idempotency handling"
 category: platform-shopify
 risk: safe
 source: curated

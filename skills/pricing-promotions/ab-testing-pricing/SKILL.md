@@ -1,6 +1,6 @@
 ---
 name: ab-testing-pricing
-description: "Price experimentation frameworks with statistical significance and revenue tracking"
+description: "Test different price points with proper statistical rigor to find the revenue-maximizing price while tracking conversion rate and margin impact"
 category: pricing-promotions
 risk: critical
 source: curated

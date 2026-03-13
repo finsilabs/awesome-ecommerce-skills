@@ -1,6 +1,6 @@
 ---
 name: order-management-system
-description: "OMS design with distributed fulfillment, split orders, and backorder handling"
+description: "Design an order management system that routes orders to the right warehouse, handles split shipments, and manages backorders gracefully"
 category: business-operations
 risk: critical
 source: curated

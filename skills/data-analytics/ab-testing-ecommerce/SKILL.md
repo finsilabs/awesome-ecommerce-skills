@@ -1,6 +1,6 @@
 ---
 name: ab-testing-ecommerce
-description: "Experimentation platform for product pages, checkout, and pricing tests"
+description: "Run controlled experiments on product pages, checkout flows, and pricing to find what converts best using statistical significance testing"
 category: data-analytics
 risk: safe
 source: curated

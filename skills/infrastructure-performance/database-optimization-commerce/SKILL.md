@@ -1,6 +1,6 @@
 ---
 name: database-optimization-commerce
-description: "Product query optimization, search indexing, and read-replica strategies"
+description: "Speed up slow product and order queries with proper indexing, query analysis, read replicas, and search engine offloading strategies"
 category: infrastructure-performance
 risk: critical
 source: curated

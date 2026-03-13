@@ -1,6 +1,6 @@
 ---
 name: image-optimization-cdn
-description: "Product image pipeline — resize, compress, WebP/AVIF, lazy load, CDN delivery"
+description: "Speed up your store by automatically resizing and converting product images to WebP/AVIF, adding lazy loading, and serving via CDN"
 category: infrastructure-performance
 risk: safe
 source: curated

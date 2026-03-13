@@ -1,6 +1,6 @@
 ---
 name: subscription-billing
-description: "Recurring payment flows with dunning, plan changes, prorations, and cancellation"
+description: "Sell recurring subscriptions with automated billing, dunning emails for failed payments, plan upgrade/downgrade prorations, and self-serve cancellation"
 category: payments-checkout
 risk: critical
 source: curated

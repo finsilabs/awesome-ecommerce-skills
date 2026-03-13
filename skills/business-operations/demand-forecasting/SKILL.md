@@ -1,6 +1,6 @@
 ---
 name: demand-forecasting
-description: "Inventory demand prediction using sales history, seasonality, and trends"
+description: "Predict future inventory needs using historical sales data, seasonal trends, and reorder points to prevent stockouts and overstock"
 category: business-operations
 risk: safe
 source: curated

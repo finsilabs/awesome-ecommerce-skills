@@ -1,6 +1,6 @@
 ---
 name: product-bundles-kits
-description: "Bundle/kit management with dynamic pricing, inventory deduction, and display logic"
+description: "Sell grouped products as bundles or kits with automatic inventory deduction for each component, bundle pricing, and display logic"
 category: catalog-inventory
 risk: safe
 source: curated

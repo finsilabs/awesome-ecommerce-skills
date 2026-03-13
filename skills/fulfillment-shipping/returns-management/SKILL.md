@@ -1,6 +1,6 @@
 ---
 name: returns-management
-description: "RMA flow with return labels, refund/exchange logic, and restocking"
+description: "Process returns end to end — generate prepaid labels, apply refund or exchange logic, update inventory, and notify customers automatically"
 category: fulfillment-shipping
 risk: critical
 source: curated

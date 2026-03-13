@@ -1,6 +1,6 @@
 ---
 name: sfcc-cartridge-development
-description: "SFRA cartridge architecture, controllers, and ISML templates"
+description: "Build SFRA-based Salesforce Commerce Cloud cartridges with controllers, ISML templates, and hooks to customize storefront behavior"
 category: platform-salesforce-cc
 risk: safe
 source: curated

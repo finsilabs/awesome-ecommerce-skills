@@ -1,6 +1,6 @@
 ---
 name: woocommerce-subscriptions
-description: "Recurring payments and subscription product types in WooCommerce"
+description: "Add subscription products to WooCommerce with automatic recurring billing, renewal notifications, and subscriber self-service management"
 category: platform-woocommerce
 risk: safe
 source: curated

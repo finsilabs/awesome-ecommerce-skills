@@ -1,6 +1,6 @@
 ---
 name: shopify-checkout-extensions
-description: "Checkout UI extensions and Shopify Functions for custom logic"
+description: "Customize Shopify's checkout with UI extensions for upsells and custom fields, plus Shopify Functions for serverless discount and shipping logic"
 category: platform-shopify
 risk: safe
 source: curated

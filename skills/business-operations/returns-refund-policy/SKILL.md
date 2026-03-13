@@ -1,6 +1,6 @@
 ---
 name: returns-refund-policy
-description: "Policy engine for return windows, restocking fees, and automated approvals"
+description: "Automate your return and refund process with configurable return windows, restocking fees, and rule-based approval logic for each product type"
 category: business-operations
 risk: critical
 source: curated

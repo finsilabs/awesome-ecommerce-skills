@@ -1,6 +1,6 @@
 ---
 name: dynamic-pricing
-description: "Demand-based pricing, competitor monitoring, and algorithmic price optimization"
+description: "Automatically adjust prices based on demand signals, competitor prices, and inventory levels to maximize revenue and stay competitive"
 category: pricing-promotions
 risk: critical
 source: curated

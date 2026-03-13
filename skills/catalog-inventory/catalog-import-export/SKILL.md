@@ -1,6 +1,6 @@
 ---
 name: catalog-import-export
-description: "Bulk product import/export via CSV, JSON, XML with validation and error handling"
+description: "Import and export your entire product catalog in CSV, JSON, or XML with validation, error reporting, and scheduled sync support"
 category: catalog-inventory
 risk: safe
 source: curated

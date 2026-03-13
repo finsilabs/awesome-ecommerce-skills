@@ -1,6 +1,6 @@
 ---
 name: magento-multi-store
-description: "Multi-website, multi-store setup with shared catalogs and scoped config"
+description: "Configure multiple websites and store views in Magento with shared or scoped catalogs, separate URL structures, and store-specific settings"
 category: platform-magento
 risk: safe
 source: curated

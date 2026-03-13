@@ -1,6 +1,6 @@
 ---
 name: edge-commerce
-description: "Edge computing for commerce — geo-routing, edge-side personalization, KV stores"
+description: "Reduce latency globally by running geo-routing, A/B tests, and personalization logic at the network edge using Cloudflare Workers or Vercel"
 category: infrastructure-performance
 risk: safe
 source: curated

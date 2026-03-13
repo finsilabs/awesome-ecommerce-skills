@@ -1,6 +1,6 @@
 ---
 name: faceted-navigation
-description: "Build filterable product listings with multi-select facets and URL-driven state"
+description: "Let shoppers filter products by multiple attributes simultaneously with URL-shareable filter state, instant results, and mobile-friendly controls"
 category: storefront-ui
 risk: safe
 source: curated

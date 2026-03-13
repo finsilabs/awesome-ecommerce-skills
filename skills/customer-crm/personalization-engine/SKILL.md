@@ -1,6 +1,6 @@
 ---
 name: personalization-engine
-description: "Product recommendations using collaborative filtering and browsing history"
+description: "Show each shopper personalized product recommendations based on their browsing history and what similar customers bought using collaborative filtering"
 category: customer-crm
 risk: safe
 source: curated

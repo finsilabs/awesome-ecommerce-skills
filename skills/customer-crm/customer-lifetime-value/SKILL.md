@@ -1,6 +1,6 @@
 ---
 name: customer-lifetime-value
-description: "CLV calculation models, prediction, and retention strategy automation"
+description: "Calculate and predict how much revenue each customer will generate over time, then automate retention strategies for your highest-value segments"
 category: customer-crm
 risk: safe
 source: curated

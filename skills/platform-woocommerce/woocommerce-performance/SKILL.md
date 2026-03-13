@@ -1,6 +1,6 @@
 ---
 name: woocommerce-performance
-description: "WooCommerce optimization — query tuning, caching, and database cleanup"
+description: "Fix slow WooCommerce stores by optimizing database queries, clearing transients, enabling Redis object caching, and configuring page caching"
 category: platform-woocommerce
 risk: safe
 source: curated

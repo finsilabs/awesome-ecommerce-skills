@@ -1,6 +1,6 @@
 ---
 name: multi-warehouse
-description: "Multi-location inventory with allocation rules, transfer orders, and split fulfillment"
+description: "Manage inventory across multiple warehouses with smart allocation rules, transfer orders between locations, and split-fulfillment routing"
 category: catalog-inventory
 risk: critical
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: sfcc-ocapi-scapi
-description: "OCAPI and Shopper APIs for headless Salesforce Commerce"
+description: "Integrate with Salesforce Commerce Cloud's headless APIs (OCAPI and Shopper APIs) to build custom storefronts and mobile commerce experiences"
 category: platform-salesforce-cc
 risk: safe
 source: curated

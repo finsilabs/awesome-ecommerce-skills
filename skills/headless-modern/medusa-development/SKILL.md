@@ -1,6 +1,6 @@
 ---
 name: medusa-development
-description: "Medusa.js setup, custom services, subscribers, and API extensions"
+description: "Extend the open-source Medusa commerce platform with custom services, event subscribers, and API endpoints for unique business requirements"
 category: headless-modern
 risk: safe
 source: curated

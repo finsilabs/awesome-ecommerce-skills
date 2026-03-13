@@ -1,6 +1,6 @@
 ---
 name: email-marketing-automation
-description: "Triggered email flows — welcome, post-purchase, win-back, browse abandonment"
+description: "Build automated email flows for welcome series, post-purchase follow-ups, win-back campaigns, and browse abandonment to drive repeat revenue"
 category: marketing-growth
 risk: safe
 source: curated

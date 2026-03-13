@@ -1,6 +1,6 @@
 ---
 name: jamstack-storefront
-description: "Static-generated storefronts with Next.js/Astro + commerce API backends"
+description: "Build a blazing-fast storefront with Next.js or Astro that pre-renders product pages as static HTML and fetches live data from commerce APIs"
 category: headless-modern
 risk: safe
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: account-security
-description: "Brute-force protection, MFA, session management for customer accounts"
+description: "Protect customer accounts with brute-force lockouts, multi-factor authentication, secure session handling, and credential-stuffing defenses"
 category: security-compliance
 risk: critical
 source: curated

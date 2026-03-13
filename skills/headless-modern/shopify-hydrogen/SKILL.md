@@ -1,6 +1,6 @@
 ---
 name: shopify-hydrogen
-description: "Hydrogen + Remix storefront with Oxygen deployment and Storefront API"
+description: "Build a custom Shopify storefront using the Hydrogen React framework with Remix routing and deploy it to Shopify's Oxygen edge hosting"
 category: headless-modern
 risk: safe
 source: curated

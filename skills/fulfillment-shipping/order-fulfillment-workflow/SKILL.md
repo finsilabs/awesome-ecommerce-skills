@@ -1,6 +1,6 @@
 ---
 name: order-fulfillment-workflow
-description: "Pick-pack-ship workflows with barcode scanning and packing slip generation"
+description: "Streamline your warehouse with digital pick-pack-ship workflows, barcode scanning for accuracy, and automatic packing slip generation"
 category: fulfillment-shipping
 risk: critical
 source: curated

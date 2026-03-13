@@ -1,6 +1,6 @@
 ---
 name: inventory-tracking
-description: "Real-time stock tracking across warehouses with reservation and backorder logic"
+description: "Track stock levels in real time across all your warehouses with inventory reservation to prevent overselling and support for backorders"
 category: catalog-inventory
 risk: critical
 source: curated

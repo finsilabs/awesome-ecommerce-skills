@@ -1,6 +1,6 @@
 ---
 name: exit-intent-popups
-description: "Exit-intent detection with offer targeting, frequency capping, and A/B testing"
+description: "Capture leaving visitors with targeted exit-intent popups that show personalized offers, email capture forms, and respect frequency capping rules"
 category: marketing-growth
 risk: safe
 source: curated

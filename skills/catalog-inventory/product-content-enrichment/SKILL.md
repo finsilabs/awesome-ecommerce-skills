@@ -1,6 +1,6 @@
 ---
 name: product-content-enrichment
-description: "AI-assisted product descriptions, attribute extraction, and image tagging"
+description: "Use AI to auto-generate product descriptions, extract attributes from raw specs, and tag images to enrich your catalog at scale"
 category: catalog-inventory
 risk: safe
 source: curated

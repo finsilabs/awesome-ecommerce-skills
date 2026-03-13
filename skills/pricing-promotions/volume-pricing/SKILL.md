@@ -1,6 +1,6 @@
 ---
 name: volume-pricing
-description: "Quantity-based price breaks, tiered pricing tables, and B2B price lists"
+description: "Offer quantity-based price breaks so wholesale and bulk buyers automatically see lower prices as they add more units to their cart"
 category: pricing-promotions
 risk: safe
 source: curated

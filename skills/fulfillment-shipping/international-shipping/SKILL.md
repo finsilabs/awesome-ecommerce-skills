@@ -1,6 +1,6 @@
 ---
 name: international-shipping
-description: "Cross-border commerce: customs forms, duties estimation, restricted items"
+description: "Handle cross-border orders with customs form generation, duties and taxes estimation, HS code assignment, and restricted items blocking"
 category: fulfillment-shipping
 risk: critical
 source: curated

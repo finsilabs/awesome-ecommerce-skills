@@ -1,6 +1,6 @@
 ---
 name: bot-protection
-description: "Anti-scraping, anti-scalping, and CAPTCHA strategies for commerce"
+description: "Block automated bots from scraping your catalog, scalping limited inventory, and abusing checkout flows using CAPTCHA and behavioral detection"
 category: security-compliance
 risk: critical
 source: curated

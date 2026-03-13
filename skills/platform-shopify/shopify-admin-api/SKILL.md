@@ -1,6 +1,6 @@
 ---
 name: shopify-admin-api
-description: "Admin API for products, orders, customers with GraphQL and REST"
+description: "Automate Shopify store operations — products, orders, inventory, and customers — using the GraphQL Admin API with bulk operation support"
 category: platform-shopify
 risk: safe
 source: curated

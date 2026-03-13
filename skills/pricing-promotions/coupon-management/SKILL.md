@@ -1,6 +1,6 @@
 ---
 name: coupon-management
-description: "Coupon CRUD, validation rules, usage limits, single-use codes, bulk generation"
+description: "Build a coupon system with percentage and fixed discounts, usage limits per customer, expiration dates, and bulk unique-code generation"
 category: pricing-promotions
 risk: safe
 source: curated

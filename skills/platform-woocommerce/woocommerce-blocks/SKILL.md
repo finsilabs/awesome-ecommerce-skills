@@ -1,6 +1,6 @@
 ---
 name: woocommerce-blocks
-description: "Gutenberg block-based checkout and cart customization"
+description: "Customize WooCommerce checkout and cart pages using Gutenberg blocks with server-side rendering, slot-fills, and extensibility hooks"
 category: platform-woocommerce
 risk: safe
 source: curated

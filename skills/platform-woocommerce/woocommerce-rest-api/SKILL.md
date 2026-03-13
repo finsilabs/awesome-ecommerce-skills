@@ -1,6 +1,6 @@
 ---
 name: woocommerce-rest-api
-description: "WooCommerce REST API for headless and integration use cases"
+description: "Integrate or build headless frontends on WooCommerce using its REST API for products, orders, customers, and coupons with key authentication"
 category: platform-woocommerce
 risk: safe
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: multi-currency
-description: "Currency detection, conversion, rounding rules, and localized formatting"
+description: "Let international shoppers browse and pay in their local currency with automatic detection, live exchange rates, and locale-specific price formatting"
 category: payments-checkout
 risk: critical
 source: curated

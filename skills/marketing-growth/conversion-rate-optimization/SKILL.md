@@ -1,6 +1,6 @@
 ---
 name: conversion-rate-optimization
-description: "CRO audit frameworks, heatmap analysis, and checkout funnel optimization"
+description: "Systematically improve your store's revenue per visitor by auditing checkout drop-off, running heatmaps, and implementing CRO best practices"
 category: marketing-growth
 risk: safe
 source: curated

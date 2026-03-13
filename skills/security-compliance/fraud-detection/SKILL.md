@@ -1,6 +1,6 @@
 ---
 name: fraud-detection
-description: "Rule-based and ML fraud scoring with 3DS, velocity checks, and manual review"
+description: "Protect your store from fraudulent orders using risk scoring, 3D Secure challenges, velocity checks, and manual review queues for suspicious orders"
 category: security-compliance
 risk: critical
 source: curated

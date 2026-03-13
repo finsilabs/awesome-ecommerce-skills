@@ -1,6 +1,6 @@
 ---
 name: secure-checkout
-description: "TLS, CSP headers, tokenization, and XSS prevention for payment pages"
+description: "Harden your checkout against attacks with HTTPS enforcement, Content Security Policy headers, input sanitization, and card data tokenization"
 category: security-compliance
 risk: critical
 source: curated

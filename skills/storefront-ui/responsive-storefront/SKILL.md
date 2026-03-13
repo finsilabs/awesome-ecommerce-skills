@@ -1,6 +1,6 @@
 ---
 name: responsive-storefront
-description: "Mobile-first responsive patterns for commerce (thumb-friendly cart, sticky buy bar)"
+description: "Build a mobile-first storefront with thumb-friendly navigation, sticky add-to-cart buttons, and touch-optimized components for high mobile conversion"
 category: storefront-ui
 risk: safe
 source: curated

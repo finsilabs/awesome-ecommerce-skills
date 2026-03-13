@@ -1,6 +1,6 @@
 ---
 name: erp-integration
-description: "ERP sync patterns (SAP, NetSuite, Odoo) for orders, inventory, and customers"
+description: "Sync orders, inventory, and customer data between your store and ERP systems like SAP, NetSuite, or Odoo using middleware and async queues"
 category: integrations-apis
 risk: critical
 source: curated

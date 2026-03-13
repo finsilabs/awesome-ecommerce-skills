@@ -1,6 +1,6 @@
 ---
 name: email-service-integration
-description: "Transactional email setup (SendGrid, SES, Postmark) with template management"
+description: "Send reliable transactional emails (order confirmations, shipping updates) via SendGrid, SES, or Postmark with templates and deliverability best practices"
 category: integrations-apis
 risk: safe
 source: curated

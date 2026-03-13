@@ -1,6 +1,6 @@
 ---
 name: pos-integration
-description: "Point-of-sale integration with online inventory and unified order management"
+description: "Connect your physical point-of-sale system to your online store for unified inventory, shared customer records, and omnichannel order management"
 category: integrations-apis
 risk: critical
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: gift-cards
-description: "Gift card issuance, redemption, balance tracking, and partial-use handling"
+description: "Sell and accept gift cards with secure code generation, real-time balance tracking, partial redemption support, and expiration enforcement"
 category: pricing-promotions
 risk: critical
 source: curated

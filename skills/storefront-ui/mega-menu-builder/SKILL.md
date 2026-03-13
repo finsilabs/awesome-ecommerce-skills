@@ -1,6 +1,6 @@
 ---
 name: mega-menu-builder
-description: "Category navigation with mega menus, featured products, and promotional banners"
+description: "Build a rich navigation mega menu with product images, category highlights, featured banners, and keyboard-accessible dropdowns for large catalogs"
 category: storefront-ui
 risk: safe
 source: curated

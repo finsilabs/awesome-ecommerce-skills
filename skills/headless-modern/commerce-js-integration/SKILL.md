@@ -1,6 +1,6 @@
 ---
 name: commerce-js-integration
-description: "Commerce.js (Chec) SDK integration for lightweight headless stores"
+description: "Build a lightweight headless store using the Commerce.js SDK for product display, cart management, and checkout without a heavy backend"
 category: headless-modern
 risk: safe
 source: curated

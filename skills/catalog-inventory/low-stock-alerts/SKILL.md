@@ -1,6 +1,6 @@
 ---
 name: low-stock-alerts
-description: "Automated reorder point monitoring with supplier notifications and demand forecasting"
+description: "Automatically alert your team and trigger reorders when products fall below custom thresholds, using sales velocity and demand forecasting"
 category: catalog-inventory
 risk: safe
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: affiliate-program
-description: "Affiliate tracking, commission tiers, payout management, and fraud detection"
+description: "Track affiliate sales with unique links, manage commission tiers, automate payouts, and detect fraudulent referrals to protect your margins"
 category: marketing-growth
 risk: safe
 source: curated

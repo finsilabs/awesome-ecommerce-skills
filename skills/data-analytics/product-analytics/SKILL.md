@@ -1,6 +1,6 @@
 ---
 name: product-analytics
-description: "Product performance metrics, sell-through rates, and dead stock identification"
+description: "Track product performance with sell-through rates, views-to-purchase conversion, dead stock identification, and category-level reporting"
 category: data-analytics
 risk: safe
 source: curated

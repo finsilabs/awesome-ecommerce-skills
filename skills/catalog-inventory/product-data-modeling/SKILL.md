@@ -1,6 +1,6 @@
 ---
 name: product-data-modeling
-description: "Schema design for products with variants, options, attributes, and relationships"
+description: "Design a flexible product database schema that supports variants, custom attributes, product relationships, and category hierarchies"
 category: catalog-inventory
 risk: safe
 source: curated

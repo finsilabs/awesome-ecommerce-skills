@@ -1,6 +1,6 @@
 ---
 name: checkout-flow-optimization
-description: "Multi-step vs single-page checkout design with conversion best practices"
+description: "Design a high-converting checkout with address autocomplete, smart field ordering, progress indicators, and minimal friction to reduce abandonment"
 category: payments-checkout
 risk: safe
 source: curated

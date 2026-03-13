@@ -1,6 +1,6 @@
 ---
 name: magento-graphql
-description: "Magento GraphQL API for headless storefronts and PWA Studio"
+description: "Query Magento's GraphQL API to build headless storefronts or PWA Studio frontends with products, cart, checkout, and customer operations"
 category: platform-magento
 risk: safe
 source: curated

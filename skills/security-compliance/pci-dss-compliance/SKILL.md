@@ -1,6 +1,6 @@
 ---
 name: pci-dss-compliance
-description: "PCI-DSS requirements mapping, SAQ selection, and implementation checklist"
+description: "Meet PCI-DSS payment security requirements by scoping your environment correctly, selecting the right SAQ, and implementing required controls"
 category: security-compliance
 risk: critical
 source: curated

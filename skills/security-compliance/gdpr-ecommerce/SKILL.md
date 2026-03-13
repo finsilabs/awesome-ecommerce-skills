@@ -1,6 +1,6 @@
 ---
 name: gdpr-ecommerce
-description: "GDPR compliance — consent management, data export, right to deletion"
+description: "Make your store GDPR-compliant with cookie consent, customer data export on request, right-to-deletion workflows, and data processing agreements"
 category: security-compliance
 risk: critical
 source: curated

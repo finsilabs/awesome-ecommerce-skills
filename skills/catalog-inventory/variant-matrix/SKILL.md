@@ -1,6 +1,6 @@
 ---
 name: variant-matrix
-description: "Generate and manage variant combinations (size x color x material) with SKU strategies"
+description: "Generate and manage all size/color/material combinations for a product with automatic SKU creation and per-variant pricing and inventory"
 category: catalog-inventory
 risk: safe
 source: curated

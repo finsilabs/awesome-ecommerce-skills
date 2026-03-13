@@ -1,6 +1,6 @@
 ---
 name: product-categorization
-description: "Hierarchical taxonomy design with breadcrumbs, auto-categorization, and SEO"
+description: "Build a clean product hierarchy with breadcrumb navigation, automated category assignment, and SEO-friendly URLs for each category level"
 category: catalog-inventory
 risk: safe
 source: curated

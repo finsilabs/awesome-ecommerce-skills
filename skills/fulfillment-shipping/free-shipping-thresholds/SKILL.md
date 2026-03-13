@@ -1,6 +1,6 @@
 ---
 name: free-shipping-thresholds
-description: "Dynamic free shipping rules with progress indicators and upsell nudges"
+description: "Motivate larger orders by showing a progress bar toward free shipping and nudging customers to add more items to qualify"
 category: fulfillment-shipping
 risk: safe
 source: curated

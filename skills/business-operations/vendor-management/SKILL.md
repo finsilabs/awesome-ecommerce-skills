@@ -1,6 +1,6 @@
 ---
 name: vendor-management
-description: "Vendor portal, purchase orders, dropship routing, and performance scorecards"
+description: "Manage supplier relationships with a portal for purchase orders, dropship routing, delivery tracking, and vendor performance scorecards"
 category: business-operations
 risk: critical
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: commerce-api-gateway
-description: "API gateway patterns for aggregating multiple commerce microservices"
+description: "Aggregate multiple commerce microservices behind a single API gateway with GraphQL federation, rate limiting, and unified authentication"
 category: headless-modern
 risk: safe
 source: curated

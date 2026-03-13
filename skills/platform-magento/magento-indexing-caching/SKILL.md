@@ -1,6 +1,6 @@
 ---
 name: magento-indexing-caching
-description: "Indexer management, Varnish config, and full-page cache strategies"
+description: "Speed up Magento by managing indexers correctly, configuring Varnish full-page cache, and using Redis for session and object caching"
 category: platform-magento
 risk: safe
 source: curated

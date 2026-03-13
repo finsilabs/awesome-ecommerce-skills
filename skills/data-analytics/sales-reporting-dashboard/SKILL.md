@@ -1,6 +1,6 @@
 ---
 name: sales-reporting-dashboard
-description: "Revenue, AOV, conversion dashboards with drill-down and cohort analysis"
+description: "Build executive dashboards showing revenue, average order value, conversion rates, and cohort analysis with drill-down by date and channel"
 category: data-analytics
 risk: safe
 source: curated

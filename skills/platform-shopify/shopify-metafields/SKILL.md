@@ -1,6 +1,6 @@
 ---
 name: shopify-metafields
-description: "Custom data with metafield definitions, validation, and storefront access"
+description: "Store custom data on any Shopify resource — products, orders, customers — using typed metafield definitions accessible from Liquid and the Storefront API"
 category: platform-shopify
 risk: safe
 source: curated

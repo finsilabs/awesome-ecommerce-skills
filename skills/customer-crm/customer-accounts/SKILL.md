@@ -1,6 +1,6 @@
 ---
 name: customer-accounts
-description: "Registration, profile management, address book, and order history"
+description: "Let shoppers register, manage their profile, save multiple addresses, and view their full order history in a personal account portal"
 category: customer-crm
 risk: safe
 source: curated

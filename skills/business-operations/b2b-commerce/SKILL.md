@@ -1,6 +1,6 @@
 ---
 name: b2b-commerce
-description: "B2B features — company accounts, quote workflows, custom catalogs, net terms"
+description: "Enable wholesale and B2B sales with company accounts, custom catalogs, quote workflows, purchase orders, and net payment terms"
 category: business-operations
 risk: critical
 source: curated

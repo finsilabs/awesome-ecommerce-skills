@@ -1,6 +1,6 @@
 ---
 name: flash-sale-engine
-description: "Time-limited sales with countdown timers, stock limits, and queue management"
+description: "Run time-limited sales with live countdown timers, per-item quantity caps, virtual waiting rooms, and automatic price restoration on expiry"
 category: pricing-promotions
 risk: critical
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: recently-viewed-products
-description: "Track and display browsing history with sessionStorage/cookie strategies"
+description: "Show shoppers the products they recently browsed using browser storage so they can easily pick up where they left off on your store"
 category: storefront-ui
 risk: safe
 source: curated

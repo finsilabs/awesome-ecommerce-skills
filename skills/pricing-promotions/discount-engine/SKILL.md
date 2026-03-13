@@ -1,6 +1,6 @@
 ---
 name: discount-engine
-description: "Rule-based discount system — percentage, fixed, BOGO, tiered, conditional"
+description: "Create a flexible discount system supporting percentage off, fixed amounts, buy-one-get-one, tiered thresholds, and complex conditional rules"
 category: pricing-promotions
 risk: critical
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: quick-view-modal
-description: "Product quick-view overlays with add-to-cart without leaving the listing page"
+description: "Let shoppers preview product details and add items to cart from the listing page without navigating away, reducing friction in the shopping flow"
 category: storefront-ui
 risk: safe
 source: curated

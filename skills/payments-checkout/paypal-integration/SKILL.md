@@ -1,6 +1,6 @@
 ---
 name: paypal-integration
-description: "PayPal checkout, express buttons, PayPal Commerce Platform setup"
+description: "Add PayPal, Venmo, and Pay Later buttons to your store using the PayPal Commerce Platform SDK with Express Checkout for one-tap buying"
 category: payments-checkout
 risk: critical
 source: curated

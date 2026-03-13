@@ -1,6 +1,6 @@
 ---
 name: tax-calculation
-description: "Tax engine integration (TaxJar, Avalara) with nexus rules and VAT handling"
+description: "Calculate accurate sales tax and VAT at checkout using TaxJar or Avalara, with nexus management for multi-state and international compliance"
 category: payments-checkout
 risk: critical
 source: curated

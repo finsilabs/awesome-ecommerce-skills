@@ -1,6 +1,6 @@
 ---
 name: dropshipping-integration
-description: "Supplier order routing, inventory sync, and margin calculation for dropship"
+description: "Connect to supplier APIs for automatic order routing to dropship vendors, real-time inventory sync, and margin calculation per order"
 category: fulfillment-shipping
 risk: critical
 source: curated

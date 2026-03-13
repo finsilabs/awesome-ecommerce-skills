@@ -1,6 +1,6 @@
 ---
 name: product-reviews-ratings
-description: "Review collection, moderation, aggregate scoring, and display widgets"
+description: "Collect, moderate, and display customer reviews with star ratings, aggregate scores, and structured data markup for Google rich results"
 category: customer-crm
 risk: safe
 source: curated

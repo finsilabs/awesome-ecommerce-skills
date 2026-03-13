@@ -1,6 +1,6 @@
 ---
 name: monitoring-alerting-commerce
-description: "Commerce-specific dashboards — checkout success rate, cart errors, payment failures"
+description: "Track store health in real time with dashboards for checkout success rate, payment failures, cart errors, and custom SLO alerting"
 category: infrastructure-performance
 risk: safe
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: data-retention-policies
-description: "Order/customer data lifecycle management and automated purging"
+description: "Automate the lifecycle of order and customer data — archive old records, anonymize personal data on request, and purge expired data on schedule"
 category: security-compliance
 risk: critical
 source: curated

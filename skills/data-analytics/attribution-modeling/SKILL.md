@@ -1,6 +1,6 @@
 ---
 name: attribution-modeling
-description: "Multi-touch attribution for marketing spend optimization"
+description: "Understand which marketing channels drive purchases by implementing multi-touch attribution models across UTM-tracked campaigns and channels"
 category: data-analytics
 risk: safe
 source: curated

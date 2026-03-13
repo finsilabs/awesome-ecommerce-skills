@@ -1,6 +1,6 @@
 ---
 name: shipment-tracking
-description: "Track shipments across carriers with webhook-driven status updates"
+description: "Give customers live package tracking by aggregating carrier status updates via webhooks and sending proactive delivery notifications"
 category: fulfillment-shipping
 risk: safe
 source: curated

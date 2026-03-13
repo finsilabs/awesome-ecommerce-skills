@@ -1,6 +1,6 @@
 ---
 name: push-notifications
-description: "Web push for price drops, back-in-stock, and cart reminders"
+description: "Send browser push notifications for price drops, back-in-stock alerts, and cart reminders to bring shoppers back without needing their email"
 category: marketing-growth
 risk: safe
 source: curated

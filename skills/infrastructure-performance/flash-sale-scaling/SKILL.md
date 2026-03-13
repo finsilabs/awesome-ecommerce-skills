@@ -1,6 +1,6 @@
 ---
 name: flash-sale-scaling
-description: "Auto-scaling, queue-based ordering, and circuit breakers for traffic spikes"
+description: "Prepare for Black Friday and flash sales with auto-scaling, queue-based order processing, and circuit breakers to prevent site outages"
 category: infrastructure-performance
 risk: critical
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: customer-segmentation
-description: "RFM analysis, behavioral segments, and cohort-based targeting"
+description: "Segment customers by purchase recency, frequency, and spend (RFM) or behavioral signals to power targeted marketing and personalization"
 category: customer-crm
 risk: safe
 source: curated

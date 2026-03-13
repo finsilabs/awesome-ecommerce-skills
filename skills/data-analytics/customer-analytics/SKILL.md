@@ -1,6 +1,6 @@
 ---
 name: customer-analytics
-description: "RFM scoring, purchase frequency, churn prediction, and segment analysis"
+description: "Analyze customer behavior with RFM scoring, purchase frequency tracking, churn prediction, and cohort analysis to improve retention strategy"
 category: data-analytics
 risk: safe
 source: curated

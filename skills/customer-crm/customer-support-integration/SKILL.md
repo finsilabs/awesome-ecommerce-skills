@@ -1,6 +1,6 @@
 ---
 name: customer-support-integration
-description: "Helpdesk integration (Zendesk, Intercom) with order context injection"
+description: "Connect Zendesk or Intercom to your store so support agents see full order history and customer details without switching tools"
 category: customer-crm
 risk: safe
 source: curated

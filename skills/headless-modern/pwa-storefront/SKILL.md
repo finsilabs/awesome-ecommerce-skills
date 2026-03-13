@@ -1,6 +1,6 @@
 ---
 name: pwa-storefront
-description: "Progressive web app storefronts with offline catalog, service workers"
+description: "Turn your store into an installable Progressive Web App with offline product browsing, push notifications, and home screen access for mobile shoppers"
 category: headless-modern
 risk: safe
 source: curated

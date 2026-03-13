@@ -1,6 +1,6 @@
 ---
 name: digital-products
-description: "Manage downloadable goods — license keys, download limits, expiration, delivery"
+description: "Sell software, ebooks, and other downloads with secure delivery, license key generation, download limits, and expiration controls"
 category: catalog-inventory
 risk: critical
 source: curated

@@ -1,6 +1,6 @@
 ---
 name: ecommerce-caching
-description: "Multi-layer caching — CDN, application, database, and cart-aware cache invalidation"
+description: "Improve store performance with a layered caching strategy — CDN edge caching, Redis application cache, and smart cart-aware invalidation"
 category: infrastructure-performance
 risk: critical
 source: curated

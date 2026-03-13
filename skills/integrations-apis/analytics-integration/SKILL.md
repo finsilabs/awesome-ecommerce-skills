@@ -1,6 +1,6 @@
 ---
 name: analytics-integration
-description: "GA4, Meta Pixel, server-side tagging, and data layer implementation"
+description: "Implement GA4, Meta Pixel, and server-side tagging with a proper data layer so you capture accurate conversion events for ad campaigns"
 category: integrations-apis
 risk: safe
 source: curated

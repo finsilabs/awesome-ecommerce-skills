@@ -1,6 +1,6 @@
 ---
 name: cart-logic
-description: "Shopping cart state management — add/remove/update, persistence, merge strategies"
+description: "Build a robust shopping cart with add/remove/update operations, session persistence across devices, and cart merge for returning logged-in users"
 category: payments-checkout
 risk: safe
 source: curated

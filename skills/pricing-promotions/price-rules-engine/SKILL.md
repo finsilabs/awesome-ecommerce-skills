@@ -1,6 +1,6 @@
 ---
 name: price-rules-engine
-description: "Stackable pricing rules with priority, exclusions, and customer segment targeting"
+description: "Define stackable pricing rules with priority ordering, customer-segment targeting, product exclusions, and automatic discount combination logic"
 category: pricing-promotions
 risk: critical
 source: curated

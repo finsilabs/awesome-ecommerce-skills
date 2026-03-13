@@ -1,6 +1,6 @@
 ---
 name: guest-checkout
-description: "Frictionless guest checkout with optional account creation post-purchase"
+description: "Allow shoppers to buy without creating an account, then invite them to save their details post-purchase to reduce checkout friction and increase conversion"
 category: payments-checkout
 risk: safe
 source: curated

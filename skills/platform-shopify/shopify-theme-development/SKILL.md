@@ -1,6 +1,6 @@
 ---
 name: shopify-theme-development
-description: "Liquid templating, theme architecture, sections, and theme app extensions"
+description: "Build and customize Shopify themes using Liquid templating, JSON sections, dynamic blocks, and theme app extensions for added functionality"
 category: platform-shopify
 risk: safe
 source: curated

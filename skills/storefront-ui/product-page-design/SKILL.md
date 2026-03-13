@@ -1,6 +1,6 @@
 ---
 name: product-page-design
-description: "High-converting product page layouts with image galleries, variant selectors, and social proof"
+description: "Design high-converting product detail pages with image galleries, variant selectors, social proof, and clear calls-to-action that drive add-to-cart"
 category: storefront-ui
 risk: safe
 source: curated

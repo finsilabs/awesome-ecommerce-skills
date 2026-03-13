@@ -1,6 +1,6 @@
 ---
 name: order-processing-pipeline
-description: "Order state machine: pending -> confirmed -> processing -> shipped -> delivered"
+description: "Implement a reliable order state machine that moves orders from pending through payment, fulfillment, and delivery with webhook-driven transitions"
 category: payments-checkout
 risk: critical
 source: curated

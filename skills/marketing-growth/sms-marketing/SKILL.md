@@ -1,6 +1,6 @@
 ---
 name: sms-marketing
-description: "SMS campaigns with opt-in, segmentation, and compliance (TCPA/GDPR)"
+description: "Launch SMS marketing campaigns with opt-in flows, audience segmentation, and full TCPA/GDPR compliance to drive revenue through text messaging"
 category: marketing-growth
 risk: safe
 source: curated

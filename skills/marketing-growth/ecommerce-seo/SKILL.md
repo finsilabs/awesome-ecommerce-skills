@@ -1,6 +1,6 @@
 ---
 name: ecommerce-seo
-description: "Product page SEO, structured data (JSON-LD), canonical URLs, and sitemap generation"
+description: "Maximize organic search traffic with optimized product page meta tags, JSON-LD structured data for Google Shopping, and automated XML sitemaps"
 category: marketing-growth
 risk: safe
 source: curated

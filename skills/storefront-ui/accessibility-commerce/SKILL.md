@@ -1,6 +1,6 @@
 ---
 name: accessibility-commerce
-description: "WCAG 2.1 AA compliance for e-commerce — screen readers, keyboard nav, ARIA for carts"
+description: "Make your store usable by everyone with WCAG 2.1 AA compliance — screen reader support, keyboard navigation, and accessible cart and checkout flows"
 category: storefront-ui
 risk: safe
 source: curated

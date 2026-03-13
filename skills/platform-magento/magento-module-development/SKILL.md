@@ -1,6 +1,6 @@
 ---
 name: magento-module-development
-description: "Custom Magento 2 modules with dependency injection and service contracts"
+description: "Build custom Magento 2 modules using dependency injection, plugins, observers, and service contracts to extend core functionality cleanly"
 category: platform-magento
 risk: safe
 source: curated

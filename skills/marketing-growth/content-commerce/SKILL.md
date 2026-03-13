@@ -1,6 +1,6 @@
 ---
 name: content-commerce
-description: "Blog-to-commerce integration, shoppable content, and editorial merchandising"
+description: "Turn your blog into a sales channel by embedding shoppable product cards in editorial content and tracking content-influenced revenue"
 category: marketing-growth
 risk: safe
 source: curated

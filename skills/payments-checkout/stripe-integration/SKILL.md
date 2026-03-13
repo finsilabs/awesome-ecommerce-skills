@@ -1,6 +1,6 @@
 ---
 name: stripe-integration
-description: "Stripe payment intents, subscriptions, webhooks, and SCA compliance"
+description: "Build secure payment flows with Stripe — Payment Intents, subscription billing, webhook handling, and European SCA compliance for card payments"
 category: payments-checkout
 risk: critical
 source: curated

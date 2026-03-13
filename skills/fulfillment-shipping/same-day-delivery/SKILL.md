@@ -1,6 +1,6 @@
 ---
 name: same-day-delivery
-description: "Local delivery zone management, time-slot booking, and driver dispatch"
+description: "Offer same-day local delivery with geographic zone management, customer-facing time-slot booking, and driver dispatch coordination"
 category: fulfillment-shipping
 risk: critical
 source: curated

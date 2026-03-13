@@ -1,6 +1,6 @@
 ---
 name: product-comparison
-description: "Side-by-side feature comparison tables with dynamic attribute selection"
+description: "Let shoppers select multiple products and compare them side-by-side in a table with highlighted differences to help them make the right buying decision"
 category: storefront-ui
 risk: safe
 source: curated
