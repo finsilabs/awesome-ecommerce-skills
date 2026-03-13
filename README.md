@@ -12,7 +12,7 @@ Skills are expert instructions that teach AI assistants how to do specific e-com
 
 **With a skill**, the same assistant produces production-ready code that follows industry best practices.
 
-We tested every skill with [Tessl](https://tessl.io) automated evaluations. On average, skills improve AI output quality from **68%** to **97%** — a **+29% improvement** across 131 skills.
+We tested every skill with [Tessl](https://tessl.io) automated evaluations. On average, skills improve AI output quality from **66%** to **96%** — a **+31% improvement** across 177 skills.
 
 **Works with:** Claude Code, Cursor, Gemini CLI, GitHub Copilot, Codex CLI, Kiro, OpenCode, and any AI assistant that supports context files.
 
@@ -135,28 +135,28 @@ We have 8 **headless-specific skills** covering Shopify Hydrogen, Medusa, Saleor
 
 Every skill is tested using [Tessl](https://tessl.io) automated evaluations. Each eval gives an AI assistant a realistic e-commerce task, then scores the output against a detailed checklist. We run each task twice — once without the skill (baseline) and once with it — to measure the real improvement.
 
-**Across 131 skills tested:**
+**Across 177 skills tested:**
 
 | | Score |
 |---|---|
-| Without skills (baseline) | 68% |
-| With skills | 97% |
-| **Improvement** | **+29%** |
+| Without skills (baseline) | 66% |
+| With skills | 96% |
+| **Improvement** | **+31%** |
 
 **Biggest improvements:**
 
 | Skill | Without | With | Improvement |
 |-------|---------|------|-------------|
+| win-back-reactivation | 13% | 91% | **+78%** |
 | woocommerce-subscriptions | 31% | 100% | **+69%** |
-| fraud-detection | 34% | 97% | **+63%** |
+| fraud-detection | 34% | 100% | **+66%** |
 | low-stock-alerts | 36% | 98% | **+62%** |
-| product-content-enrichment | 39% | 97% | **+58%** |
+| ecommerce-budgeting-forecasting | 39% | 100% | **+61%** |
+| product-content-enrichment | 39% | 98% | **+59%** |
+| marketplace-advertising | 39% | 97% | **+58%** |
 | customer-lifetime-value | 40% | 97% | **+57%** |
-| referral-program | 47% | 100% | **+53%** |
-| coupon-management | 49% | 100% | **+51%** |
-| dropshipping-integration | 50% | 100% | **+50%** |
-| search-autocomplete | 46% | 96% | **+50%** |
-| dynamic-pricing | 44% | 93% | **+49%** |
+| accounts-receivable-automation | 43% | 100% | **+57%** |
+| ugc-campaign-management | 40% | 96% | **+56%** |
 
 ## Top 10 Starter Skills
 
@@ -164,16 +164,16 @@ New to this? Start here. These are the most commonly needed skills for any e-com
 
 | Skill | What It Does | Eval Score |
 |-------|-------------|------------|
-| **Checkout Flow Optimization** | Design a high-converting checkout with address autocomplete, smart field ordering, progress indicators, and minimal friction to reduce abandonment | 95% |
-| **Product Data Modeling** | Design a flexible product database schema that supports variants, custom attributes, product relationships, and category hierarchies | 92% |
+| **Checkout Flow Optimization** | Design a high-converting checkout with address autocomplete, smart field ordering, progress indicators, and minimal friction to reduce abandonment | 94% |
+| **Product Data Modeling** | Design a flexible product database schema that supports variants, custom attributes, product relationships, and category hierarchies | 95% |
 | **Stripe Integration** | Build secure payment flows with Stripe — Payment Intents, subscription billing, webhook handling, and European SCA compliance for card payments | 100% |
-| **Ecommerce Seo** | Maximize organic search traffic with optimized product page meta tags, JSON-LD structured data for Google Shopping, and automated XML sitemaps | 96% |
-| **Cart Logic** | Build a robust shopping cart with add/remove/update operations, session persistence across devices, and cart merge for returning logged-in users | 95% |
+| **Ecommerce Seo** | Maximize organic search traffic with optimized product page meta tags, JSON-LD structured data for Google Shopping, and automated XML sitemaps | 97% |
+| **Cart Logic** | Build a robust shopping cart with add/remove/update operations, session persistence across devices, and cart merge for returning logged-in users | 91% |
 | **Inventory Tracking** | Track stock levels in real time across all your warehouses with inventory reservation to prevent overselling and support for backorders | 100% |
-| **Shipping Rate Calculator** | Show real-time shipping rates from UPS, FedEx, USPS, and DHL at checkout by integrating directly with each carrier's rate API | 90% |
+| **Shipping Rate Calculator** | Show real-time shipping rates from UPS, FedEx, USPS, and DHL at checkout by integrating directly with each carrier's rate API | 98% |
 | **Customer Accounts** | Let shoppers register, manage their profile, save multiple addresses, and view their full order history in a personal account portal | 100% |
-| **Discount Engine** | Create a flexible discount system supporting percentage off, fixed amounts, buy-one-get-one, tiered thresholds, and complex conditional rules | 89% |
-| **Product Page Design** | Design high-converting product detail pages with image galleries, variant selectors, social proof, and clear calls-to-action that drive add-to-cart | 90% |
+| **Discount Engine** | Create a flexible discount system supporting percentage off, fixed amounts, buy-one-get-one, tiered thresholds, and complex conditional rules | 91% |
+| **Product Page Design** | Design high-converting product detail pages with image galleries, variant selectors, social proof, and clear calls-to-action that drive add-to-cart | 88% |
 
 ## All Categories
 
