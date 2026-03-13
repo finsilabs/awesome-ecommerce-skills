@@ -246,6 +246,12 @@ We welcome contributions! Whether you want to improve an existing skill or add a
 2. Check out the [skill template](docs/contributors/skill-template.md) to get started
 3. Run `npm run validate` to check your skill before submitting
 
+## Built by Finsi
+
+This project is maintained by the team behind [Finsi OS](https://finsi.ai) — an AI-powered operating system for e-commerce brands. Finsi connects your entire stack (ads, email, retention, profitability), analyzes what matters, and acts on it automatically. If these skills help your AI assistant give better advice, Finsi takes it further by running your growth operations end-to-end.
+
+[Start a free 30-day pilot →](https://finsi.ai)
+
 ## License
 
 MIT
