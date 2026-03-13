@@ -6,9 +6,9 @@ risk: safe
 source: curated
 date_added: "2026-03-12"
 tags: [seo, structured-data, json-ld, sitemap, canonical, meta-tags, schema-org]
-triggers: ["optimize ecommerce SEO", "add structured data", "generate sitemap", "fix product page SEO"]
+triggers: ["optimize ecommerce SEO", "add structured data", "generate sitemap", "fix product page SEO", "improve organic search ranking"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Implement technical SEO for e-commerce sites including product page meta tags, Schema.org structured data (JSON-LD), canonical URL management for variant/filter pages, XML sitemap generation, and internal linking strategies. This skill focuses on the engineering side of SEO — the markup, configuration, and automation that help search engines understand and rank your product pages.
+E-commerce SEO covers the technical and content foundations that help search engines understand and rank your product pages: meta tags, structured data (JSON-LD), canonical URLs, XML sitemaps, and Core Web Vitals. Shopify and WooCommerce handle most technical SEO automatically; your effort should focus on optimizing titles, descriptions, and structured data quality — not plumbing.
 
 ## When to Use This Skill
 
@@ -24,449 +24,184 @@ Implement technical SEO for e-commerce sites including product page meta tags, S
 - When implementing JSON-LD structured data for rich snippets (price, availability, reviews)
 - When handling canonical URLs for products with multiple variants or filter combinations
 - When generating XML sitemaps for a large catalog (10K+ products)
-- When optimizing Core Web Vitals for product and collection pages
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store with admin access, Google Search Console account, sitemap/structured-data tools
+- When diagnosing why products are not appearing in Google Shopping rich results
 
 ## Core Instructions
 
-1. **Set up meta tags for product pages**
+### Step 1: Check what your platform handles automatically
 
-   ```typescript
-   interface ProductSeoData {
-     title: string;
-     description: string;
-     canonicalUrl: string;
-     ogImage: string;
-     price: number;
-     currency: string;
-     availability: 'in_stock' | 'out_of_stock' | 'preorder';
-   }
+Before installing anything, understand what is already built in:
 
-   function generateProductMetaTags(product: ProductSeoData): string {
-     const availabilityMap = {
-       in_stock: 'instock',
-       out_of_stock: 'oos',
-       preorder: 'preorder',
-     };
+| Feature | Shopify | WooCommerce | BigCommerce |
+|---------|---------|-------------|-------------|
+| XML sitemap | Auto-generated at `/sitemap.xml` | Auto-generated at `/sitemap_index.xml` (with Yoast SEO) | Auto-generated at `/xmlsitemap.xml` |
+| Canonical URLs | Yes (built-in) | Yes (with Yoast SEO) | Yes (built-in) |
+| Meta title/description editing | Yes (via product editor) | Yes (via Yoast SEO fields) | Yes (via product editor) |
+| JSON-LD product schema | Basic (varies by theme) | Requires WooCommerce + Yoast or Rank Math | Basic (varies by theme) |
+| robots.txt | Editable in Online Store settings | Editable via file or Yoast | Editable via admin |
 
-     return `
-       <title>${escapeHtml(product.title)} | Your Store</title>
-       <meta name="description" content="${escapeHtml(product.description)}" />
-       <link rel="canonical" href="${product.canonicalUrl}" />
+### Step 2: Install an SEO foundation
 
-       <!-- Open Graph -->
-       <meta property="og:type" content="product" />
-       <meta property="og:title" content="${escapeHtml(product.title)}" />
-       <meta property="og:description" content="${escapeHtml(product.description)}" />
-       <meta property="og:url" content="${product.canonicalUrl}" />
-       <meta property="og:image" content="${product.ogImage}" />
-       <meta property="product:price:amount" content="${(product.price / 100).toFixed(2)}" />
-       <meta property="product:price:currency" content="${product.currency}" />
-       <meta property="product:availability" content="${availabilityMap[product.availability]}" />
+---
 
-       <!-- Twitter -->
-       <meta name="twitter:card" content="summary_large_image" />
-       <meta name="twitter:title" content="${escapeHtml(product.title)}" />
-       <meta name="twitter:image" content="${product.ogImage}" />
-     `;
-   }
-   ```
+#### Shopify
 
-2. **Implement JSON-LD structured data for products**
+Shopify handles sitemaps, canonicals, and basic schema automatically. Focus on:
 
-   ```typescript
-   function buildProductJsonLd(product: Product, reviews: ReviewSummary) {
-     const schema: Record<string, any> = {
-       '@context': 'https://schema.org',
-       '@type': 'Product',
-       name: product.title,
-       image: product.images.map(img => img.src),
-       description: product.metaDescription || product.description.slice(0, 200),
-       sku: product.variants[0]?.sku,
-       mpn: product.variants[0]?.barcode,
-       brand: {
-         '@type': 'Brand',
-         name: product.vendor,
-       },
-       offers: product.variants.length === 1
-         ? buildSingleOffer(product.variants[0])
-         : buildAggregateOffer(product.variants),
-     };
+1. **Install a SEO app** for enhanced structured data and bulk editing:
+   - **Yoast SEO for Shopify** ($19/mo) — most comprehensive
+   - **Schema Plus** (free tier) — focused on JSON-LD structured data
+   - **SEO Manager** ($20/mo) — bulk meta editing + structured data
+2. Go to **Shopify Admin → Online Store → Preferences** and verify:
+   - Your homepage title and meta description are set
+   - Google Analytics is connected
+3. Go to each product's page in admin and fill in the **SEO** section at the bottom:
+   - Write unique meta titles following: `[Brand] [Product Name] - [Key Attribute] | [Store Name]`
+   - Write unique meta descriptions (150–160 characters) that include price range, key benefit, and a call to action
+4. Submit your sitemap to Google Search Console: go to **search.google.com/search-console** → Sitemaps → Add `yourstore.com/sitemap.xml`
 
-     if (reviews.count > 0) {
-       schema.aggregateRating = {
-         '@type': 'AggregateRating',
-         ratingValue: reviews.average.toFixed(1),
-         reviewCount: reviews.count,
-         bestRating: '5',
-         worstRating: '1',
-       };
-     }
+---
 
-     return schema;
-   }
+#### WooCommerce
 
-   function buildSingleOffer(variant: ProductVariant) {
-     return {
-       '@type': 'Offer',
-       url: `https://yourstore.com/products/${variant.productSlug}`,
-       priceCurrency: 'USD',
-       price: (variant.price / 100).toFixed(2),
-       availability: variant.inventoryQuantity > 0
-         ? 'https://schema.org/InStock'
-         : 'https://schema.org/OutOfStock',
-       seller: {
-         '@type': 'Organization',
-         name: 'Your Store',
-       },
-     };
-   }
+1. Install **Yoast SEO** (free) or **Rank Math** (free) from the WordPress plugin directory — these are required for proper WooCommerce SEO
+2. After installing Yoast SEO:
+   - Go to **Yoast SEO → Search Appearance → WooCommerce** and configure product page templates
+   - Enable JSON-LD structured data under **Yoast SEO → Search Appearance → Schema**
+   - Go to **Yoast SEO → Tools → Bulk Editor** to edit meta titles and descriptions for all products at once
+3. For enhanced product schema (price, availability, reviews):
+   - Install **Rank Math** which includes WooCommerce Product Schema with review aggregation built in
+4. Submit sitemap to Google Search Console: Yoast auto-generates `/sitemap_index.xml`
 
-   function buildAggregateOffer(variants: ProductVariant[]) {
-     const prices = variants.map(v => v.price);
-     const anyInStock = variants.some(v => v.inventoryQuantity > 0);
-     return {
-       '@type': 'AggregateOffer',
-       lowPrice: (Math.min(...prices) / 100).toFixed(2),
-       highPrice: (Math.max(...prices) / 100).toFixed(2),
-       priceCurrency: 'USD',
-       offerCount: variants.length,
-       availability: anyInStock
-         ? 'https://schema.org/InStock'
-         : 'https://schema.org/OutOfStock',
-     };
-   }
-   ```
+---
 
-3. **Handle canonical URLs for variants and filtered pages**
+#### BigCommerce
 
-   ```typescript
-   // Canonical URL strategy:
-   // - Product page: /products/blue-widget (canonical, no variant in URL)
-   // - Variant selected: /products/blue-widget?variant=123 (canonical points to base product URL)
-   // - Collection + filter: /collections/shoes?color=red&size=10 (canonical = self without sort/page params)
-   // - Paginated: /collections/shoes?page=2 (canonical = self, with prev/next links)
+1. BigCommerce includes basic SEO features built-in. Go to **BigCommerce Admin → Products → [Edit Product] → SEO** tab
+2. For enhanced structured data: install **SEO Expert** from the BigCommerce App Marketplace
+3. Go to **Store Setup → Search Engine Optimization** to configure global defaults
+4. Submit your sitemap at `yourstore.com/xmlsitemap.xml` to Google Search Console
 
-   function getCanonicalUrl(path: string, query: Record<string, string>): string {
-     const baseUrl = 'https://yourstore.com';
+---
 
-     // For product pages, strip variant parameters
-     if (path.startsWith('/products/')) {
-       return `${baseUrl}${path}`;
-     }
+#### Custom / Headless
 
-     // For collection pages, keep filter params but strip sort/page
-     if (path.startsWith('/collections/')) {
-       const allowedParams = ['color', 'size', 'brand', 'material', 'price'];
-       const filtered = Object.entries(query)
-         .filter(([key]) => allowedParams.includes(key))
-         .sort(([a], [b]) => a.localeCompare(b));
-
-       if (filtered.length === 0) return `${baseUrl}${path}`;
-       const qs = new URLSearchParams(filtered).toString();
-       return `${baseUrl}${path}?${qs}`;
-     }
-
-     return `${baseUrl}${path}`;
-   }
-
-   // Pagination with rel prev/next
-   function getPaginationLinks(basePath: string, page: number, totalPages: number) {
-     const links: string[] = [];
-     if (page > 1) {
-       const prevUrl = page === 2
-         ? basePath
-         : `${basePath}?page=${page - 1}`;
-       links.push(`<link rel="prev" href="${prevUrl}" />`);
-     }
-     if (page < totalPages) {
-       links.push(`<link rel="next" href="${basePath}?page=${page + 1}" />`);
-     }
-     return links.join('\n');
-   }
-   ```
-
-4. **Generate XML sitemaps for large catalogs**
-
-   ```typescript
-   import { createGzip } from 'zlib';
-   import { SitemapStream, streamToPromise } from 'sitemap';
-
-   // For large catalogs, split into sitemap index + child sitemaps
-   // Each child sitemap should have max 50,000 URLs
-
-   async function generateSitemapIndex(): Promise<string> {
-     const totalProducts = await db.products.countActive();
-     const sitemapCount = Math.ceil(totalProducts / 50000);
-
-     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-     xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-
-     // Product sitemaps
-     for (let i = 1; i <= sitemapCount; i++) {
-       xml += `  <sitemap>\n`;
-       xml += `    <loc>https://yourstore.com/sitemaps/products-${i}.xml.gz</loc>\n`;
-       xml += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
-       xml += `  </sitemap>\n`;
-     }
-
-     // Collection sitemap
-     xml += `  <sitemap>\n`;
-     xml += `    <loc>https://yourstore.com/sitemaps/collections.xml.gz</loc>\n`;
-     xml += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
-     xml += `  </sitemap>\n`;
-
-     // Pages sitemap
-     xml += `  <sitemap>\n`;
-     xml += `    <loc>https://yourstore.com/sitemaps/pages.xml.gz</loc>\n`;
-     xml += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
-     xml += `  </sitemap>\n`;
-
-     xml += '</sitemapindex>';
-     return xml;
-   }
-
-   async function generateProductSitemap(page: number): Promise<Buffer> {
-     const limit = 50000;
-     const offset = (page - 1) * limit;
-     const products = await db.products.findActive({ limit, offset });
-
-     const stream = new SitemapStream({ hostname: 'https://yourstore.com' });
-
-     for (const product of products) {
-       stream.write({
-         url: `/products/${product.slug}`,
-         lastmod: product.updatedAt.toISOString(),
-         changefreq: 'daily',
-         priority: 0.8,
-         img: product.images.map(img => ({
-           url: img.src,
-           title: img.alt || product.title,
-         })),
-       });
-     }
-
-     stream.end();
-     return streamToPromise(stream);
-   }
-   ```
-
-5. **Implement breadcrumb structured data**
-
-   ```typescript
-   function buildBreadcrumbJsonLd(breadcrumbs: { name: string; url: string }[]) {
-     return {
-       '@context': 'https://schema.org',
-       '@type': 'BreadcrumbList',
-       itemListElement: breadcrumbs.map((crumb, index) => ({
-         '@type': 'ListItem',
-         position: index + 1,
-         name: crumb.name,
-         item: `https://yourstore.com${crumb.url}`,
-       })),
-     };
-   }
-
-   // Example usage:
-   const breadcrumbs = [
-     { name: 'Home', url: '/' },
-     { name: 'Shoes', url: '/collections/shoes' },
-     { name: 'Running Shoes', url: '/collections/running-shoes' },
-     { name: 'Air Max 90', url: '/products/air-max-90' },
-   ];
-   ```
-
-6. **Set up robots.txt and meta robots for e-commerce**
-
-   ```typescript
-   // Robots.txt generator
-   function generateRobotsTxt(baseUrl: string): string {
-     return `User-agent: *
-   Allow: /
-
-   # Block faceted navigation duplicate content
-   Disallow: /collections/*?sort=
-   # Do NOT disallow /collections/*?page= — Google recommends letting paginated pages be crawled
-   # with self-referencing canonicals rather than blocking them in robots.txt.
-   Disallow: /search?
-   Disallow: /cart
-   Disallow: /checkout
-   Disallow: /account
-
-   # Block internal API routes
-   Disallow: /api/
-
-   Sitemap: ${baseUrl}/sitemap.xml
-   `;
-   }
-
-   // Use meta robots for fine-grained control
-   function getMetaRobots(page: PageContext): string {
-     // Don't index filtered collection pages with many active filters
-     if (page.type === 'collection' && page.activeFilterCount > 2) {
-       return 'noindex, follow';
-     }
-
-     // Don't index search results
-     if (page.type === 'search') {
-       return 'noindex, follow';
-     }
-
-     // Don't index out-of-stock products (optional strategy)
-     if (page.type === 'product' && !page.inStock) {
-       return 'noindex, follow';  // Or keep indexed but mark as OutOfStock in structured data
-     }
-
-     return 'index, follow';
-   }
-   ```
-
-## Examples
-
-### Next.js product page with SEO
+For headless storefronts, implement structured data manually. Serve JSON-LD on every product page:
 
 ```typescript
-// pages/products/[slug].tsx
-import Head from 'next/head';
-import type { GetStaticProps, GetStaticPaths } from 'next';
-
-export const getStaticPaths: GetStaticPaths = async () => {
-  const slugs = await db.products.getAllActiveSlugs();
+function buildProductJsonLd(product: Product, reviews: ReviewSummary) {
   return {
-    paths: slugs.map(slug => ({ params: { slug } })),
-    fallback: 'blocking',
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    image: product.images.map(img => img.src),
+    description: product.metaDescription || product.description.slice(0, 200),
+    sku: product.variants[0]?.sku,
+    brand: { '@type': 'Brand', name: product.vendor },
+    offers: product.variants.length === 1
+      ? {
+          '@type': 'Offer',
+          url: `https://yourstore.com/products/${product.slug}`,
+          priceCurrency: 'USD',
+          price: (product.variants[0].priceInCents / 100).toFixed(2),
+          availability: product.variants[0].inventoryQuantity > 0
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+        }
+      : {
+          '@type': 'AggregateOffer',
+          lowPrice: (Math.min(...product.variants.map(v => v.priceInCents)) / 100).toFixed(2),
+          highPrice: (Math.max(...product.variants.map(v => v.priceInCents)) / 100).toFixed(2),
+          priceCurrency: 'USD',
+          offerCount: product.variants.length,
+        },
+    ...(reviews.count > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: reviews.average.toFixed(1),
+        reviewCount: reviews.count,
+        bestRating: '5',
+      },
+    } : {}),
   };
-};
-
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const product = await db.products.findBySlug(params.slug as string);
-  if (!product || product.status !== 'active') {
-    return { notFound: true };
-  }
-
-  return {
-    props: { product: serialize(product) },
-    revalidate: 300, // ISR: regenerate every 5 minutes
-  };
-};
-
-export default function ProductPage({ product }) {
-  const canonicalUrl = `https://yourstore.com/products/${product.slug}`;
-  const productSchema = buildProductJsonLd(product, product.reviews);
-  const breadcrumbSchema = buildBreadcrumbJsonLd(product.breadcrumbs);
-
-  return (
-    <>
-      <Head>
-        <title>{product.seoTitle || product.title} | Your Store</title>
-        <meta name="description" content={product.seoDescription || product.description.slice(0, 160)} />
-        <link rel="canonical" href={canonicalUrl} />
-        <meta property="og:type" content="product" />
-        <meta property="og:title" content={product.title} />
-        <meta property="og:image" content={product.images[0]?.src} />
-        <meta property="og:url" content={canonicalUrl} />
-        <script
-          type="application/ld+json"
-          key="product-schema"
-        >
-          {JSON.stringify(productSchema)}
-        </script>
-        <script
-          type="application/ld+json"
-          key="breadcrumb-schema"
-        >
-          {JSON.stringify(breadcrumbSchema)}
-        </script>
-      </Head>
-      {/* Product page content */}
-    </>
-  );
 }
 ```
 
-### Automated sitemap regeneration with cron
-
+For canonical URL handling on variant pages — strip variant parameters:
 ```typescript
-// scripts/regenerate-sitemaps.ts
-// Run via cron: 0 */6 * * * (every 6 hours)
-
-import { writeFileSync } from 'fs';
-import { gzipSync } from 'zlib';
-import { join } from 'path';
-
-async function regenerateSitemaps() {
-  const outputDir = join(process.cwd(), 'public', 'sitemaps');
-
-  // 1. Generate sitemap index
-  const index = await generateSitemapIndex();
-  writeFileSync(join(process.cwd(), 'public', 'sitemap.xml'), index);
-
-  // 2. Generate product sitemaps
-  const totalProducts = await db.products.countActive();
-  const sitemapCount = Math.ceil(totalProducts / 50000);
-
-  for (let i = 1; i <= sitemapCount; i++) {
-    const sitemap = await generateProductSitemap(i);
-    writeFileSync(
-      join(outputDir, `products-${i}.xml.gz`),
-      gzipSync(sitemap)
-    );
-  }
-
-  // 3. Generate collection sitemap
-  const collections = await db.collections.findPublished();
-  const collectionSitemap = buildCollectionSitemap(collections);
-  writeFileSync(
-    join(outputDir, 'collections.xml.gz'),
-    gzipSync(collectionSitemap)
-  );
-
-  // 4. Notify Google of sitemap updates
-  // Note: Google deprecated the google.com/ping?sitemap= endpoint in 2023 — do not use it.
-  // Instead, submit or update your sitemap URL via the Google Search Console API:
-  // https://developers.google.com/webmaster-tools/v1/sitemaps/submit
-  // For automated submission use the `googleapis` package with a service account.
-
-  console.log(`Sitemaps regenerated: ${totalProducts} products, ${collections.length} collections`);
+// Always use the base product URL as canonical
+// /products/blue-widget?variant=123 → canonical: /products/blue-widget
+function getCanonicalUrl(path: string): string {
+  // Strip variant query parameters
+  return `https://yourstore.com${path.split('?')[0]}`;
 }
-
-regenerateSitemaps().catch(console.error);
 ```
+
+For large catalogs (10k+ products), use a sitemap index:
+```typescript
+// Serve /sitemap.xml as a sitemap index pointing to paginated product sitemaps
+// Each child sitemap: max 50,000 URLs
+// Regenerate every 6 hours or on product publish/unpublish events
+```
+
+### Step 3: Optimize product titles and descriptions
+
+This is the highest-ROI SEO work. Follow these title formats:
+
+- **Product title format**: `[Brand] [Product Name] [Key Attribute] - [Store Name]`
+  - Example: "Nike Air Max 90 White - Running Store"
+- **Meta description format**: Include price range, key benefit, and CTA in 150–160 characters
+  - Example: "Shop Nike Air Max 90 from $120. Lightweight cushioning for daily runs. Free shipping on orders over $75. Shop now."
+
+**Common issues to fix:**
+- Duplicate meta titles across variants (fix: add variant-specific attributes to the title)
+- Meta descriptions that are just the product description truncated (fix: write purposeful descriptions)
+- Missing alt text on product images (fix: use `[Product Name] - [Color/View]` format)
+
+### Step 4: Handle technical SEO issues
+
+**Canonical URLs for filter pages:**
+- Collection pages with active filters (`/collections/shoes?color=red`) should use self-referencing canonicals
+- Pages with sort order only (`/collections/shoes?sort=price-asc`) should canonical back to the unfiltered collection URL
+
+In Shopify, this is handled automatically. In WooCommerce with Yoast, go to **Yoast SEO → Search Appearance → Taxonomies** and configure canonical behavior for filtered pages.
+
+**Robots.txt — block these paths:**
+- `/cart` and `/checkout` — not indexable
+- `/account` and `/search?` — not indexable
+- Collection filter combinations with 3+ active filters — use `noindex, follow` meta tag
+
+In Shopify: **Online Store → Themes → Edit Code → robots.txt.liquid**
+In WooCommerce: Yoast SEO manages robots.txt automatically
+
+### Step 5: Verify with Google tools
+
+1. **Google Rich Results Test** (search.google.com/test/rich-results): paste any product URL and verify structured data is correct
+2. **Google Search Console**: check for structured data errors under **Enhancements → Products**
+3. **PageSpeed Insights**: test Core Web Vitals — target LCP under 2.5 seconds, CLS under 0.1
 
 ## Best Practices
 
-- **Write unique meta descriptions for every product** — avoid duplicating the product title as the description; include key attributes (size, material, price) that help click-through rate
-- **Use JSON-LD over microdata** — Google recommends JSON-LD for structured data; it's easier to maintain and doesn't clutter your HTML
-- **Set canonical URLs on every page** — self-referencing canonicals prevent duplicate content from URL parameters (tracking codes, sort options)
-- **Compress sitemaps with gzip** — large sitemaps must be gzipped and split at 50,000 URLs per file
-- **Update sitemaps automatically** — regenerate sitemaps on product publish/unpublish, not just on a schedule
-- **Add image sitemaps** — include product images in your sitemap with descriptive titles for Google Image search traffic
-- **Use hreflang for multi-language stores** — if you sell in multiple languages/regions, implement hreflang tags to avoid duplicate content penalties
-- **Monitor with Google Search Console** — verify structured data, check for crawl errors, and monitor indexing status regularly
+- **Write unique meta descriptions for every product** — avoid duplicating the product title; include key attributes (size, material, price) that help click-through rate
+- **Compress and properly size product images** — oversized images are the #1 cause of slow LCP scores; Shopify compresses automatically; WooCommerce use ShortPixel or Imagify plugin
+- **Use JSON-LD over microdata** — easier to maintain and Google recommends it
+- **Set canonical URLs on every page** — self-referencing canonicals prevent duplicate content from URL parameters
+- **Update sitemaps automatically** — Shopify and WooCommerce + Yoast do this; for custom builds, regenerate on product publish/unpublish events
+- **Add image sitemaps** — include product images with descriptive alt text for Google Image search traffic
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Faceted navigation creates millions of indexable URLs | Use `noindex, follow` on heavily filtered pages and block filter params in robots.txt |
-| Out-of-stock products return 404 | Keep the page live with a 200 status; show "out of stock" and suggest alternatives; remove from sitemap only if permanently discontinued |
-| Duplicate content from product variants | Use a single canonical URL for the product regardless of selected variant; don't give each variant its own indexable URL |
-| Schema.org validation errors in Google Search Console | Test structured data with Google's Rich Results Test tool before deploying; ensure price and availability are always present |
-| Slow page load hurts Core Web Vitals | Preload hero images, lazy-load below-fold content, and inline critical CSS; target LCP under 2.5 seconds |
-| Missing alt text on product images | Auto-generate alt text from product title + variant options (e.g., "Blue Running Shoe - Front View") but allow manual overrides |
+| Products not appearing in Google Shopping rich results | Check Google Search Console → Enhancements → Products for structured data errors; use Rich Results Test to validate |
+| Faceted navigation creating millions of indexable URLs | Shopify/WooCommerce handle this automatically with canonicals; for custom builds, use `noindex, follow` on heavily filtered pages |
+| Out-of-stock products returning 404 | Keep the page live at 200 status; show "out of stock" and suggest alternatives; remove from sitemap only if permanently discontinued |
+| Schema.org validation errors | Test with Google's Rich Results Test; ensure price and availability are always present and correctly formatted |
+| Slow Core Web Vitals hurting ranking | Preload hero images, compress product images, use lazy loading below fold; Shopify's CDN helps significantly |
 
 ## Related Skills
 
-- @product-page-design
-- @ecommerce-caching
-- @product-data-modeling
-- @storefront-performance
-- @headless-storefront
+- @google-shopping-feed
+- @google-ads-ecommerce
+- @content-commerce
+- @social-proof-widgets

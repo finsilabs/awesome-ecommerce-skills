@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [search, autocomplete, typeahead, fuzzy-matching, merchandising, algolia, elasticsearch]
 triggers: ["add search autocomplete", "implement typeahead search", "product search suggestions", "search as you type", "fuzzy search"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -27,326 +27,214 @@ Implement a typeahead search experience that surfaces product suggestions, categ
 - When implementing merchandising rules to boost promoted products in results
 - When supporting multi-language storefronts requiring synonym and phonetic matching
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
-**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
-
 ## Core Instructions
 
-1. **Set up debounced input handler**
+### Step 1: Determine the merchant's platform and choose the right approach
 
-   Prevent excessive API calls by debouncing the input event. 200-300 ms is the sweet spot for perceived responsiveness without hammering your backend.
+| Platform | Recommended Approach | Why |
+|----------|---------------------|-----|
+| **Shopify** | Install **Search & Discovery** app (free, by Shopify) for synonym/boost configuration + **Searchie** or **Boost Commerce** app for full autocomplete dropdown | Search & Discovery improves the built-in Shopify search with synonyms and product boosts; Boost Commerce ($19/mo) adds a fully styled autocomplete dropdown with category results and merchandising rules |
+| **WooCommerce** | Install **FiboSearch – AJAX Search for WooCommerce** (free/paid) or **SearchWP** + SearchWP Live Search extension | FiboSearch adds an instant AJAX autocomplete dropdown to the WooCommerce search bar with product images, prices, and category results — no custom code needed |
+| **BigCommerce** | Enable **Search Suggestions** in **Storefront → Search** settings + install **Klevu Smart Search** or **Searchspring** for advanced autocomplete | BigCommerce's native search has basic autocomplete; Klevu ($449+/mo) and Searchspring add AI-powered autocomplete, synonym management, and merchandising rules |
+| **Custom / Headless** | Build with Algolia InstantSearch.js (recommended) or self-hosted Typesense; implement debounced input, AbortController for race conditions, and ARIA combobox pattern | Algolia offers the best developer experience with a generous free tier (10K searches/month); Typesense is the self-hosted alternative |
 
-   ```javascript
-   // useSearchAutocomplete.js
-   import { useState, useEffect, useRef, useCallback } from 'react';
+### Step 2: Configure search autocomplete on your platform
 
-   function debounce(fn, delay) {
-     let timer;
-     return (...args) => {
-       clearTimeout(timer);
-       timer = setTimeout(() => fn(...args), delay);
-     };
-   }
+---
 
-   export function useSearchAutocomplete(minChars = 2) {
-     const [query, setQuery] = useState('');
-     const [results, setResults] = useState({ products: [], categories: [], suggestions: [] });
-     const [loading, setLoading] = useState(false);
-     const abortRef = useRef(null);
+#### Shopify
 
-     const fetchSuggestions = useCallback(
-       debounce(async (q) => {
-         if (q.length < minChars) {
-           setResults({ products: [], categories: [], suggestions: [] });
-           return;
-         }
+**Search & Discovery app (required baseline — free):**
+1. Install **Search & Discovery** from the Shopify App Store
+2. Go to **Apps → Search & Discovery → Synonyms** and add business synonyms:
+   - Bidirectional: "sneakers" ↔ "trainers" ↔ "shoes"
+   - One-way: "tv" → "television", "flat screen"
+3. Under **Boosts**, pin high-priority products or collections to appear first for specific queries
+4. Under **Filter settings**, configure which attributes appear as filters alongside search results
+5. The app improves Shopify's native predictive search API used by all OS2.0 theme search bars
 
-         // Cancel previous in-flight request
-         if (abortRef.current) abortRef.current.abort();
-         abortRef.current = new AbortController();
+**Boost Commerce app (full autocomplete dropdown):**
+1. Install **Boost Commerce – Product Filter & Search** from the Shopify App Store
+2. In the app dashboard, configure the **Instant Search** popup:
+   - Enable product image + price in suggestions
+   - Add category/collection suggestions
+   - Configure the number of product results (recommend 5–8)
+3. Set up **Merchandising rules** in the app: boost new arrivals, pin best sellers, exclude out-of-stock from suggestions
+4. Customize the popup's appearance to match your theme colors in the **Design** settings
 
-         setLoading(true);
-         try {
-           const res = await fetch(
-             `/api/search/autocomplete?q=${encodeURIComponent(q)}&limit=5`,
-             { signal: abortRef.current.signal }
-           );
-           const data = await res.json();
-           setResults(data);
-         } catch (err) {
-           if (err.name !== 'AbortError') console.error(err);
-         } finally {
-           setLoading(false);
-         }
-       }, 250),
-       [minChars]
-     );
+---
 
-     useEffect(() => { fetchSuggestions(query); }, [query, fetchSuggestions]);
+#### WooCommerce
 
-     return { query, setQuery, results, loading };
-   }
-   ```
+**FiboSearch (recommended — free tier available):**
+1. Install **FiboSearch – AJAX Search for WooCommerce** from WordPress.org
+2. Go to **FiboSearch → Settings → General**
+3. Configure what appears in suggestions:
+   - **Products**: name, SKU, tags (enable all for best results)
+   - **Categories**: enable to show category suggestions
+   - **Pages/Posts**: enable if you have blog content
+4. Set **Fuzzy Search** to On — this handles typos like "adids" → "Adidas"
+5. Under **Appearance**, configure the dropdown layout: product image + name + price vs. compact text-only
+6. FiboSearch replaces the default WooCommerce search widget — it works with the standard search input, Elementor search widgets, and most theme search bars
 
-2. **Build the server-side autocomplete endpoint**
+**SearchWP + Live Search extension:**
+1. Install **SearchWP** (paid, from $99/yr) for advanced indexing control
+2. Install the **SearchWP Live Search** extension for real-time autocomplete
+3. In the SearchWP admin, configure which product fields are indexed with what weight (name > SKU > description)
+4. Enable custom fields and product attributes in the index for spec-based searching
 
-   The endpoint should search across multiple indices (products, categories, pages) and apply merchandising boosts.
+---
 
-   ```javascript
-   // api/search/autocomplete.js (Node/Express)
-   import { searchClient } from '../lib/algolia'; // or your search provider
+#### BigCommerce
 
-   export async function autocompleteHandler(req, res) {
-     const { q, limit = 5 } = req.query;
-     if (!q || q.length < 2) {
-       return res.json({ products: [], categories: [], suggestions: [] });
-     }
+1. Go to **Storefront → Search** in your BigCommerce control panel
+2. Under **Search Suggestions**, enable **Products**, **Categories**, and **Brands** as suggestion types
+3. Set the number of suggestions to show (5–8 for products)
+4. Configure **Search as you type** to start after 2 characters
 
-     const [productsResult, categoriesResult] = await Promise.all([
-       searchClient.search({
-         indexName: 'products',
-         query: q,
-         params: {
-           hitsPerPage: parseInt(limit),
-           attributesToRetrieve: ['objectID', 'name', 'image', 'price', 'url', 'category'],
-           attributesToHighlight: ['name'],
-           typoTolerance: true,
-           // Merchandising: boost in-stock, pinned items via optional filters or rules
-           optionalFilters: ['is_featured:true<score=2>', 'in_stock:true<score=1>'],
-         },
-       }),
-       searchClient.search({
-         indexName: 'categories',
-         query: q,
-         params: {
-           hitsPerPage: 3,
-           attributesToRetrieve: ['name', 'url', 'product_count'],
-         },
-       }),
-     ]);
+**Klevu Smart Search (advanced autocomplete):**
+1. Install from the BigCommerce App Marketplace
+2. In the Klevu dashboard, configure synonym groups and boosting rules
+3. Klevu's autocomplete dropdown automatically shows product images, prices, categories, and trending searches
+4. Add custom banners to the search dropdown for specific queries (e.g., show a "Summer Sale" banner when someone searches "dress")
 
-     res.json({
-       products: productsResult.hits,
-       categories: categoriesResult.hits,
-       suggestions: productsResult.facets?.query_suggestions?.slice(0, 4) ?? [],
-     });
-   }
-   ```
+---
 
-3. **Render the dropdown with keyboard navigation**
+#### Custom / Headless
 
-   Implement ARIA-compliant combobox pattern (role="combobox", role="listbox") with full keyboard support.
-
-   Note: When rendering server-provided highlight HTML, sanitize it with DOMPurify first.
-
-   ```jsx
-   // SearchAutocomplete.jsx
-   import { useSearchAutocomplete } from './useSearchAutocomplete';
-   import { useRef, useState } from 'react';
-   import DOMPurify from 'dompurify';
-
-   export function SearchAutocomplete() {
-     const { query, setQuery, results, loading } = useSearchAutocomplete();
-     const [activeIndex, setActiveIndex] = useState(-1);
-     const inputRef = useRef(null);
-     const isOpen = query.length >= 2 &&
-       (results.products.length > 0 || results.categories.length > 0);
-     const allItems = [...results.categories, ...results.products];
-
-     function handleKeyDown(e) {
-       if (e.key === 'ArrowDown') {
-         e.preventDefault();
-         setActiveIndex(i => Math.min(i + 1, allItems.length - 1));
-       }
-       if (e.key === 'ArrowUp') {
-         e.preventDefault();
-         setActiveIndex(i => Math.max(i - 1, -1));
-       }
-       if (e.key === 'Enter' && activeIndex >= 0) {
-         window.location.href = allItems[activeIndex].url;
-       }
-       if (e.key === 'Escape') {
-         inputRef.current.blur();
-         setActiveIndex(-1);
-       }
-     }
-
-     return (
-       <div role="combobox" aria-expanded={isOpen} aria-haspopup="listbox" aria-owns="autocomplete-list">
-         <input
-           ref={inputRef}
-           type="search"
-           value={query}
-           onChange={e => { setQuery(e.target.value); setActiveIndex(-1); }}
-           onKeyDown={handleKeyDown}
-           aria-autocomplete="list"
-           aria-controls="autocomplete-list"
-           aria-activedescendant={activeIndex >= 0 ? `item-${activeIndex}` : undefined}
-           placeholder="Search products..."
-         />
-         {loading && <span aria-live="polite" className="spinner" aria-label="Loading suggestions" />}
-         {isOpen && (
-           <ul id="autocomplete-list" role="listbox" className="autocomplete-dropdown">
-             {results.categories.map((cat, i) => (
-               <li key={cat.url} id={`item-${i}`} role="option" aria-selected={activeIndex === i}
-                   className={activeIndex === i ? 'active' : ''}>
-                 <a href={cat.url}>
-                   <span className="prefix">Category: </span>
-                   {cat.name} ({cat.product_count})
-                 </a>
-               </li>
-             ))}
-             {results.products.map((product, i) => {
-               const idx = i + results.categories.length;
-               // Sanitize server-provided highlight markup before rendering as HTML
-               const highlightedName = DOMPurify.sanitize(
-                 product._highlightResult?.name?.value ?? product.name
-               );
-               return (
-                 <li key={product.objectID} id={`item-${idx}`} role="option"
-                     aria-selected={activeIndex === idx}
-                     className={activeIndex === idx ? 'active' : ''}>
-                   <a href={product.url} className="product-suggestion">
-                     <img src={product.image} alt="" width="40" height="40" />
-                     <span dangerouslySetInnerHTML={{ __html: highlightedName }} />
-                     <span className="price">${product.price}</span>
-                   </a>
-                 </li>
-               );
-             })}
-           </ul>
-         )}
-       </div>
-     );
-   }
-   ```
-
-4. **Configure fuzzy matching and synonyms**
-
-   Set up your search index with appropriate fuzzy matching tolerance and business synonyms.
-
-   ```javascript
-   // scripts/configure-algolia-index.js
-   await searchClient.setSettings({
-     indexName: 'products',
-     indexSettings: {
-       searchableAttributes: [
-         'name',              // Highest priority
-         'brand',
-         'category',
-         'description',       // Lowest priority
-       ],
-       customRanking: ['desc(popularity_score)', 'desc(conversion_rate)'],
-       typoTolerance: 'min',   // Allow 1 typo for words >= 5 chars
-       minWordSizefor1Typo: 5,
-       minWordSizefor2Typos: 9,
-       synonyms: [
-         { objectID: 'shoes', type: 'synonym', synonyms: ['shoes', 'sneakers', 'footwear', 'trainers'] },
-         { objectID: 'tv',    type: 'synonym', synonyms: ['tv', 'television', 'flat screen'] },
-       ],
-     },
-   });
-   ```
-
-5. **Add merchandising rules (query-level pinning and boosting)**
-
-   ```javascript
-   // Pin "New Arrivals" collection result when query contains "new"
-   await searchClient.saveRule({
-     indexName: 'products',
-     rule: {
-       objectID: 'boost-new-arrivals',
-       conditions: [{ pattern: 'new', anchoring: 'contains' }],
-       consequence: {
-         filterPromotes: true,
-         promote: [{ objectID: 'collection-new-arrivals', position: 0 }],
-       },
-     },
-   });
-   ```
-
-## Examples
-
-### Typesense self-hosted alternative
-
-If you need a cost-effective, self-hosted option instead of Algolia:
-
+**Debounced input hook with AbortController (prevents race conditions):**
 ```javascript
-import Typesense from 'typesense';
+// useSearchAutocomplete.js
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-const client = new Typesense.Client({
-  nodes: [{ host: 'localhost', port: 8108, protocol: 'http' }],
-  apiKey: process.env.TYPESENSE_API_KEY,
-  connectionTimeoutSeconds: 2,
-});
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
+}
 
-const results = await client.collections('products').documents().search({
-  q: query,
-  query_by: 'name,brand,category',
-  prefix: true,
-  num_typos: 1,
-  highlight_full_fields: 'name',
-  per_page: 5,
-});
+export function useSearchAutocomplete(minChars = 2) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState({ products: [], categories: [], suggestions: [] });
+  const [loading, setLoading] = useState(false);
+  const abortRef = useRef(null);
+
+  const fetchSuggestions = useCallback(
+    debounce(async (q) => {
+      if (q.length < minChars) { setResults({ products: [], categories: [], suggestions: [] }); return; }
+      if (abortRef.current) abortRef.current.abort();
+      abortRef.current = new AbortController();
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/search/autocomplete?q=${encodeURIComponent(q)}&limit=5`,
+          { signal: abortRef.current.signal });
+        setResults(await res.json());
+      } catch (err) { if (err.name !== 'AbortError') console.error(err); }
+      finally { setLoading(false); }
+    }, 250),
+    [minChars]
+  );
+
+  useEffect(() => { fetchSuggestions(query); }, [query, fetchSuggestions]);
+  return { query, setQuery, results, loading };
+}
 ```
 
-### Elasticsearch fuzzy query
+**Accessible combobox dropdown (ARIA combobox + listbox pattern):**
+```jsx
+// SearchAutocomplete.jsx
+import DOMPurify from 'dompurify'; // sanitize server-provided highlight HTML
 
-```json
-{
-  "query": {
-    "bool": {
-      "should": [
-        {
-          "match_phrase_prefix": {
-            "name": { "query": "QUERY_STRING", "boost": 3 }
-          }
-        },
-        {
-          "multi_match": {
-            "query": "QUERY_STRING",
-            "fields": ["name^2", "brand", "category"],
-            "fuzziness": "AUTO",
-            "prefix_length": 2
-          }
-        }
-      ]
-    }
-  },
-  "size": 5
+export function SearchAutocomplete() {
+  const { query, setQuery, results, loading } = useSearchAutocomplete();
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const inputRef = useRef(null);
+  const allItems = [...results.categories, ...results.products];
+  const isOpen = query.length >= 2 && allItems.length > 0;
+
+  function handleKeyDown(e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, allItems.length - 1)); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, -1)); }
+    if (e.key === 'Enter' && activeIndex >= 0) window.location.href = allItems[activeIndex].url;
+    if (e.key === 'Escape') { inputRef.current.blur(); setActiveIndex(-1); }
+  }
+
+  return (
+    <div role="combobox" aria-expanded={isOpen} aria-haspopup="listbox" aria-owns="autocomplete-list">
+      <input ref={inputRef} type="search" value={query}
+        onChange={e => { setQuery(e.target.value); setActiveIndex(-1); }}
+        onKeyDown={handleKeyDown}
+        aria-autocomplete="list" aria-controls="autocomplete-list"
+        aria-activedescendant={activeIndex >= 0 ? `item-${activeIndex}` : undefined}
+        placeholder="Search products..." />
+      {loading && <span aria-live="polite" className="sr-only">Loading suggestions</span>}
+      {isOpen && (
+        <ul id="autocomplete-list" role="listbox" className="autocomplete-dropdown">
+          {results.categories.map((cat, i) => (
+            <li key={cat.url} id={`item-${i}`} role="option" aria-selected={activeIndex === i}>
+              <a href={cat.url}>Category: {cat.name} ({cat.product_count})</a>
+            </li>
+          ))}
+          {results.products.map((product, i) => {
+            const idx = i + results.categories.length;
+            const highlighted = DOMPurify.sanitize(product._highlightResult?.name?.value ?? product.name);
+            return (
+              <li key={product.objectID} id={`item-${idx}`} role="option" aria-selected={activeIndex === idx}>
+                <a href={product.url} className="product-suggestion">
+                  <img src={product.image} alt="" width="40" height="40" />
+                  <span dangerouslySetInnerHTML={{ __html: highlighted }} />
+                  <span>${product.price}</span>
+                </a>
+              </li>
+            );
+          })}
+          <li><a href={`/search?q=${encodeURIComponent(query)}`}>View all results for "{query}"</a></li>
+        </ul>
+      )}
+    </div>
+  );
 }
+```
+
+**Algolia index configuration (typo tolerance + synonyms + merchandising):**
+```javascript
+await searchClient.setSettings({
+  indexName: 'products',
+  indexSettings: {
+    searchableAttributes: ['name', 'brand', 'category', 'description'],
+    customRanking: ['desc(popularity_score)', 'desc(conversion_rate)'],
+    typoTolerance: 'min',
+    minWordSizefor1Typo: 5,
+    synonyms: [
+      { objectID: 'shoes', type: 'synonym', synonyms: ['shoes', 'sneakers', 'footwear', 'trainers'] },
+    ],
+    optionalFilters: ['is_featured:true<score=2>', 'in_stock:true<score=1>'],
+  },
+});
 ```
 
 ## Best Practices
 
-- **Debounce at 200-300 ms** — balances responsiveness and server load; do not go below 150 ms
+- **Debounce at 200–300 ms** — balances responsiveness and server load; do not go below 150 ms
 - **Cancel in-flight requests** — use `AbortController` to avoid race conditions when the user types quickly
-- **Highlight matched terms** — wrap matched substrings in `<mark>` or `<em>` so shoppers see why a result appeared; always sanitize server-supplied HTML with DOMPurify before rendering
+- **Highlight matched terms** — wrap matched substrings in `<mark>` so shoppers see why a result appeared; sanitize server-supplied HTML before rendering
 - **Show a "View all results" link** — always provide an escape hatch to the full search results page
-- **Cache frequent queries** — most storefronts have a small set of high-frequency queries; a simple LRU cache cuts backend load by 40-60%
-- **Track no-results queries** — log queries returning zero results to your analytics; these are direct signals for synonym or catalog gaps
-- **Set minChars to 2** — single-character queries produce noise and hit backend hard with no conversion value
-- **Preload on focus** — on input focus (before typing), fetch trending searches to fill an empty state
+- **Cache frequent queries** — most stores have a small set of high-frequency queries; an LRU cache cuts backend load significantly
+- **Track no-results queries** — log queries returning zero results; these are direct signals for synonym gaps or catalog holes
+- **Set minChars to 2** — single-character queries produce noise and return no conversion value
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Stale results appearing when user types fast | Use `AbortController` to cancel the previous request before issuing a new one |
-| Dropdown appears behind sticky header or modal | Set `z-index` explicitly on the dropdown container; use a portal (`createPortal`) if inside an `overflow:hidden` ancestor |
+| Stale results when user types fast | Use `AbortController` to cancel the previous request before issuing a new one |
+| Dropdown appears behind sticky header | Set `z-index` explicitly on the dropdown; use a portal if inside an `overflow:hidden` ancestor |
 | Keyboard navigation focus lost on re-render | Track `activeIndex` in component state, not DOM focus; re-apply `aria-activedescendant` on each render |
-| Fuzzy matching returns irrelevant results | Configure `prefix_length: 2` in Elasticsearch or `minWordSizefor1Typo: 5` in Algolia to require a solid stem before fuzzy kicks in |
-| Merchandising rules not applying | Rules only trigger when the query matches the condition pattern — use `anchoring: 'contains'` not `is` for partial matches |
+| Fuzzy matching returns irrelevant results | Configure `minWordSizefor1Typo: 5` in Algolia or `prefix_length: 2` in Elasticsearch to require a solid stem before fuzzy kicks in |
+| Merchandising rules not applying | Rules trigger when the query matches the condition pattern — use `anchoring: 'contains'` not `is` for partial matches |
 
 ## Related Skills
 
 - @faceted-navigation
 - @product-page-design
-- @product-categorization
 - @accessibility-commerce
+- @storefront-theming

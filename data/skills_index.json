@@ -9,7 +9,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -23,7 +26,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -37,7 +43,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -51,7 +60,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -65,7 +77,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -79,7 +94,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -93,7 +111,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -107,7 +128,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -121,7 +145,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -130,12 +157,15 @@
     "path": "skills/catalog-inventory/catalog-import-export",
     "category": "catalog-inventory",
     "name": "Catalog Import Export",
-    "description": "Import and export your entire product catalog in CSV, JSON, or XML with validation, error reporting, and scheduled sync support",
+    "description": "Import and export your entire product catalog in bulk using your platform's native tools or dedicated apps, with validation and scheduled sync support",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -144,12 +174,15 @@
     "path": "skills/catalog-inventory/cogs-tracking-allocation",
     "category": "catalog-inventory",
     "name": "Cogs Tracking Allocation",
-    "description": "Track cost of goods sold with FIFO/LIFO/weighted average inventory valuation, landed cost allocation for imports, and variance analysis against standard costs",
+    "description": "Track cost of goods sold and landed costs using your platform's built-in tools or accounting integrations to compute accurate gross margin per order",
     "risk": "critical",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -158,12 +191,15 @@
     "path": "skills/catalog-inventory/digital-products",
     "category": "catalog-inventory",
     "name": "Digital Products",
-    "description": "Sell software, ebooks, and other downloads with secure delivery, license key generation, download limits, and expiration controls",
+    "description": "Sell software, ebooks, and other downloads with secure delivery, license key generation, download limits, and expiration controls using platform apps",
     "risk": "critical",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -172,12 +208,15 @@
     "path": "skills/catalog-inventory/inventory-tracking",
     "category": "catalog-inventory",
     "name": "Inventory Tracking",
-    "description": "Track stock levels in real time across all your warehouses with inventory reservation to prevent overselling and support for backorders",
+    "description": "Track stock levels in real time across your platform with inventory reservation to prevent overselling and support for backorders",
     "risk": "critical",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -186,12 +225,15 @@
     "path": "skills/catalog-inventory/low-stock-alerts",
     "category": "catalog-inventory",
     "name": "Low Stock Alerts",
-    "description": "Automatically alert your team and trigger reorders when products fall below custom thresholds, using sales velocity and demand forecasting",
+    "description": "Set up automated alerts when products fall below custom thresholds so you can reorder before running out of stock",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -205,7 +247,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -214,12 +259,15 @@
     "path": "skills/catalog-inventory/product-bundles-kits",
     "category": "catalog-inventory",
     "name": "Product Bundles Kits",
-    "description": "Sell grouped products as bundles or kits with automatic inventory deduction for each component, bundle pricing, and display logic",
+    "description": "Sell grouped products as bundles or kits with automatic inventory deduction, bundle pricing, and display logic using platform apps",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -228,12 +276,15 @@
     "path": "skills/catalog-inventory/product-categorization",
     "category": "catalog-inventory",
     "name": "Product Categorization",
-    "description": "Build a clean product hierarchy with breadcrumb navigation, automated category assignment, and SEO-friendly URLs for each category level",
+    "description": "Build a clean product hierarchy with collections, categories, tags, and breadcrumb navigation using your platform's native tools",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -242,12 +293,15 @@
     "path": "skills/catalog-inventory/product-content-enrichment",
     "category": "catalog-inventory",
     "name": "Product Content Enrichment",
-    "description": "Use AI to auto-generate product descriptions, extract attributes from raw specs, and tag images to enrich your catalog at scale",
+    "description": "Use AI to auto-generate product descriptions, extract attributes, and tag images to enrich your catalog at scale using platform tools and AI writing apps",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -256,12 +310,15 @@
     "path": "skills/catalog-inventory/product-data-modeling",
     "category": "catalog-inventory",
     "name": "Product Data Modeling",
-    "description": "Design a flexible product database schema that supports variants, custom attributes, product relationships, and category hierarchies",
+    "description": "Structure your product catalog using your platform's native data model for variants, attributes, metafields, and product relationships",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -270,12 +327,15 @@
     "path": "skills/catalog-inventory/variant-matrix",
     "category": "catalog-inventory",
     "name": "Variant Matrix",
-    "description": "Generate and manage all size/color/material combinations for a product with automatic SKU creation and per-variant pricing and inventory",
+    "description": "Generate and manage all size/color/material combinations for a product using your platform's variant tools with bulk price and inventory management",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -284,12 +344,15 @@
     "path": "skills/customer-crm/customer-accounts",
     "category": "customer-crm",
     "name": "Customer Accounts",
-    "description": "Let shoppers register, manage their profile, save multiple addresses, and view their full order history in a personal account portal",
+    "description": "Let shoppers register, manage their profile, save multiple addresses, and view their full order history using your platform's built-in customer account system",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -298,12 +361,15 @@
     "path": "skills/customer-crm/customer-lifetime-value",
     "category": "customer-crm",
     "name": "Customer Lifetime Value",
-    "description": "Calculate and predict the net profit value each customer will generate over their lifetime, then automate retention strategies for your highest-value segments",
+    "description": "Calculate and track the net profit value each customer generates, then automate retention strategies for your highest-value segments using platform tools",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -312,12 +378,15 @@
     "path": "skills/customer-crm/customer-segmentation",
     "category": "customer-crm",
     "name": "Customer Segmentation",
-    "description": "Segment customers by purchase recency, frequency, and spend (RFM) or behavioral signals to power targeted marketing and personalization",
+    "description": "Segment customers by purchase behavior, recency, and spend using Klaviyo, your platform's built-in tools, or a custom RFM analysis to power targeted marketing",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -326,12 +395,15 @@
     "path": "skills/customer-crm/customer-support-integration",
     "category": "customer-crm",
     "name": "Customer Support Integration",
-    "description": "Connect Zendesk or Intercom to your store so support agents see full order history and customer details without switching tools",
+    "description": "Connect your helpdesk (Gorgias, Zendesk, Intercom) to your store so support agents see full order history and customer details without switching tools",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -340,12 +412,15 @@
     "path": "skills/customer-crm/live-chat-commerce",
     "category": "customer-crm",
     "name": "Live Chat Commerce",
-    "description": "Add real-time chat to your storefront so agents can share product links, assist with cart questions, and close sales in the conversation",
+    "description": "Add real-time chat to your storefront using a platform-native app so agents can share product links, assist with cart questions, and close sales",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -354,12 +429,15 @@
     "path": "skills/customer-crm/personalization-engine",
     "category": "customer-crm",
     "name": "Personalization Engine",
-    "description": "Show each shopper personalized product recommendations based on their browsing history and what similar customers bought using collaborative filtering",
+    "description": "Show each shopper personalized product recommendations using platform apps and recommendation tools based on browsing history and purchase patterns",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -373,7 +451,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -387,7 +468,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -401,7 +485,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -415,7 +502,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -429,7 +519,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -443,7 +536,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -457,7 +553,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -471,7 +570,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -485,7 +587,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -499,7 +604,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -513,7 +621,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -527,7 +638,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -541,7 +655,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -555,7 +672,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -569,7 +689,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -583,7 +706,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -597,7 +723,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -611,7 +740,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -625,7 +757,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -639,7 +774,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -653,7 +791,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -667,7 +808,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -681,7 +825,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -695,7 +842,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -709,7 +859,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -723,7 +876,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -737,7 +893,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -863,7 +1022,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -877,7 +1039,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -891,7 +1056,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -905,7 +1073,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -919,7 +1090,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -933,7 +1107,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -947,7 +1124,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -961,7 +1141,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -975,7 +1158,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -989,7 +1175,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1003,7 +1192,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1017,7 +1209,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1031,7 +1226,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1045,7 +1243,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1059,7 +1260,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1073,7 +1277,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1082,12 +1289,15 @@
     "path": "skills/marketing-growth/cart-abandonment-recovery",
     "category": "marketing-growth",
     "name": "Cart Abandonment Recovery",
-    "description": "Win back shoppers who leave with carts by sending timed email, SMS, and push sequences with escalating incentives to complete their purchase",
+    "description": "Win back shoppers who leave items in their cart by setting up timed email, SMS, and push sequences with escalating incentives to complete their purchase",
     "risk": "safe",
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1101,7 +1311,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1115,7 +1328,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1129,7 +1345,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1143,9 +1362,12 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
-    "difficulty": "advanced"
+    "difficulty": "intermediate"
   },
   {
     "id": "customer-retention-engine",
@@ -1157,9 +1379,12 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
-    "difficulty": "advanced"
+    "difficulty": "intermediate"
   },
   {
     "id": "ecommerce-seo",
@@ -1171,7 +1396,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1185,7 +1413,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1199,7 +1430,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1213,7 +1447,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -1227,9 +1464,12 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
-    "difficulty": "advanced"
+    "difficulty": "intermediate"
   },
   {
     "id": "google-ads-ecommerce",
@@ -1241,7 +1481,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1255,7 +1498,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1269,7 +1515,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1283,7 +1532,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1297,9 +1549,12 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
-    "difficulty": "advanced"
+    "difficulty": "intermediate"
   },
   {
     "id": "loyalty-program-optimization",
@@ -1311,7 +1566,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1325,7 +1583,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1339,7 +1600,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1353,7 +1617,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1367,7 +1634,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1381,7 +1651,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1395,7 +1668,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -1409,7 +1685,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1423,7 +1702,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1437,7 +1719,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1451,7 +1736,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1465,7 +1753,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1479,7 +1770,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1493,7 +1787,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1507,7 +1804,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1521,7 +1821,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1535,7 +1838,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1549,7 +1855,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1563,7 +1872,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1577,7 +1889,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1591,7 +1906,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1605,7 +1923,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1619,7 +1940,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1633,7 +1957,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1647,7 +1974,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -1661,7 +1991,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1675,7 +2008,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1689,7 +2025,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1703,7 +2042,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1717,7 +2059,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1731,7 +2076,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1745,7 +2093,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1759,7 +2110,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -1773,7 +2127,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1787,7 +2144,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -1801,7 +2161,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2081,7 +2444,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2095,7 +2461,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2109,7 +2478,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2123,7 +2495,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2137,7 +2512,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2151,7 +2529,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2165,7 +2546,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2179,7 +2563,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2193,7 +2580,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2207,7 +2597,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2221,7 +2614,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2235,7 +2631,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2249,7 +2648,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2263,7 +2665,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2277,7 +2682,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2291,7 +2699,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2305,7 +2716,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2319,7 +2733,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2333,7 +2750,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2347,7 +2767,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2361,7 +2784,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2375,7 +2801,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -2389,7 +2818,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2403,7 +2835,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2417,7 +2852,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -2431,7 +2869,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -2445,7 +2886,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "beginner"
   },
@@ -2459,7 +2903,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   },
@@ -2473,7 +2920,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "advanced"
   },
@@ -2487,7 +2937,10 @@
     "source": "curated",
     "date_added": "2026-03-12",
     "platforms": [
-      "platform-agnostic"
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
     ],
     "difficulty": "intermediate"
   }

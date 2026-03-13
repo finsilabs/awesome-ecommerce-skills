@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [security, tls, csp, tokenization, xss, pci-dss, checkout-security, content-security-policy, https]
 triggers: ["secure checkout", "checkout security", "csp headers", "tls checkout", "xss prevention payment", "pci dss checkout", "tokenization"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,255 +16,141 @@ difficulty: intermediate
 
 ## Overview
 
-Payment pages are the highest-value target for attackers — a single XSS vulnerability can lead to Magecart-style card skimming attacks that steal thousands of card numbers. Securing checkout requires enforcing TLS everywhere, implementing strict Content Security Policies (CSP) to prevent script injection, using payment tokenization to minimize PCI scope, and applying defense-in-depth headers that block the most common web attacks. This skill covers the full security stack for payment pages.
+Payment pages are the highest-value target for attackers — a single XSS vulnerability can lead to Magecart-style card skimming attacks that steal thousands of card numbers. Securing checkout requires enforcing TLS everywhere, implementing strict Content Security Policies (CSP) to prevent script injection, using payment tokenization to minimize PCI scope, and removing non-essential third-party scripts from payment pages. The good news: Shopify and BigCommerce handle most of this infrastructure automatically. WooCommerce merchants need to configure hosting and install security plugins. Custom storefronts require implementing all of these controls from scratch.
 
 ## When to Use This Skill
 
-- When building or auditing a custom checkout flow that accepts payment information
+- When building or auditing a checkout flow that accepts payment information
 - When a penetration test or security scan surfaces XSS, CSP, or header vulnerabilities on payment pages
-- When migrating from a hosted payment page to a custom UI (increases PCI scope)
 - When reviewing third-party script loading on pages that have access to payment form context
 - When preparing for PCI DSS SAQ A-EP or SAQ D compliance assessment
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles PCI compliance, SSL, and infrastructure security. Focus on app-level security, GDPR consent (via Shopify Privacy API), and access controls.
-**WooCommerce**: You manage your own hosting security. Use security plugins (Wordfence, Sucuri), SSL certificate, and PCI-compliant payment gateways. GDPR handled via cookie consent plugins.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Understanding of your platform's security model, relevant compliance requirements
+- When migrating from a hosted payment page to a custom UI (increases PCI scope)
 
 ## Core Instructions
 
-1. **Enforce HTTPS and HSTS**
+### Step 1: Understand your checkout security responsibility by platform
 
-   Payment pages must only be served over HTTPS. Add HTTP Strict Transport Security (HSTS) to prevent downgrade attacks:
+| Platform | HTTPS / TLS | CSP Headers | Payment Tokenization | Third-Party Script Control |
+|----------|-------------|-------------|---------------------|---------------------------|
+| **Shopify** | Automatic — Shopify provisions and renews SSL certificates | Shopify manages checkout CSP; your theme pages need review | Shopify Payments and all gateway integrations use tokenization | Use Shopify's Script Manager and Customer Events to control what loads on checkout |
+| **WooCommerce** | Your hosting responsibility — install SSL from Let's Encrypt or your host | Your server responsibility — configure via hosting or plugin | Determined by your gateway choice (Stripe Elements = SAQ A-EP) | WordPress plugin and theme scripts load globally; use conditional loading to exclude checkout |
+| **BigCommerce** | Automatic — BigCommerce provisions SSL and enforces HTTPS | BigCommerce manages checkout CSP for hosted checkout | Handled by your payment gateway choice through BigCommerce checkout | BigCommerce Script Manager controls third-party script placement |
+| **Custom / Headless** | Your infrastructure responsibility | Your application responsibility — implement per-request CSP with nonces | Implement with Stripe Elements or Braintree Drop-in UI | Full control and full responsibility — must implement explicitly |
 
-   ```typescript
-   // next.config.ts — security headers applied to all routes
-   const securityHeaders = [
-     // Force HTTPS for 2 years, include subdomains, allow preloading
-     {key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload'},
-     // Prevent clickjacking
-     {key: 'X-Frame-Options', value: 'DENY'},
-     // Prevent MIME-type sniffing
-     {key: 'X-Content-Type-Options', value: 'nosniff'},
-     // Control referrer information
-     {key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin'},
-     // Disable browser features not needed on checkout
-     {key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()'},
-   ];
+### Step 2: Platform-specific checkout security setup
 
-   export default {
-     async headers() {
-       return [{source: '/(.*)', headers: securityHeaders}];
-     },
-   };
-   ```
+---
 
-   Submit your domain to the HSTS Preload list at https://hstspreload.org after confirming all subdomains support HTTPS.
+#### Shopify
 
-2. **Implement a strict Content Security Policy**
+Shopify's hosted checkout is one of the most secure available — it runs on Shopify's own domain (`checkout.shopify.com` or your custom domain with SSL), uses Shopify Payments tokenization, and is protected by Shopify's CDN and WAF.
 
-   CSP is the most effective defense against Magecart/XSS card skimming. Start with a strict policy on checkout pages:
+**HTTPS enforcement:**
+- Shopify automatically provisions free SSL certificates for all stores and custom domains
+- Go to **Online Store → Domains** to verify SSL is active on your custom domain
+- Enable **Redirect all traffic to HTTPS** under **Online Store → Preferences → Checkout and accounts**
 
-   ```typescript
-   // lib/csp.ts
-   export function generateCSP(nonce: string): string {
-     const isDev = process.env.NODE_ENV === 'development';
+**Third-party scripts on checkout:**
+Shopify's checkout extension model (Checkout Extensibility) limits what can run on the checkout page — this is by design for PCI compliance.
 
-     const directives: Record<string, string[]> = {
-       'default-src': ["'self'"],
-       'script-src': [
-         "'self'",
-         `'nonce-${nonce}'`,                    // Only nonce-whitelisted scripts
-         'https://js.stripe.com',               // Stripe.js (load from CDN, never bundle)
-         'https://challenges.cloudflare.com',   // Cloudflare Turnstile
-         ...(isDev ? ["'unsafe-eval'"] : []),   // Next.js hot reload in dev only
-       ],
-       'style-src': ["'self'", `'nonce-${nonce}'`, 'https://fonts.googleapis.com'],
-       'font-src': ["'self'", 'https://fonts.gstatic.com'],
-       'img-src': ["'self'", 'data:', 'https:', 'blob:'],
-       'connect-src': [
-         "'self'",
-         'https://api.stripe.com',
-         'https://r.stripe.com',
-         process.env.NEXT_PUBLIC_API_URL!,
-       ],
-       'frame-src': [
-         'https://js.stripe.com',               // Stripe Elements iframe
-         'https://hooks.stripe.com',
-         'https://challenges.cloudflare.com',
-       ],
-       'object-src': ["'none'"],
-       'base-uri': ["'self'"],
-       'form-action': ["'self'"],
-       'upgrade-insecure-requests': [],
-     };
+1. Go to **Settings → Customer events** to manage tracking pixels and scripts
+2. Scripts added via Customer Events run in a sandboxed context and cannot access payment data
+3. **Do not inject JavaScript into the checkout page via theme code or ScriptTag API** — this is prohibited for SAQ A compliance and may be blocked by Shopify
 
-     return Object.entries(directives)
-       .map(([key, values]) => `${key} ${values.join(' ')}`.trim())
-       .join('; ');
-   }
+**Theme security review:**
+1. Go to **Online Store → Themes → Edit code**
+2. Search your theme for any references to `document.cookie`, `localStorage`, or `fetch` on cart/checkout pages — these are red flags if you did not add them intentionally
+3. Review installed apps: go to **Settings → Apps and sales channels** and remove apps you no longer use; each installed app can inject scripts into your storefront
 
-   // Apply as a response header per request (nonce must be unique per request)
-   // In Next.js middleware:
-   export function middleware(request: NextRequest) {
-     const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-     const csp = generateCSP(nonce);
-     const response = NextResponse.next();
-     response.headers.set('Content-Security-Policy', csp);
-     response.headers.set('x-nonce', nonce); // Pass nonce to layout for script tags
-     return response;
-   }
-   ```
+**Admin account security (reduces attack surface):**
+1. Go to **Settings → Users and permissions**
+2. Require 2FA for all staff accounts — a compromised admin account is the most common way attackers modify checkout behavior
+3. Limit staff access to only the permissions needed for their role
 
-3. **Use payment tokenization to minimize PCI scope**
+---
 
-   Never handle raw card numbers in your application. Use Stripe Elements, Braintree Drop-in UI, or Adyen Web Components — these iframe the card input fields, keeping raw card data off your domain entirely:
+#### WooCommerce
 
-   ```typescript
-   // The correct pattern: Stripe handles all card data in an iframe
-   // Your server only ever sees a paymentMethodId (opaque token)
-   const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-   const elements = stripe.elements({clientSecret});
+WooCommerce checkout security depends almost entirely on your hosting configuration and payment gateway. Your hosting provider is responsible for TLS, and the gateway you choose determines whether card data ever touches your server.
 
-   const cardElement = elements.create('card', {
-     style: {
-       base: {
-         fontSize: '16px',
-         color: '#32325d',
-         '::placeholder': {color: '#aab7c4'},
-       },
-     },
-   });
-   cardElement.mount('#card-element');
+**Step 1 — Force HTTPS on your store:**
+1. In your WordPress hosting control panel (cPanel, Kinsta, WP Engine), enable free SSL via Let's Encrypt or your host's built-in certificate
+2. Install **Really Simple SSL** (free plugin) — it forces HTTPS sitewide, updates internal links, and fixes mixed content warnings in one step
+3. After activating, verify at **Settings → SSL** that the redirect is active and no mixed content warnings appear
 
-   // On submit: stripe creates a PaymentMethod on their servers
-   const {paymentMethod, error} = await stripe.createPaymentMethod({
-     type: 'card',
-     card: cardElement,
-   });
-   // paymentMethod.id is the token your server uses — never the card number
-   ```
+**Step 2 — Choose a payment gateway that keeps card data off your server:**
+- **Stripe (WooCommerce Stripe Payment Gateway)** — uses Stripe Elements; card data entered in a Stripe iframe never touches your server (SAQ A-EP)
+- **Stripe Checkout (redirect)** — customer is redirected to Stripe's hosted page; even simpler (SAQ A)
+- **PayPal Standard** — redirect to PayPal; SAQ A
+- Avoid any gateway that requires your server to receive raw card numbers
 
-   **What you must NEVER do:**
-   ```typescript
-   // NEVER collect card data in your own input fields
-   // NEVER send card numbers to your server
-   // NEVER log payment method details
-   // NEVER store CVV under any circumstances (PCI DSS prohibition)
-   ```
+**Step 3 — Install security plugins:**
+1. Install **Wordfence Security** (free): go to **Wordfence → Firewall** and set protection level to "Extended Protection" — this adds a WAF rule at the WordPress application layer
+2. Install **WP Activity Log** (~$99/year) or **Simple History** (free): logs all admin actions including order edits, plugin installs, and setting changes
+3. Go to **Settings → Discussion** — disable comments on checkout/cart pages if enabled (reduces XSS attack surface)
 
-4. **Implement output encoding and XSS prevention**
+**Step 4 — Remove scripts from checkout pages:**
+WooCommerce loads all active plugins on every page by default. Use **Asset CleanUp Pro** ($25 one-time) or add conditional PHP to prevent non-essential scripts from loading on checkout:
 
-   ```typescript
-   // Never interpolate user input directly into HTML
-   // BAD — vulnerable to XSS
-   const html = `<div>Thank you, ${req.query.name}</div>`;
+Go to **WooCommerce → Settings → Advanced** and verify:
+- Debug logging is **off** (`WP_DEBUG` must be `false` in `wp-config.php` in production)
+- No custom code logs order data or payment details
 
-   // GOOD — use framework-provided safe rendering
-   // In React, JSX escapes automatically:
-   return <div>Thank you, {customerName}</div>; // Safe
+**Step 5 — Configure SSL security headers via hosting or plugin:**
+1. If using Nginx hosting (Kinsta, WP Engine, Nexcess), ask your host to add HSTS and X-Frame-Options headers — these are commonly pre-configured on managed WordPress hosts
+2. Alternatively, install **HTTP Headers** (free plugin) to add security headers via WordPress without editing server config
 
-   // When you must render HTML (e.g., product descriptions from a CMS),
-   // always sanitize first with DOMPurify
-   import DOMPurify from 'isomorphic-dompurify';
-   const safeHtml = DOMPurify.sanitize(product.descriptionHtml, {
-     ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'ul', 'ol', 'li', 'br'],
-     ALLOWED_ATTR: [],
-   });
-   ```
+---
 
-   Validate and sanitize all user inputs server-side:
-   ```typescript
-   import {z} from 'zod';
+#### BigCommerce
 
-   const checkoutSchema = z.object({
-     email: z.string().email().max(255),
-     name: z.string().min(1).max(200).regex(/^[\p{L}\p{M}\s\-'.]+$/u),
-     address: z.string().min(1).max(500),
-     city: z.string().min(1).max(100),
-     postalCode: z.string().min(1).max(20),
-     country: z.string().length(2), // ISO 3166-1 alpha-2
-   });
+BigCommerce's hosted checkout is PCI-DSS Level 1 certified and handles TLS, CSP, and payment tokenization automatically when you use a supported gateway.
 
-   export async function POST(req: NextRequest) {
-     const body = await req.json();
-     const result = checkoutSchema.safeParse(body);
-     if (!result.success) {
-       return NextResponse.json({errors: result.error.flatten()}, {status: 400});
-     }
-     // Process validated data
-   }
-   ```
+**HTTPS enforcement:**
+- BigCommerce automatically provisions and renews SSL for all stores
+- Go to **Store Setup → Store Settings → Security** — verify **Force secure checkout** is enabled
+- Go to **Storefront → SSL Certificate** to confirm your custom domain has SSL active
 
-5. **Audit and control third-party scripts**
+**Controlling third-party scripts:**
+1. Go to **Storefront → Script Manager**
+2. Review all installed scripts — for each script, check the **Placement** setting
+3. For scripts that do not need to run on checkout (analytics, advertising, chat), set **Placement** to exclude checkout pages
+4. Scripts in Script Manager run in the storefront context; BigCommerce's checkout itself is protected by a separate, more restrictive CSP
 
-   Third-party scripts (analytics, chat, advertising) are the most common vector for Magecart attacks on checkout pages. Remove or isolate all non-essential third parties from payment pages:
+**Checkout payment security:**
+- BigCommerce Payments and certified payment gateways (Stripe, Braintree, PayPal) use tokenization — card data never touches BigCommerce's or your application servers
+- Go to **Store Setup → Payments** and review your active gateway — ensure you are not using a gateway that uses "direct post" to your server
 
-   ```typescript
-   // Detect which page we're on and conditionally load third-party scripts
-   // app/checkout/layout.tsx — no third-party scripts allowed
-   export default function CheckoutLayout({children}: {children: React.ReactNode}) {
-     // No analytics, no chat, no advertising tags on checkout
-     return (
-       <html>
-         <head>
-           {/* Only Stripe.js — loaded from Stripe's CDN with SRI hash */}
-           <script
-             src="https://js.stripe.com/v3/"
-             integrity="sha256-..." // Subresource Integrity hash
-             crossOrigin="anonymous"
-           />
-         </head>
-         <body>{children}</body>
-       </html>
-     );
-   }
-   ```
+**Admin account security:**
+1. Go to **Account Settings → Users**
+2. Review all user accounts — remove former employees and contractors
+3. Ensure all active accounts have **2FA enabled** under their individual account security settings
+4. Go to **Settings → Advanced Settings → API Accounts** — review OAuth credentials; revoke any unused API tokens
 
-   Use Subresource Integrity (SRI) for any script loaded from a CDN:
-   ```bash
-   # Generate SRI hash for a script
-   curl -s https://js.stripe.com/v3/ | openssl dgst -sha256 -binary | openssl base64 -A
-   ```
+---
 
-6. **Implement security monitoring and alerting**
+#### Custom / Headless
 
-   ```typescript
-   // Monitor for CSP violations — browsers send reports to your endpoint
-   // app/api/csp-report/route.ts
-   export async function POST(req: NextRequest) {
-     const report = await req.json();
-     const violation = report['csp-report'];
+For custom storefronts, you implement all checkout security controls. The three most critical are: payment tokenization (so your server never sees card numbers), strict CSP on payment pages (to prevent Magecart injection), and HTTPS with security headers.
 
-     await logger.warn('CSP Violation', {
-       documentUri: violation['document-uri'],
-       violatedDirective: violation['violated-directive'],
-       blockedUri: violation['blocked-uri'],
-       sourceFile: violation['source-file'],
-       lineNumber: violation['line-number'],
-     });
+**Payment tokenization with Stripe Elements (SAQ A-EP):**
 
-     // Alert on checkout page CSP violations — could indicate active attack
-     if (violation['document-uri']?.includes('/checkout')) {
-       await alertSecurityTeam('CSP violation on checkout page', violation);
-     }
+```typescript
+// Client-side: Stripe handles card data in an iframe — your code never sees card numbers
+const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const elements = stripe.elements({ clientSecret });
+const paymentElement = elements.create('payment');
+paymentElement.mount('#payment-element');
 
-     return new NextResponse(null, {status: 204});
-   }
-   ```
+// On submit: Stripe handles card capture; your server receives only a paymentIntentId
+const { error, paymentIntent } = await stripe.confirmPayment({
+  elements,
+  confirmParams: { return_url: `${window.location.origin}/order-confirmation` },
+});
+// Your server confirms via paymentIntentId — never a card number
+```
 
-   Update CSP to send reports:
-   ```
-   Content-Security-Policy: ...; report-uri /api/csp-report; report-to csp-endpoint
-   ```
-
-## Examples
-
-### Complete security headers for an e-commerce Next.js app
+**HTTPS and security headers (Next.js example):**
 
 ```typescript
 // next.config.ts
@@ -274,21 +160,19 @@ export default {
       {
         source: '/(.*)',
         headers: [
-          {key: 'X-DNS-Prefetch-Control', value: 'on'},
-          {key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload'},
-          {key: 'X-Frame-Options', value: 'SAMEORIGIN'},
-          {key: 'X-Content-Type-Options', value: 'nosniff'},
-          {key: 'X-XSS-Protection', value: '1; mode=block'},
-          {key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin'},
-          {key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()'},
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
         ],
       },
       {
-        // Extra restrictive headers on checkout pages
+        // No caching on checkout; no indexing by search engines
         source: '/checkout(.*)',
         headers: [
-          {key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate'},
-          {key: 'X-Robots-Tag', value: 'noindex'},
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+          { key: 'X-Robots-Tag', value: 'noindex' },
         ],
       },
     ];
@@ -296,39 +180,104 @@ export default {
 };
 ```
 
-### Audit third-party scripts on payment pages
+**Content Security Policy with per-request nonces (prevents Magecart):**
 
-```bash
-# Use the Chrome DevTools Coverage tool or automated audit
-# Lighthouse can surface third-party scripts:
-lighthouse https://yourstore.com/checkout --only-categories=best-practices --output=json \
-  | jq '.audits["third-party-summary"].details.items[] | {entity: .entity, blockingTime: .blockingTime}'
+```typescript
+// middleware.ts — generate a new nonce per request; static nonces can be bypassed
+export function middleware(request: NextRequest) {
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+
+  const csp = [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' https://js.stripe.com`,
+    `style-src 'self' 'nonce-${nonce}'`,
+    `frame-src https://js.stripe.com https://hooks.stripe.com`,
+    `connect-src 'self' https://api.stripe.com`,
+    `img-src 'self' data: https:`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `upgrade-insecure-requests`,
+    `report-uri /api/csp-report`,
+  ].join('; ');
+
+  const response = NextResponse.next();
+  response.headers.set('Content-Security-Policy', csp);
+  response.headers.set('x-nonce', nonce); // Pass to layout for script nonce attributes
+  return response;
+}
+```
+
+**CSP violation monitoring:**
+
+```typescript
+// app/api/csp-report/route.ts — log violations; alert on checkout page violations
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const violation = body['csp-report'];
+
+  await logger.warn('CSP Violation', {
+    documentUri: violation['document-uri'],
+    violatedDirective: violation['violated-directive'],
+    blockedUri: violation['blocked-uri'],
+  });
+
+  // A CSP violation on a payment page may indicate an active Magecart attack
+  if (violation['document-uri']?.includes('/checkout')) {
+    await alertSecurityTeam('CSP violation on checkout page', violation);
+  }
+
+  return new NextResponse(null, { status: 204 });
+}
+```
+
+**Server-side input validation with Zod:**
+
+```typescript
+import { z } from 'zod';
+
+const checkoutSchema = z.object({
+  email: z.string().email().max(255),
+  name: z.string().min(1).max(200).regex(/^[\p{L}\p{M}\s\-'.]+$/u),
+  address: z.string().min(1).max(500),
+  city: z.string().min(1).max(100),
+  postalCode: z.string().min(1).max(20),
+  country: z.string().length(2), // ISO 3166-1 alpha-2
+});
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const result = checkoutSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json({ errors: result.error.flatten() }, { status: 400 });
+  }
+  // Proceed with validated data only
+}
 ```
 
 ## Best Practices
 
-- **Treat checkout pages as a separate security zone** — apply the most restrictive CSP, disable all non-essential third-party scripts, and treat any script violation as a potential Magecart incident
-- **Never inline JavaScript on payment pages** — use nonce-based CSP and external scripts; `'unsafe-inline'` in `script-src` defeats the entire purpose of CSP
-- **Add Subresource Integrity (SRI) to all CDN scripts** — SRI ensures the script content hasn't been tampered with even if the CDN is compromised
-- **Log CSP violations in production** — set `report-uri` and monitor for violations; legitimate violations from browser extensions are rare but injection attempts are distinctive
-- **Rotate encryption keys and review PCI DSS scope annually** — PCI scope changes as you add integrations; conduct an annual review with a QSA (Qualified Security Assessor)
-- **Use a WAF (Web Application Firewall)** — Cloudflare WAF or AWS WAF with the OWASP managed ruleset blocks SQL injection, XSS, and other OWASP Top 10 attacks at the edge
-- **Scan dependencies for vulnerabilities** — run `npm audit` in CI and use Snyk or Dependabot to catch third-party library CVEs before they reach production
+- **Treat checkout as a separate security zone** — apply the most restrictive CSP, disable all non-essential third-party scripts, and treat any CSP violation on a payment page as a potential Magecart incident
+- **Never inline JavaScript on payment pages** — use nonce-based CSP and external scripts; adding `'unsafe-inline'` to `script-src` defeats the entire purpose of CSP
+- **Remove non-essential apps and plugins** — every installed Shopify app, WordPress plugin, or BigCommerce script is a potential attack surface; remove anything your store does not actively use
+- **Add Subresource Integrity (SRI) to CDN scripts** — SRI ensures the script content has not been tampered with even if the CDN is compromised; generate with `openssl dgst -sha256 -binary script.js | openssl base64`
+- **Enable WAF protection at the edge** — Cloudflare WAF (free plan) or your hosting provider's WAF blocks OWASP Top 10 attacks before they reach your application
+- **Scan dependencies for vulnerabilities in CI** — run `npm audit` and use Snyk or Dependabot; a compromised npm package in your checkout bundle is as dangerous as a Magecart injection
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| CSP breaks Stripe Elements iframes | Add `https://js.stripe.com` and `https://hooks.stripe.com` to `frame-src`; Stripe publishes a current list of required CSP allowances in their docs |
-| `'unsafe-inline'` added to unblock styles | Use nonces for inline styles instead; `'unsafe-inline'` invalidates the entire CSP protection for that directive |
-| TLS certificate expired | Use Let's Encrypt with auto-renewal (Certbot) or a managed certificate from your CDN provider; set calendar alerts 30 days before expiry |
-| XSS via URL query parameters in order confirmation | Always encode/escape dynamic data before inserting into HTML; use `encodeURIComponent` in URLs and React's automatic JSX escaping for HTML content |
-| Third-party analytics loading on checkout | Add a conditional check in your analytics initialization that skips loading on `/checkout` routes |
+| CSP breaks Stripe Elements iframes | Add `https://js.stripe.com` and `https://hooks.stripe.com` to `frame-src`; check Stripe's CSP documentation for the current complete allowlist |
+| `'unsafe-inline'` added to unblock styles | Use nonces for inline styles instead; `'unsafe-inline'` invalidates CSP protection for that directive entirely |
+| TLS certificate expired | Use Let's Encrypt with auto-renewal (Certbot) or a managed certificate from your CDN; Shopify and BigCommerce auto-renew — only WooCommerce/custom stores require manual renewal |
+| Analytics scripts loading on checkout pages | Add a conditional check in your analytics initialization that skips loading on `/checkout` routes; on Shopify use Customer Events placement settings |
+| Third-party chat widget with access to payment fields | Remove chat widgets from checkout pages entirely; no legitimate support use case requires reading payment form values |
 
 ## Related Skills
 
 - @fraud-detection
 - @account-security
 - @bot-protection
-- @stripe-integration
+- @pci-dss-compliance
 - @gdpr-ecommerce

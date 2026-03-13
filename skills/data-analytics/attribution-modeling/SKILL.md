@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [attribution, multi-touch, marketing-analytics, utm, last-click, first-click, data-driven, channel-analysis]
 triggers: ["attribution modeling", "multi-touch attribution", "marketing attribution", "channel attribution", "first touch vs last touch", "data-driven attribution", "marketing spend optimization", "UTM attribution"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,9 @@ difficulty: advanced
 
 ## Overview
 
-Attribution modeling determines which marketing touchpoints receive credit for a conversion, enabling informed decisions about where to allocate ad spend. This skill covers building four attribution models (last-click, first-click, linear, and time-decay) from first-party UTM data, comparing model outputs to identify channel discrepancies, and implementing a data-driven attribution approach using Markov chains for stores with sufficient data volume.
+Attribution modeling determines which marketing touchpoints receive credit for a conversion, enabling informed decisions about where to allocate ad spend. Every ad platform (Meta, Google, TikTok) reports attribution using its own model — typically claiming 100% credit — which means the sum of all platform-reported revenue routinely exceeds your actual revenue.
+
+This skill guides you through setting up first-party attribution on your platform, comparing attribution models side by side, and using dedicated attribution tools that do this automatically without building custom pipelines.
 
 ## When to Use This Skill
 
@@ -27,318 +29,161 @@ Attribution modeling determines which marketing touchpoints receive credit for a
 - When implementing first-party attribution to replace data lost from iOS tracking changes
 - When affiliate, influencer, and paid search all contributed to the same order and each claims 100% credit
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
-
 ## Core Instructions
 
-1. **Capture the full customer touchpoint journey**
+### Step 1: Determine your platform and choose the right attribution tool
 
-   Every marketing touch must be recorded with a consistent schema:
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | **Triple Whale** or **Northbeam** | Both built specifically for Shopify DTC brands; pull order data via API, de-duplicate cross-platform attribution, and show first-party blended ROAS |
+| **Shopify** (budget) | **Shopify Analytics** built-in attribution + UTM tracking | Free; shows last-click attribution by UTM source for all orders |
+| **WooCommerce** | **Metorik** + GA4 attribution | Metorik adds UTM tracking to WooCommerce orders; GA4 provides data-driven attribution model |
+| **BigCommerce** | **Rockerbox** or **Northbeam** | Both support BigCommerce via API integration; provide multi-touch attribution dashboards |
+| **All platforms** (mid-market) | **Rockerbox** or **Affluent** | Platform-agnostic; pull ad spend from all channels and match to first-party order data |
+| **Custom / Headless** | Build on **Segment** + **dbt** or use **Triple Whale's pixel API** | Capture touchpoints with Segment, store in warehouse, model attribution in dbt |
 
-   ```typescript
-   interface MarketingTouchpoint {
-     sessionId: string;
-     customerId: string | null;   // Null for anonymous visitors
-     anonymousId: string;         // Cookie-based ID for pre-login tracking
-     utmSource: string;
-     utmMedium: string;
-     utmCampaign: string;
-     utmContent: string | null;
-     utmTerm: string | null;
-     landingPage: string;
-     touchedAt: Date;
-     touchType: 'organic' | 'paid' | 'email' | 'social' | 'direct' | 'referral';
-   }
+### Step 2: Set up UTM tracking correctly across all channels
 
-   // Client-side: fire on every page load where UTM params are present
-   function captureUTMTouchpoint() {
-     const params = new URLSearchParams(window.location.search);
-     if (!params.get('utm_source') && !params.get('gclid') && !params.get('fbclid')) return;
+Good attribution starts with consistent UTM parameters. Without them, 40–60% of traffic appears as "direct" (dark traffic).
 
-     const anonymousId = getOrCreateAnonymousId();
+**UTM naming conventions to enforce across your team:**
 
-     fetch('/api/analytics/touchpoint', {
-       method: 'POST',
-       body: JSON.stringify({
-         sessionId: getSessionId(),
-         anonymousId,
-         utmSource: params.get('utm_source') ?? inferSource(document.referrer),
-         utmMedium: params.get('utm_medium') ?? 'organic',
-         utmCampaign: params.get('utm_campaign') ?? '(none)',
-         utmContent: params.get('utm_content'),
-         utmTerm: params.get('utm_term'),
-         landingPage: window.location.pathname,
-         touchedAt: new Date().toISOString(),
-       }),
-     });
-   }
-   ```
+| Parameter | Example | Rule |
+|-----------|---------|-------|
+| `utm_source` | `google`, `meta`, `klaviyo` | Always lowercase; never `Google` or `GOOGLE` |
+| `utm_medium` | `cpc`, `email`, `social` | Standardized list; no custom variants |
+| `utm_campaign` | `spring-sale-2026` | Consistent format across platforms |
 
-2. **Link touchpoints to conversions at order time**
+**Platform-specific setup:**
 
-   When an order is placed, fetch all touchpoints for that user's conversion path:
+- **Google Ads:** Enable auto-tagging (adds `gclid` automatically); also add UTM parameters under Campaign → Settings → Additional settings → Campaign URL options
+- **Meta Ads:** Add UTM parameters under Ad Set → Website URL, or use Meta's URL parameters feature at the account level
+- **Klaviyo:** Go to **Account → Settings → UTM Tracking** — enable automatic UTM appending for all email and SMS campaigns
+- **Affiliates/influencers:** Generate unique UTM links per creator using a URL builder; track in a spreadsheet
 
-   ```typescript
-   async function buildConversionPath(orderId: string): Promise<ConversionPath> {
-     const order = await db.orders.findById(orderId, { include: ['customer'] });
-     const anonymousId = order.anonymousId ?? order.session?.anonymousId;
-     const customerId = order.customerId;
+### Step 3: Configure attribution in your chosen tool
 
-     // Get all touchpoints from the 30-day look-back window before the order
-     const lookbackStart = new Date(order.createdAt.getTime() - 30 * 86400000);
+---
 
-     const touchpoints = await db.marketingTouchpoints.findMany({
-       where: {
-         OR: [
-           { customerId },
-           { anonymousId },
-         ],
-         touchedAt: { gte: lookbackStart, lte: order.createdAt },
-       },
-       orderBy: { touchedAt: 'asc' },
-     });
+#### Shopify
 
-     await db.conversionPaths.upsert(
-       { orderId },
-       {
-         orderId,
-         orderRevenue: order.subtotalCents / 100,
-         touchpoints: touchpoints.map((t) => ({
-           source: t.utmSource,
-           medium: t.utmMedium,
-           campaign: t.utmCampaign,
-           touchedAt: t.touchedAt.toISOString(),
-         })),
-         pathLength: touchpoints.length,
-         createdAt: new Date(),
-       }
-     );
+**Option A: Built-in Shopify Analytics (last-click, free)**
 
-     return { orderId, orderRevenue: order.subtotalCents / 100, touchpoints };
-   }
-   ```
+1. Go to **Analytics → Reports → Sessions over time**
+2. Filter by **Referral source** to see which UTM sources drove sessions
+3. Go to **Analytics → Reports → Sales by traffic source** for revenue by channel (last-click attribution)
+4. Limitation: Shopify's built-in attribution is last-click only with a 30-day window; it cannot show multi-touch paths
 
-3. **Implement the four standard attribution models**
+**Option B: Triple Whale (recommended for DTC brands spending $50K+/mo on ads)**
 
-   ```typescript
-   type TouchpointCredit = { source: string; medium: string; campaign: string; credit: number };
+1. Install **Triple Whale** from the Shopify App Store
+2. Triple Whale's pixel fires on every page load, capturing the full click path before purchase
+3. Go to **Triple Whale → Attribution** to see revenue under four models side by side: first-click, last-click, linear, and Triple Whale's own blended model
+4. Connect your ad accounts (Meta, Google, TikTok) under **Integrations** — Triple Whale then compares your platform-reported ROAS against first-party-attributed ROAS
+5. Use the **Summary Dashboard** for a daily view of true ROAS by channel
 
-   function applyLastClickAttribution(path: ConversionPath): TouchpointCredit[] {
-     if (path.touchpoints.length === 0) return [{ source: 'direct', medium: 'none', campaign: '(none)', credit: path.orderRevenue }];
-     const last = path.touchpoints[path.touchpoints.length - 1];
-     return [{ source: last.source, medium: last.medium, campaign: last.campaign, credit: path.orderRevenue }];
-   }
+**Option C: Polar Analytics (mid-market, more affordable)**
 
-   function applyFirstClickAttribution(path: ConversionPath): TouchpointCredit[] {
-     if (path.touchpoints.length === 0) return [{ source: 'direct', medium: 'none', campaign: '(none)', credit: path.orderRevenue }];
-     const first = path.touchpoints[0];
-     return [{ source: first.source, medium: first.medium, campaign: first.campaign, credit: path.orderRevenue }];
-   }
+1. Install **Polar Analytics** from the Shopify App Store
+2. Connect ad accounts under **Integrations**
+3. Polar provides first-party attribution with multiple models and a "blended ROAS" metric that accounts for all channels
 
-   function applyLinearAttribution(path: ConversionPath): TouchpointCredit[] {
-     if (path.touchpoints.length === 0) return [{ source: 'direct', medium: 'none', campaign: '(none)', credit: path.orderRevenue }];
-     const creditPerTouch = path.orderRevenue / path.touchpoints.length;
-     return path.touchpoints.map((t) => ({ source: t.source, medium: t.medium, campaign: t.campaign, credit: creditPerTouch }));
-   }
+---
 
-   function applyTimeDecayAttribution(path: ConversionPath): TouchpointCredit[] {
-     if (path.touchpoints.length === 0) return [{ source: 'direct', medium: 'none', campaign: '(none)', credit: path.orderRevenue }];
+#### WooCommerce
 
-     // Half-life: 7 days — touchpoints from 7 days ago get half the weight of the final touch
-     const halfLifeDays = 7;
-     const orderTime = new Date(path.touchpoints[path.touchpoints.length - 1].touchedAt).getTime();
+**Using Metorik + GA4**
 
-     const weights = path.touchpoints.map((t) => {
-       const daysBeforeConversion = (orderTime - new Date(t.touchedAt).getTime()) / 86400000;
-       return Math.pow(0.5, daysBeforeConversion / halfLifeDays);
-     });
+1. Install **Metorik** (metorik.com) and connect to your WooCommerce store
+2. Metorik captures UTM parameters on every order automatically — no additional plugin needed once configured
+3. In Metorik, go to **Reports → UTM** to see orders and revenue by utm_source, utm_medium, and utm_campaign (last-click)
+4. For multi-touch attribution, pair Metorik with **Google Analytics 4:**
+   - Install GA4 via **Site Kit by Google** or **MonsterInsights** plugin
+   - In GA4, go to **Advertising → Attribution** to configure the attribution model (last click, first click, linear, data-driven)
+   - GA4's data-driven attribution requires 400+ conversions per month to activate
 
-     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+**Alternative: WooCommerce Google Analytics plugin (free)**
 
-     return path.touchpoints.map((t, i) => ({
-       source: t.source,
-       medium: t.medium,
-       campaign: t.campaign,
-       credit: path.orderRevenue * (weights[i] / totalWeight),
-     }));
-   }
-   ```
+- Tracks ecommerce events automatically; provides last-click channel attribution in GA4
 
-4. **Aggregate attribution credits by channel**
+---
 
-   ```typescript
-   async function buildChannelAttributionReport(
-     startDate: Date,
-     endDate: Date,
-     model: 'last_click' | 'first_click' | 'linear' | 'time_decay'
-   ) {
-     const paths = await db.conversionPaths.findMany({
-       where: { createdAt: { gte: startDate, lte: endDate } },
-     });
+#### BigCommerce
 
-     const attributionFn = {
-       last_click: applyLastClickAttribution,
-       first_click: applyFirstClickAttribution,
-       linear: applyLinearAttribution,
-       time_decay: applyTimeDecayAttribution,
-     }[model];
+1. In BigCommerce, go to **Storefront → Script Manager** and add your attribution tool's pixel
+2. **Rockerbox** (recommended): Installs via script; pulls BigCommerce orders via API to match to ad touchpoints; provides first-party attribution dashboard
+3. Built-in BigCommerce analytics (**Analytics → Marketing**) shows traffic sources by last-click session; limited to top-level source/medium
+4. For deeper analysis, connect BigCommerce to **Google Analytics 4** via the official BigCommerce GA4 integration in **Apps → Google**
 
-     const channelCredits: Record<string, { revenue: number; orders: number }> = {};
+---
 
-     for (const path of paths) {
-       const credits = attributionFn(path);
-       for (const credit of credits) {
-         const key = `${credit.source}/${credit.medium}`;
-         channelCredits[key] = channelCredits[key] ?? { revenue: 0, orders: 0 };
-         channelCredits[key].revenue += credit.credit;
-         channelCredits[key].orders += credit.credit / path.orderRevenue; // fractional order count
-       }
-     }
+#### Custom / Headless
 
-     return Object.entries(channelCredits)
-       .map(([channel, stats]) => ({ channel, revenue: stats.revenue, orders: stats.orders }))
-       .sort((a, b) => b.revenue - a.revenue);
-   }
-   ```
+For headless storefronts, capture touchpoints server-side and store them with orders. Then model attribution in a data warehouse:
 
-5. **Implement data-driven attribution using a Markov chain model**
-
-   For stores with 10,000+ conversion paths, a Markov chain model is more accurate than rule-based models:
-
-   ```typescript
-   // Build transition probability matrix from conversion paths
-   function buildMarkovTransitionMatrix(paths: ConversionPath[]): Map<string, Map<string, number>> {
-     const transitions = new Map<string, Map<string, number>>();
-
-     const addTransition = (from: string, to: string) => {
-       if (!transitions.has(from)) transitions.set(from, new Map());
-       const row = transitions.get(from)!;
-       row.set(to, (row.get(to) ?? 0) + 1);
-     };
-
-     for (const path of paths) {
-       const channels = ['start', ...path.touchpoints.map((t) => `${t.source}/${t.medium}`), 'conversion'];
-       for (let i = 0; i < channels.length - 1; i++) {
-         addTransition(channels[i], channels[i + 1]);
-       }
-     }
-
-     // Normalize to probabilities
-     for (const [from, toMap] of transitions) {
-       const total = [...toMap.values()].reduce((sum, v) => sum + v, 0);
-       for (const [to, count] of toMap) {
-         toMap.set(to, count / total);
-       }
-     }
-
-     return transitions;
-   }
-
-   // Removal effect: channel credit = (overall CVR - CVR without channel) / overall CVR
-   function calculateRemovalEffect(transitions: Map<string, Map<string, number>>, channel: string, paths: ConversionPath[]): number {
-     const overallCVR = paths.filter((p) => p.touchpoints.length > 0).length / paths.length;
-
-     // Simulate paths with the channel removed (transition to null/non-converting)
-     const pathsWithoutChannel = paths.map((p) => ({
-       ...p,
-       touchpoints: p.touchpoints.filter((t) => `${t.source}/${t.medium}` !== channel),
-     }));
-
-     const pathsWithConversion = pathsWithoutChannel.filter((p) => {
-       if (p.touchpoints.length === 0) return false;
-       // Simple simulation: path converts if it still has touchpoints
-       return Math.random() < 0.7; // simplified; full implementation uses matrix multiplication
-     });
-
-     const cvrWithout = pathsWithConversion.length / paths.length;
-     return (overallCVR - cvrWithout) / overallCVR;
-   }
-   ```
-
-## Examples
-
-### Side-by-side model comparison report
+**Step 1 — Capture UTM touchpoints on every visit:**
 
 ```typescript
-async function compareAttributionModels(startDate: Date, endDate: Date) {
-  const models = ['last_click', 'first_click', 'linear', 'time_decay'] as const;
+// Client-side: capture and store UTM params in localStorage on every page load
+function captureUTMTouchpoint() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('utm_source') && !params.get('gclid') && !params.get('fbclid')) return;
 
-  const results = await Promise.all(
-    models.map(async (model) => {
-      const report = await buildChannelAttributionReport(startDate, endDate, model);
-      return { model, channels: report.slice(0, 10) };
-    })
-  );
-
-  // Find channels with the biggest discrepancy between last-click and linear
-  const lastClick = results.find((r) => r.model === 'last_click')!.channels;
-  const linear = results.find((r) => r.model === 'linear')!.channels;
-
-  const discrepancies = lastClick.map((lc) => {
-    const lin = linear.find((l) => l.channel === lc.channel);
-    return {
-      channel: lc.channel,
-      lastClickRevenue: lc.revenue,
-      linearRevenue: lin?.revenue ?? 0,
-      difference: lc.revenue - (lin?.revenue ?? 0),
-    };
-  }).sort((a, b) => Math.abs(b.difference) - Math.abs(a.difference));
-
-  return { models: results, discrepancies };
+  const touchpoints = JSON.parse(localStorage.getItem('utm_touchpoints') || '[]');
+  touchpoints.push({
+    source: params.get('utm_source') ?? inferSource(document.referrer),
+    medium: params.get('utm_medium') ?? 'organic',
+    campaign: params.get('utm_campaign') ?? '(none)',
+    touchedAt: new Date().toISOString(),
+    landingPage: window.location.pathname,
+  });
+  // Keep last 10 touchpoints (30-day look-back)
+  localStorage.setItem('utm_touchpoints', JSON.stringify(touchpoints.slice(-10)));
 }
 ```
 
-### ROAS by channel under different attribution models
+**Step 2 — Attach touchpoints to the order at checkout:**
 
-```sql
--- Compare ROAS across models by joining attribution results with ad spend
-SELECT
-  ac.channel,
-  ac.model,
-  ac.attributed_revenue,
-  as_.ad_spend,
-  ROUND(ac.attributed_revenue / NULLIF(as_.ad_spend, 0), 2) AS roas
-FROM (
-  SELECT channel, model, SUM(attributed_revenue) AS attributed_revenue
-  FROM channel_attribution_results
-  WHERE period BETWEEN :start AND :end
-  GROUP BY channel, model
-) ac
-LEFT JOIN (
-  SELECT source || '/' || medium AS channel, SUM(spend) AS ad_spend
-  FROM ad_spend_by_channel
-  WHERE date BETWEEN :start AND :end
-  GROUP BY channel
-) as_ ON ac.channel = as_.channel
-ORDER BY ac.model, roas DESC;
+```typescript
+// Send stored touchpoints with the order creation request
+const touchpoints = JSON.parse(localStorage.getItem('utm_touchpoints') || '[]');
+await createOrder({ ...orderData, marketingTouchpoints: touchpoints });
 ```
+
+**Step 3 — Store and model attribution in your data warehouse:**
+
+Export to BigQuery or Snowflake via **Fivetran** or **Stitch**, then build attribution models in **dbt**. Use a dbt package like `dbt-attribution` or write your own last-click, linear, and time-decay models against your orders + touchpoints tables.
+
+### Step 4: Compare attribution models and act on the data
+
+Run these comparisons monthly to guide budget decisions:
+
+| What to compare | How to interpret |
+|-----------------|-----------------|
+| Platform ROAS vs. first-party ROAS | If platform ROAS is 5x but first-party is 2x, the channel is getting over-credited from view-through attribution |
+| Last-click vs. linear (all-touch) | Channels that appear stronger under linear are likely assisting conversions that get credited elsewhere under last-click |
+| First-touch vs. last-touch | First-touch shows which channels drive awareness; last-touch shows which channels close sales |
+
+**Rule of thumb:** If Meta claims $200K in attributed revenue and Google claims $180K, but your total revenue was $250K, you have significant attribution overlap. Use a first-party tool (Triple Whale, Rockerbox) to de-duplicate and get a realistic picture.
 
 ## Best Practices
 
-- **Always build multiple models and compare them** — no single model is "correct"; the comparison reveals which channels are over/under-credited in your current setup
-- **Use first-party data for attribution** — iOS privacy changes have made third-party pixel attribution unreliable; server-side UTM + server-side Conversions API is now essential
+- **Always compare multiple models** — no single attribution model is "correct"; the comparison reveals which channels are over/under-credited in your current setup
+- **Use first-party data for attribution** — iOS privacy changes have made third-party pixel attribution unreliable; server-side UTM tracking is now essential
 - **Standardize UTM naming conventions strictly** — `utm_source=google` and `utm_source=Google` are treated as different channels; enforce lowercase and a controlled vocabulary
-- **Apply a 30-day look-back window** — most e-commerce conversions occur within 30 days of first touch; longer windows create noise from irrelevant past touchpoints
-- **Store raw touchpoint data indefinitely** — you can always rerun attribution models on historical data as your model improves, but you cannot reconstruct lost touchpoint events
-- **Benchmark attribution model revenue against actual revenue** — the sum of attributed revenue across all models should equal total order revenue; a mismatch indicates tracking gaps
-- **Account for view-through attribution separately** — display and video ads may not generate direct clicks but influence conversions; track impression data separately and report it as an add-on to click-based models
+- **Apply a 30-day look-back window** — most e-commerce conversions occur within 30 days of first touch; use this as your standard window
+- **Benchmark total attributed revenue against actual revenue** — the sum of first-party attributed revenue should equal total order revenue; a large gap indicates tracking gaps
+- **Report blended ROAS (total revenue / total ad spend) alongside channel ROAS** — blended ROAS is harder to manipulate and gives a true picture of overall marketing efficiency
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Total attributed revenue exceeds actual revenue | Linear and time-decay models distribute fractions of revenue; if summing across models, total will be correct but cross-model comparison will not match |
-| Anonymous touchpoints not linked to orders | Implement anonymous ID stitching: store `anonymousId` in both the touchpoint and the order; stitch when the user logs in or creates an account |
-| UTM parameters stripped by third-party redirect domains | Use Google's URL builder and test that redirects preserve query parameters; some URL shorteners strip UTM params |
-| Attribution shows 80% direct traffic (dark traffic) | Investigate: brand search often appears as direct when users type the brand name; UTM deep-links in email often lose parameters on mobile apps |
-| Markov chain model gives 0% credit to email | Email appears late in the path in most journeys; ensure the look-back window is long enough (30 days) to capture the initial awareness touchpoints |
+| Total platform-reported revenue exceeds actual revenue | This is expected — each platform claims 100% credit; use a first-party tool (Triple Whale, Rockerbox) to de-duplicate attribution |
+| 40-60% of orders show as "direct" or "none" | UTM parameters are missing from campaign links; audit your UTM setup in each ad platform; add UTMs to email footers and bio links |
+| UTM parameters stripped by redirect domains | Test your redirect URLs; some URL shorteners strip UTM params — use Google's URL builder and verify parameters survive |
+| Attribution shows email with very low credit | Email often appears late in conversion paths under last-click because customers come back via direct; check first-click model to see email's role in awareness |
+| iOS privacy changes reduced Meta attribution accuracy | Use Meta's Conversions API (CAPI) integration — Klaviyo and Triple Whale both support CAPI to send server-side conversion events back to Meta |
 
 ## Related Skills
 

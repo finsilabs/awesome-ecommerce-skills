@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [customer-analytics, rfm, churn-prediction, purchase-frequency, cohort, retention, customer-data, segmentation]
 triggers: ["customer analytics", "rfm scoring", "churn prediction", "purchase frequency analysis", "customer retention analytics", "customer behavior analysis", "customer data analysis"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,329 +16,175 @@ difficulty: advanced
 
 ## Overview
 
-Customer analytics transforms raw order and behavioral data into actionable insights about purchase patterns, lifecycle stages, and churn risk. This skill covers building a complete customer analytics pipeline: RFM scoring from SQL, purchase frequency distributions, churn prediction using survival analysis concepts, segment-level cohort comparisons, and an API that surfaces customer analytics for operational tools like marketing automation and the CRM.
+Customer analytics transforms raw order data into actionable insights about purchase patterns, lifecycle stages, and churn risk. The core analyses — RFM scoring, cohort retention, purchase frequency, and churn prediction — reveal which customers are loyal, which are at risk, and which channels produce the best long-term customers.
+
+This skill guides you through running these analyses using your platform's built-in tools and dedicated analytics apps, with data warehouse approaches for stores that need deeper segmentation.
 
 ## When to Use This Skill
 
-- When building a customer analytics module for an internal data platform
 - When the marketing team needs data-driven segments beyond simple demographic filters
 - When calculating at-risk customer counts for quarterly business reviews
 - When measuring the impact of loyalty programs on purchase frequency
-- When identifying the acquisition channels that produce the highest-quality customers (CLV by source)
+- When identifying the acquisition channels that produce the highest-LTV customers
 - When preparing customer health dashboards for account management or VIP programs
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When building cohort retention analysis to understand customer lifetime value trends
 
 ## Core Instructions
 
-1. **Build a comprehensive RFM scoring pipeline**
+### Step 1: Choose the right tool for your platform
 
-   ```sql
-   -- Full RFM analysis with segment labels
-   WITH order_stats AS (
-     SELECT
-       customer_id,
-       MAX(created_at) AS last_order_at,
-       COUNT(id) AS order_count,
-       SUM(subtotal_cents) / 100.0 AS total_spent,
-       MIN(created_at) AS first_order_at,
-       AVG(subtotal_cents) / 100.0 AS avg_order_value
-     FROM orders
-     WHERE status NOT IN ('cancelled', 'refunded')
-     GROUP BY customer_id
-   ),
-   rfm_raw AS (
-     SELECT
-       customer_id,
-       EXTRACT(EPOCH FROM (NOW() - last_order_at)) / 86400 AS recency_days,
-       order_count AS frequency,
-       total_spent AS monetary,
-       avg_order_value,
-       first_order_at
-     FROM order_stats
-   ),
-   rfm_scores AS (
-     SELECT
-       *,
-       NTILE(5) OVER (ORDER BY recency_days DESC) AS r,
-       NTILE(5) OVER (ORDER BY frequency ASC) AS f,
-       NTILE(5) OVER (ORDER BY monetary ASC) AS m
-     FROM rfm_raw
-   )
-   SELECT
-     c.id AS customer_id,
-     c.email,
-     c.first_name,
-     rs.recency_days,
-     rs.frequency,
-     rs.monetary,
-     rs.avg_order_value,
-     rs.r,
-     rs.f,
-     rs.m,
-     rs.r + rs.f + rs.m AS rfm_score,
-     CASE
-       WHEN rs.r >= 4 AND rs.f >= 4 AND rs.m >= 4 THEN 'champions'
-       WHEN rs.r >= 3 AND rs.f >= 3 AND rs.m >= 3 THEN 'loyal_customers'
-       WHEN rs.r >= 4 AND rs.f <= 2 THEN 'recent_customers'
-       WHEN rs.r >= 3 AND rs.f >= 3 AND rs.m <= 2 THEN 'potential_loyalists'
-       WHEN rs.r <= 2 AND rs.f >= 4 AND rs.m >= 4 THEN 'cannot_lose_them'
-       WHEN rs.r <= 2 AND rs.f >= 3 THEN 'at_risk'
-       WHEN rs.r = 1 AND rs.f <= 2 THEN 'lost'
-       ELSE 'other'
-     END AS segment
-   FROM rfm_scores rs
-   JOIN customers c ON rs.customer_id = c.id;
-   ```
+| Platform | Recommended Tool | What It Provides |
+|----------|-----------------|-----------------|
+| **Shopify** | **Klaviyo** + Shopify's built-in customer segments | RFM-style segments, purchase frequency, CLV prediction, cohort reports |
+| **Shopify** (advanced) | **Lifetimely** or **Triple Whale** | True cohort LTV, CLV by acquisition channel, retention curves |
+| **WooCommerce** | **Metorik** | Customer segmentation, RFM analysis, cohort retention, churn identification |
+| **WooCommerce** (email) | **Klaviyo** for WooCommerce | Behavioral segments + automated flows based on customer lifecycle stage |
+| **BigCommerce** | **Klaviyo** for BigCommerce + **Glew.io** | Glew provides cohort analysis and CLV tracking natively for BigCommerce |
+| **All platforms** (data-first) | Export to **Google Looker Studio** + **BigQuery** via Fivetran | Full SQL-based analysis; required for advanced RFM and cohort modeling |
 
-2. **Analyze purchase frequency distribution**
+### Step 2: Set up customer segmentation on your platform
 
-   Understanding the distribution of order counts reveals the proportion of one-time vs. repeat buyers:
+---
 
-   ```sql
-   -- Purchase frequency distribution
-   SELECT
-     order_count,
-     COUNT(customer_id) AS customers,
-     ROUND(100.0 * COUNT(customer_id) / SUM(COUNT(customer_id)) OVER (), 1) AS pct_of_customers,
-     SUM(total_spent) AS total_revenue_from_segment,
-     ROUND(AVG(total_spent), 2) AS avg_ltv
-   FROM (
-     SELECT customer_id, COUNT(id) AS order_count, SUM(subtotal_cents) / 100.0 AS total_spent
-     FROM orders
-     WHERE status NOT IN ('cancelled', 'refunded')
-     GROUP BY customer_id
-   ) t
-   GROUP BY order_count
-   ORDER BY order_count;
-   ```
+#### Shopify
 
-   TypeScript API for the frequency chart:
+**Using Shopify's built-in customer segments (all plans):**
 
-   ```typescript
-   export async function getPurchaseFrequencyDistribution(req: Request, res: Response) {
-     const rows = await db.query(`
-       SELECT
-         CASE
-           WHEN order_count = 1 THEN '1 order'
-           WHEN order_count BETWEEN 2 AND 3 THEN '2-3 orders'
-           WHEN order_count BETWEEN 4 AND 6 THEN '4-6 orders'
-           ELSE '7+ orders'
-         END AS frequency_bucket,
-         COUNT(*) AS customers,
-         AVG(total_spent) AS avg_ltv
-       FROM (
-         SELECT customer_id, COUNT(id) AS order_count, SUM(subtotal_cents) / 100.0 AS total_spent
-         FROM orders WHERE status NOT IN ('cancelled', 'refunded') GROUP BY customer_id
-       ) t
-       GROUP BY frequency_bucket
-       ORDER BY MIN(order_count)
-     `);
+1. Go to **Customers → Segments**
+2. Shopify provides pre-built segments including:
+   - **Abandoned checkout in the last 30 days**
+   - **Customers who have purchased more than X times**
+   - **Customers who haven't purchased in 90 days** (at-risk segment)
+   - **High-spend customers** (based on total spend threshold)
+3. Create custom segments using the query editor with filters like:
+   - `number_of_orders >= 3` (loyal customers)
+   - `days_since_last_order > 90` (churn risk)
+   - `total_spent > 500` (high-value)
+4. Export segments to CSV or sync directly to Klaviyo for email campaigns
 
-     res.json(rows);
-   }
-   ```
+**Using Klaviyo for RFM segmentation on Shopify:**
 
-3. **Build a churn prediction pipeline**
+1. Install **Klaviyo** from the Shopify App Store
+2. Klaviyo automatically syncs all historical and new Shopify order data
+3. Go to **Segments → Create Segment** and build RFM-style segments using:
+   - **Recency:** "Has placed an order in the last X days"
+   - **Frequency:** "Number of orders is greater than X"
+   - **Monetary:** "Total amount spent is greater than $X"
+4. Pre-built segment examples:
+   - **Champions:** Ordered in last 30 days + 3+ orders + $200+ lifetime spend
+   - **At Risk:** No order in 90–180 days + previously placed 2+ orders
+   - **Lost:** No order in 180+ days
+5. Use these segments to trigger flows in Klaviyo: win-back campaigns for at-risk, VIP rewards for champions
 
-   ```typescript
-   interface CustomerChurnRisk {
-     customerId: string;
-     churnScore: number;       // 0–1, probability of churn
-     churnCategory: 'low' | 'medium' | 'high' | 'churned';
-     daysSinceLastOrder: number;
-     avgPurchaseIntervalDays: number;
-     predictedNextOrderDate: Date | null;
-   }
+**Using Lifetimely for cohort LTV on Shopify:**
 
-   async function scoreCustomerChurnRisk(customerId: string): Promise<CustomerChurnRisk> {
-     const orders = await db.orders.findByCustomer(customerId, {
-       where: { status: { notIn: ['cancelled', 'refunded'] } },
-       orderBy: { createdAt: 'asc' },
-     });
+1. Install **Lifetimely** from the Shopify App Store
+2. Go to **Lifetimely → Cohorts** to see a month-by-month retention matrix: what percentage of customers from each acquisition cohort are still buying at months 1, 3, 6, 12
+3. Go to **Lifetimely → Channels** to compare 12-month LTV by acquisition source (Google, Meta, organic, email)
+4. Go to **Lifetimely → Customer Segments** to see RFM distribution and predicted CLV per customer
 
-     if (orders.length === 0) return { customerId, churnScore: 0.95, churnCategory: 'churned', daysSinceLastOrder: Infinity, avgPurchaseIntervalDays: 0, predictedNextOrderDate: null };
+---
 
-     const lastOrderDate = orders[orders.length - 1].createdAt;
-     const daysSinceLastOrder = (Date.now() - lastOrderDate.getTime()) / 86400000;
+#### WooCommerce
 
-     if (orders.length === 1) {
-       // Single-purchase customers: churn score based on days since purchase
-       const churnScore = Math.min(0.95, 0.3 + daysSinceLastOrder * 0.005);
-       return { customerId, churnScore, churnCategory: churnScore > 0.7 ? 'high' : churnScore > 0.4 ? 'medium' : 'low', daysSinceLastOrder, avgPurchaseIntervalDays: 0, predictedNextOrderDate: null };
-     }
+**Using Metorik:**
 
-     // Multi-purchase: compare recency to typical interval
-     const intervals: number[] = [];
-     for (let i = 1; i < orders.length; i++) {
-       intervals.push((orders[i].createdAt.getTime() - orders[i - 1].createdAt.getTime()) / 86400000);
-     }
-     const avgInterval = intervals.reduce((sum, v) => sum + v, 0) / intervals.length;
-     const stdDev = Math.sqrt(intervals.reduce((sum, v) => sum + Math.pow(v - avgInterval, 2), 0) / intervals.length);
+1. Connect Metorik to your WooCommerce store via API
+2. Go to **Metorik → Customers** to browse all customers with filters:
+   - Last order date (identify churned/at-risk)
+   - Total spent (identify high-value)
+   - Order count (identify one-time vs. repeat buyers)
+3. Go to **Metorik → Reports → Customer Cohorts** to see retention by monthly acquisition cohort
+4. Go to **Metorik → Segments** to create saved customer segments (equivalent to RFM groups); export segments as CSVs for Klaviyo or Mailchimp
 
-     // How many standard deviations past due is this customer?
-     const zScore = (daysSinceLastOrder - avgInterval) / Math.max(1, stdDev);
-     const churnScore = Math.min(0.99, Math.max(0.01, 1 / (1 + Math.exp(-0.5 * zScore))));
+**Using Klaviyo for WooCommerce:**
 
-     const predictedNextOrderDate = new Date(lastOrderDate.getTime() + avgInterval * 86400000);
+1. Install the **Klaviyo for WooCommerce** plugin
+2. Klaviyo syncs WooCommerce customers and orders, enabling the same RFM segments described for Shopify above
+3. Go to **Klaviyo → Analytics → Cohort Analysis** to see retention curves and predicted CLV by acquisition date
 
-     return {
-       customerId,
-       churnScore,
-       churnCategory: churnScore > 0.75 ? 'high' : churnScore > 0.45 ? 'medium' : 'low',
-       daysSinceLastOrder,
-       avgPurchaseIntervalDays: avgInterval,
-       predictedNextOrderDate,
-     };
-   }
-   ```
+---
 
-4. **Build acquisition channel quality analysis**
+#### BigCommerce
 
-   ```sql
-   -- CLV by acquisition channel: which channels bring the best customers?
-   SELECT
-     COALESCE(oa.source, 'direct') AS acquisition_source,
-     COUNT(DISTINCT c.id) AS customers_acquired,
-     AVG(clv.total_revenue_12mo) AS avg_12mo_clv,
-     PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY clv.total_revenue_12mo) AS median_12mo_clv,
-     AVG(clv.order_count) AS avg_orders_per_customer,
-     AVG(clv.avg_order_value) AS avg_aov,
-     -- Ratio of customers who ordered more than once
-     ROUND(100.0 * COUNT(DISTINCT CASE WHEN clv.order_count > 1 THEN c.id END) / COUNT(DISTINCT c.id), 1) AS repeat_purchase_rate_pct
-   FROM customers c
-   LEFT JOIN order_attribution oa ON oa.order_id = (
-     SELECT id FROM orders WHERE customer_id = c.id ORDER BY created_at ASC LIMIT 1
-   )
-   LEFT JOIN LATERAL (
-     SELECT
-       customer_id,
-       COUNT(id) AS order_count,
-       SUM(subtotal_cents) / 100.0 AS total_revenue_12mo,
-       AVG(subtotal_cents) / 100.0 AS avg_order_value
-     FROM orders
-     WHERE customer_id = c.id
-       AND status NOT IN ('cancelled', 'refunded')
-       AND created_at <= c.created_at + INTERVAL '12 months'
-     GROUP BY customer_id
-   ) clv ON TRUE
-   WHERE c.created_at >= NOW() - INTERVAL '18 months' -- acquired in last 18mo for fair comparison
-   GROUP BY 1
-   ORDER BY avg_12mo_clv DESC;
-   ```
+1. **BigCommerce Customer Groups:** Go to **Customers → Customer Groups** — create groups based on purchase history, spend thresholds, and geographic criteria
+2. Install **Glew.io** from the BigCommerce App Marketplace — provides cohort retention analysis, RFM scoring, and CLV by acquisition channel
+3. Install **Klaviyo** for BigCommerce for behavioral email segmentation and lifecycle automation
 
-5. **Build the customer analytics API**
+---
 
-   ```typescript
-   // GET /api/analytics/customers/overview
-   export async function getCustomerAnalyticsOverview(req: Request, res: Response) {
-     const [
-       segmentDistribution,
-       frequencyDistribution,
-       churnRiskDistribution,
-       retentionRate,
-     ] = await Promise.all([
-       db.query(rfmSegmentDistributionSQL),
-       db.query(purchaseFrequencySQL),
-       db.customerChurnScores.groupBy({ by: ['churnCategory'], _count: { customerId: true } }),
-       calculateRetentionRate(90), // 90-day retention
-     ]);
+### Step 3: Analyze purchase frequency and retention
 
-     res.json({
-       totalCustomers: segmentDistribution.reduce((sum: number, s: any) => sum + s.count, 0),
-       segments: segmentDistribution,
-       frequencyDistribution,
-       churnRisk: {
-         high: churnRiskDistribution.find((r: any) => r.churnCategory === 'high')?._count?.customerId ?? 0,
-         medium: churnRiskDistribution.find((r: any) => r.churnCategory === 'medium')?._count?.customerId ?? 0,
-         low: churnRiskDistribution.find((r: any) => r.churnCategory === 'low')?._count?.customerId ?? 0,
-       },
-       retentionRate90Day: retentionRate,
-     });
-   }
-   ```
+**Purchase frequency distribution (using any platform's export):**
 
-## Examples
+Export your customer order data to a CSV or Google Sheet and calculate:
+- What % of customers have placed exactly 1 order?
+- What % have placed 2–3 orders?
+- What % have placed 4+ orders?
 
-### Customer cohort retention matrix
+Industry benchmarks:
+- Typical DTC brand: 60–70% of customers are one-time buyers
+- Healthy subscription or consumable brand: 40–50% of customers reorder within 90 days
+- Your second-purchase rate (% of first-time buyers who place a second order within 90 days) is the single most important leading indicator of long-term CLV
 
-```sql
--- Monthly cohort retention: what % of each acquisition cohort is still buying?
-WITH first_orders AS (
-  SELECT customer_id, DATE_TRUNC('month', MIN(created_at)) AS cohort_month
-  FROM orders WHERE status NOT IN ('cancelled', 'refunded') GROUP BY customer_id
-),
-repeat_orders AS (
-  SELECT o.customer_id, DATE_TRUNC('month', o.created_at) AS order_month
-  FROM orders o WHERE status NOT IN ('cancelled', 'refunded')
-)
-SELECT
-  fo.cohort_month,
-  COUNT(DISTINCT fo.customer_id) AS cohort_size,
-  EXTRACT(MONTH FROM AGE(ro.order_month, fo.cohort_month)) AS months_since_first_order,
-  COUNT(DISTINCT ro.customer_id) AS retained_customers,
-  ROUND(100.0 * COUNT(DISTINCT ro.customer_id) / COUNT(DISTINCT fo.customer_id), 1) AS retention_pct
-FROM first_orders fo
-JOIN repeat_orders ro ON fo.customer_id = ro.customer_id
-  AND ro.order_month >= fo.cohort_month
-GROUP BY fo.cohort_month, months_since_first_order
-ORDER BY fo.cohort_month DESC, months_since_first_order;
-```
+**Cohort retention analysis:**
 
-### Identify best customers about to churn
+A cohort retention grid shows what percentage of customers acquired in month X are still buying at months 1, 3, 6, 12:
 
-```typescript
-async function getHighValueAtRiskCustomers(limit = 50) {
-  const scores = await db.customerChurnScores.findMany({
-    where: { churnCategory: 'high' },
-    include: ['customer'],
-    orderBy: [{ customer: { lifetimeSpendCents: 'desc' } }],
-    take: limit,
-  });
+- **Shopify + Lifetimely:** Available natively in the **Cohorts** view
+- **Klaviyo:** Available under **Analytics → Cohort Analysis**
+- **Metorik:** Available under **Reports → Cohorts**
+- **Manual (any platform):** Export all orders to Google Sheets; create a pivot table with acquisition month as rows and "months since first order" as columns
 
-  return scores.map((s) => ({
-    customerId: s.customerId,
-    name: s.customer.firstName,
-    email: s.customer.email,
-    lifetimeValue: s.customer.lifetimeSpendCents / 100,
-    churnScore: s.churnScore,
-    daysSinceLastOrder: s.daysSinceLastOrder,
-    recommendedAction: s.customer.lifetimeSpendCents >= 50000 ? 'personal_outreach' : 'win_back_email',
-  }));
-}
-```
+**What good retention looks like:**
+| Months After First Order | Minimum Viable | Healthy | Excellent |
+|--------------------------|---------------|---------|-----------|
+| Month 1 (second purchase rate) | 15% | 25% | 40%+ |
+| Month 3 retention | 10% | 20% | 35%+ |
+| Month 12 retention | 5% | 15% | 30%+ |
+
+### Step 4: Identify at-risk customers and act
+
+**At-risk customer identification:**
+
+The simplest at-risk definition: customers who previously ordered multiple times but have not ordered in longer than their typical interval.
+
+- **Shopify Segments:** `number_of_orders > 1 AND days_since_last_order > 90`
+- **Klaviyo:** Create a "Winback" segment: "Has placed more than 1 order" AND "Has not placed an order in the last 90 days"
+- **Metorik:** Use the "Customers at risk of churning" pre-built filter
+
+**Action by segment:**
+
+| Segment | Recommended Action |
+|---------|-------------------|
+| Champions (recent, frequent, high-spend) | Invite to VIP program; early access to new products |
+| Loyal but cooling (frequent but not recent) | Targeted win-back email with personalized product recommendations |
+| At risk (inactive > 90 days, multiple prior orders) | Win-back sequence: reminder → small incentive → final offer |
+| One-time buyers | Second purchase campaign; show complementary products |
+| Lost (inactive > 180 days) | Low-cost re-engagement attempt; if no response, suppress to reduce email costs |
 
 ## Best Practices
 
-- **Run RFM scoring as a nightly batch job** — customer order history changes daily; stale scores lead to wrong segment assignments
-- **Validate churn model accuracy** monthly by comparing predicted churn probabilities from 90 days ago to who actually churned — adjust scoring coefficients if accuracy drifts
-- **Segment acquisition channel analysis** by cohort month, not lifetime — channels that were good 2 years ago may have declined in quality
-- **Track second-purchase rate as a leading indicator** — the conversion from one-time buyer to repeat customer is the highest-leverage retention metric and a leading indicator of CLV
-- **Build alerts on segment migrations** — when the "cannot lose them" segment grows week over week, it signals a retention problem needing immediate action
-- **Cross-reference churn risk with support ticket history** — customers who contacted support and had poor experiences (low CSAT) have higher churn risk; combine signals
-- **Combine RFM with behavioral data for richer segments** — RFM is purchase-based; layer in browsing frequency, category affinity, and channel preference for more precise targeting
+- **Run RFM scoring monthly** — customer order history changes continuously; stale segments lead to wrong targeting
+- **Track second-purchase rate as a leading indicator** — the conversion from one-time to repeat buyer is the highest-leverage retention metric; it predicts CLV far in advance of any LTV model
+- **Segment CLV by acquisition channel** — customers from organic search, paid social, and email/SMS referrals often have dramatically different LTVs; measure them separately to inform budget allocation
+- **Build alerts for segment migration** — when the "at risk" segment grows week over week, it signals a retention problem needing immediate action; set up alerts in Klaviyo or Lifetimely
+- **Flag seasonal buyers separately** — customers who only buy in Q4 should not be marked as churned in Q2; apply a seasonal buyer tag before running churn analysis
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| RFM quantiles shift dramatically after a sale event | Use a rolling 90-day window for scoring rather than the all-time dataset; recent spikes shouldn't permanently elevate scores |
-| Churn prediction false positives for seasonal buyers | Include a "seasonal purchase pattern" flag — customers who only buy in Q4 should not be marked as churned in Q2 |
-| Acquisition channel analysis not accounting for multi-touch | Clarify whether you are using first-touch or last-touch attribution; be explicit in report labels |
-| Cohort analysis shows 0% retention after month 6 | Check if the query is filtering out cohort groups that haven't had 6 months yet — use `HAVING cohort_month <= NOW() - INTERVAL '6 months'` |
-| Customer analytics queries time out on 1M+ customer tables | Materialize RFM scores daily into `customer_rfm_scores` table; never compute NTILE on the full table in real-time |
+| RFM segments shift dramatically after a sale event | Use a rolling 90-day window for scoring; recent sales spikes should not permanently elevate scores for customers who only responded to a discount |
+| Acquisition channel CLV analysis not accounting for multi-touch | Use first-touch attribution for CLV by channel — the channel that introduced the customer, not the channel that converted the last order |
+| Cohort retention shows 0% after month 6 | Check whether the query or export is filtering out cohorts that do not have 6 months of data yet; exclude cohorts acquired in the last 6 months from long-term retention views |
+| Customer count in segments does not match email list size | Some customers in your store may not be subscribed to email; segment by customer (order-based) separately from email list (consent-based) |
+| Win-back campaigns going to customers who bought recently | Ensure segment filters are current — sync order data before running segment exports; stale data causes emails to go to wrong contacts |
 
 ## Related Skills
 
 - @customer-segmentation
-- @customer-lifetime-value
 - @attribution-modeling
 - @sales-reporting-dashboard
 - @ab-testing-ecommerce
+- @unit-economics-tracking

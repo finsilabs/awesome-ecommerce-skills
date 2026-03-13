@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [quick-view, modal, overlay, product-listing, add-to-cart, dialog, focus-trap]
 triggers: ["quick view product", "product preview modal", "add to cart from listing", "product overlay", "quick buy"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: beginner
 ---
 
@@ -16,7 +16,7 @@ difficulty: beginner
 
 ## Overview
 
-Implement a product quick-view overlay that lets shoppers preview key product details — images, variants, description, price — and add items to cart without navigating away from the product listing page. The modal uses the native `<dialog>` element for built-in focus trapping and Escape-to-close behavior, lazily fetches product data, and returns focus to the triggering element on close.
+Implement a product quick-view overlay that lets shoppers preview key product details — images, variants, description, price — and add items to cart without navigating away from the product listing page. Quick view reduces friction for shoppers browsing multiple products and works best for products with simple variant structures (1–2 variant axes).
 
 ## When to Use This Skill
 
@@ -25,333 +25,219 @@ Implement a product quick-view overlay that lets shoppers preview key product de
 - When implementing a "quick add" button on product cards in collections or search results
 - When the site's PDP is heavy (many images, reviews section) and a lighter preview would reduce friction
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
-**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
-
 ## Core Instructions
 
-1. **Trigger quick view from the product card**
+### Step 1: Determine the merchant's platform and choose the right approach
 
-   Add a "Quick View" button that appears on card hover (and is always visible on touch devices). Store the product ID in a data attribute.
+| Platform | Recommended Approach | Why |
+|----------|---------------------|-----|
+| **Shopify** | Enable Quick View in your theme (Dawn, Sense, Craft all include it) or install **Quick View – Instant Preview** app | Dawn's built-in Quick Add button adds items directly to cart from collection pages; the Quick View app adds a full product preview with variant selection |
+| **WooCommerce** | Install **YITH WooCommerce Quick View** (free) or **WooCommerce Quick View Pro** | YITH Quick View is the most widely used option — adds a "Quick View" button on hover, opens a modal with gallery, variants, and Add to Cart, and requires no custom code |
+| **BigCommerce** | Enable **Quick View** in **Storefront → My Themes → Customize → Product Cards** (Cornerstone theme) | Cornerstone includes a built-in quick view popup — toggle it in the Theme Editor with no coding required |
+| **Custom / Headless** | Build a modal using the native `<dialog>` element with lazy product fetch, variant selection, and focus management | `<dialog>` provides built-in focus trapping and Escape-to-close; lazy fetching keeps initial page weight low |
 
-   ```jsx
-   // ProductCard.jsx
-   export function ProductCard({ product, onQuickView }) {
-     return (
-       <article className="product-card">
-         <div className="product-card__image-wrapper">
-           <a href={product.url} tabIndex={-1} aria-hidden="true">
-             <img src={product.image} alt="" loading="lazy" />
-           </a>
-           <button
-             className="quick-view-btn"
-             onClick={() => onQuickView(product.id)}
-             aria-label={`Quick view ${product.name}`}
-           >
-             Quick View
-           </button>
-         </div>
-         <div className="product-card__info">
-           <a href={product.url} className="product-card__name">{product.name}</a>
-           <p className="product-card__price">${product.price}</p>
-         </div>
-       </article>
-     );
-   }
-   ```
+### Step 2: Enable and configure Quick View
 
-   ```css
-   .product-card__image-wrapper { position: relative; }
+---
 
-   .quick-view-btn {
-     position: absolute;
-     bottom: var(--space-sm);
-     left: 50%;
-     transform: translateX(-50%) translateY(8px);
-     opacity: 0;
-     transition: opacity 0.15s, transform 0.15s;
-     background: #fff;
-     border: 1px solid #e2e8f0;
-     border-radius: 4px;
-     padding: 8px 16px;
-     white-space: nowrap;
-     cursor: pointer;
-   }
+#### Shopify
 
-   .product-card:hover .quick-view-btn,
-   .product-card:focus-within .quick-view-btn {
-     opacity: 1;
-     transform: translateX(-50%) translateY(0);
-   }
+**Built-in Quick Add (Dawn, Sense, Craft):**
 
-   /* Always visible on touch devices */
-   @media (hover: none) {
-     .quick-view-btn { opacity: 1; transform: translateX(-50%) translateY(0); }
-   }
-   ```
+Dawn's collection pages include a "Quick Add" button by default that adds a product directly to cart without opening a modal. To enable/configure it:
+1. Go to **Online Store → Themes → Customize**
+2. Navigate to a collection page template
+3. In the **Product card** section, enable **Quick add button**
+4. Set button style: **Standard** (shows "Quick Add") or **Icon** (+ icon)
 
-2. **Manage modal state and lazy-fetch product details**
+Note: Dawn's Quick Add only works for products with no variants or a single variant axis. For products with multiple option types (Color + Size), it opens the product page instead.
 
-   ```javascript
-   // useQuickView.js
-   import { useState, useCallback } from 'react';
+**Full Quick View modal (Quick View – Instant Preview app):**
+1. Install from the Shopify App Store (free tier available)
+2. The app adds a "Quick View" button on hover over product cards across all collection pages
+3. In app settings, configure which product sections appear in the modal: images, description, reviews, size guides
+4. Shoppers can select all variant options and add to cart without leaving the collection page
+5. No theme code editing required — the app injects via App Block
 
-   export function useQuickView() {
-     const [state, setState] = useState({ isOpen: false, product: null, loading: false });
+---
 
-     const openQuickView = useCallback(async (productId) => {
-       setState({ isOpen: true, product: null, loading: true });
-       try {
-         const res = await fetch(`/api/products/${productId}/quick-view`);
-         const product = await res.json();
-         setState({ isOpen: true, product, loading: false });
-       } catch {
-         setState({ isOpen: false, product: null, loading: false });
-       }
-     }, []);
+#### WooCommerce
 
-     const closeQuickView = useCallback(() => {
-       setState({ isOpen: false, product: null, loading: false });
-     }, []);
+**YITH WooCommerce Quick View (free):**
+1. Install and activate from WordPress.org
+2. Go to **YITH → Quick View → General Settings**
+3. Set **Trigger**: "Quick View button on hover" (recommended) or click on product image
+4. Configure **Modal content**: choose which sections to show — Gallery, Price, Short Description, Variants (Add to Cart), Reviews summary
+5. Set **Modal width** and whether to show a "View full product" link inside the modal (recommended)
+6. Under **Style**, adjust button text, colors, and positioning to match your theme
 
-     return { ...state, openQuickView, closeQuickView };
-   }
-   ```
+The plugin adds a "Quick View" button to `.product` elements across shop, archive, and search results pages automatically.
 
-3. **Build the modal using the native `<dialog>` element**
+---
 
-   `<dialog>` provides built-in focus trapping, Escape-to-close, and the `::backdrop` pseudo-element for the overlay.
+#### BigCommerce
 
-   ```jsx
-   // QuickViewModal.jsx
-   import { useEffect, useRef } from 'react';
+**Built-in Quick View (Cornerstone theme):**
+1. Go to **Storefront → My Themes → Customize**
+2. Find **Product Cards** section (in Global or Category Page settings depending on your theme version)
+3. Toggle **Enable Quick View** to On
+4. Configure which elements appear: gallery, options/variants, Add to Cart button, price
+5. BigCommerce's Quick View pulls the product's full variant options and images
 
-   export function QuickViewModal({ isOpen, product, loading, onClose, onAddToCart }) {
-     const dialogRef = useRef(null);
+For non-Cornerstone themes, check your theme documentation — Quick View support varies. If not included, install the **Quick View** app from the BigCommerce App Marketplace.
 
-     useEffect(() => {
-       const dialog = dialogRef.current;
-       if (!dialog) return;
-       if (isOpen) {
-         dialog.showModal();
-       } else {
-         dialog.close();
-       }
-     }, [isOpen]);
+---
 
-     // Close on backdrop click
-     function handleDialogClick(e) {
-       if (e.target === dialogRef.current) onClose();
-     }
+#### Custom / Headless
 
-     return (
-       <dialog
-         ref={dialogRef}
-         className="quick-view-dialog"
-         onClose={onClose}
-         onClick={handleDialogClick}
-         aria-label={product ? `Quick view: ${product.name}` : 'Quick view'}
-       >
-         <div className="quick-view-content">
-           <button className="close-btn" onClick={onClose} aria-label="Close quick view">
-             &times;
-           </button>
-
-           {loading && (
-             <div className="quick-view-skeleton" aria-live="polite" aria-label="Loading product details">
-               <div className="skeleton skeleton--image" />
-               <div className="skeleton skeleton--title" />
-               <div className="skeleton skeleton--price" />
-             </div>
-           )}
-
-           {!loading && product && (
-             <QuickViewBody product={product} onAddToCart={onAddToCart} onClose={onClose} />
-           )}
-         </div>
-       </dialog>
-     );
-   }
-   ```
-
-4. **Build the quick view body with variant selection**
-
-   ```jsx
-   // QuickViewBody.jsx
-   import { useState } from 'react';
-
-   export function QuickViewBody({ product, onAddToCart, onClose }) {
-     const [selectedVariant, setSelectedVariant] = useState(product.variants[0] ?? null);
-     const [quantity, setQuantity] = useState(1);
-     const [adding, setAdding] = useState(false);
-
-     async function handleAddToCart() {
-       if (!selectedVariant) return;
-       setAdding(true);
-       await onAddToCart({ variantId: selectedVariant.id, quantity });
-       setAdding(false);
-       onClose();
-     }
-
-     return (
-       <div className="quick-view-body">
-         {/* Images */}
-         <div className="quick-view-images">
-           <img
-             src={selectedVariant?.image ?? product.images[0]}
-             alt={product.name}
-             className="quick-view-main-image"
-           />
-         </div>
-
-         {/* Details */}
-         <div className="quick-view-details">
-           <h2 className="quick-view-title">{product.name}</h2>
-           <p className="quick-view-price">${selectedVariant?.price ?? product.price}</p>
-
-           {/* Variant selector */}
-           {product.options.map(option => (
-             <fieldset key={option.name} className="variant-fieldset">
-               <legend>{option.name}</legend>
-               {option.values.map(value => {
-                 const variant = product.variants.find(v =>
-                   v.options[option.name] === value
-                 );
-                 return (
-                   <label key={value} className={`variant-option ${selectedVariant?.options[option.name] === value ? 'selected' : ''}`}>
-                     <input
-                       type="radio"
-                       name={option.name}
-                       value={value}
-                       checked={selectedVariant?.options[option.name] === value}
-                       disabled={!variant || variant.inventory === 0}
-                       onChange={() => setSelectedVariant(variant)}
-                     />
-                     {value}
-                   </label>
-                 );
-               })}
-             </fieldset>
-           ))}
-
-           <p className="quick-view-excerpt">{product.shortDescription}</p>
-
-           <div className="quick-view-actions">
-             <button
-               className="btn-primary"
-               onClick={handleAddToCart}
-               disabled={!selectedVariant || selectedVariant.inventory === 0 || adding}
-             >
-               {adding ? 'Adding...' : selectedVariant?.inventory === 0 ? 'Sold Out' : 'Add to Cart'}
-             </button>
-             <a href={product.url} className="btn-secondary">View Full Details</a>
-           </div>
-         </div>
-       </div>
-     );
-   }
-   ```
-
-5. **Return focus to the trigger element on close**
-
-   ```javascript
-   // In the component that manages quick view state
-   const triggerRef = useRef(null);
-
-   function handleOpenQuickView(productId, triggerElement) {
-     triggerRef.current = triggerElement;
-     openQuickView(productId);
-   }
-
-   function handleCloseQuickView() {
-     closeQuickView();
-     // Return focus to the button that opened the modal
-     requestAnimationFrame(() => triggerRef.current?.focus());
-   }
-   ```
-
-## Examples
-
-### Product listing page wiring everything together
-
+**Quick View button on product cards:**
 ```jsx
-// ProductListingPage.jsx
-export function ProductListingPage({ initialProducts }) {
-  const { isOpen, product, loading, openQuickView, closeQuickView } = useQuickView();
-  const [cartItems, setCartItems] = useCart();
-
-  async function handleAddToCart({ variantId, quantity }) {
-    await addToCart({ variantId, quantity });
-  }
-
+// ProductCard.jsx
+export function ProductCard({ product, onQuickView }) {
   return (
-    <>
-      <div className="product-grid">
-        {initialProducts.map(p => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            onQuickView={(id) => openQuickView(id)}
-          />
-        ))}
+    <article className="product-card">
+      <div className="product-card__image-wrapper">
+        <a href={product.url}>
+          <img src={product.image} alt={product.name} loading="lazy" />
+        </a>
+        <button className="quick-view-btn"
+          onClick={() => onQuickView(product.id)}
+          aria-label={`Quick view ${product.name}`}>
+          Quick View
+        </button>
       </div>
-
-      <QuickViewModal
-        isOpen={isOpen}
-        product={product}
-        loading={loading}
-        onClose={closeQuickView}
-        onAddToCart={handleAddToCart}
-      />
-    </>
+      <a href={product.url} className="product-card__name">{product.name}</a>
+      <p className="product-card__price">${product.price}</p>
+    </article>
   );
 }
 ```
 
-### Quick view API endpoint
+```css
+/* Always visible on touch; appears on hover for mouse users */
+.quick-view-btn { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  opacity: 0; transition: opacity 0.15s; }
+.product-card:hover .quick-view-btn, .product-card:focus-within .quick-view-btn { opacity: 1; }
+@media (hover: none) { .quick-view-btn { opacity: 1; } }
+```
 
+**Modal using native `<dialog>` (built-in focus trapping + Escape-to-close):**
+```jsx
+// QuickViewModal.jsx
+import { useEffect, useRef } from 'react';
+
+export function QuickViewModal({ isOpen, product, loading, onClose, onAddToCart }) {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen) dialog.showModal();
+    else dialog.close();
+  }, [isOpen]);
+
+  return (
+    <dialog ref={dialogRef} className="quick-view-dialog"
+      onClose={onClose}
+      onClick={(e) => { if (e.target === dialogRef.current) onClose(); }}
+      aria-label={product ? `Quick view: ${product.name}` : 'Quick view'}>
+      <button className="close-btn" onClick={onClose} aria-label="Close quick view">&times;</button>
+
+      {loading && (
+        <div aria-live="polite" aria-label="Loading product details">
+          {/* Skeleton loaders */}
+          <div className="skeleton skeleton--image" />
+          <div className="skeleton skeleton--title" />
+        </div>
+      )}
+
+      {!loading && product && (
+        <QuickViewBody product={product} onAddToCart={onAddToCart} onClose={onClose} />
+      )}
+    </dialog>
+  );
+}
+```
+
+**Quick view body with variant selection:**
+```jsx
+function QuickViewBody({ product, onAddToCart, onClose }) {
+  const [selectedVariant, setSelectedVariant] = useState(product.variants[0] ?? null);
+
+  return (
+    <div className="quick-view-body">
+      <img src={selectedVariant?.image ?? product.images[0]} alt={product.name} />
+      <div className="quick-view-details">
+        <h2>{product.name}</h2>
+        <p>${selectedVariant?.price ?? product.price}</p>
+
+        {product.options.map(option => (
+          <fieldset key={option.name}>
+            <legend>{option.name}</legend>
+            {option.values.map(value => {
+              const variant = product.variants.find(v => v.options[option.name] === value);
+              return (
+                <label key={value}>
+                  <input type="radio" name={option.name} value={value}
+                    checked={selectedVariant?.options[option.name] === value}
+                    disabled={!variant || variant.inventory === 0}
+                    onChange={() => setSelectedVariant(variant)} />
+                  {value}{variant?.inventory === 0 ? ' (sold out)' : ''}
+                </label>
+              );
+            })}
+          </fieldset>
+        ))}
+
+        <button className="btn-primary"
+          disabled={!selectedVariant || selectedVariant.inventory === 0}
+          onClick={() => onAddToCart({ variantId: selectedVariant.id, quantity: 1 }).then(onClose)}>
+          Add to Cart
+        </button>
+        <a href={product.url}>View Full Details</a>
+      </div>
+    </div>
+  );
+}
+```
+
+**Return focus to the trigger button when modal closes:**
 ```javascript
-// api/products/[id]/quick-view.js
-export async function GET(req, { params }) {
-  const product = await db.products.findById(params.id, {
-    include: ['variants', 'options', 'images'],
-    fields: ['id', 'name', 'price', 'shortDescription', 'url',
-             'images', 'variants', 'options'],
-  });
-  if (!product) return Response.json({ error: 'Not found' }, { status: 404 });
-  return Response.json(product);
+const triggerRef = useRef(null);
+
+function handleOpenQuickView(productId, triggerElement) {
+  triggerRef.current = triggerElement; // store the button that was clicked
+  openQuickView(productId);
+}
+
+function handleCloseQuickView() {
+  closeQuickView();
+  requestAnimationFrame(() => triggerRef.current?.focus());
 }
 ```
 
 ## Best Practices
 
-- **Use `<dialog>` element** — it provides native focus trapping, Escape-to-close, `::backdrop`, and screen reader announcement for free
-- **Return focus on close** — WCAG 2.4.3 requires focus to return to the element that opened the modal
 - **Always provide a "View full details" link** — quick view is a shortcut, not a replacement; complex products (many images, reviews) need the full PDP
-- **Lazy-fetch product data on open** — do not embed full product data in the product card HTML; fetch it on demand to keep initial page weight low
-- **Show a loading skeleton** — the fetch takes 100-300 ms; a skeleton prevents perceived layout shift
-- **Close on backdrop click** — clicking outside the modal content area should close it; `<dialog>` click handling on the element itself achieves this cleanly
+- **Lazy-fetch product data on open** — do not embed full product data in the card HTML; fetch it on demand to keep page weight low
+- **Show a loading skeleton** — the fetch takes 100–300 ms; a skeleton prevents perceived layout shift
+- **Close on backdrop click** — clicking outside the modal content area should close it
 - **Prevent body scroll when open** — on mobile, `overscroll-behavior: contain` on the dialog prevents the underlying page from scrolling
+- **Use Quick View only for simple products** — products with 3+ variant axes, size guides, or detailed spec tables should go to the full PDP
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Focus lost after modal closes | Store the trigger element reference before opening; call `.focus()` on it inside `requestAnimationFrame` after close |
-| `<dialog>` not supported in older browsers | `<dialog>` has had >96% support since 2022; for legacy support add the `dialog-polyfill` npm package |
-| Body scrolls behind open modal | Set `overflow: hidden` on `body` when modal is open; restore it on close |
-| Quick view does not work on mobile (no hover) | Ensure the Quick View button is always visible on `hover: none` media devices using `@media (hover: none)` |
-| Variant selection resets when images change | Keep `selectedVariant` in state indexed by variant ID, not by position in the array |
+| Focus lost after modal closes | Store the trigger element reference before opening; call `.focus()` inside `requestAnimationFrame` after close |
+| Quick view button not visible on touch devices | Use `@media (hover: none)` to always show the button on touch screens; do not rely on hover alone |
+| Body scrolls behind open modal | Set `overflow: hidden` on `body` when modal is open; restore on close |
+| Variant selection resets when images change | Keep `selectedVariant` in state indexed by variant ID, not position in the array |
+| Quick view opens for products that need full PDP | Detect products with 3+ options or requiring size guide and navigate to PDP directly instead |
 
 ## Related Skills
 
 - @product-page-design
-- @cart-logic
 - @accessibility-commerce
 - @responsive-storefront
+- @faceted-navigation

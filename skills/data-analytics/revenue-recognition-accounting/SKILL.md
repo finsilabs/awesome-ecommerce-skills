@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [revenue-recognition, asc-606, accounting]
 triggers: ["implement revenue recognition", "ASC 606", "IFRS 15", "deferred revenue", "subscription revenue accounting", "multi-element arrangement", "revenue schedule"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,371 +16,200 @@ difficulty: advanced
 
 ## Overview
 
-Revenue recognition is one of the most consequential accounting disciplines in ecommerce. Under ASC 606 (US GAAP) and its international counterpart IFRS 15, revenue is recognized when — or as — performance obligations are satisfied, not simply when cash is received. This distinction matters enormously for subscriptions, gift cards, bundled product-service arrangements, and any transaction where delivery spans time periods.
+Revenue recognition determines when you can record revenue in your financial statements. Under ASC 606 (US GAAP) and IFRS 15, revenue is recognized when — or as — performance obligations are satisfied, not simply when cash is received. This matters enormously for subscriptions (revenue earned monthly even if billed annually), gift cards (revenue earned only on redemption), and bundled products (where a warranty component must be deferred).
 
-This skill covers the full lifecycle: identifying contracts, allocating transaction prices across performance obligations, recognizing revenue at the correct point in time, maintaining deferred revenue schedules, and producing the journal entries that feed your general ledger. It applies to direct-to-consumer ecommerce, subscription box services, SaaS-adjacent digital products, marketplace sellers, and omnichannel retailers.
+Getting revenue recognition right protects you from audit findings, builds investor trust, and ensures your financial statements accurately reflect business performance.
 
-Getting revenue recognition right protects you from restatements, builds investor trust, and provides the accurate financials needed for fundraising, M&A due diligence, and regulatory compliance.
+This skill guides you through the practical setup of revenue recognition using your accounting system, platform integrations, and relevant apps.
 
----
+## When to Use This Skill
 
-## When to Use
-
-- You sell subscription products (monthly boxes, replenishment subscriptions, memberships)
-- You sell bundled offers (product + warranty + installation + support in one SKU)
-- You issue gift cards, store credit, or prepaid plans
-- You offer buy-now-pay-later arrangements or installment plans
-- You have consignment inventory or agency/principal arrangements
-- You recognize revenue from a third-party marketplace (Amazon, eBay) where fees are deducted
-- You are preparing GAAP or IFRS financials for investors, auditors, or a financing round
-- You need to separate recognized revenue from cash receipts in your financial model
-- You are building a data pipeline that automatically posts revenue recognition journal entries
-
----
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When you sell subscription products (monthly boxes, replenishment subscriptions, memberships)
+- When you sell bundled offers (product + warranty + service in one SKU)
+- When you issue gift cards, store credit, or prepaid plans
+- When you recognize revenue from third-party marketplaces (Amazon, eBay)
+- When preparing GAAP or IFRS financials for investors, auditors, or a financing round
+- When building a data pipeline that automatically posts revenue recognition journal entries
+- When you need to separate recognized revenue from cash receipts in your financial model
 
 ## Core Instructions
 
-### Step 1 — Identify the Contract with the Customer
+### Step 1: Identify which revenue types require special treatment
 
-A contract exists when all of the following criteria are met:
-1. Both parties have approved the contract (written, verbal, or implied by conduct).
-2. Each party's rights regarding goods/services can be identified.
-3. Payment terms are identifiable.
-4. The contract has commercial substance.
-5. It is probable you will collect the consideration you are entitled to.
+Most standard ecommerce product sales (order placed → shipped → delivered) are straightforward: recognize revenue at delivery. The complexity arises with these arrangements:
 
-For ecommerce, a completed checkout confirmation typically constitutes the contract. Cancellation windows under consumer protection law do not prevent contract identification but may affect the timing of recognition.
+| Revenue Type | Recognition Rule | Common Mistake |
+|-------------|-----------------|----------------|
+| **Physical product (single sale)** | Recognize at delivery (when control transfers to customer) | Recognizing at order placement instead of delivery |
+| **Subscription (annual or multi-month)** | Recognize ratably over the subscription period | Recognizing full annual payment in month 1 |
+| **Gift cards** | Recognize at redemption; handle unredeemed breakage separately | Recognizing at sale |
+| **Extended warranty** | Recognize ratably over the warranty period | Recognizing 100% at product shipment |
+| **Bundle (product + service)** | Allocate price across components; recognize each independently | Recognizing 100% at shipment of physical component |
+| **Buy Now Pay Later** | Recognize at delivery (BNPL provider pays you immediately; installment risk is theirs) | No special treatment needed; straightforward |
+| **Marketplace sales (as principal)** | Recognize gross revenue; record fees as cost of revenue | Net revenue recognition (agent treatment) when you control inventory |
+| **Marketplace sales (as agent)** | Recognize only your net commission | Gross revenue recognition when you do not control inventory |
 
-```sql
--- Identify contracts eligible for revenue recognition
-SELECT
-    o.order_id,
-    o.customer_id,
-    o.order_date,
-    o.total_amount,
-    o.payment_status,
-    o.fulfillment_status,
-    CASE
-        WHEN o.payment_status = 'captured'
-         AND o.customer_verified = TRUE
-        THEN 'contract_identified'
-        ELSE 'pending'
-    END AS contract_status
-FROM orders o
-WHERE o.order_date >= '2026-01-01'
-  AND o.payment_status IN ('captured', 'authorized');
-```
+### Step 2: Set up your accounting system for proper revenue recognition
 
-### Step 2 — Identify Performance Obligations
-
-Each distinct promise to transfer a good or service is a separate performance obligation. A good or service is distinct if:
-- The customer can benefit from it on its own or with other readily available resources, AND
-- The promise to transfer it is separately identifiable from other promises in the contract.
-
-Common ecommerce performance obligations:
-| Arrangement | Obligations |
-|---|---|
-| Product only | Delivery of product |
-| Product + extended warranty | Delivery of product; Stand-ready warranty service |
-| Subscription box | Each monthly box delivery |
-| Gift card | Redemption (breakage handled separately) |
-| Bundle (product + install + support) | Product delivery; Installation; 12-month support |
-| Digital download | License grant at point of download |
-
-```python
-# Performance obligation classification logic
-OBLIGATION_TYPES = {
-    'physical_product': {'recognition_method': 'point_in_time', 'trigger': 'delivery_confirmed'},
-    'digital_download': {'recognition_method': 'point_in_time', 'trigger': 'download_activated'},
-    'subscription_period': {'recognition_method': 'over_time', 'trigger': 'period_elapsed'},
-    'extended_warranty': {'recognition_method': 'over_time', 'trigger': 'warranty_period_elapsed'},
-    'installation_service': {'recognition_method': 'point_in_time', 'trigger': 'installation_complete'},
-    'support_service': {'recognition_method': 'over_time', 'trigger': 'support_period_elapsed'},
-    'gift_card': {'recognition_method': 'point_in_time', 'trigger': 'redemption_or_breakage'},
-}
-
-def classify_order_items(order_items: list[dict]) -> list[dict]:
-    obligations = []
-    for item in order_items:
-        obligation_type = item.get('product_type')
-        config = OBLIGATION_TYPES.get(obligation_type, {})
-        obligations.append({
-            'order_item_id': item['order_item_id'],
-            'sku': item['sku'],
-            'obligation_type': obligation_type,
-            'recognition_method': config.get('recognition_method'),
-            'trigger': config.get('trigger'),
-            'standalone_selling_price': item.get('ssp'),
-            'allocated_transaction_price': None,  # computed in step 3
-        })
-    return obligations
-```
-
-### Step 3 — Determine and Allocate the Transaction Price
-
-The transaction price is the amount of consideration you expect to receive. It must account for:
-- Variable consideration (discounts, rebates, refunds, returns) — use expected value or most likely amount method
-- Significant financing components (if payment is materially before or after delivery)
-- Non-cash consideration
-- Consideration payable to the customer (coupons, referral credits)
-
-For bundles, allocate the transaction price to each performance obligation based on **relative standalone selling prices (SSPs)**.
-
-```python
-from decimal import Decimal
-
-def allocate_transaction_price(
-    transaction_price: Decimal,
-    obligations: list[dict]
-) -> list[dict]:
-    """
-    Allocate transaction price to performance obligations
-    using relative standalone selling price method (ASC 606-10-32-28).
-    """
-    total_ssp = sum(Decimal(str(o['standalone_selling_price'])) for o in obligations)
-    if total_ssp == 0:
-        raise ValueError("Total standalone selling price cannot be zero")
-
-    allocated = []
-    running_total = Decimal('0')
-
-    for i, obligation in enumerate(obligations):
-        ssp = Decimal(str(obligation['standalone_selling_price']))
-        if i == len(obligations) - 1:
-            # Assign remainder to last obligation to avoid rounding errors
-            allocated_price = transaction_price - running_total
-        else:
-            allocated_price = (ssp / total_ssp * transaction_price).quantize(Decimal('0.01'))
-            running_total += allocated_price
-
-        obligation['allocated_transaction_price'] = allocated_price
-        allocated.append(obligation)
-
-    return allocated
-```
-
-### Step 4 — Recognize Revenue as Performance Obligations Are Satisfied
-
-**Point-in-time recognition:** Recognize when control transfers to the customer. Indicators include:
-- Entity has right to payment
-- Customer has legal title
-- Physical possession transferred
-- Customer has risks and rewards of ownership
-- Customer has accepted the asset
-
-**Over-time recognition:** Recognize ratably if one of the following is true:
-- Customer simultaneously receives and consumes benefits (e.g., monthly subscription)
-- Entity's performance creates or enhances a customer-controlled asset
-- No alternative use exists for the asset and entity has enforceable right to payment
-
-```python
-from datetime import date
-from decimal import Decimal
-
-def compute_recognition_schedule(
-    obligation: dict,
-    recognition_start: date,
-    recognition_end: date,
-    reporting_period_start: date,
-    reporting_period_end: date,
-) -> Decimal:
-    """
-    Compute revenue recognized in a reporting period for an over-time obligation.
-    Uses straight-line method unless usage-based pattern is specified.
-    """
-    if obligation['recognition_method'] == 'point_in_time':
-        if obligation.get('trigger_date') and (
-            reporting_period_start <= obligation['trigger_date'] <= reporting_period_end
-        ):
-            return obligation['allocated_transaction_price']
-        return Decimal('0')
-
-    # Over-time: pro-rate by days
-    total_days = (recognition_end - recognition_start).days
-    if total_days == 0:
-        return obligation['allocated_transaction_price']
-
-    overlap_start = max(recognition_start, reporting_period_start)
-    overlap_end = min(recognition_end, reporting_period_end)
-
-    if overlap_start >= overlap_end:
-        return Decimal('0')
-
-    days_in_period = (overlap_end - overlap_start).days
-    return (obligation['allocated_transaction_price'] * days_in_period / total_days).quantize(Decimal('0.01'))
-```
-
-### Step 5 — Deferred Revenue Tracking
-
-Deferred revenue (contract liabilities) arise when cash is received before the performance obligation is satisfied. Maintain a deferred revenue schedule to track balances.
-
-```sql
--- Deferred revenue roll-forward schedule
-WITH monthly_activity AS (
-    SELECT
-        DATE_TRUNC('month', period_date) AS accounting_month,
-        order_id,
-        obligation_id,
-        SUM(CASE WHEN transaction_type = 'cash_received' THEN amount ELSE 0 END) AS cash_received,
-        SUM(CASE WHEN transaction_type = 'revenue_recognized' THEN amount ELSE 0 END) AS revenue_recognized,
-        SUM(CASE WHEN transaction_type = 'refund' THEN amount ELSE 0 END) AS refunds
-    FROM revenue_transactions
-    GROUP BY 1, 2, 3
-)
-SELECT
-    accounting_month,
-    SUM(cash_received) AS new_deferred_revenue,
-    SUM(revenue_recognized) AS revenue_released,
-    SUM(refunds) AS refund_reversals,
-    SUM(cash_received - revenue_recognized - refunds) AS net_change,
-    SUM(SUM(cash_received - revenue_recognized - refunds))
-        OVER (ORDER BY accounting_month ROWS UNBOUNDED PRECEDING) AS ending_deferred_balance
-FROM monthly_activity
-GROUP BY 1
-ORDER BY 1;
-```
-
-### Step 6 — Journal Entries
-
-Standard double-entry journal entries for revenue recognition:
-
-**At cash receipt (before delivery):**
-```
-DR  Cash / Accounts Receivable          $100.00
-    CR  Deferred Revenue (Liability)         $100.00
-```
-
-**At revenue recognition (point-in-time):**
-```
-DR  Deferred Revenue                    $100.00
-    CR  Revenue                              $100.00
-```
-
-**Monthly recognition for subscription (over-time, $120/year = $10/month):**
-```
-DR  Deferred Revenue                     $10.00
-    CR  Revenue — Subscription               $10.00
-```
-
-**For bundled arrangement ($150 total: $100 product + $50 warranty):**
-```
-Step 1 — At payment (cash received before delivery):
-DR  Cash                                $150.00
-    CR  Deferred Revenue                    $150.00
-
-Step 2 — At shipment (product performance obligation satisfied):
-DR  Deferred Revenue                    $100.00
-    CR  Revenue — Product Sales             $100.00
-(The remaining $50.00 stays in Deferred Revenue for the warranty obligation.)
-
-Step 3 — Monthly warranty recognition ($50 / 12 months = $4.17/month):
-DR  Deferred Revenue — Warranty           $4.17
-    CR  Revenue — Warranty Service           $4.17
-```
+The right tool depends on your business complexity and accounting system:
 
 ---
+
+#### For subscription businesses
+
+**Shopify (subscription apps):**
+1. Use **Recharge** or **Skio** for subscription management on Shopify — both apps create orders in Shopify for each billing cycle
+2. Connect Shopify to **Xero** via A2X or to **QuickBooks** via Finaloop
+3. In Xero, revenue from subscription orders is recognized when the order is created (each billing cycle) — for monthly subscriptions billed monthly, this is correct
+4. For **annual subscriptions:** You need to spread the payment across 12 months. In Xero:
+   - Create the invoice when the subscription starts (e.g., $120 annual)
+   - Post the full $120 to a **Deferred Revenue** liability account
+   - Each month, create a recurring journal entry: DR Deferred Revenue $10 / CR Subscription Revenue $10
+   - Use Xero's **Repeating Transactions** feature to automate this
+
+**QuickBooks Online approach for annual subscriptions:**
+1. When annual payment received: create an invoice for $120, post to "Deferred Revenue" (liability account)
+2. Create a recurring journal entry (monthly): DR Deferred Revenue $10 / CR Subscription Revenue $10
+3. QuickBooks recurring transactions: **+ New → Journal Entry → Make recurring**
+
+**Dedicated revenue recognition tools:**
+- **Younium** or **Chargebee** (if using subscription billing): Both have built-in revenue recognition that automatically defers and releases subscription revenue on the correct schedule; export to accounting system
+- **Recurly + Sage Intacct**: For larger subscription businesses; Recurly handles billing, Sage Intacct handles automated GAAP-compliant revenue recognition
+
+---
+
+#### For gift cards
+
+**Shopify:**
+1. When a gift card is purchased, Shopify records it as a sale in the platform — but for accounting purposes, this is a liability (deferred revenue), not revenue
+2. In your accounting system: post gift card sales to **Gift Card Liability** (liability account), not revenue
+3. When a gift card is redeemed (applied to an order): transfer from Gift Card Liability to Revenue
+4. **Breakage:** For gift cards that are never redeemed, recognize the expected breakage amount as revenue either:
+   - Proportionally as cards are redeemed (preferred if you can estimate breakage reliably), OR
+   - When redemption is considered remote (typically after 3–5 years of inactivity)
+5. **Practical setup in QuickBooks/Xero:** Create a "Gift Card Liability" account; when the accounting integration posts a gift card sale, manually reclassify it to the liability account; when redeemed, reclassify to revenue
+
+**A2X for Shopify:** A2X allows you to configure how different Shopify transaction types post to your accounting system — set gift card sales to post to a deferred revenue account and gift card redemptions to post to a revenue account.
+
+---
+
+#### For product bundles with warranties
+
+**Manual approach (most common for small-to-mid-size merchants):**
+
+1. Determine the standalone selling price (SSP) of each component:
+   - Product SSP: What you would sell it for without the bundle
+   - Warranty SSP: What you would charge for the warranty alone (or estimate using cost-plus-margin)
+
+2. Allocate the bundle price proportionally:
+   ```
+   Example: Bundle = $150 (product + 1-year warranty)
+   Product SSP: $130, Warranty SSP: $30, Total SSP: $160
+
+   Product allocation: $150 × ($130/$160) = $121.88
+   Warranty allocation: $150 × ($30/$160) = $28.12
+   ```
+
+3. Post journal entries:
+   - At payment receipt: DR Cash $150 / CR Deferred Revenue $150
+   - At shipment: DR Deferred Revenue $121.88 / CR Product Revenue $121.88
+   - Monthly (over 12 months): DR Deferred Revenue $2.34 / CR Warranty Revenue $2.34
+
+4. In QuickBooks/Xero: Create a **Deferred Revenue – Warranty** liability account for the warranty component; set up a recurring journal entry to release $2.34/month per warranty sold
+
+---
+
+### Step 3: Handle the physical product timing issue
+
+The most common revenue recognition error for ecommerce: recognizing revenue at order placement instead of delivery.
+
+**Under ASC 606:** For physical goods, revenue is recognized when the customer obtains control — typically at delivery, not at checkout.
+
+**Practical impact:**
+- Orders placed December 30 but delivered January 3 should be recognized in January, not December
+- If you have many orders in transit at period-end (year-end or quarter-end), this creates a timing difference
+
+**How to handle in practice:**
+
+For most merchants with short transit times (1–3 days), the difference between order date and delivery date is immaterial and auditors typically accept recognition at shipment. However, if you have:
+- Long transit times (>7 days)
+- Significant holiday rush shipping in late December
+- GAAP audited financials
+
+...then you need to accrue for in-transit revenue:
+1. At period-end, pull a list of all shipped but undelivered orders (from your shipping carrier or ShipStation)
+2. Calculate their total value
+3. Record a journal entry: DR Revenue / CR Deferred Revenue – In Transit (for the in-transit amount)
+4. Reverse the entry on the first day of the next period
+
+### Step 4: Set up deferred revenue tracking
+
+Maintain a running deferred revenue balance to verify your accounting is correct.
+
+**Monthly deferred revenue reconciliation (in a spreadsheet):**
+
+```
+Opening Deferred Revenue Balance
++ New deferrals this month (gift cards sold + subscription annual billings + warranty components)
+- Revenue released this month (gift card redemptions + monthly subscription recognition + warranty releases)
+- Refunds/cancellations
+= Closing Deferred Revenue Balance
+
+Should equal: Deferred Revenue balance on your balance sheet
+```
+
+If the calculated balance does not match your balance sheet, there is a missing journal entry.
+
+**Review checklist each month:**
+- [ ] All gift card sales posted to liability account (not revenue)
+- [ ] Monthly subscription revenue recognition journal entries posted
+- [ ] Warranty component deferrals released for the month
+- [ ] In-transit accrual reversed from prior month; new in-transit accrual posted
+- [ ] Deferred revenue reconciliation ties to balance sheet
+
+### Step 5: Principal vs. agent determination for marketplace revenue
+
+If you sell through Amazon, eBay, or other marketplaces, determine whether you are a principal or an agent:
+
+**You are a principal if:**
+- You control the inventory before it is transferred to the customer (i.e., Amazon FBA inventory is yours)
+- You bear inventory risk (unsold items are your problem)
+- You set the selling price
+
+→ Recognize **gross revenue** (full selling price); record Amazon fees as cost of revenue
+
+**You are an agent if:**
+- A third party controls the inventory
+- The marketplace sets the price or has primary pricing authority
+- You earn a commission only
+
+→ Recognize only your **net commission**
+
+Most Amazon FBA sellers are principals and should recognize gross revenue. If you are unsure, consult your accountant.
 
 ## Best Practices
 
-1. **Maintain a contract obligation register** — Every order with multiple performance obligations should have a record in an obligations table linking back to the originating order, SSP, allocated price, and recognition schedule.
-
-2. **Automate deferred revenue releases** — Build a nightly job that evaluates trigger conditions (delivery confirmed, subscription period ended) and posts recognition entries. Manual spreadsheet processes are error-prone at scale.
-
-3. **Separate revenue accounts by obligation type** — Use distinct GL accounts for product revenue, subscription revenue, warranty revenue, and service revenue. This simplifies disclosure and audit support.
-
-4. **Document your SSP methodology** — Auditors will ask how you determined standalone selling prices. Use observable prices where available; use the adjusted market assessment or expected cost-plus-margin approach where they are not.
-
-5. **Track breakage on gift cards** — Recognize gift card breakage (unused balances) proportionally as cards are redeemed (if breakage is expected) or only when the likelihood of redemption is remote, depending on whether you can reliably estimate breakage.
-
-6. **Establish a variable consideration constraint** — For returns and refunds, use the expected value method across a portfolio of contracts. Record a refund liability and contra-revenue from day one rather than reversing revenue after the fact.
-
-7. **Reconcile deferred revenue to cash receipts** — Monthly, the ending deferred revenue balance should reconcile to cash received less revenue recognized. Any gap indicates missing journal entries or timing errors.
-
-8. **Disclose contract liabilities correctly** — ASC 606 requires disclosure of opening and closing balances of contract liabilities, and amounts recognized from prior-period contract liabilities in the current period.
-
-9. **Handle principal vs. agent correctly** — If you are an agent (marketplace facilitator), recognize only the net commission as revenue, not the gross transaction amount. Misclassification leads to overstated revenue.
-
-10. **Version-control your recognition policy** — As your product mix evolves, document policy changes and their effective dates. Retrospective policy changes may require restatements.
-
----
+- **Automate deferred revenue releases** — build recurring journal entries in QuickBooks or Xero for all subscription and warranty revenue recognition; monthly manual entries will be missed eventually
+- **Maintain a contract obligation register** — for any bundle or subscription with multiple performance obligations, maintain a spreadsheet tracking the allocated price, recognition schedule, and amount remaining
+- **Separate revenue accounts by obligation type** — use distinct GL accounts for product revenue, subscription revenue, warranty revenue, and gift card redemptions; simplifies disclosure and audit support
+- **Reconcile deferred revenue to cash receipts monthly** — the ending deferred revenue balance should reconcile to cash received less revenue recognized; any gap indicates missing journal entries
+- **Document your SSP methodology** — auditors will ask how you determined standalone selling prices; use observable market prices where available and document the approach for every bundle type
+- **Apply a variable consideration constraint for returns** — based on historical return rates by category, reduce recognized revenue at delivery by expected returns; record a refund liability for the expected return amount
 
 ## Common Pitfalls
 
-### Pitfall 1: Recognizing Revenue at Checkout Instead of Delivery
-Many ecommerce platforms record revenue at the time of payment. Under ASC 606, for physical goods, revenue is typically recognized when the customer obtains control — at delivery, not at order placement. This creates a timing difference that must be managed via deferred revenue.
+| Problem | Solution |
+|---------|----------|
+| Revenue recognized at checkout instead of delivery | For physical goods, recognize when the carrier marks the shipment as delivered; post a deferred revenue entry at order placement and recognize at the delivery trigger event |
+| Full bundle price recognized at shipment | Split the bundle price across performance obligations using SSPs; defer the warranty/service component and release ratably over the service period |
+| Gift card revenue recognized at sale | Gift card revenue is a deferred liability until redemption; post to a liability account at sale; recognize at redemption |
+| Subscription prorations done by calendar month instead of by day | Mid-month subscription starts should be recognized pro-rata by exact days, not calendar month; a subscription started on the 15th of a 30-day month recognizes 16/30 of the monthly fee in month 1 |
+| Not reassessing variable consideration (returns) each period | Return rates change over time; re-estimate expected returns monthly and record a catch-up adjustment in the current period |
+| Recording Amazon payout net of fees as revenue | If you are a principal on Amazon, record the full selling price as gross revenue and Amazon's fees as cost of revenue/selling expenses separately |
 
-**Fix:** Build a fulfillment event trigger. When the carrier marks the shipment as delivered, post the recognition entry. For orders in transit at period-end, accrue based on expected delivery dates.
+## Related Skills
 
-### Pitfall 2: Recognizing Full Bundle Price at Shipment
-Shipping a bundled product and a 1-year warranty together does not mean you can recognize 100% of the transaction price at shipment. The warranty obligation extends over time.
-
-**Fix:** At order capture, split the transaction price across obligations using SSPs. Recognize product revenue at delivery and warranty revenue ratably over the warranty term.
-
-### Pitfall 3: Ignoring Return Windows
-If a product has a 30-day return policy, recognizing 100% of revenue at delivery overstates revenue for in-window shipments.
-
-**Fix:** Apply a variable consideration constraint. Based on historical return rates by category, reduce the transaction price recognized at delivery by expected returns. Record a refund liability for the expected return amount.
-
-### Pitfall 4: Gift Card Revenue Recognized at Sale
-Gift card revenue is recognized when the card is redeemed (i.e., when the performance obligation is satisfied), not when the card is sold.
-
-**Fix:** Record gift card proceeds to a deferred revenue liability. Recognize to revenue upon redemption. For breakage, apply your estimated breakage rate either proportionally to redemptions or when remote.
-
-### Pitfall 5: Subscription Prorations Not Accounted For
-Mid-month subscription starts, upgrades, and downgrades create partial-period recognition that is easy to get wrong.
-
-**Fix:** Compute recognition by exact day, not by calendar month. A subscription started on the 15th of a 30-day month should recognize 16/30 of the monthly fee in that first month.
-
-### Pitfall 6: Not Reassessing Variable Consideration Each Period
-Return rates, refund rates, and rebate accruals change over time. Failing to update estimates leads to cumulative errors.
-
-**Fix:** Each month, re-estimate your variable consideration (expected returns, volume rebates) and record a catch-up adjustment in the current period. This is the cumulative catch-up method under ASC 606.
-
-### Pitfall 7: Marketplace Revenue Gross vs. Net Confusion
-Selling on Amazon and recording the full selling price as revenue — without netting out Amazon's fees — overstates gross revenue if you are acting as a principal but causes misstatement if you are actually an agent.
-
-**Fix:** Determine whether you control the product before it is transferred to the customer. If you control inventory, you are a principal — recognize gross revenue and record fees as cost of revenue. If Amazon/the marketplace controls the sale, you may be an agent — recognize only your net commission.
-
----
-
-## Appendix: Key SQL Schemas
-
-```sql
--- Core revenue recognition tables
-CREATE TABLE performance_obligations (
-    obligation_id       SERIAL PRIMARY KEY,
-    order_id            BIGINT NOT NULL REFERENCES orders(order_id),
-    order_item_id       BIGINT REFERENCES order_items(order_item_id),
-    obligation_type     VARCHAR(50) NOT NULL,
-    recognition_method  VARCHAR(20) NOT NULL CHECK (recognition_method IN ('point_in_time', 'over_time')),
-    standalone_ssp      NUMERIC(12,2) NOT NULL,
-    allocated_price     NUMERIC(12,2) NOT NULL,
-    recognition_start   DATE,
-    recognition_end     DATE,
-    trigger_event       VARCHAR(50),
-    trigger_date        DATE,
-    fully_recognized    BOOLEAN DEFAULT FALSE,
-    created_at          TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE revenue_recognition_entries (
-    entry_id            SERIAL PRIMARY KEY,
-    obligation_id       BIGINT NOT NULL REFERENCES performance_obligations(obligation_id),
-    accounting_date     DATE NOT NULL,
-    amount_recognized   NUMERIC(12,2) NOT NULL,
-    cumulative_recognized NUMERIC(12,2) NOT NULL,
-    remaining_deferred  NUMERIC(12,2) NOT NULL,
-    gl_account          VARCHAR(20),
-    journal_entry_ref   VARCHAR(50),
-    created_at          TIMESTAMP DEFAULT NOW()
-);
-```
+- @financial-reporting-dashboard
+- @financial-analytics-dashboard
+- @cash-flow-forecasting
+- @marketplace-fee-reconciliation

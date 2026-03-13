@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [shipping, rates, carriers, ups, fedex, usps, dhl, fulfillment]
 triggers: ["calculate shipping rates", "integrate carrier APIs", "add shipping options", "real-time shipping quotes"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Implement real-time shipping rate calculation by integrating carrier APIs (UPS, FedEx, USPS, DHL) through a unified abstraction layer. This skill covers rate shopping across carriers, package dimension and weight-based quoting, shipping zone configuration, flat-rate and free-shipping thresholds, and caching strategies to keep checkout fast even when carrier APIs are slow.
+Showing real-time shipping rates at checkout — from UPS, FedEx, USPS, DHL — lets customers choose their preferred service and prevents you from under- or overcharging for shipping. Every major platform supports carrier-calculated rates natively or through apps, and a multi-carrier rate shopping tool can save you 15–40% on shipping costs by automatically selecting the cheapest option.
 
 ## When to Use This Skill
 
@@ -26,478 +26,199 @@ Implement real-time shipping rate calculation by integrating carrier APIs (UPS, 
 - When you need to calculate dimensional weight for accurate carrier pricing
 - When setting up shipping zones and rate tables for international shipping
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify Shipping (carrier-calculated rates), Shopify Fulfillment Network, or apps like ShipStation. The Fulfillment API handles custom fulfillment workflows.
-**WooCommerce**: Use WooCommerce Shipping or plugins (ShipStation, WooCommerce Table Rate Shipping). Extend with woocommerce_shipping_methods filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with shipping configured, carrier API accounts if using custom rates
-
 ## Core Instructions
 
-1. **Define the shipping rate abstraction layer**
+### Step 1: Determine your platform and choose the right shipping rate tool
 
-   ```typescript
-   interface ShipmentRequest {
-     origin: Address;
-     destination: Address;
-     packages: Package[];
-     declaredValue?: number;     // in cents, for insurance
-     shipDate?: Date;
-   }
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Shopify Shipping (built-in) or Easyship / ShipStation for rate shopping | Shopify Shipping gives discounted USPS, UPS, DHL rates; Easyship adds 250+ carrier options and rate shopping |
+| **WooCommerce** | WooCommerce Shipping (USPS/DHL) + Table Rate Shipping for custom rules | WooCommerce Shipping handles basic carrier rates; Table Rate Shipping adds weight/zone-based rule tables |
+| **BigCommerce** | ShipperHQ or Easyship | ShipperHQ is the most powerful rate management tool for BigCommerce with dimensional rate calculation |
+| **Custom / Headless** | EasyPost or Shippo as a carrier meta-API | Both aggregate UPS, FedEx, USPS, DHL into a single API call — far simpler than integrating each carrier directly |
 
-   interface Address {
-     name?: string;
-     street1: string;
-     street2?: string;
-     city: string;
-     state: string;
-     postalCode: string;
-     country: string;            // ISO 3166-1 alpha-2
-     residential?: boolean;
-   }
+### Step 2: Set up carrier-calculated rates
 
-   interface Package {
-     weight: { value: number; unit: 'oz' | 'lb' | 'g' | 'kg' };
-     dimensions: { length: number; width: number; height: number; unit: 'in' | 'cm' };
-     itemCount?: number;
-   }
+#### Shopify
 
-   interface ShippingRate {
-     carrier: string;            // 'ups', 'fedex', 'usps', 'dhl'
-     service: string;            // 'ground', 'express', '2day', etc.
-     serviceName: string;        // Human-readable: "UPS Ground"
-     rate: number;               // in cents
-     currency: string;
-     estimatedDays: number;
-     estimatedDelivery?: Date;
-     guaranteed: boolean;
-   }
+**Shopify Shipping (built-in, free, recommended starting point):**
 
-   interface CarrierAdapter {
-     name: string;
-     getRates(request: ShipmentRequest): Promise<ShippingRate[]>;
-   }
-   ```
+1. Go to **Settings → Shipping and delivery → Manage rates**
+2. Under your domestic zone, click **Add rate**
+3. Select **Use carrier or app to calculate rates**
+4. Choose from: USPS, UPS, DHL Express
+5. Check the services you want to offer (e.g., USPS Priority Mail, USPS Ground Advantage, UPS Ground, UPS 2nd Day Air)
+6. Optionally add a markup or discount percentage on top of carrier rates (useful to offset packing material costs)
+7. Save — rates will now appear dynamically at checkout based on the order's actual weight and destination
 
-2. **Implement the UPS carrier adapter (REST API)**
+**For more carrier options (FedEx, regional carriers, international):**
+1. Install **Easyship** or **ShipStation** from the Shopify App Store
+2. Both integrate as Shopify "carrier-calculated shipping" providers and appear natively at checkout
+3. Easyship's free tier shows live rates from 50+ carriers at checkout
+4. **Note:** Carrier-calculated rates at checkout require Shopify's **Advanced plan** ($299/mo) or higher, OR purchasing the carrier-calculated shipping add-on ($20/month on lower plans)
 
-   ```typescript
-   import axios from 'axios';
+**For flat-rate and free-shipping rules:**
+- In Shopify Shipping, you can create flat-rate options ($5.99 standard shipping, $14.99 express) in addition to or instead of carrier-calculated rates
+- Combine with a free shipping threshold: add a free shipping rate with a minimum order condition (see @free-shipping-thresholds skill)
 
-   class UPSAdapter implements CarrierAdapter {
-     name = 'ups';
-     private baseUrl = 'https://onlinetools.ups.com/api';
-     private accessToken: string;
+#### WooCommerce
 
-     constructor(private config: {
-       clientId: string;
-       clientSecret: string;
-       accountNumber: string;
-     }) {}
+**WooCommerce Shipping (USPS + DHL, free):**
+1. Install the **WooCommerce Shipping** plugin (free, by WooCommerce)
+2. Go to **WooCommerce → Settings → Shipping → Add shipping zone** for each region
+3. Under each zone, click **Add shipping method** → select USPS or DHL Express
+4. Configure which services to display at checkout (Priority Mail, Ground Advantage, etc.)
+5. Add your package dimensions and weights to products for accurate rate calculation
 
-     private async authenticate(): Promise<void> {
-       const response = await axios.post(
-         'https://onlinetools.ups.com/security/v1/oauth/token',
-         'grant_type=client_credentials',
-         {
-           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-           auth: {
-             username: this.config.clientId,
-             password: this.config.clientSecret,
-           },
-         }
-       );
-       this.accessToken = response.data.access_token;
-     }
+**WooCommerce Table Rate Shipping (for complex rules, e.g., weight tiers, custom zones):**
+1. Purchase the **WooCommerce Table Rate Shipping** extension from WooCommerce.com
+2. Create rate tables: e.g., 0–1lb = $4.99, 1–5lb = $7.99, 5–20lb = $12.99
+3. Create separate tables for domestic vs. international zones
 
-     async getRates(request: ShipmentRequest): Promise<ShippingRate[]> {
-       await this.authenticate();
+**ShipStation for WooCommerce (multi-carrier rate shopping):**
+1. Install the **ShipStation for WooCommerce** plugin
+2. ShipStation can be configured to use your negotiated carrier rates and display them at checkout via WooCommerce's shipping method API
+3. Note: ShipStation shows rates in your ShipStation dashboard, not always directly at customer checkout — check ShipStation documentation for the specific WooCommerce checkout rate display feature
 
-       const response = await axios.post(
-         `${this.baseUrl}/rating/v1/Rate`,
-         {
-           RateRequest: {
-             Shipment: {
-               Shipper: {
-                 ShipperNumber: this.config.accountNumber,
-                 Address: this.formatAddress(request.origin),
-               },
-               ShipTo: { Address: this.formatAddress(request.destination) },
-               Package: request.packages.map(pkg => ({
-                 PackagingType: { Code: '02' }, // Customer packaging
-                 Dimensions: {
-                   UnitOfMeasurement: { Code: pkg.dimensions.unit === 'in' ? 'IN' : 'CM' },
-                   Length: String(pkg.dimensions.length),
-                   Width: String(pkg.dimensions.width),
-                   Height: String(pkg.dimensions.height),
-                 },
-                 PackageWeight: {
-                   UnitOfMeasurement: { Code: pkg.weight.unit === 'lb' ? 'LBS' : 'KGS' },
-                   Weight: String(this.normalizeWeight(pkg.weight)),
-                 },
-               })),
-             },
-           },
-         },
-         {
-           headers: {
-             Authorization: `Bearer ${this.accessToken}`,
-             'Content-Type': 'application/json',
-           },
-         }
-       );
+#### BigCommerce
 
-       return this.parseRates(response.data);
-     }
+**ShipperHQ (most powerful option for BigCommerce):**
+1. Install **ShipperHQ** from the BigCommerce App Marketplace
+2. Connect your UPS, FedEx, USPS, DHL accounts to ShipperHQ (or use ShipperHQ's built-in carrier accounts)
+3. ShipperHQ handles dimensional weight calculations automatically based on your product dimensions
+4. Configure rate shopping rules: "Show cheapest option", "Show all options", or "Show cheapest per delivery speed tier"
+5. Set markup rules: +$2 per shipment for handling, or -15% discount on all FedEx rates
 
-     private formatAddress(addr: Address) {
-       return {
-         AddressLine: [addr.street1, addr.street2].filter(Boolean),
-         City: addr.city,
-         StateProvinceCode: addr.state,
-         PostalCode: addr.postalCode,
-         CountryCode: addr.country,
-       };
-     }
+**BigCommerce built-in real-time rates:**
+1. Go to **Store Setup → Shipping → Add a shipping zone**
+2. Under the zone, add a real-time carrier method (UPS, FedEx, USPS via Endicia)
+3. Enter your carrier account credentials
+4. BigCommerce will display live carrier rates at checkout
 
-     private normalizeWeight(weight: Package['weight']): number {
-       if (weight.unit === 'oz') return weight.value / 16;
-       if (weight.unit === 'g') return weight.value / 1000;
-       if (weight.unit === 'kg') return weight.value;
-       return weight.value; // lb
-     }
+#### Custom / Headless
 
-     private parseRates(data: any): ShippingRate[] {
-       const rated = data.RateResponse?.RatedShipment || [];
-       return rated.map(r => ({
-         carrier: 'ups',
-         service: r.Service.Code,
-         serviceName: this.getServiceName(r.Service.Code),
-         rate: Math.round(parseFloat(r.TotalCharges.MonetaryValue) * 100),
-         currency: r.TotalCharges.CurrencyCode,
-         estimatedDays: parseInt(r.GuaranteedDelivery?.BusinessDaysInTransit || '5'),
-         guaranteed: !!r.GuaranteedDelivery,
-       }));
-     }
-
-     private getServiceName(code: string): string {
-       const names: Record<string, string> = {
-         '03': 'UPS Ground',
-         '02': 'UPS 2nd Day Air',
-         '01': 'UPS Next Day Air',
-         '13': 'UPS 3 Day Select',
-         '12': 'UPS Next Day Air Saver',
-         '14': 'UPS Next Day Air Early',
-       };
-       return names[code] || `UPS Service ${code}`;
-     }
-   }
-   ```
-
-3. **Build the multi-carrier rate shopping engine**
-
-   ```typescript
-   class ShippingRateEngine {
-     private carriers: CarrierAdapter[] = [];
-     private cache: Map<string, { rates: ShippingRate[]; expires: number }> = new Map();
-
-     registerCarrier(adapter: CarrierAdapter): void {
-       this.carriers.push(adapter);
-     }
-
-     async getRates(request: ShipmentRequest): Promise<ShippingRate[]> {
-       // Check cache first (rates are valid for ~15 minutes)
-       const cacheKey = this.getCacheKey(request);
-       const cached = this.cache.get(cacheKey);
-       if (cached && cached.expires > Date.now()) {
-         return cached.rates;
-       }
-
-       // Fetch from all carriers in parallel with timeouts
-       const results = await Promise.allSettled(
-         this.carriers.map(carrier =>
-           Promise.race([
-             carrier.getRates(request),
-             new Promise<ShippingRate[]>((_, reject) =>
-               setTimeout(() => reject(new Error(`${carrier.name} timeout`)), 5000)
-             ),
-           ])
-         )
-       );
-
-       const rates: ShippingRate[] = [];
-       for (const result of results) {
-         if (result.status === 'fulfilled') {
-           rates.push(...result.value);
-         } else {
-           console.warn(`Carrier rate fetch failed: ${result.reason}`);
-         }
-       }
-
-       // Sort by price ascending
-       rates.sort((a, b) => a.rate - b.rate);
-
-       // Cache for 15 minutes
-       this.cache.set(cacheKey, { rates, expires: Date.now() + 15 * 60 * 1000 });
-
-       return rates;
-     }
-
-     private getCacheKey(request: ShipmentRequest): string {
-       const dest = `${request.destination.postalCode}-${request.destination.country}`;
-       const weight = request.packages.reduce((sum, p) => sum + p.weight.value, 0);
-       return `${request.origin.postalCode}-${dest}-${weight}`;
-     }
-   }
-   ```
-
-4. **Calculate dimensional weight**
-
-   ```typescript
-   function calculateDimensionalWeight(pkg: Package): number {
-     // DIM factor: 139 for domestic (US), 139 for UPS/FedEx international
-     const DIM_FACTOR_DOMESTIC = 139;   // cubic inches per pound
-     const DIM_FACTOR_METRIC = 5000;    // cubic cm per kg
-
-     let dimWeight: number;
-
-     if (pkg.dimensions.unit === 'in') {
-       const cubicInches =
-         pkg.dimensions.length * pkg.dimensions.width * pkg.dimensions.height;
-       dimWeight = cubicInches / DIM_FACTOR_DOMESTIC; // result in lbs
-     } else {
-       const cubicCm =
-         pkg.dimensions.length * pkg.dimensions.width * pkg.dimensions.height;
-       dimWeight = cubicCm / DIM_FACTOR_METRIC; // result in kg
-     }
-
-     // Carrier charges the greater of actual weight vs dimensional weight
-     const actualWeight = normalizeWeightToLbs(pkg.weight);
-     return Math.max(actualWeight, Math.ceil(dimWeight));
-   }
-
-   function normalizeWeightToLbs(weight: Package['weight']): number {
-     switch (weight.unit) {
-       case 'oz': return weight.value / 16;
-       case 'g':  return weight.value / 453.592;
-       case 'kg': return weight.value * 2.20462;
-       case 'lb': return weight.value;
-     }
-   }
-   ```
-
-5. **Add flat-rate and free-shipping rules**
-
-   ```typescript
-   interface ShippingRule {
-     name: string;
-     type: 'flat_rate' | 'free_shipping' | 'tiered_rate';
-     conditions: {
-       minOrderTotal?: number;     // in cents
-       maxOrderWeight?: number;    // in lbs
-       countries?: string[];       // ISO codes
-       zones?: string[];
-     };
-     rate?: number;                // in cents (for flat rate)
-     tiers?: { minWeight: number; maxWeight: number; rate: number }[];
-   }
-
-   function applyShippingRules(
-     carrierRates: ShippingRate[],
-     rules: ShippingRule[],
-     orderTotal: number,
-     totalWeight: number,
-     destination: Address
-   ): ShippingRate[] {
-     const allRates = [...carrierRates];
-
-     for (const rule of rules) {
-       const countryMatch = !rule.conditions.countries ||
-         rule.conditions.countries.includes(destination.country);
-       const totalMatch = !rule.conditions.minOrderTotal ||
-         orderTotal >= rule.conditions.minOrderTotal;
-       const weightMatch = !rule.conditions.maxOrderWeight ||
-         totalWeight <= rule.conditions.maxOrderWeight;
-
-       if (!countryMatch || !totalMatch || !weightMatch) continue;
-
-       if (rule.type === 'free_shipping') {
-         allRates.push({
-           carrier: 'store',
-           service: 'free',
-           serviceName: 'Free Shipping',
-           rate: 0,
-           currency: 'USD',
-           estimatedDays: 7,
-           guaranteed: false,
-         });
-       }
-
-       if (rule.type === 'flat_rate' && rule.rate !== undefined) {
-         allRates.push({
-           carrier: 'store',
-           service: 'flat',
-           serviceName: rule.name,
-           rate: rule.rate,
-           currency: 'USD',
-           estimatedDays: 5,
-           guaranteed: false,
-         });
-       }
-     }
-
-     return allRates.sort((a, b) => a.rate - b.rate);
-   }
-   ```
-
-6. **Expose the shipping rate API endpoint**
-
-   ```typescript
-   // POST /api/shipping/rates
-   async function getShippingRates(req: Request, res: Response) {
-     const { cartId, destination } = req.body;
-
-     const cart = await getCartWithItems(cartId);
-     const origin = await getWarehouseAddress(cart);
-
-     // Convert cart items to packages using bin-packing
-     const packages = packItems(cart.lineItems, await getPackagingOptions());
-
-     const engine = new ShippingRateEngine();
-     engine.registerCarrier(new UPSAdapter(config.ups));
-     engine.registerCarrier(new FedExAdapter(config.fedex));
-     engine.registerCarrier(new USPSAdapter(config.usps));
-
-     const carrierRates = await engine.getRates({ origin, destination, packages });
-
-     // Apply store rules (free shipping, flat rates)
-     const rules = await db.shippingRules.find({ isActive: true });
-     const allRates = applyShippingRules(
-       carrierRates,
-       rules,
-       cart.subtotal,
-       packages.reduce((s, p) => s + p.weight.value, 0),
-       destination
-     );
-
-     // Only show top options to reduce choice paralysis
-     const topRates = [
-       allRates.find(r => r.rate === 0),                          // Free (if available)
-       allRates.find(r => r.rate > 0),                            // Cheapest paid
-       allRates.find(r => r.estimatedDays <= 2 && r.guaranteed),  // Fastest
-     ].filter(Boolean);
-
-     res.json({ rates: topRates });
-   }
-   ```
-
-## Examples
-
-### EasyPost as a unified carrier API
-
-Instead of integrating each carrier individually, use EasyPost as a meta-API:
+Use EasyPost or Shippo as a meta-API to get rates from all carriers in one call — far simpler than integrating UPS, FedEx, USPS, and DHL separately:
 
 ```typescript
 import EasyPost from '@easypost/api';
-
 const easypost = new EasyPost(process.env.EASYPOST_API_KEY);
 
-async function getEasyPostRates(request: ShipmentRequest): Promise<ShippingRate[]> {
+// Get multi-carrier rates for a shipment
+async function getShippingRates(params: {
+  originZip: string;
+  destinationZip: string;
+  destinationCountry: string;
+  weightOz: number;
+  lengthIn: number;
+  widthIn: number;
+  heightIn: number;
+}): Promise<{ carrier: string; service: string; rateCents: number; estimatedDays: number }[]> {
   const shipment = await easypost.Shipment.create({
     from_address: {
-      street1: request.origin.street1,
-      city: request.origin.city,
-      state: request.origin.state,
-      zip: request.origin.postalCode,
-      country: request.origin.country,
+      zip: params.originZip,
+      country: 'US',
     },
     to_address: {
-      street1: request.destination.street1,
-      city: request.destination.city,
-      state: request.destination.state,
-      zip: request.destination.postalCode,
-      country: request.destination.country,
+      zip: params.destinationZip,
+      country: params.destinationCountry,
     },
     parcel: {
-      length: request.packages[0].dimensions.length,
-      width: request.packages[0].dimensions.width,
-      height: request.packages[0].dimensions.height,
-      weight: request.packages[0].weight.value * 16, // EasyPost expects oz
+      length: params.lengthIn,
+      width: params.widthIn,
+      height: params.heightIn,
+      weight: params.weightOz, // EasyPost uses oz
     },
   });
 
   return shipment.rates.map(rate => ({
-    carrier: rate.carrier.toLowerCase(),
-    service: rate.service,
-    serviceName: `${rate.carrier} ${rate.service}`,
-    rate: Math.round(parseFloat(rate.rate) * 100),
-    currency: rate.currency,
-    estimatedDays: rate.est_delivery_days || 5,
-    estimatedDelivery: rate.delivery_date ? new Date(rate.delivery_date) : undefined,
-    guaranteed: rate.delivery_days !== null,
-  }));
+    carrier: rate.carrier,
+    service: `${rate.carrier} ${rate.service}`,
+    rateCents: Math.round(parseFloat(rate.rate) * 100),
+    estimatedDays: rate.est_delivery_days ?? 5,
+  })).sort((a, b) => a.rateCents - b.rateCents);
+}
+
+// Apply store-level rules on top of carrier rates
+function applyShippingRules(params: {
+  carrierRates: { carrier: string; service: string; rateCents: number; estimatedDays: number }[];
+  cartSubtotalCents: number;
+  freeShippingThresholdCents: number;
+}): { label: string; rateCents: number; estimatedDays: number }[] {
+  const rates = [...params.carrierRates];
+
+  // Add free shipping option if eligible
+  if (params.cartSubtotalCents >= params.freeShippingThresholdCents) {
+    rates.unshift({ carrier: 'store', service: 'Free Shipping', rateCents: 0, estimatedDays: 7 });
+  }
+
+  // Show max 3 options to avoid choice paralysis:
+  // 1. Free (if available)
+  // 2. Cheapest paid option
+  // 3. Fastest guaranteed option
+  const freeOption = rates.find(r => r.rateCents === 0);
+  const cheapestPaid = rates.filter(r => r.rateCents > 0).sort((a, b) => a.rateCents - b.rateCents)[0];
+  const fastest = rates.filter(r => r.estimatedDays <= 2).sort((a, b) => a.estimatedDays - b.estimatedDays)[0];
+
+  return [freeOption, cheapestPaid, fastest]
+    .filter(Boolean)
+    .filter((r, i, arr) => arr.findIndex(x => x?.service === r?.service) === i) // deduplicate
+    .map(r => ({ label: r!.service, rateCents: r!.rateCents, estimatedDays: r!.estimatedDays }));
 }
 ```
 
-### Shipping zone-based rate table
+### Step 3: Configure dimensional weight calculation
 
-```typescript
-const zoneRates: Record<string, Record<string, number>> = {
-  // zone -> { weightBucket -> rate in cents }
-  domestic: { '0-1lb': 599, '1-5lb': 899, '5-10lb': 1299, '10-20lb': 1899 },
-  canada:   { '0-1lb': 999, '1-5lb': 1499, '5-10lb': 2199, '10-20lb': 3299 },
-  international: { '0-1lb': 1499, '1-5lb': 2499, '5-10lb': 3999, '10-20lb': 5999 },
-};
+Carriers charge based on the greater of actual weight vs. dimensional weight. Always configure this.
 
-function getZone(country: string): string {
-  if (country === 'US') return 'domestic';
-  if (country === 'CA') return 'canada';
-  return 'international';
-}
+**Shopify:**
+- Enter package dimensions on each product variant (Products → [Product] → Shipping section)
+- Shopify automatically calculates dimensional weight when computing carrier rates
 
-function getWeightBucket(weightLbs: number): string {
-  if (weightLbs <= 1) return '0-1lb';
-  if (weightLbs <= 5) return '1-5lb';
-  if (weightLbs <= 10) return '5-10lb';
-  return '10-20lb';
-}
+**WooCommerce:**
+- Enter dimensions in the WooCommerce product Shipping tab (length, width, height in inches/cm)
+- The WooCommerce Shipping plugin uses these dimensions for DHL and USPS dimensional rates
 
-function getZoneRate(country: string, weightLbs: number): number {
-  const zone = getZone(country);
-  const bucket = getWeightBucket(weightLbs);
-  return zoneRates[zone]?.[bucket] ?? zoneRates.international['10-20lb'];
-}
-```
+**ShipperHQ:**
+- ShipperHQ has advanced dimensional weight packing simulation — it determines how multiple items pack into your actual box sizes and calculates the rate based on the packed box, not just the sum of item weights
+
+**Manual check for dimensional weight:**
+- DIM factor (US domestic): 139 cubic inches per pound
+- Formula: (L × W × H) / 139 = DIM weight in lbs
+- If DIM weight > actual weight, carrier charges DIM weight
+
+### Step 4: Display the right number of options at checkout
+
+Too many shipping options cause checkout abandonment. Best practice:
+
+1. **Cheapest option** — always show this (often "Ground" or "Standard")
+2. **Free shipping** — if the cart qualifies, show it prominently at the top
+3. **Fastest option** — 1-day or 2-day air for customers who need speed
+
+Remove everything in between (3-day, 5-day, etc.) — customers don't need 6 options.
+
+In ShipperHQ: use "Rate Filters" to show only specific service levels. In Easyship: configure "Checkout Rules" to limit displayed options.
 
 ## Best Practices
 
-- **Always set carrier API timeouts** — carrier APIs can be slow (2-5s); set a 5s timeout and fall back to flat rates if they fail
-- **Cache rate quotes for 15-30 minutes** — rates don't change frequently; cache by origin+destination+weight to avoid repeated API calls
-- **Use dimensional weight** — always calculate dim weight and charge the greater of actual vs. dimensional; otherwise you lose money on large, light items
-- **Show 2-3 shipping options max** — cheapest, fastest, and free (if available); too many options cause checkout abandonment
-- **Validate addresses before rate requests** — use carrier address validation APIs to catch bad addresses before they cause rate errors
-- **Handle carrier outages gracefully** — if all carrier APIs fail, show flat-rate fallback options instead of an error
-- **Round up package weights** — carriers round up to the next pound/kilogram; do the same in your calculation to match actual charges
-- **Recalculate rates when the cart changes** — invalidate cached rates when items are added, removed, or quantities change
+- **Always set carrier API timeouts** — carrier rate APIs can take 2–5 seconds; show cached or flat-rate fallbacks if they don't respond in time
+- **Validate addresses before requesting rates** — invalid addresses cause rate errors and checkout failures; most carriers offer address validation APIs (Shippo has one built in)
+- **Round up package weights** — carriers round up to the next whole pound/kg; do the same in your rate calculation to avoid showing a lower rate than the customer will actually be charged
+- **Offer free shipping as a separate option, not by discounting a carrier rate** — present it as "Free Shipping (5–7 days)" rather than modifying a carrier's listed rate
+- **Recalculate rates when the cart changes** — re-fetch rates when items are added, quantities change, or the shipping address is updated
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Carrier API returns no rates for valid address | Check if the address is a PO Box (UPS/FedEx don't deliver to PO Boxes); fall back to USPS |
-| Shipping cost calculated at checkout differs from order total | Recalculate shipping at order creation, not just at cart; lock the rate for a limited time window |
-| Huge shipping costs for lightweight but large items | Always use dimensional weight calculation; the DIM factor is 139 (domestic) and 5000 (metric) |
-| Rate requests are too slow (>3 seconds) | Fetch all carriers in parallel with `Promise.allSettled`, set 5s timeouts, and use in-memory caching |
-| International shipments missing duties/taxes | Use DHL's Landed Cost API or a service like Zonos for duty/tax estimation on international orders |
-| Residential vs. commercial surcharges | Validate address type and pass `residential: true` to carrier APIs to get accurate quotes including surcharges |
+| Carrier API returns no rates for a valid address | Check if the address is a PO Box (UPS/FedEx don't deliver to PO Boxes); fall back to USPS for PO Boxes |
+| Checkout shows lower shipping cost than order total charged | Recalculate the final shipping rate in your order confirmation logic, not just at cart; rates can change between cart and checkout |
+| Large light items get expensive rates | Enable dimensional weight calculation; most carriers use DIM weight for large boxes — ShipperHQ handles this automatically |
+| Rate requests make checkout slow (3+ seconds) | Use a carrier aggregator (EasyPost/Shippo) instead of individual carrier APIs; aggregate has better response times |
 
 ## Related Skills
 
-- @order-processing-pipeline
-- @erp-integration
-- @ecommerce-caching
+- @free-shipping-thresholds
+- @international-shipping
+- @order-fulfillment-workflow
 - @checkout-flow-optimization
-- @pci-dss-compliance
+- @dropshipping-integration

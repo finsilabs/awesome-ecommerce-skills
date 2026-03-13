@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [ab-testing, price-experiments, statistical-significance, revenue-tracking, conversion-rate, experimentation]
 triggers: ["price A/B test", "price experiment", "test pricing", "price testing", "statistical significance pricing", "experiment framework"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,7 @@ difficulty: advanced
 
 ## Overview
 
-Implement a price experimentation framework that assigns users to price variants deterministically, tracks conversion and revenue metrics per variant, and calculates statistical significance so you know when an experiment has conclusively found a winner. Includes guardrails to prevent price inconsistency within a single user session and a clean experiment lifecycle (draft → running → concluded).
+Price A/B testing lets you run controlled experiments — showing one price to a segment of visitors and a different price to another — before committing to a permanent change. This is one of the highest-leverage optimizations available, but also one of the riskiest: a poorly executed test destroys customer trust and produces misleading data. Most platforms do not have native price A/B testing, so this requires either a dedicated app or a custom implementation. This skill walks you through setting up price experiments correctly on each major platform.
 
 ## When to Use This Skill
 
@@ -26,264 +26,205 @@ Implement a price experimentation framework that assigns users to price variants
 - When running multiple concurrent price experiments on different products without interference
 - When regulatory or ethical requirements demand that price tests are documented, time-limited, and reversible
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
-**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
-
 ## Core Instructions
 
-1. **Design the experiment schema**
+### Step 1: Determine the merchant's platform and choose the right approach
 
-   ```sql
-   CREATE TABLE price_experiments (
-     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name         VARCHAR(128) NOT NULL,
-     product_id   UUID NOT NULL REFERENCES products(id),
-     status       VARCHAR(16) NOT NULL DEFAULT 'draft'
-                    CHECK (status IN ('draft', 'running', 'paused', 'concluded')),
-     traffic_pct  INTEGER NOT NULL DEFAULT 50, -- % of eligible traffic in the experiment
-     started_at   TIMESTAMPTZ,
-     concluded_at TIMESTAMPTZ,
-     winner_variant_id UUID,
-     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Intelligems or Neat A/B Testing app | Native Shopify apps that handle price variant assignment, session stickiness, and statistical reporting without custom code |
+| **Shopify Plus** | Intelligems + Shopify Functions | Shopify Functions allow server-side price overrides — the most reliable approach on Plus |
+| **WooCommerce** | Nelio A/B Testing plugin or Split Hero | WordPress-native experiment plugins with WooCommerce price testing support |
+| **BigCommerce** | Intelligems (supports BigCommerce) or Google Optimize alternatives | BigCommerce's Price Lists API can set variant-specific prices per customer segment |
+| **Custom / Headless** | Build with your own session bucketing + platform pricing API | Full control but requires custom statistical tracking |
 
-   CREATE TABLE price_experiment_variants (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     experiment_id   UUID NOT NULL REFERENCES price_experiments(id),
-     name            VARCHAR(64) NOT NULL,   -- e.g. 'control', 'treatment_1'
-     price           INTEGER NOT NULL,       -- cents
-     traffic_split   INTEGER NOT NULL,       -- percentage of experiment traffic, must sum to 100
-     impressions     INTEGER NOT NULL DEFAULT 0,
-     add_to_carts    INTEGER NOT NULL DEFAULT 0,
-     purchases       INTEGER NOT NULL DEFAULT 0,
-     revenue         BIGINT NOT NULL DEFAULT 0, -- cents
-     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+### Step 2: Design the experiment
 
-   CREATE TABLE price_experiment_assignments (
-     session_id    VARCHAR(128) NOT NULL,
-     experiment_id UUID NOT NULL REFERENCES price_experiments(id),
-     variant_id    UUID NOT NULL REFERENCES price_experiment_variants(id),
-     assigned_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-     PRIMARY KEY (session_id, experiment_id)
-   );
-   ```
+Before setting up any tool, define these parameters:
 
-2. **Assign a user to a variant (deterministic by session)**
+1. **Hypothesis** — "Reducing the price from $49.99 to $44.99 will increase revenue per visitor by more than 5%"
+2. **Primary metric** — Revenue per visitor (RPV), not just conversion rate. A lower price converts better but may earn less per order
+3. **Traffic split** — 50/50 is standard; never run more than 2 variants simultaneously on the same product
+4. **Minimum duration** — At least 7 days to capture weekday/weekend variation; ideally 14 days
+5. **Minimum sample size** — Calculate using a significance calculator (use [abtestguide.com](https://abtestguide.com/abtestsize/)). Aim for at least 100 conversions per variant before declaring a winner
+6. **Exclusion rules** — Existing customers who paid the old price should not be shown the new price mid-experiment
 
-   ```typescript
-   import crypto from 'crypto';
+### Step 3: Platform-specific setup
 
-   async function assignVariant(
-     experimentId: string,
-     sessionId: string
-   ): Promise<PriceExperimentVariant | null> {
-     const experiment = await db.priceExperiments.findById(experimentId);
-     if (!experiment || experiment.status !== 'running') return null;
+---
 
-     // Check for existing assignment (sticky bucketing)
-     const existing = await db.priceExperimentAssignments.findOne({ session_id: sessionId, experiment_id: experimentId });
-     if (existing) {
-       return db.priceExperimentVariants.findById(existing.variant_id);
-     }
+#### Shopify
 
-     // Determine if this session is in the experiment traffic bucket
-     const trafficHash = parseInt(
-       crypto.createHash('sha256').update(`traffic:${experimentId}:${sessionId}`).digest('hex').slice(0, 8),
-       16
-     ) % 100;
+**Option A: Intelligems (recommended for most merchants)**
 
-     if (trafficHash >= experiment.traffic_pct) return null; // not in experiment
+Intelligems is the leading Shopify app for price testing. It handles session stickiness, statistical significance, and integrates with Shopify's checkout natively.
 
-     // Assign to a variant using deterministic hashing
-     const variantHash = parseInt(
-       crypto.createHash('sha256').update(`variant:${experimentId}:${sessionId}`).digest('hex').slice(0, 8),
-       16
-     ) % 100;
+1. Install Intelligems from the Shopify App Store
+2. Go to **Intelligems → Tests → New Price Test**
+3. Select the product(s) to test
+4. Set your variant prices (e.g., $49.99 vs $44.99)
+5. Set traffic split (50/50 recommended)
+6. Set a start date and estimated end date based on your sample size calculator
+7. Intelligems assigns visitors to variants via a persistent cookie and reports RPV, conversion rate, and statistical significance in their dashboard
 
-     const variants = await db.priceExperimentVariants.findByExperiment(experimentId);
-     let cumulative = 0;
-     let assignedVariant: PriceExperimentVariant | null = null;
+Key settings to configure:
+- **Sticky bucketing** — ensure the same visitor always sees the same price (enabled by default)
+- **Returning customer exclusion** — under **Advanced Settings**, exclude customers who have previously purchased the product at the original price
+- **Minimum detectable effect** — set to the minimum revenue change that would justify the price change (e.g., 5%)
 
-     for (const variant of variants) {
-       cumulative += variant.traffic_split;
-       if (variantHash < cumulative) {
-         assignedVariant = variant;
-         break;
-       }
-     }
+**Option B: Neat A/B Testing**
 
-     if (!assignedVariant) return null;
+A lighter-weight alternative if you only need simple price split tests:
+1. Install Neat A/B Testing from the App Store
+2. Create a test targeting a specific product or collection
+3. Set the price variant and traffic split
+4. Monitor results in the Neat dashboard
 
-     // Persist assignment
-     await db.priceExperimentAssignments.insert({
-       session_id: sessionId,
-       experiment_id: experimentId,
-       variant_id: assignedVariant.id,
-     });
+**Option C: Shopify Plus — Shopify Functions (advanced)**
 
-     return assignedVariant;
-   }
-   ```
+For Plus merchants who need full control:
+1. Create a Shopify Function (Discount Function type)
+2. The function receives cart context and customer ID
+3. Use deterministic hashing on the customer/session ID to assign to a variant
+4. Apply a fixed-amount or percentage discount equal to the price difference
+5. Track conversions via Shopify's order webhook + a custom analytics store
 
-3. **Get the experiment price for a product**
+---
 
-   ```typescript
-   async function getExperimentPrice(
-     productId: string,
-     sessionId: string,
-     defaultPrice: number
-   ): Promise<{ price: number; variantId: string | null; experimentId: string | null }> {
-     const activeExperiment = await db.priceExperiments.findOne({
-       product_id: productId,
-       status: 'running',
-     });
+#### WooCommerce
 
-     if (!activeExperiment) return { price: defaultPrice, variantId: null, experimentId: null };
+**Option A: Nelio A/B Testing plugin**
 
-     const variant = await assignVariant(activeExperiment.id, sessionId);
-     if (!variant) return { price: defaultPrice, variantId: null, experimentId: null };
+1. Install Nelio A/B Testing from the WordPress plugin directory
+2. Go to **Nelio A/B Testing → Add New Experiment → WooCommerce Product Experiment**
+3. Select the product and set the alternative price
+4. Configure the conversion goal (purchase of that product)
+5. The plugin tracks sessions and reports conversion rates with statistical significance
 
-     // Track impression
-     await db.raw(
-       'UPDATE price_experiment_variants SET impressions = impressions + 1 WHERE id = ?',
-       [variant.id]
-     );
+**Option B: Manual with Google Optimize (sunsetted) replacements**
 
-     return { price: variant.price, variantId: variant.id, experimentId: activeExperiment.id };
-   }
-   ```
+Since Google Optimize was discontinued in 2023, consider:
+- **VWO (Visual Website Optimizer)** — supports WooCommerce price testing via JavaScript
+- **AB Tasty** — enterprise-grade with WooCommerce native integration
+- **Convert.com** — WooCommerce-compatible with server-side testing support
 
-4. **Track conversion events**
+**Important WooCommerce note**: Client-side price changes (JavaScript-based) are cosmetic only — they do not change the actual checkout price. Always ensure your A/B testing tool changes the price at the WooCommerce product level or through the `woocommerce_get_price` filter, not just the displayed number.
 
-   ```typescript
-   async function trackExperimentEvent(
-     variantId: string,
-     event: 'add_to_cart' | 'purchase',
-     revenueCents = 0
-   ): Promise<void> {
-     if (event === 'add_to_cart') {
-       await db.raw(
-         'UPDATE price_experiment_variants SET add_to_carts = add_to_carts + 1 WHERE id = ?',
-         [variantId]
-       );
-     } else if (event === 'purchase') {
-       await db.raw(
-         'UPDATE price_experiment_variants SET purchases = purchases + 1, revenue = revenue + ? WHERE id = ?',
-         [revenueCents, variantId]
-       );
-     }
-   }
-   ```
+---
 
-5. **Calculate statistical significance using a two-proportion z-test**
+#### BigCommerce
 
-   ```typescript
-   function calculateZTest(
-     controlConversions: number,
-     controlImpressions: number,
-     treatmentConversions: number,
-     treatmentImpressions: number
-   ): { zScore: number; pValue: number; significant: boolean } {
-     if (controlImpressions === 0 || treatmentImpressions === 0) {
-       return { zScore: 0, pValue: 1, significant: false };
-     }
+1. Use BigCommerce's **Price Lists** feature (available on Plus and above):
+   - Go to **Products → Price Lists → Add Price List**
+   - Create a price list for your "treatment" price
+   - Assign the price list to a specific customer group
+2. Split customers into control/treatment groups by assigning them to the customer group
+3. Track conversions using BigCommerce's built-in analytics or Google Analytics with custom dimensions
 
-     const p1 = controlConversions / controlImpressions;
-     const p2 = treatmentConversions / treatmentImpressions;
-     const pPooled = (controlConversions + treatmentConversions) / (controlImpressions + treatmentImpressions);
-     const se = Math.sqrt(pPooled * (1 - pPooled) * (1 / controlImpressions + 1 / treatmentImpressions));
+Alternatively, use **Intelligems for BigCommerce** which manages the visitor bucketing automatically.
 
-     if (se === 0) return { zScore: 0, pValue: 1, significant: false };
+---
 
-     const zScore = (p2 - p1) / se;
-     // Approximate two-tailed p-value using standard normal CDF
-     const pValue = 2 * (1 - normalCDF(Math.abs(zScore)));
-     return { zScore, pValue, significant: pValue < 0.05 };
-   }
+#### Custom / Headless
 
-   // Abramowitz and Stegun approximation for the normal CDF
-   function normalCDF(z: number): number {
-     const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
-     const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
-     const sign = z < 0 ? -1 : 1;
-     const x = Math.abs(z) / Math.sqrt(2);
-     const t = 1 / (1 + p * x);
-     const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-     return 0.5 * (1 + sign * y);
-   }
-
-   async function getExperimentResults(experimentId: string) {
-     const variants = await db.priceExperimentVariants.findByExperiment(experimentId);
-     const control = variants.find(v => v.name === 'control')!;
-
-     return variants.map(variant => {
-       const conversionRate = variant.impressions > 0 ? variant.purchases / variant.impressions : 0;
-       const revenuePerImpression = variant.impressions > 0 ? variant.revenue / variant.impressions : 0;
-       const stats = variant.name !== 'control'
-         ? calculateZTest(control.purchases, control.impressions, variant.purchases, variant.impressions)
-         : null;
-       return { ...variant, conversionRate, revenuePerImpression, stats };
-     });
-   }
-   ```
-
-## Examples
-
-### Set up a $10 price reduction experiment with 50/50 split
+For headless storefronts, you need to implement session bucketing, price resolution, and conversion tracking:
 
 ```typescript
-const experiment = await db.priceExperiments.insert({
-  name: '$39.99 vs $29.99 — Widget Pro',
-  product_id: 'prod_widget_pro',
-  status: 'running',
-  traffic_pct: 100, // all traffic participates
-  started_at: new Date(),
-});
+import crypto from 'crypto';
 
-await db.priceExperimentVariants.insertMany([
-  { experiment_id: experiment.id, name: 'control',     price: 3999, traffic_split: 50 },
-  { experiment_id: experiment.id, name: 'treatment_1', price: 2999, traffic_split: 50 },
-]);
-```
+// Deterministic variant assignment by session ID
+function assignVariant(
+  experimentId: string,
+  sessionId: string,
+  variants: { id: string; weight: number }[]  // weights must sum to 100
+): string {
+  const hash = parseInt(
+    crypto.createHash('sha256')
+      .update(`${experimentId}:${sessionId}`)
+      .digest('hex')
+      .slice(0, 8),
+    16
+  ) % 100;
 
-### Check significance from the admin dashboard
-
-```typescript
-const results = await getExperimentResults('exp_abc123');
-for (const variant of results) {
-  console.log(`${variant.name}: ${(variant.conversionRate * 100).toFixed(2)}% CVR, ` +
-    `$${(variant.revenuePerImpression / 100).toFixed(2)} RPV` +
-    (variant.stats ? ` | p=${variant.stats.pValue.toFixed(4)} ${variant.stats.significant ? '✓' : ''}` : ''));
+  let cumulative = 0;
+  for (const variant of variants) {
+    cumulative += variant.weight;
+    if (hash < cumulative) return variant.id;
+  }
+  return variants[variants.length - 1].id;
 }
-// control:     3.20% CVR, $1.28 RPV
-// treatment_1: 4.80% CVR, $1.44 RPV | p=0.0031 ✓
+
+// Usage: get the price for a visitor
+const variantId = assignVariant('exp_price_widget_pro', sessionId, [
+  { id: 'control',   weight: 50 },  // $49.99
+  { id: 'treatment', weight: 50 },  // $44.99
+]);
+
+const prices = { control: 4999, treatment: 4499 };  // cents
+const priceForVisitor = prices[variantId];
 ```
+
+Track conversions and calculate statistical significance:
+
+```typescript
+// Two-proportion z-test for statistical significance
+function zTest(
+  controlConversions: number,
+  controlVisitors: number,
+  treatmentConversions: number,
+  treatmentVisitors: number
+): { pValue: number; significant: boolean } {
+  const p1 = controlConversions / controlVisitors;
+  const p2 = treatmentConversions / treatmentVisitors;
+  const pPooled = (controlConversions + treatmentConversions) / (controlVisitors + treatmentVisitors);
+  const se = Math.sqrt(pPooled * (1 - pPooled) * (1 / controlVisitors + 1 / treatmentVisitors));
+  if (se === 0) return { pValue: 1, significant: false };
+  const z = Math.abs((p2 - p1) / se);
+  // Approximate p-value (two-tailed)
+  const pValue = 2 * (1 - normalCDF(z));
+  return { pValue, significant: pValue < 0.05 };
+}
+```
+
+Use your platform's pricing API (Shopify Admin API, BigCommerce Catalog API) to push price updates once a winner is declared.
+
+### Step 4: Monitor and conclude the experiment
+
+Track these metrics during the experiment:
+
+| Metric | Where to find it |
+|--------|-----------------|
+| Revenue per visitor (RPV) | Intelligems dashboard; or calculate from your orders data |
+| Conversion rate by variant | Your A/B tool's analytics |
+| Statistical significance (p-value) | Your A/B tool; aim for p < 0.05 |
+| Sample size per variant | Ensure you hit your pre-calculated minimum before concluding |
+
+**Declare a winner only when:**
+- You have reached the pre-calculated minimum sample size (not before)
+- The p-value is below 0.05
+- The experiment has run for at least 7 days
+
+After declaring a winner, update the product price permanently and end the experiment.
 
 ## Best Practices
 
-- **Use sticky bucketing** — once a session is assigned to a variant, always show the same price; inconsistent prices within a session destroy trust and distort results
-- **Require statistical significance before declaring a winner** — minimum p < 0.05 and at minimum 100 conversions per variant before making rollout decisions
-- **Track revenue per impression (RPV), not just conversion rate** — a lower price may convert better but generate less revenue; RPV captures the full picture
-- **Do not run experiments on the same product simultaneously** — overlapping experiments cause interaction effects that make results uninterpretable
-- **Set a minimum experiment duration** — run for at least 7 days to account for weekday/weekend seasonality patterns
-- **Exclude existing customers from new-customer price tests** — showing existing customers a different price than they paid previously causes churn and complaints
-- **Log the variant ID in every order** — store the `variantId` in the order record so you can later reconcile experiment assignments against actual revenue
+- **Use Revenue Per Visitor (RPV), not just conversion rate** — a lower price may convert better but generate less revenue; RPV captures the full picture
+- **Require sticky bucketing** — once a session is assigned to a variant, always show the same price; inconsistent prices destroy trust and distort results
+- **Pre-register your minimum sample size** — decide before the experiment starts how many conversions you need; stopping as soon as p < 0.05 (peeking) inflates false positive rates
+- **Exclude existing customers** — showing an existing customer a price lower than what they paid triggers complaints and churn
+- **Run only one experiment per product at a time** — overlapping experiments on the same product create interaction effects that make results uninterpretable
+- **Pause experiments during promotions** — site-wide sales or marketing campaigns confound price experiment results
+- **Log the variant assignment on every order** — store the variant ID in the order metadata so you can later audit revenue attribution
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| User sees different price across page loads (no stickiness) | Persist the assignment to DB and always read the assignment before generating a price |
-| Peeking problem — stopping experiment as soon as p < 0.05 | Pre-register a minimum sample size (e.g., 500 conversions/variant) and only evaluate significance after reaching it |
-| Bots inflate impressions and skew results | Filter out non-human sessions using bot detection before recording impressions |
-| A/B test is active during a sale event, confounding results | Pause all price experiments during site-wide promotions or account for the promotion in your analysis |
+| Visitor sees different price on refresh | Ensure your A/B tool uses persistent cookies or server-side session storage for bucketing |
+| Peeking — stopping at first p < 0.05 | Pre-register a minimum conversion count (e.g., 200 per variant) and only check significance after reaching it |
+| Price change only affects the product page, not checkout | Ensure the test tool changes the actual price, not just a displayed number — verify in the cart and checkout |
+| Bots inflate visitor counts and skew results | Filter bot traffic before recording impressions; most A/B tools have bot filtering built in |
+| Experiment runs during a flash sale | Pause all price experiments during site-wide promotions |
 
 ## Related Skills
 

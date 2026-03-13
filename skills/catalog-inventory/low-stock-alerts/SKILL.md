@@ -1,6 +1,6 @@
 ---
 name: low-stock-alerts
-description: "Automatically alert your team and trigger reorders when products fall below custom thresholds, using sales velocity and demand forecasting"
+description: "Set up automated alerts when products fall below custom thresholds so you can reorder before running out of stock"
 category: catalog-inventory
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [low-stock, alerts, reorder, notifications, demand-forecasting, replenishment, procurement]
 triggers: ["low stock alert", "reorder point", "out of stock notification", "inventory replenishment", "stock level alert", "demand forecasting"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,324 +16,224 @@ difficulty: intermediate
 
 ## Overview
 
-Implement automated monitoring of inventory levels against configurable reorder points, trigger supplier notification emails when stock falls below thresholds, and apply simple demand forecasting (rolling average of daily sales velocity) to dynamically calculate reorder points based on lead time. Covers the alert data model, background job scheduling, escalation logic, and a merchant-facing alert dashboard.
+Low stock alerts notify you when inventory drops below a threshold so you can reorder before running out. Every major platform has this built in — Shopify, WooCommerce, and BigCommerce all send email notifications when stock falls below a configured level. For more advanced needs like demand-based thresholds, supplier PO automation, or team notifications in Slack, dedicated apps add those capabilities without custom code.
 
 ## When to Use This Skill
 
-- When merchants are running out of stock unexpectedly and missing sales
-- When the inventory management workflow relies on manual checks rather than automated alerts
-- When implementing demand-based reorder points rather than fixed thresholds
+- When products are unexpectedly running out of stock and missing sales
+- When the current inventory workflow relies on manual checks rather than automated alerts
+- When you want demand-based reorder points rather than fixed thresholds
 - When the store has supplier lead times that need to be factored into when to reorder
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
-**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with product catalog access, API credentials
 
 ## Core Instructions
 
-1. **Design the reorder configuration and alert data models**
+### Step 1: Determine platform and choose the right tool
 
-   ```javascript
-   // reorder_configs table — per variant, per location
-   {
-     id,
-     variant_id: 'var_shirt_red_M',
-     location_id: 'wh_east',
-     reorder_point: 20,              // Alert when available drops to or below this
-     reorder_quantity: 100,          // Suggested PO quantity
-     supplier_id: 'sup_acme',
-     lead_time_days: 7,              // Days from PO to receipt
-     use_dynamic_reorder_point: true, // Compute from demand velocity if true
-     created_at: Date,
-   }
+| Platform | Built-in Alerts | Recommended Extension |
+|----------|-----------------|-----------------------|
+| **Shopify** | Shopify sends an email notification when stock hits zero; very limited threshold control | Stocky (free, by Shopify) for configurable thresholds and PO automation; Back in Stock for customer notifications |
+| **WooCommerce** | WooCommerce emails the store admin when stock drops below the configured low-stock threshold | ATUM Inventory Management for per-product thresholds, supplier emails, and reorder suggestions |
+| **BigCommerce** | Built-in low stock notifications per product with configurable threshold | Multi-Location Inventory app for location-specific alerts |
+| **Custom / Headless** | Build a background job that checks levels against reorder points | Required when platform has no native alerting or you need supplier email automation |
 
-   // stock_alerts table
-   {
-     id,
-     variant_id,
-     location_id,
-     alert_type: 'low_stock'|'out_of_stock'|'overstock',
-     triggered_at: Date,
-     available_at_trigger: 5,
-     reorder_point_at_trigger: 20,
-     resolved_at: null,             // Set when stock rises above reorder point
-     notification_sent: false,
-     acknowledged_by: null,
-   }
-   ```
+---
 
-2. **Background job: check all inventory levels against reorder points**
+### Step 2: Platform-specific setup
 
-   ```javascript
-   // jobs/checkStockLevels.js
-   export async function checkStockLevels() {
-     // Fetch all inventory levels with their reorder configs
-     const levels = await db.inventoryLevels.findMany({
-       include: {
-         reorderConfig: true,
-         variant: { include: { product: true } },
-         location: true,
-       },
-       where: {
-         reorderConfig: { isNot: null },
-       },
-     });
+---
 
-     const now = new Date();
-     const alerts = [];
+#### Shopify
 
-     for (const level of levels) {
-       const config = level.reorderConfig;
-       const available = level.onHand - level.reserved;
+**Built-in low stock notification:**
 
-       let reorderPoint = config.reorderPoint;
+Shopify sends an email to the store admin when inventory hits zero, but doesn't support configurable thresholds natively.
 
-       // Override with dynamic reorder point if configured
-       if (config.useDynamicReorderPoint) {
-         const velocity = await calculateDailySalesVelocity(level.variantId, level.locationId, 30);
-         reorderPoint = Math.ceil(velocity * config.leadTimeDays * 1.2); // 20% safety stock buffer
-       }
+1. Go to **Settings → Notifications → Scroll to Staff order notifications**
+2. Ensure the admin email is set — Shopify will notify this address when stock reaches 0
 
-       const alertType = available === 0 ? 'out_of_stock'
-         : available <= reorderPoint ? 'low_stock'
-         : null;
+**Setting per-variant thresholds with Stocky:**
 
-       if (!alertType) continue;
+1. Install **Stocky** from the Shopify App Store (free)
+2. Open Stocky and go to **Products**
+3. For each product, set the **Reorder point** (the stock level that triggers an alert)
+4. Set the **Reorder quantity** (how many units to order when the alert fires)
+5. Stocky will flag products below their reorder point in the dashboard and can generate draft purchase orders automatically
 
-       // Check if an unresolved alert already exists
-       const existingAlert = await db.stockAlerts.findFirst({
-         where: {
-           variantId: level.variantId,
-           locationId: level.locationId,
-           alertType,
-           resolvedAt: null,
-         },
-       });
+**Customer "back in stock" notifications:**
+- Install **Back In Stock** (paid) or **Klaviyo** from the App Store
+- These apps show a "Notify me when available" button on out-of-stock products
+- Automatically email opted-in customers when stock is replenished
 
-       if (!existingAlert) {
-         const alert = await db.stockAlerts.create({
-           data: {
-             variantId: level.variantId,
-             locationId: level.locationId,
-             alertType,
-             triggeredAt: now,
-             availableAtTrigger: available,
-             reorderPointAtTrigger: reorderPoint,
-           },
-         });
-         alerts.push({ ...alert, level, config });
-       }
-     }
+---
 
-     // Send notifications for new alerts
-     if (alerts.length > 0) {
-       await sendAlertNotifications(alerts);
-     }
+#### WooCommerce
 
-     return alerts.length;
-   }
+**Configure global low-stock threshold:**
 
-   // Resolve alerts when stock is replenished
-   async function resolveStockAlerts(variantId, locationId) {
-     await db.stockAlerts.updateMany({
-       where: { variantId, locationId, resolvedAt: null },
-       data: { resolvedAt: new Date() },
-     });
-   }
-   ```
+1. Go to **WooCommerce → Settings → Products → Inventory**
+2. Enter a value in **Low stock threshold** (e.g., `10`)
+3. Enter your notification email in **Notification recipient(s)** — comma-separate multiple emails
+4. WooCommerce sends an email when any product drops to or below this threshold
 
-3. **Calculate sales velocity from order history**
+**Set per-product thresholds:**
 
-   ```javascript
-   // lib/demandForecasting.js
-   export async function calculateDailySalesVelocity(variantId, locationId, windowDays = 30) {
-     const since = new Date(Date.now() - windowDays * 86400000);
+1. Go to **WooCommerce → Products → [Product] → Inventory tab**
+2. Enable **Manage stock?**
+3. Enter a **Low stock threshold** specific to this product (overrides the global setting)
 
-     const result = await db.orderLineItems.aggregate({
-       where: {
-         variantId,
-         order: {
-           createdAt: { gte: since },
-           status: { in: ['completed', 'shipped', 'delivered'] },
-           fulfillments: {
-             some: { locationId },
-           },
-         },
-       },
-       _sum: { quantity: true },
-     });
+**Advanced alerting with ATUM:**
 
-     const totalSold = result._sum.quantity ?? 0;
-     return totalSold / windowDays;
-   }
+1. Install **ATUM Inventory Management for WooCommerce** (free)
+2. ATUM's dashboard shows all products at or below their reorder point in one view
+3. Per-product reorder point configuration under **ATUM → Product Settings**
+4. ATUM can also email your supplier directly when a product needs reordering (paid feature)
 
-   export function calculateDynamicReorderPoint(dailyVelocity, leadTimeDays, safetyStockMultiplier = 1.5) {
-     // Safety stock = velocity * lead_time * safety_multiplier
-     // Reorder when: on_hand <= lead_time_demand + safety_stock
-     const leadTimeDemand = dailyVelocity * leadTimeDays;
-     const safetyStock = leadTimeDemand * (safetyStockMultiplier - 1);
-     return Math.ceil(leadTimeDemand + safetyStock);
-   }
-   ```
+**Demand-based thresholds:**
+- Install **Inventory Planner** (Shopify/WooCommerce) for sales velocity-based reorder suggestions
+- Inventory Planner analyzes your sales history and suggests reorder points based on lead time × daily velocity + safety stock
 
-4. **Send alert notifications to merchants and suppliers**
+---
 
-   ```javascript
-   // lib/alertNotifications.js
-   export async function sendAlertNotifications(alerts) {
-     // Group alerts by supplier for consolidated emails
-     const bySupplier = {};
-     for (const alert of alerts) {
-       const supplierId = alert.config?.supplierId ?? 'merchant';
-       if (!bySupplier[supplierId]) bySupplier[supplierId] = [];
-       bySupplier[supplierId].push(alert);
-     }
+#### BigCommerce
 
-     for (const [supplierId, supplierAlerts] of Object.entries(bySupplier)) {
-       if (supplierId === 'merchant') {
-         // Notify merchant
-         await emailService.send({
-           to: process.env.MERCHANT_ALERT_EMAIL,
-           template: 'low-stock-merchant',
-           data: { alerts: supplierAlerts },
-         });
-         continue;
-       }
+**Set per-product low stock threshold:**
 
-       const supplier = await db.suppliers.findUnique({ where: { id: supplierId } });
-       if (!supplier?.email) continue;
+1. Go to **Products → [Product] → Inventory tab**
+2. Set the **Low stock level** field
+3. BigCommerce sends an automatic email notification to the store admin when stock crosses this threshold
 
-       const reorderLines = supplierAlerts.map(a => ({
-         sku: a.level.variant.sku,
-         productName: a.level.variant.product.name,
-         currentStock: a.availableAtTrigger,
-         reorderQuantity: a.config.reorderQuantity,
-         location: a.level.location.name,
-       }));
+**Configure who receives alerts:**
+1. Go to **Store Setup → Store Settings → Miscellaneous**
+2. Set **Low stock email address** to your purchasing team's email
 
-       await emailService.send({
-         to: supplier.email,
-         template: 'low-stock-supplier-reorder',
-         data: {
-           supplierName: supplier.name,
-           reorderLines,
-           storeUrl: process.env.STORE_URL,
-         },
-       });
+**For location-specific alerts:**
+- Install the **Multi-Location Inventory** app
+- Set thresholds per location — useful when you stock the same SKU at multiple warehouses
 
-       // Mark notifications as sent
-       await db.stockAlerts.updateMany({
-         where: { id: { in: supplierAlerts.map(a => a.id) } },
-         data: { notificationSent: true },
-       });
-     }
-   }
-   ```
+---
 
-5. **Expose an alert management API**
+#### Custom / Headless
 
-   ```javascript
-   // api/admin/stock-alerts.js
+For custom platforms, implement a background job that checks inventory levels against configured reorder points:
 
-   // GET /api/admin/stock-alerts — fetch all unresolved alerts
-   export async function getStockAlerts(req, res) {
-     const { type, locationId, supplierId } = req.query;
-
-     const alerts = await db.stockAlerts.findMany({
-       where: {
-         resolvedAt: null,
-         ...(type ? { alertType: type } : {}),
-         ...(locationId ? { locationId } : {}),
-       },
-       include: {
-         variant: { include: { product: true } },
-         location: true,
-       },
-       orderBy: { triggeredAt: 'desc' },
-     });
-
-     res.json({ alerts, count: alerts.length });
-   }
-
-   // POST /api/admin/stock-alerts/:id/acknowledge
-   export async function acknowledgeAlert(req, res) {
-     await db.stockAlerts.update({
-       where: { id: req.params.id },
-       data: { acknowledgedBy: req.session.userId },
-     });
-     res.json({ acknowledged: true });
-   }
-   ```
-
-## Examples
-
-### Reorder point dashboard metrics
-
-```sql
--- Variants that are at or below their reorder point right now
-SELECT
-  p.name,
-  pv.sku,
-  l.name AS location,
-  il.on_hand - il.reserved AS available,
-  rc.reorder_point,
-  rc.reorder_quantity,
-  rc.lead_time_days
-FROM inventory_levels il
-JOIN reorder_configs rc ON rc.variant_id = il.variant_id AND rc.location_id = il.location_id
-JOIN product_variants pv ON pv.id = il.variant_id
-JOIN products p ON p.id = pv.product_id
-JOIN locations l ON l.id = il.location_id
-WHERE il.on_hand - il.reserved <= rc.reorder_point
-ORDER BY (il.on_hand - il.reserved) ASC;
-```
-
-### Webhook trigger when inventory crosses threshold
-
-```javascript
-// In your inventory update function, after decrementing on_hand:
-export async function onInventoryUpdated(variantId, locationId) {
-  const level = await db.inventoryLevels.findUnique({
-    where: { variantId_locationId: { variantId, locationId } },
-    include: { reorderConfig: true },
+```typescript
+// jobs/checkStockLevels.ts — run every 15-30 minutes via cron
+export async function checkStockLevels() {
+  const levels = await db.inventoryLevels.findMany({
+    include: { reorderConfig: true, variant: { include: { product: true } }, location: true },
+    where: { reorderConfig: { isNot: null } },
   });
 
-  if (!level?.reorderConfig) return;
+  const newAlerts = [];
 
-  const available = level.onHand - level.reserved;
-  if (available <= level.reorderConfig.reorderPoint) {
-    // Trigger async — do not block the inventory update
-    checkStockLevels().catch(console.error);
+  for (const level of levels) {
+    const config = level.reorderConfig!;
+    const available = level.onHand - level.reserved;
+
+    // Dynamic reorder point based on sales velocity and lead time
+    let reorderPoint = config.reorderPoint;
+    if (config.useDynamicReorderPoint) {
+      const velocity = await calculateDailySalesVelocity(level.variantId, 30); // 30-day rolling average
+      reorderPoint = Math.ceil(velocity * config.leadTimeDays * 1.2); // 20% safety stock buffer
+    }
+
+    const alertType = available === 0 ? 'out_of_stock' : available <= reorderPoint ? 'low_stock' : null;
+    if (!alertType) continue;
+
+    // Only create a new alert if the previous one is resolved
+    const existingAlert = await db.stockAlerts.findFirst({
+      where: { variantId: level.variantId, locationId: level.locationId, alertType, resolvedAt: null },
+    });
+
+    if (!existingAlert) {
+      newAlerts.push({ level, config, available, reorderPoint, alertType });
+      await db.stockAlerts.create({ data: {
+        variantId: level.variantId, locationId: level.locationId,
+        alertType, triggeredAt: new Date(), availableAtTrigger: available,
+      }});
+    }
+  }
+
+  if (newAlerts.length > 0) await sendAlertNotifications(newAlerts);
+}
+
+// Calculate daily sales velocity from order history
+async function calculateDailySalesVelocity(variantId: string, windowDays: number) {
+  const since = new Date(Date.now() - windowDays * 86400000);
+  const result = await db.orderLineItems.aggregate({
+    where: { variantId, order: { createdAt: { gte: since }, status: { in: ['completed', 'shipped'] } } },
+    _sum: { quantity: true },
+  });
+  return (result._sum.quantity ?? 0) / windowDays;
+}
+
+// Send consolidated alerts — group by supplier to avoid email spam
+async function sendAlertNotifications(alerts: Alert[]) {
+  const bySupplier: Record<string, Alert[]> = {};
+  for (const alert of alerts) {
+    const key = alert.config.supplierId ?? 'merchant';
+    if (!bySupplier[key]) bySupplier[key] = [];
+    bySupplier[key].push(alert);
+  }
+
+  for (const [supplierId, supplierAlerts] of Object.entries(bySupplier)) {
+    const to = supplierId === 'merchant' ? process.env.MERCHANT_ALERT_EMAIL : (await db.suppliers.findById(supplierId))?.email;
+    if (!to) continue;
+    await emailService.send({ to, template: 'low-stock-alert', data: { alerts: supplierAlerts } });
   }
 }
 ```
 
+---
+
+### Step 3: Calculate dynamic reorder points (optional)
+
+Fixed thresholds (e.g., "alert at 10 units") are simple but can be wrong — a product that sells 50 units per day needs a much higher threshold than one that sells 2 per week.
+
+**Formula:**
+```
+Reorder Point = (Daily Sales Velocity × Lead Time Days) × 1.2 (20% safety buffer)
+```
+
+Example: Product sells 5 units/day, supplier lead time is 7 days
+- Demand during lead time: 5 × 7 = 35 units
+- Reorder point with safety buffer: 35 × 1.2 = 42 units
+
+**For Shopify:** Use **Inventory Planner** app — it computes velocity-based reorder points automatically from your sales history.
+
+**For WooCommerce:** ATUM Inventory Management can be configured with supplier lead times and suggests reorder points based on sales velocity.
+
+---
+
+### Step 4: Automate reorder notifications to suppliers
+
+Once an alert fires, you want to notify your purchasing team or supplier automatically.
+
+**Shopify + Stocky:** Stocky generates draft purchase orders when stock falls below the reorder point. Your team reviews and sends the PO to the supplier from within Stocky.
+
+**WooCommerce + ATUM (paid):** ATUM can email the configured supplier directly when a product needs reordering, including the suggested quantity.
+
+**Email workflow (any platform):** Set the low-stock notification email directly to your supplier's ordering inbox — include the SKU, product name, and suggested reorder quantity in the notification template.
+
 ## Best Practices
 
-- **Set reorder points based on lead time and velocity** — a fixed reorder point of 10 units may be fine for fast-moving items but insufficient for seasonal products; use the dynamic formula
-- **De-duplicate alerts** — only create a new alert when the previous one has been resolved; do not spam merchants with repeated alerts for the same SKU
-- **Consolidate supplier emails** — batch multiple low-stock items for the same supplier into a single email; one email with 5 SKUs is far less noisy than 5 separate emails
-- **Resolve alerts automatically on stock receipt** — when a warehouse receipt is processed, call `resolveStockAlerts` so the dashboard stays clean
-- **Track acknowledgements** — require merchants to acknowledge alerts so you can report on response time and identify ignored alerts
-- **Monitor for consistently understocked variants** — if the same SKU triggers low-stock alerts every 2 weeks, the reorder quantity is too low
+- **Set reorder points based on lead time and sales velocity** — a fixed threshold of 10 units may be fine for slow movers but dangerously low for fast sellers; use the formula above as a starting point
+- **De-duplicate alerts** — platforms and custom solutions should only send one alert per SKU per incident, not an alert on every inventory decrement; resolve old alerts when stock is replenished
+- **Consolidate supplier emails** — one email with 5 low-stock SKUs from the same supplier is far less noisy than 5 separate emails
+- **Set thresholds at the variant level**, not just the product level — a shirt with 3 remaining in XL and 50 in M should alert only for XL
+- **Review and update thresholds seasonally** — a product that sells 2/day normally may sell 20/day during peak season; adjust thresholds before high-demand periods
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Alert fires repeatedly for the same SKU without resolution | Add a `resolvedAt` guard — only trigger a new alert when the previous one is resolved or when stock has first risen above the threshold and then dropped again |
-| Dynamic reorder point too high during seasonally low periods | Use a rolling 30-day window; consider separate high-season and off-season configurations for seasonal products |
-| Supplier emails go to spam | Configure SPF, DKIM, and DMARC for your sending domain; use a reputable transactional email provider (SendGrid, Postmark) |
-| Alert job runs too frequently and causes database load | Run the check job every 15-30 minutes, not continuously; also trigger on-demand when inventory is decremented below the reorder point |
+| Alert fires repeatedly for the same SKU | Ensure the platform only sends one alert per incident until stock is replenished; Shopify and WooCommerce do this correctly by default; custom builds need a `resolvedAt` guard |
+| Dynamic reorder point too high during off-season | Use a rolling 30-day window for velocity calculations; consider separate seasonal configurations for products with strong seasonality |
+| Supplier emails go to spam | Use an authenticated sending domain (SPF, DKIM, DMARC) for your alert emails; transactional email providers (SendGrid, Postmark) improve deliverability |
+| Alert threshold too low — too many false alarms | Start with a threshold at 2× your typical order quantity from the supplier, then tune based on how often you're actually running out before the reorder arrives |
 
 ## Related Skills
 
 - @inventory-tracking
 - @multi-warehouse
-- @order-processing-pipeline
-- @product-content-enrichment
+- @catalog-import-export

@@ -5,10 +5,10 @@ category: marketing-growth
 risk: safe
 source: curated
 date_added: "2026-03-12"
-tags: [google-ads, pmax, shopping, sem, ppc]
-triggers: ["set up Google Ads", "create shopping campaign", "implement conversion tracking"]
+tags: [google-ads, pmax, shopping, sem, ppc, conversion-tracking, roas, smart-bidding]
+triggers: ["set up Google Ads", "create shopping campaign", "implement conversion tracking", "performance max", "google shopping ads", "google ads for ecommerce"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,40 +16,63 @@ difficulty: advanced
 
 ## Overview
 
-Google Ads is the primary paid search and shopping channel for ecommerce, capturing high-intent buyers at the bottom of the funnel. A well-structured account combines Performance Max (PMax) for automated coverage, Standard Shopping for manual bid control, and Search campaigns for branded and high-value queries. Reliable conversion tracking — including Enhanced Conversions via server-side GTM — is the foundation everything else depends on.
+Google Ads captures high-intent buyers at the bottom of the funnel through Shopping ads and Search. A well-structured account combines Performance Max (PMax) for automated coverage and conversion tracking via Google Tag. Reliable conversion tracking is the foundation everything else depends on — before optimizing campaigns, ensure your purchase conversion tag is firing correctly.
 
 ## When to Use This Skill
 
 - When launching a new Google Ads account for an ecommerce store
-- When migrating from Standard Shopping to Performance Max campaigns
 - When conversion tracking is broken or under-reporting (common after iOS/browser changes)
 - When implementing Enhanced Conversions to recover lost signal
 - When setting up Google Merchant Center for the first time
+- When migrating from Standard Shopping to Performance Max campaigns
 - When diagnosing why Smart Bidding is not spending the budget efficiently
-- When needing server-side tagging via Google Tag Manager (sGTM)
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Google Ads account, Google Merchant Center account for Shopping ads, Google tag/pixel setup
 
 ## Core Instructions
 
-### 1. Set up Google Merchant Center (GMC) feed
+### Step 1: Connect your store to Google
 
-Register and verify your domain in Google Merchant Center, then generate a product feed. Google Ads Shopping and PMax both pull from GMC.
+Every platform has a native Google integration — start here before touching the Google Ads interface.
 
-> **Note:** For complete Google Shopping feed generation and optimization, see @google-shopping-feed. This skill focuses on campaign structure and bidding.
+---
 
-Custom labels (`custom_label_0` through `custom_label_4`) are essential for campaign segmentation by margin, bestseller status, and seasonality. When building the feed, populate these labels in your feed generator (see @google-shopping-feed) so you can target high-margin and new-arrival products with differentiated ROAS targets.
+#### Shopify
 
-### 2. Install Google Tag (gtag.js) and configure conversion actions
+1. Go to **Shopify Admin → Sales Channels → Google** and install the Google & YouTube channel app
+2. Connect your Google Ads account and Google Merchant Center account
+3. Shopify automatically creates the Google product feed and syncs inventory in real time
+4. Go to **Google & YouTube → Overview → Conversion Tracking** and verify the purchase conversion tag is connected
+5. This channel handles the Google Tag installation, product feed, and basic conversion tracking automatically — no manual tag setup required for most stores
 
-Load the Google Tag on every page, then fire a purchase conversion on the order confirmation page:
+**For Enhanced Conversions (recovers signal lost to cookie restrictions):**
+1. In your Google Ads account, go to **Goals → Conversions → Settings → Enhanced Conversions**
+2. Enable Enhanced Conversions for Web
+3. In Shopify, the Google channel app sends hashed customer email alongside purchase events automatically
+
+---
+
+#### WooCommerce
+
+1. Install the **Google Listings & Ads** plugin (free, official Google plugin) from the WordPress plugin directory
+2. Go to **WooCommerce → Google Listings & Ads** and connect your Google account
+3. The plugin automatically creates a product feed for Google Merchant Center and installs conversion tracking
+4. For Enhanced Conversions: install **Google Tag Manager** plugin and configure EC through GTM (see Custom/Headless section for GTM setup)
+
+**Alternative**: install **WooCommerce Google Analytics** plugin and manually add the purchase conversion event tag.
+
+---
+
+#### BigCommerce
+
+1. Go to **BigCommerce Admin → Channel Manager → Google Shopping**
+2. Connect your Google Merchant Center account — BigCommerce automatically generates the product feed
+3. For conversion tracking: go to **BigCommerce → Advanced Settings → Google Analytics** and add your Google Tag (gtag.js) ID
+4. Or install the **Google Tag Manager** app from the BigCommerce App Marketplace and configure conversion tracking in GTM
+
+---
+
+#### Custom / Headless
+
+Add Google Tag (gtag.js) to every page and fire the purchase conversion on the confirmation page:
 
 ```html
 <!-- In <head> — replace AW-CONVERSION_ID with your account ID -->
@@ -62,190 +85,117 @@ Load the Google Tag on every page, then fire a purchase conversion on the order 
 </script>
 ```
 
-Fire the purchase conversion event on the confirmation page:
-
+On the order confirmation page, fire the purchase conversion:
 ```javascript
-gtag('event', 'conversion', {
-  send_to:        'AW-CONVERSION_ID/CONVERSION_LABEL',
-  value:          order.subtotal,
-  currency:       order.currencyCode,
-  transaction_id: order.id,           // deduplication key
-  new_customer:   order.isFirstOrder, // for new customer bid boost
-});
-```
-
-### 3. Implement Enhanced Conversions
-
-Enhanced Conversions sends hashed first-party data (email, phone, address) alongside conversion events so Google can match to signed-in users — recovering signal lost to cookie deletion and cross-device journeys.
-
-```javascript
-// On the order confirmation page, set user_data before the conversion fires
+// Include user_data BEFORE the conversion event for Enhanced Conversions
 gtag('set', 'user_data', {
-  email:      order.customerEmail,      // Google hashes it client-side
-  phone:      order.customerPhone,
+  email: order.customerEmail,      // Google hashes client-side
+  phone: order.customerPhone,
   address: {
     first_name: order.customerFirstName,
-    last_name:  order.customerLastName,
-    street:     order.shippingAddress.line1,
-    city:       order.shippingAddress.city,
-    region:     order.shippingAddress.state,
-    postal_code:order.shippingAddress.zip,
-    country:    order.shippingAddress.countryCode,
+    last_name: order.customerLastName,
+    postal_code: order.shippingAddress.zip,
+    country: order.shippingAddress.countryCode,
   },
 });
 
 gtag('event', 'conversion', {
-  send_to:        'AW-CONVERSION_ID/CONVERSION_LABEL',
-  value:          order.subtotal,
-  currency:       order.currencyCode,
-  transaction_id: order.id,
+  send_to: 'AW-CONVERSION_ID/CONVERSION_LABEL',
+  value: order.subtotal,
+  currency: order.currencyCode,
+  transaction_id: order.id,       // prevents duplicate counting
+  new_customer: order.isFirstOrder,
 });
 ```
 
-### 4. Server-side tagging with Google Tag Manager (sGTM)
+For maximum signal reliability, deploy a server-side Google Tag Manager container — this bypasses browser ITP/cookie restrictions. Contact Google or a certified GTM partner to deploy sGTM.
 
-For maximum signal reliability, deploy a server-side GTM container. This bypasses browser ITP/cookie restrictions and lets you enrich events before forwarding to Google.
+### Step 2: Set up Google Merchant Center
 
-```typescript
-// Your origin server sends events to the sGTM container URL
-async function sendToSgtm(eventName: string, payload: object) {
-  await fetch(`${process.env.SGTM_CONTAINER_URL}/data`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      event_name: eventName,
-      ...payload,
-    }),
-  });
-}
+1. Create a Merchant Center account at merchants.google.com
+2. Verify and claim your domain under **Business Information → Website**
+3. If using Shopify or WooCommerce with the official plugins, the product feed is already connected — go to **Products → Feeds** to verify the sync is active
+4. For custom/headless stores, see @google-shopping-feed for feed generation
+5. Check **Products → Diagnostics** for disapproved products and fix issues before launching campaigns
 
-// Called from order webhook
-async function trackGooglePurchase(order: Order) {
-  await sendToSgtm('purchase', {
-    transaction_id: order.id,
-    value:          order.subtotal,
-    currency:       order.currencyCode,
-    items:          order.lineItems.map(i => ({
-      item_id:    i.sku,
-      item_name:  i.name,
-      price:      i.price,
-      quantity:   i.quantity,
-    })),
-    // Enhanced Conversions fields
-    email:      order.customerEmail,
-    phone:      order.customerPhone,
-  });
-}
-```
+### Step 3: Create a Performance Max campaign
 
-### 5. Performance Max campaign structure
+In Google Ads (ads.google.com):
 
-PMax replaces all ad formats (Shopping, Display, YouTube, Discovery, Search) with a single campaign. Configure asset groups by product category for better relevance:
+1. Go to **Campaigns → New Campaign → Sales**
+2. Select **Performance Max** as the campaign type
+3. Set budget: minimum $50/day to start; the algorithm needs data
+4. Set a conservative Target ROAS to start: if you need 4x ROAS, set 300% initially and increase after 2 weeks of data
+5. Create asset groups organized by product category:
 
 ```
-PMax Campaign: All Products — tROAS 400%
-  Asset Group 1: Bestsellers
-    - Final URL: /collections/bestsellers
-    - Headlines (15): focus on social proof, "Top Rated", "5-Star Reviews"
-    - Images: product lifestyle shots, white-background hero images
-    - Videos: 15s and 30s product demo
-    - Audience signals: past purchasers, product viewers (7d), similar audiences
+Asset Group 1: Bestsellers
+  Final URL: /collections/bestsellers
+  Headlines (15): focus on social proof — "Top Rated", "5-Star Reviews", "#1 Bestseller"
+  Images: product lifestyle shots + white-background product images (both required)
+  Videos: 15s and 30s product demos (upload at least one)
+  Audience signals: Past purchasers (upload customer list), Product viewers (7-day list)
 
-  Asset Group 2: New Arrivals
-    - Final URL: /collections/new
-    - Headlines: "Just Dropped", "New for [Season]", "Shop the Latest"
-    - Images: editorial/lifestyle imagery
-    - Audience signals: Instagram engagers, fashion/lifestyle interest segments
+Asset Group 2: New Arrivals
+  Final URL: /collections/new
+  Headlines: "Just Dropped", "New for [Season]", "Shop the Latest"
+  Audience signals: Instagram engagers, fashion/lifestyle interest segments
 
-  Asset Group 3: Sale / Clearance
-    - Final URL: /collections/sale
-    - Headlines: "Up to 50% Off", "Limited Time", "Final Sale"
-    - Audience signals: bargain hunters, cart abandonersers
+Asset Group 3: Sale / Clearance
+  Final URL: /collections/sale
+  Headlines: "Up to 50% Off", "Final Sale", "Limited Time"
 ```
 
-### 6. Standard Shopping campaign for bid control
+6. Under **Audience Signals**, upload your customer email list (from Klaviyo or Shopify) to create a seed audience for lookalike targeting
 
-Run a Standard Shopping campaign alongside PMax using campaign priority and negative keyword segmentation:
+### Step 4: Configure Smart Bidding correctly
 
-```
-Standard Shopping — Priority: High
-  Ad Group: High-Margin SKUs (custom_label_0 = high-margin)
-    Bid: $1.50 CPC manual or Target ROAS 600%
-  Ad Group: Core Catalog
-    Bid: $0.80 CPC
+Smart Bidding requires conversion data to optimize. Do not set ROAS targets until you have 30+ conversions in the last 30 days.
 
-PMax — Priority: Low (catches everything Standard Shopping doesn't bid on)
-  Target ROAS: 400%
-```
+**Ramping schedule:**
+- **Week 1**: Set to "Maximize Conversion Value" (no ROAS target) — let the algorithm learn
+- **Week 2**: Review actual ROAS. If it is above your target, set a ROAS target at 80% of actual
+- **Week 4+**: Gradually increase ROAS target by 10% every week until you find the efficiency-volume balance
 
-Add negative keywords to the Standard Shopping campaign to push brand queries to a separate Search campaign:
+**Conversion Value Rules** — set these to bias the algorithm toward new customers:
+1. In Google Ads, go to **Goals → Conversions → Conversion Value Rules**
+2. Add a rule: "New customer" → Multiply conversion value by 1.3
+3. This trains the algorithm to prefer acquiring new customers over retargeting existing ones
 
-```
-Negative keywords on Shopping: [brand name], [brand name review], [brand name promo code]
-```
+### Step 5: Monitor and optimize weekly
 
-### 7. Search campaigns for brand and non-brand
+| Metric | Action if off target |
+|--------|---------------------|
+| Impression Share lost to budget | Increase daily budget |
+| Impression Share lost to rank | Improve product feed quality (titles, images); increase ROAS ceiling |
+| PMax spending on branded queries | Add brand terms as campaign-level negative keywords |
+| Low conversion rate on Shopping | Check that landing page price matches feed price exactly; fix product page CRO |
 
-```
-Search Campaign: Brand
-  Ad Groups: Exact match [brand name], [brand name shop], [brand name discount]
-  Bidding: Target Impression Share 95%+, top of page
-
-Search Campaign: Category Keywords
-  Ad Groups: [product category] — phrase match, broad match modified
-  Smart Bidding: Target ROAS 300%
-  Negative keywords: jobs, careers, free, diy, homemade
-```
-
-### 8. Smart Bidding: tROAS and tCPA
-
-Configure target ROAS after accumulating at least 30–50 conversions in the last 30 days. Start higher than your actual goal and ramp down 10% per week:
-
-```
-Week 1: Set tROAS to 600% (conservative — may underspend)
-Week 2: Lower to 500% if under-delivering
-Week 4+: Settle at 400% once algorithm has learned
-```
-
-For tCPA on lead-based conversion actions (newsletter signups, account registrations):
-
-```javascript
-// Log micro-conversion events to train the algorithm
-gtag('event', 'conversion', {
-  send_to:  'AW-CONVERSION_ID/SIGNUP_LABEL',
-  value:    0,  // no value for signups
-  currency: 'USD',
-});
-```
+In Google Ads: **Reports → Predefined Reports → Shopping → Shopping performance by product** — identifies which specific products have the highest ROAS and which are wasting budget.
 
 ## Best Practices
 
-- **Use transaction_id on every purchase conversion** — prevents duplicate conversion counting from page refreshes or affiliate click overlap
-- **Enable Enhanced Conversions before launching Smart Bidding** — the algorithm needs quality signal to optimize; missing data causes erratic spend
-- **Segment campaigns by custom labels** — high-margin products deserve higher ROAS targets; margin-blind bidding wastes budget on low-profit items
-- **Exclude branded queries from PMax** — add brand terms as negative keywords at the campaign level or use a separate brand campaign
-- **Feed quality is the #1 Shopping ranking factor** — ensure titles include color, size, and brand; missing GTINs hurt impression share
-- **Use audience signals in PMax, not restrictions** — signals inform the algorithm without limiting reach; restrictions cut volume dramatically
-- **Run Search Impression Share report weekly** — lost IS due to budget means increase budget; lost IS due to rank means improve quality score
-- **Set up Conversion Value Rules** — boost the value of new customer conversions by 20–50% to train the algorithm to prefer acquiring new buyers
-- **Pause PMax and test Standard Shopping for 4 weeks** — if ROAS drops, reactivate PMax; if it holds or improves, you may have more bid control with Standard Shopping
+- **Use transaction_id on every purchase conversion** — prevents duplicate conversion counting from page refreshes
+- **Enable Enhanced Conversions before launching Smart Bidding** — the algorithm needs quality signal; missing data causes erratic spend
+- **Check feed quality in Merchant Center Diagnostics weekly** — feed quality is the #1 Shopping ranking factor; missing GTINs and poor titles hurt impression share
+- **Exclude branded queries from PMax** — add brand terms as negative keywords at the campaign level so you are not paying for branded searches that would convert anyway
+- **Provide all available product images** — products with 3+ images get higher quality scores and better ad placement
+- **Set campaign budgets at 3–5x your target CPA initially** — underfunded campaigns prevent the algorithm from accumulating the data it needs to optimize
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Double-counting conversions | Add `transaction_id` to the conversion tag; check Conversions column in reports for duplicates |
-| PMax spending all budget on branded queries | Add brand terms as campaign-level negatives or use a high-priority brand Search campaign |
-| GMC feed disapproved | Fix missing required attributes (GTIN, brand, availability); check Merchant Center diagnostics dashboard |
+| Double-counting conversions | Add `transaction_id` to the conversion tag and enable "Deduplicate conversions" in Google Ads conversion settings |
+| PMax spending all budget on branded queries | Add brand terms as campaign-level negatives or run a separate branded Search campaign at higher priority |
+| GMC feed disapproved | Check Merchant Center Diagnostics; most common: missing GTIN, price mismatch with website, broken image links |
 | Smart Bidding enters "limited" status | Ensure 30+ conversions in the last 30 days; temporarily switch to Maximize Conversion Value to accumulate data |
-| High impression share but low conversions | Improve landing page relevance; check that destination URL matches the ad and product in the feed |
-| sGTM container returning 403 | Ensure the container is configured to accept first-party requests from your domain; check allowlist settings |
-| Enhanced Conversions match rate under 30% | Send email in lowercase trimmed format; also include phone and address for higher match probability |
+| Enhanced Conversions match rate under 30% | Send email in lowercase trimmed format; include phone and address for higher match probability |
 
 ## Related Skills
 
-- @meta-ads-integration
 - @google-shopping-feed
+- @meta-ads-integration
 - @marketing-attribution-dashboard
 - @ecommerce-seo
 - @conversion-rate-optimization

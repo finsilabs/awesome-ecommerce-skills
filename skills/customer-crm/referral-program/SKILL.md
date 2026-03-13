@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [referral, refer-a-friend, viral, word-of-mouth, reward, fraud-prevention, acquisition, unique-links]
 triggers: ["referral program", "refer a friend", "referral tracking", "word of mouth program", "referral rewards", "referral fraud prevention", "referral link"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,277 +16,248 @@ difficulty: intermediate
 
 ## Overview
 
-A referral program turns your existing customers into an acquisition channel by rewarding them for introducing new customers. This skill covers generating unique referral links per customer, managing a double-sided reward (referrer and referee), implementing tiered rewards that escalate with the number of successful referrals, and detecting self-referral and multi-account fraud patterns.
+A referral program turns your existing customers into an acquisition channel by rewarding them for introducing new customers. Referral apps like ReferralCandy and Referral Hero handle unique link generation, double-sided rewards (referrer and referee), fraud detection, and post-purchase email triggers without custom code. Only build a custom referral system if your tiering logic, CRM integration, or fraud rules exceed what these tools support.
 
 ## When to Use This Skill
 
-- When building a "give $10, get $10" refer-a-friend program from scratch
-- When adding tiered rewards to an existing referral program to incentivize heavy referrers
+- When building a "give $10, get $10" refer-a-friend program
+- When adding tiered rewards that escalate with the number of successful referrals
 - When fraud from self-referrals or multiple accounts is draining referral reward budget
 - When measuring referral program CAC versus other acquisition channels
-- When implementing a waitlist with referral mechanics (move up the queue by referring friends)
-- When integrating referral tracking with post-purchase email flows
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
-**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
+- When integrating referral tracking with post-purchase email flows in Klaviyo
 
 ## Core Instructions
 
-1. **Generate unique referral codes and links**
+### Step 1: Determine platform and choose the right referral tool
 
-   ```typescript
-   import { randomBytes } from 'crypto';
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | ReferralCandy | Purpose-built for e-commerce; auto-generates referral links per customer, handles double-sided rewards, post-purchase email trigger, and fraud detection |
+| **Shopify** | Referral Hero | More flexible reward types (cash, gift cards, store credit, custom); deep Klaviyo integration for referral email flows |
+| **Shopify** | Smile.io | Combines loyalty points with referral mechanics in one app — best when you want both |
+| **WooCommerce** | ReferralCandy or Referral Hero | Both offer WooCommerce plugins; connect via REST API to track orders and issue rewards |
+| **BigCommerce** | ReferralCandy | Available on the BigCommerce App Marketplace |
+| **Custom / Headless** | Build referral tracking + reward logic | Required when platform integrations or fraud rules don't match your needs |
 
-   async function createReferralCode(customerId: string): Promise<string> {
-     // Check if customer already has a code
-     const existing = await db.referralCodes.findByCustomer(customerId);
-     if (existing) return existing.code;
+---
 
-     // Generate a short, human-friendly code
-     const customer = await db.customers.findById(customerId);
-     const prefix = customer.firstName.slice(0, 4).toUpperCase();
-     const suffix = randomBytes(3).toString('hex').toUpperCase();
-     const code = `${prefix}${suffix}`; // e.g., JANE3A9F
+### Step 2: Platform-specific setup
 
-     await db.referralCodes.create({
-       customerId,
-       code,
-       createdAt: new Date(),
-       totalReferrals: 0,
-       totalRewardsCents: 0,
-     });
+---
 
-     return code;
-   }
+#### Shopify
 
-   function buildReferralLink(code: string): string {
-     return `${process.env.STORE_URL}?ref=${code}`;
-   }
-   ```
+**Option A: ReferralCandy (recommended — full referral suite)**
 
-2. **Track referral visits and attribute signups**
+1. Install **ReferralCandy** from the Shopify App Store
+2. Connect your Shopify store — ReferralCandy automatically imports existing customers
+3. Configure your reward structure:
+   - Go to **ReferralCandy → Rewards → Set Rewards**
+   - Choose reward type for referrer: cash via PayPal, store discount, or custom gift
+   - Choose reward type for referee: discount code applied at checkout
+   - Example: Referrer gets $10 store credit; referee gets $10 off their first order
 
-   ```typescript
-   // Middleware: detect referral code from URL and store in cookie
-   export function referralTrackingMiddleware(req: Request, res: Response, next: NextFunction) {
-     const code = req.query.ref as string;
-     if (code && !req.cookies.ref_code) {
-       res.cookie('ref_code', code, {
-         maxAge: 30 * 86400 * 1000,  // 30-day attribution window
-         httpOnly: true,
-         secure: true,
-         sameSite: 'lax',
-       });
+4. Configure referral email timing:
+   - Go to **Post-Purchase Email → Settings**
+   - Set send delay to 1–3 days after purchase (customer is in the honeymoon phase)
+   - Customize the email template with your brand and the referral link
 
-       db.referralClicks.create({
-         code,
-         ip: req.ip,
-         userAgent: req.headers['user-agent'],
-         clickedAt: new Date(),
-       });
-     }
-     next();
-   }
+5. ReferralCandy automatically:
+   - Generates a unique referral link per customer
+   - Tracks clicks and attributions with a 30-day cookie window
+   - Detects self-referrals and blocks reward issuance
+   - Sends the referee a welcome email with their discount code when they sign up via the link
 
-   // On new account creation, check for referral cookie
-   async function onCustomerCreated(customerId: string, req: Request) {
-     const refCode = req.cookies.ref_code;
-     if (!refCode) return;
+6. View performance in **ReferralCandy → Analytics**:
+   - Referrals sent, clicks, signups, and purchases
+   - Revenue attributed to referrals
+   - Top referrers (for VIP outreach)
 
-     const referralCode = await db.referralCodes.findByCode(refCode);
-     if (!referralCode) return;
+**Option B: Referral Hero (Klaviyo-first)**
 
-     // Fraud check: prevent obvious self-referrals
-     if (referralCode.customerId === customerId) return;
+1. Install **Referral Hero** from the App Store
+2. Configure in **Referral Hero → Campaigns → Create Campaign**
+3. Referral Hero integrates with Klaviyo — when a referral converts, it triggers a Klaviyo flow for reward notification emails
+4. Reward types include store credit (issued via Shopify discount codes), cash (PayPal), or gift cards
 
-     await db.referrals.create({
-       referrerId: referralCode.customerId,
-       refereeId: customerId,
-       code: refCode,
-       status: 'pending',  // Reward after first purchase
-       createdAt: new Date(),
-     });
-   }
-   ```
+**Adding a referral entry point in post-purchase emails (Klaviyo):**
+1. In Klaviyo, go to the **Post-Purchase flow**
+2. Add an email at the 3-day step with the referral link
+3. ReferralCandy and Referral Hero both provide a Klaviyo integration that injects `{{ customer.referral_link }}` as a merge tag
 
-3. **Define reward tiers and grant rewards on first purchase**
+---
 
-   ```typescript
-   const REFERRAL_TIERS = [
-     { minReferrals: 0,  referrerRewardCents: 1000, refereeRewardCents: 1000 }, // $10/$10
-     { minReferrals: 5,  referrerRewardCents: 1500, refereeRewardCents: 1000 }, // $15/$10 after 5 referrals
-     { minReferrals: 10, referrerRewardCents: 2500, refereeRewardCents: 1500 }, // $25/$15 after 10 referrals
-   ];
+#### WooCommerce
 
-   function getReferralReward(successfulReferrals: number): typeof REFERRAL_TIERS[number] {
-     return [...REFERRAL_TIERS].reverse().find((t) => successfulReferrals >= t.minReferrals)!;
-   }
+**ReferralCandy for WooCommerce:**
 
-   // Triggered when the referee places their first order
-   async function onRefereeFirstPurchase(refereeId: string, orderId: string) {
-     const referral = await db.referrals.findPendingByReferee(refereeId);
-     if (!referral) return;
+1. Install the **ReferralCandy** plugin from WordPress.org or the ReferralCandy integrations page
+2. Connect your WooCommerce store with your ReferralCandy API credentials
+3. ReferralCandy tracks WooCommerce orders and attributes purchases to referrers automatically
+4. Configure rewards and email timing in the ReferralCandy dashboard (same as Shopify above)
 
-     // Verify minimum order value to prevent low-value gaming
-     const order = await db.orders.findById(orderId);
-     if (order.subtotalCents < 2500) return; // Minimum $25 order
+**Referral Hero for WooCommerce:**
+1. Install the **Referral Hero** WooCommerce plugin
+2. Configure a campaign and set reward type to WooCommerce coupon code
+3. Referral Hero issues a unique coupon code to each referee upon signup and notifies the referrer when they convert
 
-     const referrerStats = await db.referralCodes.findByCustomer(referral.referrerId);
-     const tier = getReferralReward(referrerStats.totalReferrals);
+**Manual referral program with AutomateWoo:**
+- If you prefer full control, use **AutomateWoo** to trigger referral emails and issue discount codes
+- AutomateWoo has a built-in Referral workflow template under **AutomateWoo → Workflows → Referrals**
 
-     // Issue store credit to both parties
-     await Promise.all([
-       issueStoreCredit(referral.referrerId, tier.referrerRewardCents, `Referral reward — ${refereeId} made their first purchase`),
-       issueStoreCredit(refereeId, tier.refereeRewardCents, 'Welcome reward — referred by a friend'),
-     ]);
+---
 
-     await db.referrals.update(referral.id, { status: 'rewarded', rewardedAt: new Date(), orderId });
-     await db.referralCodes.increment(referral.referrerId, 'totalReferrals', 1);
-     await db.referralCodes.increment(referral.referrerId, 'totalRewardsCents', tier.referrerRewardCents);
+#### BigCommerce
 
-     // Notify referrer
-     await sendReferralRewardEmail(referral.referrerId, tier.referrerRewardCents, refereeId);
-   }
-   ```
+**ReferralCandy for BigCommerce:**
 
-4. **Detect and prevent fraud**
+1. Go to **Apps → Search "ReferralCandy"** and install
+2. Configuration is the same as the Shopify version
+3. ReferralCandy tracks BigCommerce orders and issues BigCommerce discount codes as rewards
 
-   ```typescript
-   interface FraudSignal { signal: string; block: boolean }
+---
 
-   async function checkReferralFraud(referrerId: string, refereeId: string, refereeEmail: string): Promise<FraudSignal[]> {
-     const signals: FraudSignal[] = [];
-     const referee = await db.customers.findById(refereeId);
-     const referrer = await db.customers.findById(referrerId);
+#### Custom / Headless
 
-     // Same email domain as referrer (likely same household or self-referral)
-     const referrerDomain = referrer.email.split('@')[1];
-     const refereeDomain = refereeEmail.split('@')[1];
-     if (referrerDomain === refereeDomain && !['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'].includes(referrerDomain)) {
-       signals.push({ signal: 'same_corporate_email_domain', block: false });
-     }
-
-     // Same shipping address as referrer
-     if (referee.defaultShippingAddress && referrer.defaultShippingAddress) {
-       if (referee.defaultShippingAddress.hash === referrer.defaultShippingAddress.hash) {
-         signals.push({ signal: 'same_shipping_address', block: true });
-       }
-     }
-
-     // Referrer has multiple referrals from the same IP range
-     const refereeIp = referee.lastSignInIp ?? (await db.referralClicks.findRecentByReferee(refereeId))?.ip ?? '';
-     const ipRange = refereeIp.split('.').slice(0, 3).join('.');
-     const ipReferrals = await db.referrals.countByIpRange(referrerId, ipRange, subDays(new Date(), 30));
-     if (ipReferrals > 3) {
-       signals.push({ signal: 'ip_cluster', block: false });
-     }
-
-     // Referee account was created within 5 minutes of click
-     const click = await db.referralClicks.findRecent(referrerId);
-     if (click && differenceInMinutes(referee.createdAt, click.clickedAt) < 5) {
-       signals.push({ signal: 'immediate_signup_after_click', block: false });
-     }
-
-     return signals;
-   }
-   ```
-
-5. **Build the referral dashboard for customers**
-
-   ```typescript
-   // GET /api/referral/dashboard
-   export async function getReferralDashboard(req: Request, res: Response) {
-     const customerId = req.session.customerId!;
-     const [code, referrals, credit] = await Promise.all([
-       db.referralCodes.findOrCreateByCustomer(customerId),
-       db.referrals.findByReferrer(customerId, { orderBy: { createdAt: 'desc' } }),
-       db.storeCredits.getBalance(customerId),
-     ]);
-
-     const successful = referrals.filter((r) => r.status === 'rewarded');
-     const currentTier = getReferralReward(successful.length);
-     const nextTier = REFERRAL_TIERS.find((t) => t.minReferrals > successful.length);
-
-     res.json({
-       referralLink: buildReferralLink(code.code),
-       referralCode: code.code,
-       totalReferrals: successful.length,
-       totalEarned: code.totalRewardsCents / 100,
-       availableCredit: credit / 100,
-       currentReward: currentTier.referrerRewardCents / 100,
-       nextTierAt: nextTier?.minReferrals,
-       nextTierReward: nextTier ? nextTier.referrerRewardCents / 100 : null,
-       referrals: referrals.slice(0, 10),
-     });
-   }
-   ```
-
-## Examples
-
-### Store credit issuance function
+For headless storefronts, build referral tracking with tiered rewards and fraud detection:
 
 ```typescript
-async function issueStoreCredit(customerId: string, amountCents: number, reason: string) {
-  await db.storeCredits.create({
-    customerId,
-    amountCents,
-    reason,
-    expiresAt: new Date(Date.now() + 365 * 86400000), // 1 year expiry
-    createdAt: new Date(),
-  });
+// lib/referrals.ts
+import { randomBytes } from 'crypto';
 
-  const customer = await db.customers.findById(customerId);
-  await sendTransactionalEmail(customer.email, 'store-credit-issued', {
-    amount: amountCents / 100,
-    reason,
-    expiresAt: new Date(Date.now() + 365 * 86400000).toDateString(),
-  });
+// Generate a unique, human-friendly referral code per customer
+export async function getOrCreateReferralCode(customerId: string): Promise<string> {
+  const existing = await db.referralCodes.findFirst({ where: { customerId } });
+  if (existing) return existing.code;
+
+  const customer = await db.customers.findUnique({ where: { id: customerId } });
+  const prefix = (customer!.firstName ?? 'USER').slice(0, 4).toUpperCase();
+  const suffix = randomBytes(3).toString('hex').toUpperCase();
+  const code = `${prefix}${suffix}`; // e.g., JANE3A9F
+
+  await db.referralCodes.create({ data: { customerId, code } });
+  return code;
+}
+
+// Middleware: capture referral code from ?ref= URL param into a 30-day cookie
+export function referralTrackingMiddleware(req: Request, res: Response, next: NextFunction) {
+  const code = req.query.ref as string;
+  if (code && !req.cookies.ref_code) {
+    res.cookie('ref_code', code, { maxAge: 30 * 86400000, httpOnly: true, secure: true, sameSite: 'lax' });
+  }
+  next();
+}
+
+// Tiered rewards: reward amount increases as referrer accumulates successful referrals
+const REFERRAL_TIERS = [
+  { minReferrals: 0,  referrerRewardCents: 1000, refereeRewardCents: 1000 }, // $10/$10
+  { minReferrals: 5,  referrerRewardCents: 1500, refereeRewardCents: 1000 }, // $15/$10 after 5
+  { minReferrals: 10, referrerRewardCents: 2500, refereeRewardCents: 1500 }, // $25/$15 after 10
+];
+
+function getReferralReward(successfulReferrals: number) {
+  return [...REFERRAL_TIERS].reverse().find(t => successfulReferrals >= t.minReferrals)!;
+}
+
+// On new account creation: attribute referral, run fraud checks
+export async function onCustomerCreated(customerId: string, refCode: string | undefined) {
+  if (!refCode) return;
+
+  const referralCode = await db.referralCodes.findFirst({ where: { code: refCode } });
+  if (!referralCode || referralCode.customerId === customerId) return; // block self-referral
+
+  // Fraud check: same shipping address as referrer
+  const [referee, referrer] = await Promise.all([
+    db.customers.findUnique({ where: { id: customerId }, include: { addresses: true } }),
+    db.customers.findUnique({ where: { id: referralCode.customerId }, include: { addresses: true } }),
+  ]);
+
+  const refereeAddr = referee?.addresses[0]?.addressHash;
+  const referrerAddr = referrer?.addresses[0]?.addressHash;
+  if (refereeAddr && refereeAddr === referrerAddr) return; // same address = block
+
+  await db.referrals.create({ data: { referrerId: referralCode.customerId, refereeId: customerId, code: refCode, status: 'pending' } });
+}
+
+// On referee's first purchase: issue rewards to both parties
+export async function onRefereeFirstPurchase(refereeId: string, orderId: string) {
+  const referral = await db.referrals.findFirst({ where: { refereeId, status: 'pending' } });
+  if (!referral) return;
+
+  const order = await db.orders.findUnique({ where: { id: orderId } });
+  if (!order || order.subtotalCents < 2500) return; // require minimum $25 order
+
+  const referrerStats = await db.referralCodes.findFirst({ where: { customerId: referral.referrerId } });
+  const tier = getReferralReward(referrerStats?.totalReferrals ?? 0);
+
+  await Promise.all([
+    issueStoreCredit(referral.referrerId, tier.referrerRewardCents, `Referral reward`),
+    issueStoreCredit(refereeId, tier.refereeRewardCents, 'Welcome reward — referred by a friend'),
+  ]);
+
+  await db.referrals.update({ where: { id: referral.id }, data: { status: 'rewarded', orderId } });
+  await db.referralCodes.update({ where: { customerId: referral.referrerId }, data: { totalReferrals: { increment: 1 } } });
 }
 ```
 
-### Referral program analytics query
+**Referral program analytics SQL:**
 
 ```sql
--- Referral program performance by month
+-- Monthly referral program performance
 SELECT
   DATE_TRUNC('month', r.created_at) AS month,
   COUNT(*) AS total_referrals,
   COUNT(CASE WHEN r.status = 'rewarded' THEN 1 END) AS successful_referrals,
   ROUND(100.0 * COUNT(CASE WHEN r.status = 'rewarded' THEN 1 END) / NULLIF(COUNT(*), 0), 1) AS conversion_rate_pct,
-  SUM(CASE WHEN r.status = 'rewarded' THEN rc.total_rewards_cents END) / 100.0 AS rewards_paid_out,
-  AVG(o.subtotal_cents) / 100.0 AS avg_referred_order_value
+  SUM(CASE WHEN r.status = 'rewarded' THEN rc.total_rewards_cents END) / 100.0 AS rewards_paid_usd
 FROM referrals r
 JOIN referral_codes rc ON r.referrer_id = rc.customer_id
-LEFT JOIN orders o ON r.order_id = o.id
 GROUP BY 1
 ORDER BY 1 DESC;
 ```
 
+---
+
+### Step 3: Promote the referral program
+
+The referral link needs to be visible — customers won't find it if it's buried:
+
+1. **Post-purchase confirmation page** — add a referral CTA to the order confirmation page: "Love your order? Share with a friend and you both get $10"
+2. **Post-purchase email** — include the referral link in the 3-day post-purchase email (ReferralCandy and Klaviyo both support this automatically)
+3. **Customer account page** — add a "Refer a Friend" section showing their link and referral history
+4. **Transactional emails** — include a subtle referral CTA in shipping confirmation emails
+
+---
+
+### Step 4: Measure referral program ROI
+
+| Metric | How to Measure |
+|--------|---------------|
+| Referral conversion rate | Successful referrals / total referral clicks |
+| Referral CAC | Total rewards paid / successful referrals |
+| Revenue attributed to referrals | Tag referred orders and compare total revenue |
+| Referred customer CLV vs. non-referred | Cohort comparison at 90 days and 12 months |
+
+Compare referral CAC against your paid acquisition channels. Referral programs typically produce 20–30% lower CAC than paid channels when optimized.
+
 ## Best Practices
 
-- **Require a minimum first-order value** to qualify for the referral reward — this prevents reward farming with $1 orders
-- **Apply a 30-day attribution window** for the referral cookie — shorter windows miss customers who take time to convert; longer windows create false attribution
-- **Use store credit, not discount codes** for rewards — store credit is more valuable (customer must return to spend it) and creates a second purchase occasion
-- **Send a referral reward email immediately** when the referee purchases — the referrer often doesn't know the reward was granted; this email also prompts further referrals
-- **Rate-limit referral link clicks** per IP — more than 10 clicks from the same IP in 24 hours likely indicates link sharing on deal sites, not genuine referrals
+- **Use ReferralCandy before building from scratch** — it handles link generation, attribution, fraud detection, and reward issuance in minutes
+- **Require a minimum first-order value** to qualify for the reward — prevents reward farming with $1 test orders
+- **Use store credit, not one-time discount codes** — store credit requires the customer to return and creates a second purchase occasion
+- **Apply a 30-day attribution window** — shorter windows miss customers who take time to convert
+- **Send a reward notification email immediately** when the referee purchases — the referrer often doesn't know the reward was granted; this also prompts further referrals
 - **Block referrals to the same shipping address** — this is the clearest fraud signal for household self-referrals
-- **Track referral CAC vs. other channels** — compare (reward cost + promotional credit) / successful referrals to your paid CAC to justify the program budget
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Self-referral fraud via multiple email accounts | Hash-compare shipping address between referrer and referee; flag same-address referrals for manual review |
-| Referral cookie overwritten by later ad click | Store the first referral click separately; last-click attribution would erase the referral attribution |
-| Store credit issued before 30-day return window | Delay reward issuance by 30 days after the referee's first order to account for returns |
-| Referral link shared on coupon forums, attracting low-quality customers | Analyze CLV of referred customers vs. other channels; apply a higher minimum order if referred-cohort quality is poor |
-| Referral dashboard not updating after a successful referral | Bust the dashboard cache after `db.referrals.update` is called; React query cache should be invalidated on status change |
+| Self-referral fraud via multiple email accounts | Block same shipping address referrals (strongest signal); ReferralCandy detects this automatically |
+| Referral link shared on coupon forums | Monitor referred cohort CLV; if it's significantly lower than organic, apply a higher minimum order value |
+| Store credit issued before 30-day return window | Delay reward issuance by 30 days after the referee's order to account for returns |
+| Referral cookie overwritten by later ad click | Store the first referral click separately; ReferralCandy uses first-click attribution for referrals |
+| Low referral email open rates | Move the referral ask from the receipt email to a dedicated 3-day post-purchase email when customer satisfaction is highest |
 
 ## Related Skills
 
@@ -294,4 +265,3 @@ ORDER BY 1 DESC;
 - @customer-lifetime-value
 - @customer-segmentation
 - @email-marketing-automation
-- @customer-support-integration

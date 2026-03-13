@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [pos, point-of-sale, omnichannel, inventory-sync, square, shopify-pos]
 triggers: ["integrate POS", "connect point of sale", "unified inventory"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,416 +16,245 @@ difficulty: advanced
 
 ## Overview
 
-Point-of-sale integration connects your physical retail operations with your online store, enabling unified inventory visibility, centralized order management, and consistent customer profiles across channels. When a customer buys in-store, the online store must reflect the updated inventory immediately; when they return an online order in-store, the refund must flow back to the payment gateway. This skill covers integrating Square and Shopify POS systems with a headless commerce backend, synchronizing inventory in real time, and handling cross-channel returns.
+Point-of-sale integration connects your physical retail operations with your online store, enabling unified inventory visibility, centralized order management, and consistent customer profiles across channels. When a customer buys in-store, the online store must reflect the updated inventory immediately; when they return an online order in-store, the refund must flow back to the payment gateway. This skill covers connecting Square and Shopify POS to your commerce platform, synchronizing inventory in real time, and handling cross-channel returns.
 
 ## When to Use This Skill
 
 - When opening a physical retail location alongside an existing online store
 - When inventory discrepancies between in-store and online are causing oversells
 - When customers expect to return online purchases in-store (omnichannel returns)
-- When building a custom kiosk or tablet-based POS application
 - When franchised or multi-location retail needs unified inventory and reporting
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify supports webhooks, the Admin API, and app extensions for integrations. Use Shopify Flow or custom apps to connect third-party services.
-**WooCommerce**: Use WooCommerce REST API and WordPress hooks for integrations. Connect via plugins or custom PHP code.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: API credentials for both your store and the external service
+- When building a custom kiosk or tablet-based POS application
 
 ## Core Instructions
 
-1. **Set up Square POS API integration**
+### Step 1: Determine your platform and POS integration path
 
-   Square provides a REST API for catalog, inventory, and payment management:
+| Platform | Easiest POS Integration | What Gets Unified |
+|----------|------------------------|------------------|
+| **Shopify** | **Shopify POS** (built-in, $89/month for Pro) — designed to work with Shopify's online store natively | Inventory syncs instantly between POS and online store; orders appear in unified admin; customer profiles and loyalty points unified |
+| **WooCommerce** | **Square** + WooCommerce Square plugin (free) | Inventory syncs bidirectionally; Square POS sales update WooCommerce stock; orders can be imported into WooCommerce |
+| **BigCommerce** | **Square** + BigCommerce Square integration | Same as WooCommerce but configured in BigCommerce's channel settings; BigCommerce also supports Stripe Terminal directly |
+| **Custom / Headless** | **Square API** or **Stripe Terminal** | Full control — sync inventory via webhooks, import POS orders via API, build unified order dashboard |
 
-   ```typescript
-   // lib/pos/square-client.ts
-   import {Client, Environment} from 'square';
+### Step 2: Platform-specific POS setup
 
-   export const squareClient = new Client({
-     accessToken: process.env.SQUARE_ACCESS_TOKEN!,
-     environment: process.env.NODE_ENV === 'production'
-       ? Environment.Production
-       : Environment.Sandbox,
-   });
+---
 
-   export const {
-     catalogApi,
-     inventoryApi,
-     ordersApi,
-     paymentsApi,
-     customersApi,
-     locationsApi,
-   } = squareClient;
+#### Shopify + Shopify POS
 
-   // Get all locations (stores)
-   export async function getLocations() {
-     const {result} = await locationsApi.listLocations();
-     return result.locations ?? [];
-   }
-   ```
+Shopify POS is the most seamless option for Shopify stores since inventory is managed in a single system:
 
-2. **Sync product catalog from your PIM/commerce platform to Square**
+1. **Subscribe to Shopify POS Pro** ($89/month or included in Shopify Plus):
+   - Go to **Point of Sale → Devices** in your Shopify admin
+   - Install the Shopify POS app on your iPad or iPhone
+   - Connect a card reader (Shopify provides its own Tap & Chip reader)
 
-   Square uses a catalog with CatalogItems, CatalogItemVariations, and CatalogInventory:
+2. **Set up locations for each store:**
+   - Go to **Settings → Locations** and click **Add location** for each physical store
+   - Assign inventory quantities per location — Shopify tracks stock at each location separately
 
-   ```typescript
-   // lib/pos/catalog-sync.ts
-   import {catalogApi} from './square-client';
-   import type {CatalogObject} from 'square';
+3. **Inventory automatically stays in sync:**
+   - A sale in the POS app immediately decrements inventory for that location
+   - The online store can be configured to sell from multiple locations (go to **Settings → Shipping and delivery → Local pickup** to configure)
 
-   export async function syncProductToSquare(product: Product) {
-     // Build a batch of catalog objects: item + variations
-     const catalogObjects: CatalogObject[] = [
-       {
-         type: 'ITEM',
-         id: `#item_${product.sku}`, // # prefix indicates a new object (Square assigns real IDs)
-         itemData: {
-           name: product.name,
-           description: product.description?.substring(0, 500), // Square limit: 500 chars
-           variations: product.variants.map(variant => ({
-             type: 'ITEM_VARIATION' as const,
-             id: `#var_${variant.sku}`,
-             itemVariationData: {
-               itemId: `#item_${product.sku}`,
-               name: variant.name,
-               sku: variant.sku,
-               pricingType: 'FIXED_PRICING',
-               priceMoney: {
-                 amount: BigInt(Math.round(variant.price * 100)),
-                 currency: 'USD',
-               },
-               trackInventory: true,
-             },
-           })),
-           productType: 'REGULAR',
-           labelColor: 'E9E9E9',
-         },
-       },
-     ];
+4. **Configure click-and-collect (Buy Online, Pick Up In Store):**
+   - Go to **Settings → Shipping and delivery → Local pickup** and enable it for each location
+   - Customers select their pickup location at checkout; the order appears in that store's POS app under **Pickups**
 
-     const {result} = await catalogApi.batchUpsertCatalogObjects({
-       idempotencyKey: `sync_${product.sku}_${Date.now()}`,
-       batches: [{objects: catalogObjects}],
-     });
+---
 
-     // Map Square-assigned IDs back to your products
-     const idMapping = result.idMappings ?? [];
-     for (const mapping of idMapping) {
-       if (mapping.clientObjectId?.startsWith('#var_')) {
-         const sku = mapping.clientObjectId.replace('#var_', '');
-         await db.variants.update(sku, {squareCatalogVariationId: mapping.objectId});
-       }
-     }
+#### WooCommerce + Square
 
-     return result;
-   }
-   ```
+**Connect Square to WooCommerce:**
 
-3. **Subscribe to Square inventory webhooks**
+1. Install the **WooCommerce Square** plugin (free, developed by Square) from wordpress.org
+2. Go to **WooCommerce → Settings → Integrations → Square** and click **Connect with Square**
+3. Log in to your Square account and select your Square business location
+4. In the Square plugin settings, enable **Sync inventory** (bidirectional)
+5. Run the initial sync: go to **WooCommerce → System Status → Tools → Sync Products with Square**
 
-   When a sale occurs in-store, Square fires an `inventory.count.updated` event:
+**How inventory sync works:**
 
-   ```typescript
-   // app/api/webhooks/square/route.ts
-   import {createHmac} from 'node:crypto';
-   import {NextRequest, NextResponse} from 'next/server';
+- When you sell a product in your Square POS, WooCommerce stock decrements automatically (within minutes via webhook)
+- When WooCommerce receives an online order, Square stock decrements
+- Go to **WooCommerce → Square → Sync Log** to see sync history and troubleshoot discrepancies
 
-   export async function POST(req: NextRequest) {
-     const rawBody = Buffer.from(await req.arrayBuffer());
-     const signature = req.headers.get('x-square-hmacsha256-signature') ?? '';
-     const notificationUrl = `${process.env.APP_URL}/api/webhooks/square`;
+**Handle in-store returns of online orders:**
 
-     // Verify signature
-     const expected = createHmac('sha256', process.env.SQUARE_WEBHOOK_SECRET!)
-       .update(notificationUrl + rawBody.toString('utf8'))
-       .digest('base64');
+- Returns initiated in WooCommerce admin automatically sync to Square if the original payment used Square
+- For Stripe-paid online orders returned in-store: process the refund in Square and reconcile in WooCommerce manually, or build a custom refund endpoint (see Custom section below)
 
-     if (signature !== expected) {
-       return NextResponse.json({error: 'Invalid signature'}, {status: 401});
-     }
+---
 
-     const event = JSON.parse(rawBody.toString('utf8'));
+#### BigCommerce + Square
 
-     switch (event.type) {
-       case 'inventory.count.updated':
-         await handleInventoryUpdate(event.data.object);
-         break;
-       case 'payment.completed':
-         await handleSquarePayment(event.data.object);
-         break;
-       case 'refund.created':
-         await handleSquareRefund(event.data.object);
-         break;
-       case 'catalog.version.updated':
-         await syncCatalogFromSquare();
-         break;
-     }
+1. Go to **Channel Manager** in your BigCommerce admin and click **+ Create New Channel**
+2. Select **Square** from the channel list
+3. Authorize BigCommerce to connect to your Square account
+4. Configure inventory sync settings — BigCommerce and Square will sync stock levels bidirectionally
+5. Square POS orders can be imported into BigCommerce for unified reporting
 
-     return NextResponse.json({accepted: true});
-   }
+---
 
-   async function handleInventoryUpdate(inventoryEvent: any) {
-     const counts = inventoryEvent.inventory_counts ?? [];
+#### Custom / Headless + Square API
 
-     for (const count of counts) {
-       const {catalog_object_id: variationId, quantity, location_id: locationId} = count;
-
-       // Find the SKU mapped to this Square variation ID
-       const variant = await db.variants.findBySquareCatalogId(variationId);
-       if (!variant) continue;
-
-       // Update total inventory across all channels
-       await db.inventory.updateLocationQuantity(variant.sku, locationId, parseInt(quantity));
-
-       // Recalculate total available quantity (all locations)
-       const total = await db.inventory.getTotalAvailable(variant.sku);
-
-       // Sync the new total to your online store
-       await syncInventoryAcrossChannels({sku: variant.sku, quantity: total, source: 'pos'});
-     }
-   }
-   ```
-
-4. **Pull Square inventory for initial stock reconciliation**
-
-   ```typescript
-   // lib/pos/inventory-sync.ts
-   export async function reconcileInventoryFromSquare() {
-     const locations = await getLocations();
-
-     for (const location of locations) {
-       const {result} = await inventoryApi.retrieveInventoryCounts(undefined, location.id);
-       const counts = result.counts ?? [];
-
-       for (const count of counts) {
-         const {catalogObjectId, quantity, locationId} = count;
-         if (!catalogObjectId || !quantity) continue;
-
-         const variant = await db.variants.findBySquareCatalogId(catalogObjectId);
-         if (!variant) continue;
-
-         await db.inventory.setLocationQuantity(
-           variant.sku,
-           locationId!,
-           parseInt(quantity)
-         );
-       }
-
-       console.log(`Reconciled inventory for ${location.name}: ${counts.length} items`);
-     }
-
-     // Recalculate online available quantity as SUM(all locations) - safety stock
-     await db.inventory.recalculateTotalAvailable();
-   }
-   ```
-
-5. **Handle cross-channel returns (online order returned in-store)**
-
-   ```typescript
-   // lib/pos/returns.ts
-   export async function processInStoreReturn(params: {
-     orderId: string;
-     lineItems: Array<{lineItemId: string; quantity: number; reason: string}>;
-     locationId: string;
-   }) {
-     const {orderId, lineItems, locationId} = params;
-
-     // 1. Find the original online order
-     const order = await db.orders.findById(orderId);
-     if (!order) throw new Error(`Order ${orderId} not found`);
-     if (order.status === 'fully_refunded') throw new Error('Order already fully refunded');
-
-     // 2. Validate line items being returned
-     for (const item of lineItems) {
-       const orderLine = order.lineItems.find(l => l.id === item.lineItemId);
-       if (!orderLine) throw new Error(`Line item ${item.lineItemId} not on order`);
-       if (item.quantity > orderLine.returnableQuantity) {
-         throw new Error(`Cannot return ${item.quantity} — only ${orderLine.returnableQuantity} returnable`);
-       }
-     }
-
-     // 3. Issue refund via the original payment gateway
-     const refundAmount = lineItems.reduce((sum, item) => {
-       const line = order.lineItems.find(l => l.id === item.lineItemId)!;
-       return sum + (line.unitPriceCents * item.quantity);
-     }, 0);
-
-     let gatewayRefund;
-     if (order.paymentGateway === 'stripe') {
-       gatewayRefund = await stripe.refunds.create({
-         payment_intent: order.stripePaymentIntentId,
-         amount: refundAmount,
-         metadata: {orderId, locationId, channel: 'in_store_return'},
-       });
-     } else if (order.paymentGateway === 'square') {
-       const {result} = await paymentsApi.createPaymentRefund({
-         idempotencyKey: `return_${orderId}_${Date.now()}`,
-         paymentId: order.squarePaymentId,
-         amountMoney: {amount: BigInt(refundAmount), currency: 'USD'},
-         reason: 'In-store return',
-       });
-       gatewayRefund = result.refund;
-     }
-
-     // 4. Update order return status
-     await db.orders.addReturn({
-       orderId,
-       lineItems: lineItems.map(item => ({...item, refundedAmountCents: item.quantity * order.lineItems.find(l => l.id === item.lineItemId)!.unitPriceCents})),
-       gatewayRefundId: gatewayRefund?.id,
-       processedAt: new Date(),
-       processedAtLocation: locationId,
-     });
-
-     // 5. Restock returned items at the return location
-     for (const item of lineItems) {
-       const line = order.lineItems.find(l => l.id === item.lineItemId)!;
-       await db.inventory.incrementLocationQuantity(line.sku, locationId, item.quantity);
-       await syncInventoryAcrossChannels({sku: line.sku, quantity: await db.inventory.getTotalAvailable(line.sku), source: 'pos'});
-     }
-
-     return {refundAmount, gatewayRefundId: gatewayRefund?.id};
-   }
-   ```
-
-6. **Build a unified order dashboard across channels**
-
-   ```typescript
-   // lib/pos/unified-orders.ts
-   export async function getUnifiedOrders(dateRange: {start: Date; end: Date}, locationFilter?: string) {
-     // Fetch from all order sources in parallel
-     const [onlineOrders, squareOrders] = await Promise.all([
-       db.orders.findByDateRange(dateRange, {channel: 'online', locationId: locationFilter}),
-       fetchSquareOrders(dateRange, locationFilter),
-     ]);
-
-     const unified = [
-       ...onlineOrders.map(o => ({
-         ...o,
-         channel: 'online' as const,
-         source: 'headless_store',
-       })),
-       ...squareOrders.map(o => mapSquareOrderToUnified(o)),
-     ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
-     return unified;
-   }
-
-   async function fetchSquareOrders(dateRange: {start: Date; end: Date}, locationId?: string) {
-     const {result} = await ordersApi.searchOrders({
-       locationIds: locationId ? [locationId] : (await getLocations()).map(l => l.id!),
-       query: {
-         filter: {
-           dateTimeFilter: {
-             createdAt: {
-               startAt: dateRange.start.toISOString(),
-               endAt: dateRange.end.toISOString(),
-             },
-           },
-         },
-       },
-     });
-     return result.orders ?? [];
-   }
-   ```
-
-## Examples
-
-### Square Webhook subscription registration
+**Initialize the Square client:**
 
 ```typescript
-// Register webhooks programmatically via the Square API
-const {result} = await squareClient.webhookSubscriptionsApi.createWebhookSubscription({
-  subscription: {
-    name: 'Commerce Platform Events',
-    enabled: true,
-    notificationUrl: `${process.env.APP_URL}/api/webhooks/square`,
-    eventTypes: [
-      'inventory.count.updated',
-      'catalog.version.updated',
-      'payment.completed',
-      'refund.created',
-      'order.created',
-    ],
-  },
+// lib/pos/square-client.ts
+import { Client, Environment } from 'square';
+
+export const squareClient = new Client({
+  accessToken: process.env.SQUARE_ACCESS_TOKEN!,
+  environment: process.env.NODE_ENV === 'production' ? Environment.Production : Environment.Sandbox,
 });
-console.log('Subscription created:', result.subscription?.id);
+
+export const { catalogApi, inventoryApi, ordersApi, paymentsApi, locationsApi } = squareClient;
 ```
 
-### Shopify POS inventory sync using Shopify Admin API
+**Handle Square inventory webhooks (in-store sale → update online store):**
 
 ```typescript
-// Shopify POS shares inventory with the online store through Shopify's native inventory system
-// Use the Admin API to sync inventory levels across all locations
+// POST /api/webhooks/square
+import { createHmac } from 'node:crypto';
 
-export async function syncShopifyInventory(inventoryItemId: string, locationId: string, available: number) {
-  const mutation = `
-    mutation inventorySetQuantities($input: InventorySetQuantitiesInput!) {
-      inventorySetQuantities(input: $input) {
-        inventoryAdjustmentGroup {
-          createdAt
-          reason
-          changes {
-            name
-            delta
-          }
-        }
-        userErrors {
-          field
-          message
-        }
-      }
+export async function POST(req: NextRequest) {
+  const rawBody = Buffer.from(await req.arrayBuffer());
+  const signature = req.headers.get('x-square-hmacsha256-signature') ?? '';
+
+  // Square HMAC includes the full notification URL in the signature
+  const notificationUrl = `${process.env.APP_URL}/api/webhooks/square`;
+  const expected = createHmac('sha256', process.env.SQUARE_WEBHOOK_SECRET!)
+    .update(notificationUrl + rawBody.toString('utf8'))
+    .digest('base64');
+
+  if (signature !== expected) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
+  const event = JSON.parse(rawBody.toString('utf8'));
+
+  if (event.type === 'inventory.count.updated') {
+    const counts = event.data.object.inventory_counts ?? [];
+    for (const count of counts) {
+      const variant = await db.variants.findBySquareCatalogId(count.catalog_object_id);
+      if (!variant) continue;
+
+      await db.inventory.updateLocationQuantity(variant.sku, count.location_id, parseInt(count.quantity));
+      const total = await db.inventory.getTotalAvailable(variant.sku);
+      await redis.setex(`inventory:${variant.productId}`, 3600, String(total));
     }
-  `;
+  }
 
-  const res = await fetch(`https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/2025-01/graphql.json`, {
-    method: 'POST',
-    headers: {
-      'X-Shopify-Access-Token': process.env.SHOPIFY_ADMIN_TOKEN!,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      query: mutation,
-      variables: {
-        input: {
-          reason: 'correction',
-          setQuantities: [{inventoryItemId, locationId, quantity: available}],
+  return NextResponse.json({ accepted: true });
+}
+```
+
+**Handle cross-channel returns (online order returned in-store):**
+
+```typescript
+// lib/pos/returns.ts
+export async function processInStoreReturn(params: {
+  orderId: string;
+  lineItems: Array<{ lineItemId: string; quantity: number }>;
+  locationId: string;
+}) {
+  const { orderId, lineItems, locationId } = params;
+  const order = await db.orders.findById(orderId);
+  if (!order) throw new Error(`Order ${orderId} not found`);
+
+  // Calculate refund amount
+  const refundAmount = lineItems.reduce((sum, item) => {
+    const line = order.lineItems.find(l => l.id === item.lineItemId)!;
+    return sum + (line.unitPriceCents * item.quantity);
+  }, 0);
+
+  // Issue refund via original payment gateway
+  if (order.paymentGateway === 'stripe') {
+    await stripe.refunds.create({
+      payment_intent: order.stripePaymentIntentId,
+      amount: refundAmount,
+      metadata: { orderId, locationId, channel: 'in_store_return' },
+    });
+  } else if (order.paymentGateway === 'square') {
+    await paymentsApi.createPaymentRefund({
+      idempotencyKey: `return_${orderId}_${Date.now()}`,
+      paymentId: order.squarePaymentId!,
+      amountMoney: { amount: BigInt(refundAmount), currency: 'USD' },
+    });
+  }
+
+  // Restock returned items at the return location
+  for (const item of lineItems) {
+    const line = order.lineItems.find(l => l.id === item.lineItemId)!;
+    await db.inventory.incrementLocationQuantity(line.sku, locationId, item.quantity);
+  }
+
+  await db.orders.addReturn({ orderId, lineItems, processedAtLocation: locationId, processedAt: new Date() });
+}
+```
+
+**Sync your product catalog to Square** (required before Square can track inventory):
+
+```typescript
+export async function syncProductToSquare(product: Product) {
+  const { result } = await catalogApi.batchUpsertCatalogObjects({
+    idempotencyKey: `sync_${product.sku}_${Date.now()}`,
+    batches: [{
+      objects: [{
+        type: 'ITEM',
+        id: `#item_${product.sku}`,
+        itemData: {
+          name: product.name,
+          variations: product.variants.map(variant => ({
+            type: 'ITEM_VARIATION' as const,
+            id: `#var_${variant.sku}`,
+            itemVariationData: {
+              itemId: `#item_${product.sku}`,
+              name: variant.name,
+              sku: variant.sku,
+              pricingType: 'FIXED_PRICING',
+              priceMoney: { amount: BigInt(Math.round(variant.price * 100)), currency: 'USD' },
+              trackInventory: true,
+            },
+          })),
         },
-      },
-    }),
+      }],
+    }],
   });
 
-  return res.json();
+  // Store Square-assigned IDs for future inventory updates
+  for (const mapping of result.idMappings ?? []) {
+    if (mapping.clientObjectId?.startsWith('#var_')) {
+      const sku = mapping.clientObjectId.replace('#var_', '');
+      await db.variants.update(sku, { squareCatalogVariationId: mapping.objectId });
+    }
+  }
 }
 ```
 
 ## Best Practices
 
-- **Use Square's built-in catalog as the POS source of truth** — sync your commerce catalog to Square rather than building a parallel catalog; this ensures the POS always has current product data
+- **For Shopify merchants, use Shopify POS** — it shares a single inventory system with your online store; no sync lag, no duplicate records, and unified reporting out of the box
 - **Reserve a safety stock buffer for the online store** — never expose 100% of physical inventory online; reserve 10–20% as a buffer for in-store sales that happen faster than inventory sync can propagate
-- **Implement location-aware inventory** — track inventory per location (store), not just as a global total; this enables accurate click-and-collect availability and prevents allocating stock from the wrong store
-- **Use idempotency keys for all Square API mutations** — Square's API supports idempotency keys on orders and payments; use them to safely retry failed requests without creating duplicates
-- **Monitor inventory sync lag** — measure the time between a POS sale and the inventory update appearing in your online store; alert when lag exceeds 5 minutes
-- **Build a manual reconciliation tool** — inventory discrepancies happen; provide a UI for store managers to compare Square inventory counts with your system and trigger manual sync
-- **Handle the "buy online, return anywhere" policy carefully** — cross-channel returns require careful payment gateway handling; ensure the refund goes back to the original payment method even if processed at a different store
+- **Implement location-aware inventory** — track stock per physical location (store), not just as a global total; this enables accurate click-and-collect availability
+- **Monitor sync lag** — measure the time between a POS sale and the inventory update appearing online; alert when lag exceeds 5 minutes
+- **Build a manual reconciliation tool** — inventory discrepancies happen; store managers need a UI to compare POS inventory counts with your system and trigger a manual sync
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Inventory oversell due to sync lag | Reserve safety stock online; implement a final inventory check at checkout that calls Square's inventory API synchronously for high-demand items |
+| WooCommerce Square sync stops working | Re-authenticate the Square connection in **WooCommerce → Settings → Integrations → Square** — OAuth tokens expire; the plugin usually prompts for re-auth |
+| Inventory oversell due to sync lag | Set safety stock buffer in your marketplace/POS settings; for high-demand items, do a final inventory check at checkout against Square's inventory API |
 | Square catalog IDs diverge from your SKUs | Maintain a mapping table between your internal SKU and Square's catalog variation IDs; rebuild it from Square's catalog if it gets out of sync |
-| Webhook signature verification fails | Square's HMAC includes the full notification URL; ensure the URL used in verification exactly matches what Square sees, including protocol and path |
-| Cross-channel return creates duplicate inventory | Only restock inventory when the return is physically received in-store (status: `received`), not when the return is initiated |
-| Multi-location inventory shows wrong totals | Aggregate inventory from all locations but exclude locations that are temporarily closed or undergoing inventory counts |
+| Cross-channel return creates duplicate inventory | Only restock inventory when the return is physically received in-store (`status: received`), not when the return is initiated |
+| Shopify POS not showing online orders for pickup | Ensure the customer selected **Pick up in store** at checkout and that the correct location is assigned to the POS device in **Settings → Locations** |
 
 ## Related Skills
 
 - @marketplace-connectors
 - @webhook-architecture
-- @inventory-management
 - @flash-sale-scaling
 - @monitoring-alerting-commerce

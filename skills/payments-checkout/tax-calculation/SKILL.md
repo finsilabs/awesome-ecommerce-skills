@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [tax, vat, nexus, taxjar, avalara, compliance, checkout, international]
 triggers: ["tax calculation", "sales tax", "VAT", "TaxJar integration", "Avalara integration", "tax nexus", "international tax"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,311 +16,215 @@ difficulty: advanced
 
 ## Overview
 
-Integrate a tax calculation service (TaxJar or Avalara) to compute accurate sales tax, VAT, and GST at checkout. Covers nexus determination (economic vs. physical presence), product taxability overrides, EU/UK VAT with reverse charge, real-time calculation at the checkout address step, and filing-ready transaction recording after order completion.
+Accurate tax calculation at checkout is a legal requirement, not an optimization. In the United States, there are over 13,000 taxing jurisdictions. EU VAT rules require charging the customer's local VAT rate. Getting it wrong leads to under-collection (a liability you must cover) or over-collection (refunds and customer complaints). All major platforms have built-in tax calculation or direct integrations with TaxJar and Avalara that handle this correctly without custom code.
 
 ## When to Use This Skill
 
 - When expanding sales to states or countries where you have tax nexus obligations
-- When manual tax rates are causing compliance issues or requiring constant updates
-- When implementing EU VAT compliance (IOSS, OSS, country-specific thresholds)
-- When building a checkout that needs to display accurate tax before the customer confirms payment
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+- When manual tax rates are causing compliance issues or needing constant updates
+- When implementing EU VAT compliance (OSS/IOSS registration)
+- When displaying accurate tax before the customer confirms payment
 
 ## Core Instructions
 
-1. **Understand nexus before integrating**
+### Step 1: Understand nexus before configuring tax
 
-   ```
-   US Sales Tax Nexus:
-   Physical nexus: You have employees, warehouses, or offices in a state
-   Economic nexus: Revenue or transaction count exceeds state threshold
-                   Most states: $100,000/year OR 200 transactions/year
+You only need to collect tax in jurisdictions where you have **nexus** (a tax obligation).
 
-   EU VAT:
-   EU-based sellers: Charge VAT at the rate of the customer's country
-   Non-EU sellers:   OSS/IOSS registration required above €10,000/year in EU sales
-   B2B transactions: Reverse charge applies — customer pays VAT via self-assessment
-   ```
+**US Sales Tax nexus:**
+- **Physical nexus**: you have employees, warehouses, or offices in a state
+- **Economic nexus**: most states trigger at $100,000/year in sales OR 200 transactions to customers in that state (California and Texas use $500,000)
+- Check each state's current threshold before configuring — thresholds change
 
-2. **Integrate TaxJar for US sales tax**
+**EU VAT:**
+- EU-based sellers must charge VAT at the customer's country rate for all EU sales
+- Non-EU sellers must register for EU VAT (via OSS scheme) once annual EU B2C sales exceed €10,000
+- B2B sales within the EU: reverse charge applies — the buyer handles VAT via self-assessment
 
-   ```javascript
-   // lib/taxJar.js
-   import Taxjar from 'taxjar';
+### Step 2: Set up tax calculation on your platform
 
-   const taxjar = new Taxjar({ apiKey: process.env.TAXJAR_API_KEY });
+---
 
-   export async function calculateTaxForOrder({ fromAddress, toAddress, lineItems, shippingCost }) {
-     const params = {
-       from_country: fromAddress.country,
-       from_zip: fromAddress.zip,
-       from_state: fromAddress.state,
-       from_city: fromAddress.city,
-       from_street: fromAddress.street,
+#### Shopify
 
-       to_country: toAddress.country,
-       to_zip: toAddress.zip,
-       to_state: toAddress.state,
-       to_city: toAddress.city,
-       to_street: toAddress.street,
+**Option A: Shopify's built-in tax (recommended for US stores)**
 
-       amount: lineItems.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0),
-       shipping: shippingCost,
+1. Go to **Settings → Taxes and duties**
+2. Under **Tax regions**, select the regions where you have nexus
+3. For US: Shopify calculates taxes automatically at the correct state + county + city rate based on the customer's shipping address — no third-party service needed for basic US compliance
+4. Enable **Charge tax on shipping** if your state requires it (varies by state)
+5. For product-level exemptions (e.g., clothing exempt in PA): go to **Products → [Product] → Tax** and set the appropriate tax category or create a custom tax override
 
-       line_items: lineItems.map(item => ({
-         id: item.lineItemId,
-         quantity: item.quantity,
-         unit_price: item.unitPrice,
-         product_tax_code: item.taxCode ?? null, // e.g., 'TPP' for tangible personal property
-         discount: item.discountAmount ?? 0,
-       })),
-     };
+**Option B: Stripe Tax (via Shopify + Stripe)**
 
-     const response = await taxjar.taxForOrder(params);
+Shopify's built-in tax covers US well. For international VAT compliance, install **Stripe Tax** via a Shopify app integration.
 
-     return {
-       totalTax: response.tax.amount_to_collect,
-       taxRate: response.tax.rate,
-       breakdown: {
-         stateTax: response.tax.breakdown?.state_tax_collectable ?? 0,
-         countyTax: response.tax.breakdown?.county_tax_collectable ?? 0,
-         cityTax: response.tax.breakdown?.city_tax_collectable ?? 0,
-         specialTax: response.tax.breakdown?.special_district_tax_collectable ?? 0,
-       },
-       taxableAmount: response.tax.taxable_amount,
-       hasNexus: response.tax.has_nexus,
-     };
-   }
-   ```
+**Option C: TaxJar or Avalara (for complex multi-jurisdiction requirements)**
 
-3. **Integrate Avalara AvaTax for international coverage**
+1. Install **TaxJar** or **Avalara AvaTax** from the Shopify App Store
+2. Follow the app's setup wizard: connect to your Shopify store, enter your nexus states, and configure product tax categories
+3. The app replaces Shopify's built-in tax calculation with its own real-time calculation at checkout
+4. Committed transactions are automatically sent to TaxJar/Avalara for filing reports
 
-   Avalara covers US, Canada, EU VAT, UK VAT, Australia GST, and more.
+#### WooCommerce
 
-   ```javascript
-   // lib/avalara.js
-   import { Avatax } from 'avatax';
+**Option A: WooCommerce built-in tax**
 
-   const client = new Avatax({
-     appName: 'YourStore',
-     appVersion: '1.0',
-     environment: process.env.AVALARA_ENV === 'production' ? 'production' : 'sandbox',
-     machineName: 'checkout-service',
-   }).withSecurity({
-     username: process.env.AVALARA_USERNAME,
-     password: process.env.AVALARA_PASSWORD,
-   });
+1. Go to **WooCommerce → Settings → Tax** and enable tax calculation
+2. Set your store base address (this affects which rates apply)
+3. Go to **Tax → Standard rates** and manually enter rates per state/country
+4. **Limitation**: manual rates are not updated automatically; for compliance, use TaxJar or Avalara
 
-   export async function calculateTaxAvalara({ fromAddress, toAddress, lineItems, shippingCost, commit = false }) {
-     const transaction = {
-       type: commit ? 'SalesInvoice' : 'SalesOrder', // SalesOrder = estimate only
-       companyCode: process.env.AVALARA_COMPANY_CODE,
-       date: new Date().toISOString().split('T')[0],
-       customerCode: 'CHECKOUT',
-       commit,
+**Option B: TaxJar (recommended for US compliance)**
 
-       addresses: {
-         singleLocation: {
-           line1: toAddress.street,
-           city: toAddress.city,
-           region: toAddress.state,
-           country: toAddress.country,
-           postalCode: toAddress.zip,
-         },
-       },
+1. Sign up at **taxjar.com** and get your API token
+2. Install **TaxJar for WooCommerce** plugin (free, from WordPress.org)
+3. Go to **WooCommerce → TaxJar** and enter your API token
+4. Enable **Automatic tax calculation** — TaxJar calculates the correct rate at checkout in real-time based on your nexus states and the customer's address
+5. Enable **Transaction sync** — completed orders are automatically sent to TaxJar for filing reports
 
-       lines: [
-         ...lineItems.map((item, i) => ({
-           number: String(i + 1),
-           quantity: item.quantity,
-           amount: item.unitPrice * item.quantity - (item.discountAmount ?? 0),
-           itemCode: item.sku,
-           taxCode: item.taxCode ?? 'P0000000', // Default: tangible personal property
-           description: item.title,
-         })),
-         {
-           number: 'SHIPPING',
-           amount: shippingCost,
-           taxCode: 'FR010000', // Shipping taxability code
-         },
-       ],
-     };
+**Option C: Avalara AvaTax**
 
-     const result = await client.createTransaction({ model: transaction });
+1. Sign up at **avalara.com** and create a company in AvaTax
+2. Install the **Avalara AvaTax for WooCommerce** plugin
+3. Enter your Account ID, License Key, and Company Code from the Avalara dashboard
+4. Enable calculation and transaction recording
 
-     return {
-       totalTax: result.totalTax,
-       taxRate: result.lines?.reduce((sum, l) => sum + (l.taxCalculated ?? 0), 0) / result.totalAmount,
-       breakdown: result.summary?.map(s => ({
-         taxName: s.taxName,
-         rate: s.rate,
-         taxCalculated: s.taxCalculated,
-         jurisdiction: s.jurisName,
-       })) ?? [],
-       transactionCode: result.code, // Store for filing/commit later
-     };
-   }
-   ```
+#### BigCommerce
 
-4. **Handle EU VAT with reverse charge**
+1. Go to **Store Setup → Tax**
+2. BigCommerce has a built-in tax calculation for basic US rates
+3. For full compliance: go to **Store Setup → Tax → Tax Provider** and connect **Avalara AvaTax** or **TaxJar**
+4. Follow the provider's BigCommerce setup guide — both have native integrations that replace the built-in tax engine with real-time compliant calculations
 
-   ```javascript
-   // lib/vatCalculation.js
+**EU VAT on BigCommerce:**
+Enable **VAT by country** under **Store Setup → Tax → VAT** for EU VAT compliance. For full OSS compliance, use Avalara's EU VAT module.
 
-   // GB is NOT in the EU since Brexit (January 2021) — handle UK VAT separately
-   const EU_COUNTRIES = ['AT','BE','BG','CY','CZ','DE','DK','EE','ES','FI','FR',
-                         'GR','HR','HU','IE','IT','LT','LU','LV','MT','NL','PL',
-                         'PT','RO','SE','SI','SK'];
-   // UK VAT: UK sellers must register for UK VAT separately via HMRC.
-   // Non-UK sellers selling to UK consumers may need to register for UK VAT
-   // (threshold: £0 for non-established sellers, £85,000 for UK-established sellers).
-   const UK_COUNTRIES = ['GB'];
+---
 
-   export async function calculateVAT({ toAddress, lineItems, buyerVatNumber }) {
-     const isEUDestination = EU_COUNTRIES.includes(toAddress.country);
-     const isBusiness = !!buyerVatNumber;
+#### Custom / Headless
 
-     if (!isEUDestination) {
-       // No VAT for outside EU (assuming your company is EU-based)
-       return { totalVAT: 0, vatRate: 0, vatType: 'none' };
-     }
+Use **Stripe Tax** (simplest) or the TaxJar/Avalara API directly:
 
-     if (isBusiness && toAddress.country !== process.env.SELLER_COUNTRY) {
-       // B2B cross-border within EU — reverse charge applies, buyer self-accounts
-       const isValid = await validateVATNumber(buyerVatNumber);
-       if (isValid) {
-         return { totalVAT: 0, vatRate: 0, vatType: 'reverse_charge', validatedVAT: buyerVatNumber };
-       }
-       // VAT number invalid — charge VAT as B2C
-     }
-
-     // B2C — charge VAT at destination country rate
-     const vatRate = await getVATRateForCountry(toAddress.country);
-     const taxableAmount = lineItems.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
-     const totalVAT = +(taxableAmount * vatRate).toFixed(2);
-
-     return { totalVAT, vatRate, vatType: 'standard' };
-   }
-
-   async function validateVATNumber(vatNumber) {
-     // Use VIES validation service
-     const res = await fetch(
-       `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${vatNumber.slice(0,2)}/vat/${vatNumber.slice(2)}`
-     );
-     const data = await res.json();
-     return data.isValid;
-   }
-
-   // Country-specific VAT rates (simplified — use a maintained database in production)
-   // GB rate (20%) is for UK VAT — keep separate from EU_COUNTRIES rates above
-   // FI rate updated to 25.5% in September 2024 (previously 24%)
-   const VAT_RATES = {
-     DE: 0.19, FR: 0.20, IT: 0.22, ES: 0.21, NL: 0.21,
-     SE: 0.25, DK: 0.25, FI: 0.255,
-   };
-   const UK_VAT_RATES = {
-     GB: 0.20,
-   };
-   async function getVATRateForCountry(countryCode) {
-     return VAT_RATES[countryCode] ?? 0.20; // Default to 20% if unknown
-   }
-   ```
-
-5. **Record committed transactions for tax filing**
-
-   After a successful order, commit the tax transaction to TaxJar or Avalara so it appears in your filing reports.
-
-   ```javascript
-   // Called after order.status transitions to 'confirmed'
-   export async function commitTaxTransaction(orderId) {
-     const order = await db.orders.findUnique({
-       where: { id: orderId },
-       include: { lineItems: true, shippingAddress: true },
-     });
-
-     if (!order.taxTransactionCode) {
-       // No pre-calculated tax transaction — calculate and commit now
-       const taxResult = await calculateTaxAvalara({
-         fromAddress: STORE_ADDRESS,
-         toAddress: order.shippingAddress,
-         lineItems: order.lineItems,
-         shippingCost: order.shippingCost,
-         commit: true,
-       });
-       await db.orders.update({
-         where: { id: orderId },
-         data: { taxTransactionCode: taxResult.transactionCode },
-       });
-     } else {
-       // Commit the existing estimate transaction
-       await client.commitTransaction({
-         companyCode: process.env.AVALARA_COMPANY_CODE,
-         transactionCode: order.taxTransactionCode,
-       });
-     }
-   }
-   ```
-
-## Examples
-
-### Caching tax rates for performance
-
-TaxJar/Avalara calls add 50-200 ms to checkout. Cache estimates by zip code and order total to reduce API calls:
+**Option A: Stripe Tax (recommended for Stripe-based stores)**
 
 ```javascript
-import { createHash } from 'crypto';
+// Enable Stripe Tax on the PaymentIntent — Stripe calculates and collects tax automatically
+const paymentIntent = await stripe.paymentIntents.create({
+  amount: orderSubtotalCents, // Subtotal only — Stripe adds tax
+  currency: 'usd',
+  automatic_payment_methods: { enabled: true },
+  // Stripe Tax configuration
+  // See: https://stripe.com/docs/tax/integration
+});
 
-export async function getCachedTaxEstimate(params, calculateFn) {
-  const key = `tax:${createHash('md5')
-    .update(JSON.stringify({ zip: params.toAddress.zip, total: params.lineItems.reduce((s,i) => s+i.unitPrice*i.quantity,0) }))
-    .digest('hex')}`;
+// Or use Stripe Checkout with automatic_tax enabled:
+const session = await stripe.checkout.sessions.create({
+  line_items: lineItems,
+  mode: 'payment',
+  automatic_tax: { enabled: true }, // Stripe Tax handles calculation
+  customer_details: { address: { country: customerCountry }, address_source: 'shipping' },
+  success_url: `${domain}/success`,
+  cancel_url: `${domain}/cart`,
+});
+```
 
-  const cached = await redis.get(key);
-  if (cached) return JSON.parse(cached);
+Configure Stripe Tax under **Stripe Dashboard → Tax → Configure** — set your tax registration numbers and the tax behaviors for each product category.
 
-  const result = await calculateFn(params);
-  // Cache for 1 hour — tax rates change infrequently
-  await redis.setex(key, 3600, JSON.stringify(result));
-  return result;
+**Option B: TaxJar API**
+
+```javascript
+const Taxjar = require('taxjar');
+const taxjar = new Taxjar({ apiKey: process.env.TAXJAR_API_KEY });
+
+async function calculateTaxForOrder({ fromAddress, toAddress, lineItems, shippingCost }) {
+  const response = await taxjar.taxForOrder({
+    from_country: fromAddress.country,
+    from_zip: fromAddress.zip,
+    from_state: fromAddress.state,
+    to_country: toAddress.country,
+    to_zip: toAddress.zip,
+    to_state: toAddress.state,
+    to_city: toAddress.city,
+    amount: lineItems.reduce((sum, i) => sum + i.unit_price * i.quantity, 0),
+    shipping: shippingCost,
+    line_items: lineItems.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      product_tax_code: item.tax_code ?? null, // e.g., '20010' for general goods
+    })),
+  });
+
+  return {
+    totalTax: response.tax.amount_to_collect,
+    taxRate: response.tax.rate,
+    hasNexus: response.tax.has_nexus, // false = no tax to collect
+    breakdown: response.tax.breakdown,
+  };
+}
+
+// After order is confirmed, commit the transaction for filing reports
+async function commitTaxTransaction(order) {
+  await taxjar.createOrder({
+    transaction_id: order.id,
+    transaction_date: new Date().toISOString().split('T')[0],
+    from_country: WAREHOUSE_ADDRESS.country,
+    from_zip: WAREHOUSE_ADDRESS.zip,
+    from_state: WAREHOUSE_ADDRESS.state,
+    to_country: order.shippingAddress.country,
+    to_zip: order.shippingAddress.zip,
+    to_state: order.shippingAddress.state,
+    amount: order.subtotal,
+    shipping: order.shippingCost,
+    sales_tax: order.taxAmount,
+    line_items: order.lineItems.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      unit_price: item.price,
+      sales_tax: item.taxAmount,
+    })),
+  });
 }
 ```
 
-### Tax code reference (US)
+**EU VAT reverse charge (B2B cross-border within EU):**
 
+For EU B2B transactions, validate the buyer's VAT number via the EU VIES service before applying zero-rate:
+
+```javascript
+async function validateEUVATNumber(vatNumber) {
+  const countryCode = vatNumber.slice(0, 2);
+  const number = vatNumber.slice(2);
+  const res = await fetch(
+    `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`
+  );
+  const data = await res.json();
+  return data.isValid === true;
+}
 ```
-TPP (Tangible Personal Property): Standard taxable goods — clothing, electronics, furniture
-P0000000 (Avalara): Same as TPP in AvaTax
-D0000000: Digital goods — taxability varies by state
-NP (Non-Profits): Exempt for qualifying organizations
-SHIPPING: Shipping — taxable in some states, exempt in others
-```
+
+### Step 3: Commit tax transactions after order completion
+
+Tax calculation services require you to "commit" each transaction after payment is confirmed — this records it in your filing reports. TaxJar and Avalara apps for Shopify/WooCommerce do this automatically. For custom integrations, call the create/commit API after the order is confirmed (not before payment).
 
 ## Best Practices
 
-- **Calculate tax in real time** — display the exact tax amount before the customer confirms payment; estimated tax that changes at payment causes distrust
-- **Never hard-code tax rates** — tax rates change constantly; use TaxJar or Avalara to get current rates automatically
+- **Never hard-code tax rates** — rates change constantly; use TaxJar, Avalara, Stripe Tax, or your platform's built-in tax engine
+- **Calculate tax in real-time at checkout** — display the exact tax amount before the customer confirms payment; estimated tax that changes at payment causes distrust and cart abandonment
 - **Commit transactions after payment, not before** — only committed transactions appear in filing reports; commit when the payment is confirmed
-- **Void transactions on cancellation** — when an order is cancelled, void the committed tax transaction to avoid over-reporting
-- **Store the transaction code** — save TaxJar/Avalara transaction codes on the order so you can void or refund them later
-- **Handle tax calculation errors gracefully** — if the tax API is unavailable, apply a fallback rate (average US rate ~8.5%) or block checkout with a clear error message
+- **Void tax transactions on refunds** — when you issue a refund, void the corresponding tax transaction in TaxJar/Avalara to avoid over-reporting on your filing
+- **Handle tax API errors gracefully** — if the tax API is unavailable, apply a fallback rate (US average ~8.5%) rather than blocking checkout
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Tax calculated but not committed to the filing API | Always call the commit endpoint after successful payment; use the `order.confirmed` transition side effect |
+| Tax calculated but not committed to the filing API | Ensure your platform integration (TaxJar plugin, Avalara plugin) is configured to auto-commit on order completion; verify in the provider's transaction dashboard |
 | EU VAT charged on B2B cross-border sales | Validate VAT numbers via VIES before applying reverse charge; if validation fails, charge VAT as B2C |
-| Tax API adds 500 ms to checkout | Cache tax estimates by destination zip code and line item total; recalculate only when the address or cart changes |
-| Tax calculated on shipping when it should be exempt | Set the shipping line's tax code to `FR010000` (Avalara) or `FreightInside` (TaxJar) to let the engine determine taxability by jurisdiction |
-| Inconsistent totals when tax changes between estimate and commit | Use the same parameters for estimate and commit; store the estimated tax and compare to the committed amount |
+| Tax API adds 500ms to checkout | TaxJar and Avalara both have caching built into their Shopify/WooCommerce plugins; for custom builds, cache estimates by destination zip code and cart total for 1 hour |
+| Shopify charging wrong tax rate for a state | Verify your nexus state list in Settings → Taxes is correct and up to date; check for product-level tax overrides that may be incorrectly configured |
+| WooCommerce showing "0 tax" after TaxJar install | Verify TaxJar API key is correct; check the plugin's status page for API errors; confirm your warehouse address and nexus states are configured in the TaxJar dashboard |
 
 ## Related Skills
 
@@ -328,3 +232,4 @@ SHIPPING: Shipping — taxable in some states, exempt in others
 - @multi-currency
 - @order-processing-pipeline
 - @stripe-integration
+- @tax-compliance-automation

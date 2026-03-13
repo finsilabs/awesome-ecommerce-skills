@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [ab-testing, experimentation, statistical-significance, feature-flags, checkout, pricing, conversion, hypothesis-testing]
 triggers: ["A/B testing", "ab test", "experimentation platform", "split testing", "feature flags", "statistical significance", "conversion test", "pricing test"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,305 +16,184 @@ difficulty: intermediate
 
 ## Overview
 
-A/B testing (or split testing) is the practice of running controlled experiments where a random subset of users sees a variant and the rest see the control, then using statistical analysis to determine if the variant's effect is real or due to chance. This skill covers building an experimentation platform with server-side assignment, calculating minimum sample size before running tests, performing statistical significance testing with the chi-squared or t-test, and avoiding the most common errors (peeking, multiple comparisons, novelty effects).
+A/B testing (split testing) runs controlled experiments where a random subset of visitors sees a variant while the rest see the control. Statistical analysis then determines whether any difference is real or due to chance. Good testing disciplines — calculating required sample size before starting, running tests for at least two full weeks, and never stopping early — separate genuine insights from noise.
+
+This skill guides you through running A/B tests on your specific platform, choosing the right tools, and interpreting results correctly.
 
 ## When to Use This Skill
 
 - When making product page, checkout, or pricing changes and wanting data-driven validation
-- When building an in-house feature flag and experiment management system
-- When migrating from a client-side A/B testing tool (Optimizely, VWO) to server-side assignment for accuracy
+- When migrating from a client-side A/B testing tool to server-side assignment for accuracy
 - When needing statistical power calculations before starting an experiment
 - When analyzing experiment results and determining when to ship or kill a variant
-- When running a pricing test and needing to ensure consistent pricing per customer (no price flickering)
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When running a pricing test and needing to ensure consistent pricing per customer
+- When wanting to understand what sample size is needed before a test is meaningful
 
 ## Core Instructions
 
-1. **Design the experiment and calculate minimum sample size**
+### Step 1: Determine your platform and choose the right testing tool
 
-   Always calculate the required sample size before starting — running tests without this leads to premature stopping:
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Google Optimize (free, sunsetting) → **Convert.com** or **Intelligems** | Intelligems is built specifically for Shopify and supports pricing tests with sticky assignment; Convert integrates via Shopify's theme |
+| **Shopify** (pricing tests) | **Intelligems** | The only tool that does true server-side price testing on Shopify without flickering |
+| **WooCommerce** | **Nelio A/B Testing** plugin or **Google Optimize** | Nelio integrates natively with WordPress/WooCommerce; tracks WooCommerce conversion events automatically |
+| **BigCommerce** | **Convert.com** or **VWO** (via script injection) | Both integrate via the BigCommerce storefront script manager |
+| **Custom / Headless** | **LaunchDarkly** (feature flags + experiments) or build with **GrowthBook** (open source) | Server-side assignment with no flickering; GrowthBook is free and self-hostable |
 
-   ```typescript
-   interface SampleSizeParams {
-     baselineConversionRate: number;  // e.g., 0.025 for 2.5%
-     minimumDetectableEffect: number; // e.g., 0.003 for detecting a 0.3pp lift
-     statisticalPower: number;        // e.g., 0.80 for 80% power
-     significanceLevel: number;       // e.g., 0.05 for 95% confidence
-   }
+### Step 2: Calculate required sample size before launching
 
-   function calculateRequiredSampleSize(params: SampleSizeParams): number {
-     const { baselineConversionRate, minimumDetectableEffect, statisticalPower, significanceLevel } = params;
+Never launch a test without knowing how many visitors each variant needs. Running a test without a pre-determined stopping rule leads to peeking and false positives.
 
-     // z-scores for common alpha and power levels
-     const zAlpha = 1.96; // α = 0.05, two-tailed
-     const zBeta = statisticalPower === 0.80 ? 0.842 : statisticalPower === 0.90 ? 1.282 : 1.645;
+Use the free calculator at [https://www.evanmiller.org/ab-testing/sample-size.html](https://www.evanmiller.org/ab-testing/sample-size.html) or follow this guide:
 
-     const p1 = baselineConversionRate;
-     const p2 = baselineConversionRate + minimumDetectableEffect;
-     const pBar = (p1 + p2) / 2;
+- **Baseline conversion rate:** Pull your current CVR from your platform analytics (last 30 days)
+- **Minimum detectable effect:** The smallest lift you care about detecting (typically 0.3–1 percentage point)
+- **Statistical power:** 80% is standard
+- **Significance level:** 95% confidence (alpha = 0.05)
 
-     const n = Math.pow(zAlpha * Math.sqrt(2 * pBar * (1 - pBar)) + zBeta * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2)), 2) /
-               Math.pow(p2 - p1, 2);
+**Example:** A Shopify store with 2.5% CVR wanting to detect a 0.3pp lift needs approximately 8,600 sessions per variant. At 500 sessions/day, that is 17 days per variant minimum.
 
-     return Math.ceil(n);
-   }
+Write down the required sample size before the test starts. This is your mandatory stopping rule.
 
-   // Example: 2.5% baseline CVR, want to detect a 0.3pp lift
-   // Required sample per variant: ~8,600 sessions
-   const required = calculateRequiredSampleSize({
-     baselineConversionRate: 0.025,
-     minimumDetectableEffect: 0.003,
-     statisticalPower: 0.80,
-     significanceLevel: 0.05,
-   });
-   ```
+### Step 3: Set up the experiment on your platform
 
-2. **Build server-side variant assignment**
+---
 
-   Server-side assignment prevents variant flickering, works without JavaScript, and is required for pricing tests:
+#### Shopify
 
-   ```typescript
-   import { createHash } from 'crypto';
+**Option A: Theme-based tests with Convert.com**
 
-   interface Experiment {
-     id: string;
-     name: string;
-     variants: Array<{ id: string; name: string; weight: number }>; // weights sum to 1.0
-     status: 'draft' | 'running' | 'paused' | 'completed';
-     startedAt: Date | null;
-     endedAt: Date | null;
-   }
+1. Install Convert.com and add the tracking script via **Online Store → Themes → Edit code → theme.liquid**
+2. In Convert.com, go to **Experiences → Create Experience → A/B Test**
+3. Use the visual editor to create your variant (change button color, headline, layout)
+4. Set goals: **Add to Cart** or **Purchase** (Convert tracks Shopify purchase events automatically)
+5. Set traffic allocation (50/50 for most tests)
+6. Set the **minimum sample size** you calculated as the stopping condition
 
-   function assignVariant(experimentId: string, userId: string): string {
-     // Hash the user+experiment combination for deterministic, sticky assignment
-     const hash = createHash('md5').update(`${experimentId}:${userId}`).digest('hex');
-     const bucket = parseInt(hash.slice(0, 8), 16) / 0xffffffff; // 0–1 uniform distribution
+**Option B: Pricing tests with Intelligems**
 
-     const experiment = getExperiment(experimentId);
-     let cumulative = 0;
+1. Install **Intelligems** from the Shopify App Store
+2. Go to **Intelligems → Price Tests → New Test**
+3. Select the product(s) to test and set variant prices
+4. Intelligems handles sticky assignment server-side — the same customer always sees the same price
+5. Set the test duration to your pre-calculated sample size
+6. Review results in Intelligems' dashboard: it shows revenue per visitor (not just CVR) as the primary metric
 
-     for (const variant of experiment.variants) {
-       cumulative += variant.weight;
-       if (bucket < cumulative) return variant.id;
-     }
+**For Shopify checkout tests (Shopify Plus only):**
+- Use **Checkout Extensibility** or **Shopify Functions** to create checkout variants
+- Shopify's built-in A/B testing via **Checkout profiles** is available on Plus
 
-     return experiment.variants[experiment.variants.length - 1].id; // fallback
-   }
+---
 
-   // Middleware: inject variant assignments into request context
-   export async function experimentMiddleware(req: Request, res: Response, next: NextFunction) {
-     const userId = req.session.customerId ?? req.session.anonymousId ?? getOrCreateAnonymousId(req, res);
-     const activeExperiments = await getActiveExperiments();
+#### WooCommerce
 
-     req.experiments = {};
-     for (const exp of activeExperiments) {
-       req.experiments[exp.id] = assignVariant(exp.id, userId);
-     }
+**Using Nelio A/B Testing (recommended)**
 
-     next();
-   }
-   ```
+1. Install **Nelio A/B Testing** from the WordPress plugin directory
+2. Go to **Nelio A/B Testing → Add New Test**
+3. Choose the test type:
+   - **Page Test:** Test different landing page or product page variants
+   - **WooCommerce Test:** Test product pricing, descriptions, or images
+   - **Headline Test:** Test page titles or CTAs
+4. Set your goal to **WooCommerce Order** (conversion event)
+5. Nelio tracks statistical significance in real time — do not stop early just because significance is reached; wait for your pre-calculated sample size
+6. View results at **Nelio A/B Testing → Results**
 
-3. **Track experiment exposure and conversions**
+**Alternative: Google Optimize (free, requires Google Analytics 4)**
+1. Create a Google Optimize account and link it to your GA4 property
+2. Add the Optimize container ID to your WordPress site via **MonsterInsights** plugin (simplest method) or manually in the `<head>`
+3. Create an A/B test in Optimize pointing to your WooCommerce product or checkout URLs
+4. Set objectives using GA4 events (e.g., `purchase`)
 
-   ```typescript
-   // Track when a user is exposed to an experiment variant
-   async function trackExposure(experimentId: string, variantId: string, userId: string) {
-     // Use upsert to avoid double-counting exposures
-     await db.experimentExposures.upsert(
-       { experimentId, userId },
-       {
-         experimentId,
-         variantId,
-         userId,
-         firstExposedAt: new Date(),
-       }
-     );
-   }
+---
 
-   // Track conversion events (order placed, checkout started, etc.)
-   async function trackConversion(
-     experimentId: string,
-     userId: string,
-     event: string,
-     value?: number
-   ) {
-     const exposure = await db.experimentExposures.findOne({ experimentId, userId });
-     if (!exposure) return; // Only count conversions from exposed users
+#### BigCommerce
 
-     await db.experimentConversions.create({
-       experimentId,
-       variantId: exposure.variantId,
-       userId,
-       event,
-       value: value ?? null,
-       convertedAt: new Date(),
-     });
-   }
-   ```
+1. Go to **Storefront → Script Manager → Create a Script**
+2. Add your A/B testing tool script (Convert.com, VWO, or Optimizely) with placement **Head** and **All pages**
+3. In your testing tool, create an experiment targeting your BigCommerce product or category page URL
+4. Set the conversion goal to track the order confirmation page URL (`/order-confirmation`)
+5. BigCommerce also has built-in **Multivariate Testing** under **Marketing → Banner Manager** for banner-level tests (limited to visual banner content)
 
-4. **Calculate statistical significance with chi-squared test**
+---
 
-   ```typescript
-   interface ExperimentResults {
-     control: { exposures: number; conversions: number };
-     variant: { exposures: number; conversions: number };
-   }
+#### Custom / Headless
 
-   function calculateChiSquaredSignificance(results: ExperimentResults): {
-     pValue: number;
-     significant: boolean;
-     relativeLift: number;
-     controlCVR: number;
-     variantCVR: number;
-   } {
-     const { control, variant } = results;
+For headless storefronts, use server-side assignment to avoid flickering and to support pricing tests:
 
-     const controlCVR = control.conversions / control.exposures;
-     const variantCVR = variant.conversions / variant.exposures;
-     const relativeLift = (variantCVR - controlCVR) / controlCVR;
+**Using GrowthBook (open source, recommended)**
 
-     // Chi-squared test for independence
-     const total = control.exposures + variant.exposures;
-     const totalConversions = control.conversions + variant.conversions;
-     const totalNonConversions = total - totalConversions;
-
-     const expectedControlConv = (control.exposures * totalConversions) / total;
-     const expectedVariantConv = (variant.exposures * totalConversions) / total;
-     const expectedControlNon = (control.exposures * totalNonConversions) / total;
-     const expectedVariantNon = (variant.exposures * totalNonConversions) / total;
-
-     const chiSquared =
-       Math.pow(control.conversions - expectedControlConv, 2) / expectedControlConv +
-       Math.pow(variant.conversions - expectedVariantConv, 2) / expectedVariantConv +
-       Math.pow((control.exposures - control.conversions) - expectedControlNon, 2) / expectedControlNon +
-       Math.pow((variant.exposures - variant.conversions) - expectedVariantNon, 2) / expectedVariantNon;
-
-     // p-value approximation from chi-squared with 1 degree of freedom
-     // Accurate for p between 0.001 and 0.5
-     const pValue = Math.exp(-0.717 * chiSquared - 0.416 * chiSquared * chiSquared);
-
-     return {
-       pValue: Math.min(1, Math.max(0, pValue)),
-       significant: pValue < 0.05,
-       relativeLift,
-       controlCVR,
-       variantCVR,
-     };
-   }
-   ```
-
-5. **Build the experiment results API**
-
-   ```typescript
-   // GET /api/experiments/:id/results
-   export async function getExperimentResults(req: Request, res: Response) {
-     const { id } = req.params;
-
-     const [exposures, conversions] = await Promise.all([
-       db.experimentExposures.groupBy({ by: ['variantId'], _count: { userId: true }, where: { experimentId: id } }),
-       db.experimentConversions.groupBy({ by: ['variantId'], _count: { userId: true }, where: { experimentId: id, event: 'order_placed' } }),
-     ]);
-
-     const variantMap = new Map(exposures.map((e: any) => [e.variantId, { exposures: e._count.userId, conversions: 0 }]));
-     for (const c of conversions) {
-       const v = variantMap.get(c.variantId);
-       if (v) v.conversions = c._count.userId;
-     }
-
-     const control = variantMap.get('control') ?? { exposures: 0, conversions: 0 };
-     const variants = [...variantMap.entries()].filter(([id]) => id !== 'control').map(([variantId, data]) => ({
-       variantId,
-       ...data,
-       ...calculateChiSquaredSignificance({ control, variant: data }),
-     }));
-
-     const experiment = await db.experiments.findById(id);
-     const requiredSampleSize = calculateRequiredSampleSize({ baselineConversionRate: control.conversions / Math.max(1, control.exposures), minimumDetectableEffect: 0.003, statisticalPower: 0.80, significanceLevel: 0.05 });
-
-     res.json({
-       experiment,
-       control: { ...control, cvr: control.conversions / Math.max(1, control.exposures) },
-       variants,
-       sampleSize: { current: control.exposures, required: requiredSampleSize, reached: control.exposures >= requiredSampleSize },
-     });
-   }
-   ```
-
-## Examples
-
-### Pricing test with consistent pricing per user
-
-For pricing tests, you must show the same price to the same user every time to avoid legal and UX issues:
+1. Install GrowthBook: `npm install @growthbook/growthbook`
+2. Initialize on the server side with your user ID for sticky assignment:
 
 ```typescript
-// Server-side rendering: always use the server-assigned variant for pricing
-export async function getProductPrice(productId: string, userId: string): Promise<number> {
-  const activePricingTest = await db.experiments.findOne({
-    where: { status: 'running', type: 'pricing', productId },
+import { GrowthBook } from "@growthbook/growthbook";
+
+const gb = new GrowthBook({
+  apiHost: "https://cdn.growthbook.io",
+  clientKey: process.env.GROWTHBOOK_CLIENT_KEY,
+  attributes: {
+    id: userId, // stable user ID for consistent assignment
+    loggedIn: !!customerId,
+  },
+});
+
+await gb.loadFeatures();
+
+// Assign variant — deterministic for the same userId
+const checkoutButtonVariant = gb.getFeatureValue("checkout-button-color", "blue");
+```
+
+3. Track exposures and conversions back to GrowthBook:
+
+```typescript
+gb.setTrackingCallback((experiment, result) => {
+  analytics.track("Experiment Viewed", {
+    experimentId: experiment.key,
+    variationId: result.key,
   });
+});
 
-  if (!activePricingTest) {
-    const product = await db.products.findById(productId);
-    return product.priceInCents;
-  }
-
-  const variantId = assignVariant(activePricingTest.id, userId);
-  const variantConfig = activePricingTest.variants.find((v) => v.id === variantId);
-  return variantConfig?.priceInCents ?? (await db.products.findById(productId)).priceInCents;
-}
+// On order completion:
+analytics.track("Purchase", { revenue: order.total });
 ```
 
-### Guardrail metrics — stop a test if it hurts key metrics
+4. View statistical results in the GrowthBook UI — it runs Bayesian or frequentist significance tests on your data
 
-```typescript
-async function checkExperimentGuardrails(experimentId: string): Promise<boolean> {
-  const guardrails = {
-    maxReturnRateIncrease: 0.05,  // Stop if variant increases returns by >5pp
-    maxCartAbandonmentIncrease: 0.10,
-  };
+### Step 4: Interpret results correctly
 
-  const [controlReturns, variantReturns] = await Promise.all([
-    db.query(returnRateByVariantSQL, [experimentId, 'control']),
-    db.query(returnRateByVariantSQL, [experimentId, 'variant']),
-  ]);
+When reviewing results:
 
-  const returnRateDiff = variantReturns.rate - controlReturns.rate;
-  if (returnRateDiff > guardrails.maxReturnRateIncrease) {
-    await db.experiments.update(experimentId, { status: 'paused', pauseReason: 'guardrail_return_rate' });
-    await alertExperimentTeam(experimentId, `Return rate guardrail breached: +${(returnRateDiff * 100).toFixed(1)}pp`);
-    return false;
-  }
-  return true;
-}
-```
+1. **Wait for the pre-calculated sample size** — do not stop because it "looks significant"
+2. **Check revenue per visitor, not just CVR** — a checkout test might increase CVR but decrease AOV; measure both
+3. **Run for at least 2 full weeks** — day-of-week effects distort 7-day tests
+4. **Look at guardrail metrics** — even if your primary metric improved, check return rates and customer service ticket volume
+
+| Metric | What to Check |
+|--------|--------------|
+| Primary | Revenue per visitor (not CVR alone) |
+| Guardrail | Return rate (variant should not increase returns) |
+| Guardrail | Cart abandonment rate |
+| Confidence | p < 0.05 AND minimum sample size reached |
 
 ## Best Practices
 
 - **Calculate sample size before starting** — running until it "looks significant" is p-hacking; use the pre-calculated size as your stopping rule
-- **Use server-side assignment** for any test involving pricing, checkout flow, or personalization — client-side JavaScript A/B tools create flickering and can be blocked by ad blockers
+- **Use server-side assignment for pricing tests** — client-side tools create flickering and can show different prices on page reload, which is a legal and UX risk
 - **Never run more than 3–4 experiments on the same page simultaneously** — interaction effects between experiments contaminate all results
-- **Set up guardrail metrics** for every test — even if your primary metric improves, monitor returns, cart abandonment, and customer service contacts for regression
-- **Run experiments for at least 2 full weeks** — day-of-week effects mean a 1-week test may be accidentally biased if launch day is Monday
-- **Exclude internal team traffic** from experiments by IP allowlist or user flag — internal browsing patterns differ from customers
-- **Document the hypothesis and expected lift before starting** — post-hoc hypothesis generation leads to confirmation bias in result interpretation
+- **Exclude internal team traffic** — add your office IP to an exclusion list in your testing tool to prevent internal browsing from polluting results
+- **Document the hypothesis before starting** — write down what you expect to happen and why; post-hoc hypothesis generation leads to confirmation bias
+- **Run experiments for at least 2 full business weeks** — account for day-of-week and weekend shopping pattern differences
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Test ends early because it "looks significant" — then the lift disappears | Use pre-calculated sample size as a mandatory stopping rule; never stop a test early based on interim results |
-| Same user sees different variants on different sessions | Use server-side assignment keyed on a stable user ID (not session ID); stick to first-session assignment |
-| Checkout test shows lift in CVR but drop in AOV | Always measure revenue per visitor as your primary metric, not CVR alone — they can move in opposite directions |
-| Multiple tests running on checkout inflate false positive rate | Apply a Bonferroni correction (divide alpha by number of simultaneous tests) or use a sequential testing framework |
+| Test ends early because it "looks significant" — then the lift disappears | Use pre-calculated sample size as a mandatory stopping rule; configure your testing tool to lock results until sample size is reached |
+| Same user sees different variants on different sessions | Use server-side assignment keyed on a stable user ID (not session ID); Intelligems and GrowthBook handle this correctly by default |
+| Checkout test shows lift in CVR but drop in AOV | Always measure revenue per visitor as your primary metric; CVR and AOV can move in opposite directions |
+| Price flickering on Shopify pricing tests | Use Intelligems instead of client-side tools — it assigns prices server-side before the page renders |
 | Novelty effect inflates variant results in the first week | Report results with and without the first 3 days of data; a large week-1 spike that fades is usually novelty |
 
 ## Related Skills

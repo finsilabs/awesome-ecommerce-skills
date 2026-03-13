@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [personalization, ml, recommendations]
 triggers: ["add AI personalization", "predictive recommendations"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,294 +16,170 @@ difficulty: advanced
 
 ## Overview
 
-Predictive personalization uses machine learning to anticipate what each shopper wants before they search for it. Instead of showing every visitor the same homepage, category pages, and recommendations, you tailor the experience based on behavioral signals (browse history, purchase history, cart contents, time-on-page), demographic data, and collaborative filtering patterns from similar customers. The result is higher conversion rates, larger average order values, and stronger retention.
-
-This skill covers building a personalization pipeline: data collection, feature engineering, model selection (collaborative filtering, content-based, hybrid), real-time scoring, and integration into product recommendations, search ranking, email content, and homepage merchandising. It applies to any ecommerce platform — Shopify, headless, WooCommerce, or custom.
+Predictive personalization tailors the shopping experience to each visitor — showing relevant product recommendations, personalized content, and targeted offers based on behavior, purchase history, and patterns from similar customers. For most merchants, dedicated personalization apps deliver this without any custom ML code. Building a custom recommendation engine only makes sense for headless stores with significant traffic (100k+ monthly visitors) where app costs or data control requirements justify the complexity.
 
 ## When to Use This Skill
 
 - When your store shows the same products to every visitor regardless of their behavior
 - When you want to add "Recommended for You" sections to your homepage, PDP, or cart
-- When search results don't account for individual shopper preferences
 - When email campaigns send the same products to your entire list
-- When you're ready to move beyond rule-based merchandising to data-driven personalization
 - When conversion rates are plateauing and you need a lift from relevance
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, customer behavioral event data, ML recommendation platform (Dynamic Yield, Nosto, or custom model)
+- When ready to move beyond rule-based merchandising to data-driven personalization
 
 ## Core Instructions
 
-### 1. Collect behavioral events
+### Step 1: Choose the right personalization tool
 
-Track every meaningful user interaction and store it in an event stream:
+| Platform | Best For | Shopify | WooCommerce | BigCommerce | Price |
+|----------|---------|---------|-------------|-------------|-------|
+| **Rebuy** | Product recommendations, cross-sell/upsell widgets | App Store | Limited | Limited | $99+/mo |
+| **LimeSpot** | Personalization + merchandising | App Store | Plugin | App Marketplace | $18+/mo |
+| **Nosto** | Mid-market, full homepage + email personalization | App Store | Plugin | App Marketplace | Revenue-share |
+| **Dynamic Yield** | Enterprise, full A/B testing + personalization | Via JS tag | Via JS tag | Via JS tag | $1,000+/mo |
+| **Klaviyo** (email) | Personalized product blocks in email flows | App Store | Plugin | App Marketplace | Included in Klaviyo |
+| **Custom** | Headless stores, 100k+ visitors/mo | API | API | API | Dev cost |
+
+**Recommendation by store size:**
+- Under $1M revenue: **Rebuy** or **LimeSpot** for recommendation widgets; **Klaviyo** for personalized email
+- $1M–$10M revenue: **Nosto** for full-site + email personalization
+- $10M+: **Dynamic Yield** for enterprise personalization + experimentation
+
+### Step 2: Set up product recommendations
+
+---
+
+#### Shopify
+
+**With Rebuy:**
+1. Install **Rebuy** from the Shopify App Store
+2. Go to **Rebuy → Smart Cart** to add AI-powered cross-sell recommendations to your cart page — no code required
+3. Go to **Rebuy → Data Sources** to configure recommendation logic:
+   - "Frequently Bought Together" — products purchased together in the same order
+   - "Similar Products" — products with similar tags and attributes
+   - "Recommended for You" — personalized based on browsing history
+4. Go to **Rebuy → Widgets** to add recommendation carousels to product pages, the cart, and the homepage
+5. Rebuy connects directly to Shopify's order data to compute co-purchase patterns — no additional setup needed
+
+**With LimeSpot:**
+1. Install **LimeSpot Personalizer** from the Shopify App Store
+2. Go to **LimeSpot → Placements** to add recommendation boxes to any page (homepage, collection, product, cart)
+3. Set the recommendation strategy per placement: "Trending," "Recently Viewed," "You May Also Like," or "Frequently Bought Together"
+4. LimeSpot learns from your store's behavioral data automatically
+
+---
+
+#### WooCommerce
+
+1. Go to **WooCommerce → Products → [Product] → Linked Products** to add manual cross-sells and upsells per product
+2. For automated ML-based recommendations: install **LimeSpot for WooCommerce** or **Barilliance** plugin
+3. For email personalization: configure **Klaviyo** dynamic product blocks in post-purchase flows (Klaviyo's `Catalog` block uses purchase history to generate personalized recommendations automatically)
+
+**Alternative (simpler):** install **YITH WooCommerce Frequently Bought Together** — it adds "Customers who bought this also bought" sections using your order history, without requiring a monthly subscription.
+
+---
+
+#### BigCommerce
+
+1. Go to **BigCommerce App Marketplace** and install **LimeSpot** or **Nosto**
+2. Both apps integrate with BigCommerce's product and order APIs to compute recommendations
+3. For email: install **Klaviyo** from the BigCommerce App Marketplace and use Catalog blocks for personalized product recommendations in flows
+
+---
+
+#### Custom / Headless
+
+For headless stores, build a recommendation engine using behavioral event data and collaborative filtering:
 
 ```typescript
-// events/track.ts
+// Collect behavioral events for each visitor
 interface PersonalizationEvent {
   userId: string | null;       // null for anonymous visitors
   sessionId: string;
-  eventType: 'view' | 'add_to_cart' | 'purchase' | 'search' | 'wishlist' | 'remove_from_cart';
+  eventType: 'view' | 'add_to_cart' | 'purchase';
   productId: string;
   categoryId?: string;
   timestamp: Date;
-  metadata?: Record<string, unknown>;  // price, quantity, search query, etc.
 }
 
-export async function trackEvent(event: PersonalizationEvent) {
-  // Write to event store (Kafka, Redis Streams, or database)
-  await eventStore.append('personalization-events', {
-    ...event,
-    timestamp: event.timestamp.toISOString(),
-  });
-
-  // Update real-time user profile
-  await updateUserProfile(event);
-}
-
+// Maintain a real-time user profile in Redis
 async function updateUserProfile(event: PersonalizationEvent) {
   const key = event.userId ?? `anon:${event.sessionId}`;
-  const profile = await redis.hgetall(`user-profile:${key}`) || {};
 
-  // Maintain recent interactions (sliding window of last 50)
-  const recentViews = JSON.parse(profile.recentViews || '[]');
+  const recentViews = JSON.parse(await redis.get(`profile:${key}:views`) ?? '[]');
   if (event.eventType === 'view') {
-    recentViews.unshift({ productId: event.productId, ts: Date.now() });
+    recentViews.unshift(event.productId);
     if (recentViews.length > 50) recentViews.pop();
+    await redis.setex(`profile:${key}:views`, 30 * 86400, JSON.stringify(recentViews));
   }
 
-  // Maintain category affinity scores
-  const categoryScores = JSON.parse(profile.categoryScores || '{}');
+  const categoryScores = JSON.parse(await redis.get(`profile:${key}:categories`) ?? '{}');
   if (event.categoryId) {
-    const weight = { view: 1, add_to_cart: 3, purchase: 5, wishlist: 2 }[event.eventType] || 1;
-    categoryScores[event.categoryId] = (categoryScores[event.categoryId] || 0) + weight;
+    const weight = { view: 1, add_to_cart: 3, purchase: 5 }[event.eventType] ?? 1;
+    categoryScores[event.categoryId] = (categoryScores[event.categoryId] ?? 0) + weight;
+    await redis.setex(`profile:${key}:categories`, 30 * 86400, JSON.stringify(categoryScores));
   }
-
-  await redis.hmset(`user-profile:${key}`, {
-    recentViews: JSON.stringify(recentViews),
-    categoryScores: JSON.stringify(categoryScores),
-    lastActive: Date.now().toString(),
-  });
-  await redis.expire(`user-profile:${key}`, 30 * 24 * 60 * 60); // 30 day TTL
 }
+
+// Nightly batch job: build co-purchase similarity from 90-day order history
+// Serve recommendations via Redis cache for sub-10ms response times
+// Fallback: trending/popular items when user has no history (cold start)
 ```
 
-### 2. Build collaborative filtering model
+For most headless stores, use **Nosto's** or **Dynamic Yield's** JavaScript widget + REST API instead of building from scratch. The API surfaces the same personalization data without maintaining the recommendation engine infrastructure.
 
-Use item-item collaborative filtering — find products that are frequently co-viewed or co-purchased:
+### Step 3: Personalize email with dynamic product blocks
 
-```typescript
-// models/collaborative-filter.ts
-export async function buildCooccurrenceMatrix() {
-  // Query purchase sessions from last 90 days
-  const sessions = await db.query(`
-    SELECT session_id, array_agg(DISTINCT product_id) as products
-    FROM events
-    WHERE event_type IN ('purchase', 'add_to_cart')
-      AND timestamp > NOW() - INTERVAL '90 days'
-    GROUP BY session_id
-    HAVING COUNT(DISTINCT product_id) >= 2
-  `);
+This works for all platforms via Klaviyo:
 
-  // Build co-occurrence counts
-  const cooccurrence: Map<string, Map<string, number>> = new Map();
+1. In any Klaviyo flow (post-purchase, win-back, browse abandonment), add a **Product Block**
+2. Set the product source to **"Personalized Recommendations"** — Klaviyo uses the recipient's purchase history to select products
+3. Or use **"Cross-sell"** — Klaviyo shows products frequently bought alongside what the customer last purchased
+4. Preview the email for different customer profiles to verify recommendations vary by recipient
 
-  for (const session of sessions.rows) {
-    const products = session.products;
-    for (let i = 0; i < products.length; i++) {
-      for (let j = i + 1; j < products.length; j++) {
-        increment(cooccurrence, products[i], products[j]);
-        increment(cooccurrence, products[j], products[i]);
-      }
-    }
-  }
+### Step 4: Set up "Recommended for You" on the homepage
 
-  // Normalize to similarity scores (Jaccard or cosine)
-  const productCounts = await getProductInteractionCounts();
-  const similarities: Map<string, Array<{ productId: string; score: number }>> = new Map();
+---
 
-  for (const [productA, coProducts] of cooccurrence) {
-    const countA = productCounts.get(productA) || 1;
-    const scored = [];
+#### Shopify with Rebuy or LimeSpot
 
-    for (const [productB, coCount] of coProducts) {
-      const countB = productCounts.get(productB) || 1;
-      // Jaccard similarity
-      const score = coCount / (countA + countB - coCount);
-      scored.push({ productId: productB, score });
-    }
+1. In the app dashboard, go to **Placements → Homepage**
+2. Set the recommendation strategy to "Recommended for You" (requires at least one prior visit/purchase to personalize; shows trending for new visitors)
+3. Use the app's theme editor widget — drag it into your homepage section in **Shopify → Online Store → Themes → Customize**
 
-    scored.sort((a, b) => b.score - a.score);
-    similarities.set(productA, scored.slice(0, 50)); // Top 50 similar items
-  }
+---
 
-  // Store in Redis for real-time access
-  for (const [productId, similar] of similarities) {
-    await redis.set(
-      `similar:${productId}`,
-      JSON.stringify(similar),
-      'EX', 24 * 60 * 60  // Refresh daily
-    );
-  }
-}
+### Step 5: Measure personalization impact
 
-function increment(map: Map<string, Map<string, number>>, a: string, b: string) {
-  if (!map.has(a)) map.set(a, new Map());
-  const inner = map.get(a)!;
-  inner.set(b, (inner.get(b) || 0) + 1);
-}
-```
+Always A/B test personalization before full rollout. Both Rebuy and Nosto have built-in A/B testing:
 
-### 3. Score and serve recommendations
-
-```typescript
-// api/recommendations.ts
-export async function getRecommendations(
-  userId: string | null,
-  sessionId: string,
-  context: { page: 'home' | 'pdp' | 'cart' | 'category'; productId?: string; cartItems?: string[] },
-  limit = 12
-): Promise<string[]> {
-  const profileKey = userId ?? `anon:${sessionId}`;
-  const profile = await redis.hgetall(`user-profile:${profileKey}`);
-
-  let candidates: Map<string, number> = new Map();
-
-  // Source 1: Similar items to current product (PDP context)
-  if (context.productId) {
-    const similar = JSON.parse(await redis.get(`similar:${context.productId}`) || '[]');
-    for (const { productId, score } of similar) {
-      candidates.set(productId, (candidates.get(productId) || 0) + score * 2.0);
-    }
-  }
-
-  // Source 2: Items similar to recent views
-  if (profile?.recentViews) {
-    const recentViews = JSON.parse(profile.recentViews).slice(0, 10);
-    for (const { productId } of recentViews) {
-      const similar = JSON.parse(await redis.get(`similar:${productId}`) || '[]');
-      for (const { productId: simId, score } of similar.slice(0, 20)) {
-        candidates.set(simId, (candidates.get(simId) || 0) + score * 1.0);
-      }
-    }
-  }
-
-  // Source 3: Category affinity — boost products in preferred categories
-  if (profile?.categoryScores) {
-    const catScores = JSON.parse(profile.categoryScores);
-    const topCategories = Object.entries(catScores)
-      .sort(([, a], [, b]) => (b as number) - (a as number))
-      .slice(0, 5);
-
-    for (const [catId, catScore] of topCategories) {
-      const catProducts = await redis.smembers(`category-products:${catId}`);
-      for (const pid of catProducts.slice(0, 20)) {
-        candidates.set(pid, (candidates.get(pid) || 0) + (catScore as number) * 0.1);
-      }
-    }
-  }
-
-  // Remove already-viewed and already-in-cart items
-  const recentViewIds = new Set(
-    JSON.parse(profile?.recentViews || '[]').map((v: any) => v.productId)
-  );
-  const cartSet = new Set(context.cartItems || []);
-
-  const ranked = [...candidates.entries()]
-    .filter(([id]) => !recentViewIds.has(id) && !cartSet.has(id) && id !== context.productId)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, limit)
-    .map(([id]) => id);
-
-  // Fallback to popular items if not enough personalized results
-  if (ranked.length < limit) {
-    const popular = await redis.zrevrange('popular-products', 0, limit - ranked.length - 1);
-    const existing = new Set(ranked);
-    for (const pid of popular) {
-      if (!existing.has(pid) && !cartSet.has(pid)) ranked.push(pid);
-      if (ranked.length >= limit) break;
-    }
-  }
-
-  return ranked;
-}
-```
-
-### 4. Personalize search results
-
-Boost search results based on user's category affinity:
-
-```typescript
-// search/personalize.ts
-export function personalizeSearchResults(
-  results: SearchResult[],
-  userProfile: UserProfile
-): SearchResult[] {
-  if (!userProfile?.categoryScores) return results;
-
-  const catScores = JSON.parse(userProfile.categoryScores);
-  const maxCatScore = Math.max(...Object.values(catScores) as number[], 1);
-
-  return results.map(result => {
-    const affinityBoost = catScores[result.categoryId]
-      ? (catScores[result.categoryId] / maxCatScore) * 0.3  // Up to 30% relevance boost
-      : 0;
-
-    return {
-      ...result,
-      personalizedScore: result.relevanceScore * (1 + affinityBoost),
-    };
-  }).sort((a, b) => b.personalizedScore - a.personalizedScore);
-}
-```
-
-### 5. A/B test personalization impact
-
-Always run personalization behind a feature flag and measure lift:
-
-```typescript
-// middleware/personalization-experiment.ts
-export function getPersonalizationVariant(userId: string): 'control' | 'personalized' {
-  // Deterministic assignment based on user ID hash
-  const hash = createHash('md5').update(userId).digest('hex');
-  const bucket = parseInt(hash.substring(0, 8), 16) % 100;
-  return bucket < 50 ? 'control' : 'personalized';
-}
-```
-
-Track conversion rate, AOV, and revenue per visitor for both groups. Only graduate personalization to 100% when it shows statistically significant lift (p < 0.05 over 2+ weeks).
+| Metric | Target | Where to Find |
+|--------|--------|---------------|
+| Recommendation widget CTR | > 5% | App analytics dashboard |
+| Revenue attributed to recommendations | 10–20% of total | App analytics |
+| AOV lift (personalized vs. control) | > 5% | App A/B test results |
+| Email personalized block CTR vs. static | > 2× higher | Klaviyo flow analytics |
 
 ## Best Practices
 
-- **Start with collaborative filtering** — it requires no product metadata, just behavioral data; content-based models can be added later as a second signal
-- **Decay old signals** — a product viewed 30 days ago should carry less weight than one viewed yesterday; apply exponential time decay to interaction scores
-- **Rebuild models daily** — run the co-occurrence matrix job nightly; serve recommendations from the precomputed Redis cache for sub-10ms response times
-- **Merge anonymous and logged-in profiles** — when a visitor logs in, merge their anonymous session profile into their user profile to avoid cold-start after login
-- **Diversify recommendations** — don't show 12 items from the same category; enforce a maximum of 4 items per category to expose breadth
-- **Handle cold-start gracefully** — new users with no history get trending/popular items; new products with no interaction data get boosted in their category for the first 7 days
-- **Respect privacy** — honor DNT headers and cookie consent; let users opt out of personalization; don't personalize based on sensitive categories without explicit consent
+- **Start with post-purchase cross-sell** — "Customers who bought X also bought Y" is the highest-converting recommendation placement; set it up on the order confirmation page and in post-purchase emails
+- **Show "Recently Viewed" on the homepage** — returning visitors who see their previously viewed products have 3–4× higher conversion rates; Rebuy and LimeSpot both support this out of the box
+- **Use trending/popular as the fallback** — new visitors with no history should see trending products, not empty recommendation slots
+- **Diversify recommendations across categories** — enforce a maximum of 4 items per category to avoid showing 12 near-identical products
+- **Test personalization vs. editorial curation** — for some product types (luxury goods, gifts), curated staff picks can outperform algorithmic recommendations
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Recommendations are stale or repetitive | Apply diversity constraints — max 4 items per category, exclude recently viewed items, mix in trending items |
-| Cold-start users get empty recommendations | Fall back to popularity-based recommendations; use category-level trends when user history is sparse |
-| Personalization hurts conversion for some segments | Always A/B test; some user segments (new visitors, gift shoppers) may convert better with editorial curation |
-| Model training is too slow for real-time | Pre-compute similarity matrices offline (nightly batch); serve from Redis; only update user profiles in real-time |
-| Filter bubble — users only see familiar products | Reserve 20% of recommendation slots for serendipity — trending items, new arrivals, or items from unexplored categories |
-| Privacy compliance issues | Store only hashed/anonymized behavioral data; provide clear opt-out; comply with GDPR right-to-erasure by deleting user profiles on request |
+| Recommendations show already-purchased items | Configure the app to exclude previously purchased products from recommendations |
+| New store with no data — recommendations look wrong | Use "Trending" or editorial curation for the first 60–90 days while behavioral data accumulates |
+| Recommendations are all from one category | Enable diversity controls in app settings; most apps support "max items per category" |
+| Personalized email recommendations are same for everyone | Verify Klaviyo is receiving Placed Order events from your platform; check Klaviyo → Integrations status |
 
 ## Related Skills
 
-- @customer-analytics
+- @cross-sell-upsell-engine
+- @email-marketing-automation
 - @ab-testing-ecommerce
-- @customer-segmentation
+- @customer-analytics
 - @search-autocomplete
-- @product-page-design

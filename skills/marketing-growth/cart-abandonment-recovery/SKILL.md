@@ -1,6 +1,6 @@
 ---
 name: cart-abandonment-recovery
-description: "Win back shoppers who leave with carts by sending timed email, SMS, and push sequences with escalating incentives to complete their purchase"
+description: "Win back shoppers who leave items in their cart by setting up timed email, SMS, and push sequences with escalating incentives to complete their purchase"
 category: marketing-growth
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [cart-abandonment, email, sms, push-notifications, recovery, incentive, retargeting, conversion]
 triggers: ["cart abandonment", "abandoned cart recovery", "recover abandoned carts", "cart recovery emails", "abandonment sequence"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,9 @@ difficulty: intermediate
 
 ## Overview
 
-Cart abandonment averages 70% across e-commerce, making recovery flows one of the highest-ROI automations available. This skill covers detecting abandonment server-side, orchestrating a multi-channel recovery sequence (email → push → SMS), applying escalating incentives only when needed, and cancelling the sequence immediately on conversion.
+Cart abandonment averages 70% across e-commerce, making recovery flows one of the highest-ROI automations available. A good recovery sequence sends 2–4 messages across email, SMS, and push — starting with a simple reminder, then adding social proof or urgency, and only offering a discount as a last resort. The sequence cancels immediately when the customer completes checkout.
+
+This skill guides you through setting up cart abandonment recovery on your specific platform, choosing the right tools, and configuring the sequence for maximum revenue recovery without training customers to abandon on purpose.
 
 ## When to Use This Skill
 
@@ -27,255 +29,282 @@ Cart abandonment averages 70% across e-commerce, making recovery flows one of th
 - When needing to differentiate recovery strategy by cart value or customer segment
 - When A/B testing incentive timing (immediate vs. 24h vs. 48h discount reveal)
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, email service provider (Klaviyo, Mailchimp), optionally an SMS provider (Postscript, Attentive)
-
 ## Core Instructions
 
-1. **Detect abandonment with a server-side timer**
+### Step 1: Determine the merchant's platform and recommend the right tool
 
-   Do not rely on `beforeunload` events — they are unreliable. Instead, record when a cart was last updated and run a scheduled job to detect inactivity:
+Ask which platform the store runs on. The setup is completely different depending on the platform:
 
-   ```typescript
-   // On every cart mutation, stamp the last-active time
-   async function onCartUpdated(cartId: string) {
-     await db.carts.update(cartId, { lastActiveAt: new Date(), recoveryTriggered: false });
-   }
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Klaviyo (free up to 250 contacts) or Shopify's built-in abandoned checkout emails | Klaviyo has deep Shopify integration, tracks cart events automatically, and supports email + SMS in one tool |
+| **WooCommerce** | AutomateWoo ($99/yr) or CartFlows + FluentCRM | AutomateWoo hooks directly into WooCommerce cart events; CartFlows adds funnel recovery |
+| **BigCommerce** | Klaviyo or Omnisend | Both integrate natively with BigCommerce cart events |
+| **Magento** | Dotdigital (bundled with Adobe Commerce) or Klaviyo | Dotdigital is the default marketing automation for Magento; Klaviyo works for open-source Magento |
+| **Custom / Headless** | Klaviyo (via API) or build a custom sequence with BullMQ + SendGrid | Use Klaviyo's Track API to send cart events, then build flows in their visual editor |
 
-   // Cron: every 5 minutes
-   async function findAbandonedCarts() {
-     const cutoff = new Date(Date.now() - 60 * 60000); // 1 hour of inactivity
-     const carts = await db.carts.findWhere({
-       lastActiveAt: { lt: cutoff },
-       status: 'active',
-       recoveryTriggered: false,
-       customerEmail: { not: null },
-     });
+### Step 2: Set up the recovery sequence
 
-     for (const cart of carts) {
-       await db.carts.update(cart.id, { recoveryTriggered: true });
-       await startRecoverySequence(cart);
-     }
-   }
-   ```
+The optimal sequence follows this pattern — start without a discount and escalate only if needed:
 
-2. **Define the multi-channel sequence with escalating incentives**
+**Message 1 — Reminder (1 hour after abandonment)**
+- Channel: Email
+- Content: Show the cart items with images + prices, a "Complete your purchase" button
+- No discount — most recoveries happen here without incentive
 
-   ```typescript
-   interface RecoveryStep {
-     channel: 'email' | 'push' | 'sms';
-     delayFromAbandonMs: number;
-     incentive: null | { type: 'free_shipping' | 'percent_off'; value: number };
-     template: string;
-   }
+**Message 2 — Social proof or urgency (4–6 hours)**
+- Channel: Push notification or email
+- Content: "X people are viewing this item" or "Low stock — only Y left"
+- Still no discount
 
-   function getRecoverySequence(cartValue: number): RecoveryStep[] {
-     const highValue = cartValue >= 100;
+**Message 3 — Small incentive (24 hours)**
+- Channel: Email
+- Content: Free shipping (if cart > $75) or 10% off
+- Include a unique, single-use discount code that expires in 48 hours
 
-     return [
-       // Step 1: Friendly reminder, no incentive
-       { channel: 'email', delayFromAbandonMs: 60 * 60000,      incentive: null,                                    template: 'cart-reminder' },
-       // Step 2: Add social proof and urgency
-       { channel: 'push',  delayFromAbandonMs: 4 * 3600000,     incentive: null,                                    template: 'cart-push-reminder' },
-       // Step 3: Free shipping if cart > $100, else 10% off
-       { channel: 'email', delayFromAbandonMs: 24 * 3600000,    incentive: highValue ? { type: 'free_shipping', value: 0 } : { type: 'percent_off', value: 10 }, template: 'cart-incentive' },
-       // Step 4: Last chance — escalate discount for high-value carts
-       { channel: 'sms',   delayFromAbandonMs: 48 * 3600000,    incentive: highValue ? { type: 'percent_off', value: 15 } : { type: 'percent_off', value: 10 }, template: 'cart-last-chance' },
-     ];
-   }
-   ```
+**Message 4 — Final push (48 hours)**
+- Channel: SMS (only if opted in)
+- Content: "Last chance — your cart expires tomorrow" + discount reminder
+- This is the last message. Stop after this.
 
-3. **Schedule recovery jobs and generate unique recovery links**
+> **Never send more than 4 messages.** Beyond that, you damage brand perception more than you recover revenue.
 
-   ```typescript
-   import { Queue } from 'bullmq';
-   import { randomBytes } from 'crypto';
+### Step 3: Platform-specific setup
 
-   const recoveryQueue = new Queue('cart-recovery', {
-     connection: { host: process.env.REDIS_HOST, port: 6379 },
-   });
+---
 
-   async function startRecoverySequence(cart: Cart) {
-     const recoveryToken = randomBytes(20).toString('hex');
-     await db.cartRecoveryTokens.create({
-       cartId: cart.id,
-       token: recoveryToken,
-       expiresAt: new Date(Date.now() + 7 * 86400000),
-     });
+#### Shopify
 
-     const sequence = getRecoverySequence(cart.totalValue);
-     const abandonedAt = cart.lastActiveAt.getTime();
+**Option A: Built-in abandoned checkout emails (free, basic)**
 
-     for (const [i, step] of sequence.entries()) {
-       const delay = Math.max(0, step.delayFromAbandonMs - (Date.now() - abandonedAt));
-       let discountCode: string | null = null;
+1. Go to **Settings → Checkout → Abandoned checkouts**
+2. Check "Automatically send abandoned checkout emails"
+3. Set the delay (recommend: 1 hour for first email, 10 hours for second)
+4. Customize the email template under **Notifications → Abandoned checkout**
 
-       if (step.incentive) {
-         discountCode = await createOneTimeDiscount(step.incentive, cart.customerId);
-       }
+Limitations: Shopify's built-in recovery only supports one email (or two on Plus), no SMS, no conditional incentives. Move to Klaviyo when you need a full sequence.
 
-       await recoveryQueue.add(
-         'send-recovery',
-         { cartId: cart.id, step: i, channel: step.channel, template: step.template, recoveryToken, discountCode, customerEmail: cart.customerEmail, customerPhone: cart.customerPhone, cartItems: cart.items },
-         {
-           delay,
-           jobId: `recovery-${cart.id}-step${i}`,
-           removeOnComplete: true,
-         }
-       );
-     }
-   }
-   ```
+**Option B: Klaviyo (recommended for multi-step flows)**
 
-4. **Cancel the sequence when the cart converts**
+1. Install Klaviyo from the Shopify App Store
+2. Klaviyo automatically syncs with Shopify and tracks `Checkout Started` events
+3. In Klaviyo, go to **Flows → Create Flow → Abandoned Cart** (use their pre-built template)
+4. Configure the sequence:
 
-   ```typescript
-   async function onOrderCompleted(orderId: string) {
-     const order = await db.orders.findById(orderId, { include: ['cart'] });
-     if (!order.cartId) return;
+```
+Trigger: "Checkout Started" event
+  ↓
+Wait 1 hour → Check: "Has Placed Order since starting flow?" → If no:
+  ↓
+Email 1: Cart reminder (no discount)
+  ↓
+Wait 4 hours → Check: "Has Placed Order?" → If no:
+  ↓
+Email 2: Urgency/social proof
+  ↓
+Wait 20 hours → Check: "Has Placed Order?" → If no:
+  ↓
+Email 3: Include discount code (use Klaviyo's coupon block — creates unique single-use Shopify discount codes)
+  ↓
+Wait 24 hours → Check: "Has Placed Order?" → If no:
+  ↓
+SMS 4 (only to SMS-consented contacts): Final reminder with discount
+```
 
-     // Remove all pending recovery jobs
-     for (let step = 0; step < 4; step++) {
-       const job = await recoveryQueue.getJob(`recovery-${order.cartId}-step${step}`);
-       await job?.remove();
-     }
+5. To segment by cart value: add a **Conditional Split** on `$value` of the checkout event:
+   - Cart ≥ $100: offer free shipping
+   - Cart < $100: offer 10% off
+6. To protect VIP customers from discounts: add a Split on **Customer Lifetime Value** or **Total Orders** — skip the discount step for repeat buyers
 
-     await db.carts.update(order.cartId, { status: 'converted' });
-   }
-   ```
+**Shopify Flow (Plus only) — auto-tag for advanced routing:**
 
-5. **Implement the recovery link endpoint**
+```liquid
+Trigger: Checkout abandoned
+Condition: Cart total > 200
+Action: Add customer tag "high-value-abandoner"
+```
 
-   When a customer clicks the recovery email, restore their cart and redirect to checkout:
+Then use this tag in Klaviyo to route high-value abandoners to a VIP recovery sequence.
 
-   ```typescript
-   // GET /cart/recover/:token
-   export async function recoverCart(req: Request, res: Response) {
-     const { token } = req.params;
-     const record = await db.cartRecoveryTokens.findByToken(token);
+---
 
-     if (!record || record.expiresAt < new Date()) {
-       return res.redirect('/cart?expired=true');
-     }
+#### WooCommerce
 
-     const cart = await db.carts.findById(record.cartId, { include: ['items'] });
-     if (cart.status === 'converted') {
-       return res.redirect('/account/orders');
-     }
+**Option A: AutomateWoo (recommended)**
 
-     // Restore session cart
-     req.session.cartId = cart.id;
+1. Install and activate the AutomateWoo plugin
+2. Go to **AutomateWoo → Workflows → Add Workflow**
+3. Set the trigger to **"Cart Abandoned"**
+4. Configure timing and actions:
 
-     await db.cartRecoveryTokens.markUsed(record.id);
-     await analytics.track('Cart Recovery Link Clicked', {
-       cartId: cart.id,
-       customerId: cart.customerId,
-       cartValue: cart.totalValue,
-     });
+```
+Workflow 1: Cart Reminder
+  Trigger: Cart Abandoned
+  Timing Rule: Wait 1 hour
+  Action: Send Email (template: cart contents with images)
 
-     return res.redirect('/checkout');
-   }
-   ```
+Workflow 2: Urgency Email
+  Trigger: Cart Abandoned
+  Timing Rule: Wait 6 hours
+  Action: Send Email (template: "Items selling fast")
 
-6. **Send via the appropriate channel in the worker**
+Workflow 3: Discount Email
+  Trigger: Cart Abandoned
+  Timing Rule: Wait 24 hours
+  Action: Generate Coupon (10% off, single-use, expires in 48 hours)
+  Action: Send Email (template: include generated coupon code)
 
-   ```typescript
-   import { Worker } from 'bullmq';
+Workflow 4: SMS Last Chance (requires Twilio add-on)
+  Trigger: Cart Abandoned
+  Timing Rule: Wait 48 hours
+  Opt-in Rule: Customer has SMS marketing consent
+  Action: Send SMS via Twilio
+```
 
-   new Worker('cart-recovery', async (job) => {
-     const { channel, template, customerEmail, customerPhone, cartItems, discountCode, recoveryToken } = job.data;
+5. Set a **Rule** on each workflow: "Customer has not purchased since workflow started" — this auto-cancels the sequence on conversion
+6. For VIP segmentation: add a Rule checking `Customer → Total Spent > $500` to skip the discount workflow
 
-     const recoveryUrl = `${process.env.STORE_URL}/cart/recover/${recoveryToken}`;
+**Option B: CartFlows + FluentCRM (free alternative)**
 
-     if (channel === 'email') {
-       await sendRecoveryEmail({ to: customerEmail, template, cartItems, discountCode, recoveryUrl });
-     } else if (channel === 'push') {
-       await sendWebPush({ customerId: job.data.customerId, title: 'Your cart is waiting', body: 'Pick up where you left off', url: recoveryUrl });
-     } else if (channel === 'sms') {
-       if (!customerPhone) return; // skip if no phone
-       await sendSms({ to: customerPhone, body: `Your cart expires soon. ${discountCode ? `Use ${discountCode} for ${job.data.discountCode ? 'a discount' : ''}. ` : ''}Complete your order: ${recoveryUrl}` });
-     }
-   }, { connection: { host: process.env.REDIS_HOST, port: 6379 } });
-   ```
+1. Install CartFlows (cart abandonment tracking) and FluentCRM (email automation)
+2. CartFlows captures abandoned checkouts and syncs to FluentCRM as contacts
+3. Build the email sequence in FluentCRM's automation builder
 
-## Examples
+---
 
-### Segment-based incentive strategy
+#### BigCommerce
 
-Avoid training loyal customers to abandon — skip the discount for high-LTV segments:
+1. Install **Klaviyo** or **Omnisend** from the BigCommerce app marketplace
+2. Both platforms automatically track BigCommerce abandoned cart events
+3. Build the flow using the same 4-step sequence described above
+4. BigCommerce also has a built-in abandoned cart saver (**Marketing → Abandoned Cart Emails**) but it's limited to 3 emails with no SMS or conditional logic
+
+---
+
+#### Custom / Headless
+
+For headless storefronts, you have two paths:
+
+**Path A: Use Klaviyo's API (recommended)**
+
+Send cart events to Klaviyo, then build the flow in Klaviyo's visual editor:
 
 ```typescript
-async function getIncentiveForCustomer(customerId: string, cartValue: number) {
-  const customer = await db.customers.findById(customerId);
-  const totalSpend = await db.orders.sumByCustomer(customerId);
-
-  // VIP customers ($500+ lifetime spend) get free shipping, never a % discount
-  if (totalSpend >= 500) {
-    return { type: 'free_shipping', value: 0 };
-  }
-
-  // First-time abandoners: no incentive on first email, discount on second
-  const priorRecoveries = await db.cartRecoveryLog.countByCustomer(customerId);
-  if (priorRecoveries === 0) {
-    return null;
-  }
-
-  return { type: 'percent_off', value: cartValue >= 100 ? 15 : 10 };
+// When a cart is updated, send the event to Klaviyo
+async function trackCartUpdate(cart: Cart) {
+  await fetch('https://a.]klaviyo.com/api/events/', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Klaviyo-API-Key ${process.env.KLAVIYO_PRIVATE_KEY}`,
+      'Content-Type': 'application/json',
+      'revision': '2024-10-15',
+    },
+    body: JSON.stringify({
+      data: {
+        type: 'event',
+        attributes: {
+          metric: { data: { type: 'metric', attributes: { name: 'Checkout Started' } } },
+          profile: { data: { type: 'profile', attributes: { email: cart.customerEmail } } },
+          properties: {
+            value: cart.totalValue,
+            items: cart.items.map(i => ({
+              ProductName: i.name,
+              ProductURL: i.url,
+              ImageURL: i.imageUrl,
+              Price: i.price,
+              Quantity: i.quantity,
+            })),
+            checkout_url: `${process.env.STORE_URL}/checkout?cart=${cart.id}`,
+          },
+        },
+      },
+    }),
+  });
 }
 ```
 
-### Cart value snapshot to handle price changes
+Then build the abandoned cart flow in Klaviyo's UI — same 4-step sequence, no need to manage timers or queues yourself.
 
-Store a cart snapshot at abandonment time so recovery emails show accurate prices:
+**Path B: Build it yourself (only if you need full control)**
+
+If you need custom logic that Klaviyo can't handle (custom discount rules, proprietary channels, etc.), build the sequence with a job queue:
 
 ```typescript
-async function snapshotCart(cartId: string): Promise<CartSnapshot> {
-  const cart = await db.carts.findById(cartId, { include: ['items.product'] });
+// Detect abandoned carts — run every 5 minutes via cron
+async function findAbandonedCarts() {
+  const cutoff = new Date(Date.now() - 60 * 60000); // 1 hour inactive
+  const carts = await db.carts.findWhere({
+    lastActiveAt: { lt: cutoff },
+    status: 'active',
+    recoveryTriggered: false,
+    customerEmail: { not: null },
+  });
 
-  const snapshot = {
-    cartId,
-    snapshotAt: new Date(),
-    items: cart.items.map((item) => ({
-      productId: item.productId,
-      name: item.product.name,
-      image: item.product.images[0]?.url,
-      price: item.product.price,       // snapshot at abandonment
-      quantity: item.quantity,
-     })),
-    totalValue: cart.totalValue,
-  };
+  for (const cart of carts) {
+    await db.carts.update(cart.id, { recoveryTriggered: true });
+    await recoveryQueue.add('send-step-1', { cartId: cart.id }, { delay: 0 });
+    await recoveryQueue.add('send-step-2', { cartId: cart.id }, { delay: 4 * 3600000 });
+    await recoveryQueue.add('send-step-3', { cartId: cart.id }, { delay: 24 * 3600000 });
+    await recoveryQueue.add('send-step-4', { cartId: cart.id }, { delay: 48 * 3600000 });
+  }
+}
 
-  await db.cartSnapshots.upsert({ cartId }, snapshot);
-  return snapshot;
+// Cancel on conversion
+async function onOrderCompleted(orderId: string) {
+  const order = await db.orders.findById(orderId);
+  if (!order.cartId) return;
+  const jobs = await recoveryQueue.getJobs(['delayed']);
+  for (const job of jobs) {
+    if (job.data.cartId === order.cartId) await job.remove();
+  }
 }
 ```
+
+### Step 4: Configure incentive strategy
+
+Regardless of platform, follow these rules for discounts:
+
+1. **Never offer a discount on the first message** — most carts recover without one
+2. **Use single-use codes** — prevents sharing and reuse
+3. **Set a 48-hour expiry** on all discount codes — urgency converts
+4. **Segment by customer value:**
+   - New customers (0 orders): 10% off after 24 hours
+   - Returning customers (1–5 orders): free shipping only
+   - VIP customers (6+ orders or $500+ lifetime): no discount, just a reminder — they'll come back
+5. **Track discount abuse** — if a customer has abandoned and recovered with a discount 3+ times, remove them from discount flows
+
+### Step 5: Measure and optimize
+
+Track these metrics weekly:
+
+| Metric | Good Benchmark | How to Find It |
+|--------|---------------|----------------|
+| Recovery rate | 5–15% of abandoned carts | Klaviyo: Flow analytics. AutomateWoo: Reports → Workflows |
+| Revenue recovered | Track with UTM params (`?utm_source=recovery&utm_medium=email`) | Google Analytics → Campaigns |
+| Unsubscribe rate from recovery emails | < 0.5% per send | Your email provider's analytics |
+| Discount usage rate | < 30% of recoveries should use a discount | Compare discount vs. non-discount recovery orders |
+
+If more than 30% of recovered orders use a discount, you're revealing the discount too early. Push it to step 3 or 4, or increase the delay.
 
 ## Best Practices
 
-- **Never send more than 4 recovery touchpoints** — beyond that, you damage brand perception more than you recover revenue
-- **Do not show the discount on step 1** — most recoveries happen within the first hour without incentive; save margins for genuinely lost carts
-- **Expire discount codes in 48 hours** — urgency increases conversion; an open-ended code reduces perceived value
-- **Respect SMS opt-in status** — only send SMS recovery to customers who explicitly opted in for marketing SMS
-- **Include cart items in every message** — reminder of what they left behind outperforms generic "you forgot something" copy
-- **Use one-time use discount codes** — prevents customers from sharing or reusing the code across multiple orders
-- **Track recovery attribution separately** — use UTM params and a `recovered=true` query flag to distinguish recovery revenue
-- **Suppress within 7 days of a prior recovery sequence** — if a customer abandoned again shortly after a previous recovery, a cooling-off period improves deliverability
+- **Capture email before payment** — place the email field as the first checkout step so you can identify abandoners even if they don't finish
+- **Include cart item images in every message** — a visual reminder outperforms "you forgot something" text
+- **Respect SMS opt-in** — only send SMS recovery to customers who explicitly opted in; violations of TCPA/GDPR carry heavy fines
+- **Suppress for 7 days after a prior sequence** — if a customer abandoned again right after a recovery sequence, give them space
+- **A/B test the first email's delay** — try 30 min vs. 1 hour vs. 2 hours and measure recovery rate for each
+- **Don't include discount codes in subject lines** — it trains customers to look for them and damages brand perception
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Recovery email sent after order placed | Attach an `order.created` hook that immediately cancels all pending recovery jobs for the associated cart |
-| Anonymous cart abandonment not captured | Require email at the first checkout step (before payment) so the customer is identifiable at abandonment |
-| Duplicate sequences for the same cart | Use `recoveryTriggered: true` flag and deterministic BullMQ `jobId` to prevent re-triggering |
-| SMS sends to customers who didn't opt in | Gate SMS step behind a database `smsMarketingOptIn` flag; default to `false` |
-| High unsubscribe rate from recovery emails | Reduce frequency and ensure unsubscribe link is prominent; one-click unsubscribe is now legally required in many jurisdictions |
+| Recovery email sent after order placed | Ensure your flow checks "Has Placed Order" before each step (Klaviyo does this with flow filters; AutomateWoo uses rules) |
+| Anonymous cart abandonment not captured | Require email at the first checkout step, before payment details |
+| Customers learn to abandon for discounts | Never offer discount on message 1; skip discounts for repeat customers; track and exclude serial abandoners |
+| SMS sends to customers who didn't opt in | Gate SMS behind explicit opt-in; use your platform's consent tracking (Klaviyo tracks SMS consent separately from email) |
+| High unsubscribe rate from recovery emails | Reduce to 2–3 messages instead of 4; ensure one-click unsubscribe link is prominent |
+| Recovery emails land in spam | Use your platform's authenticated sending domain (DKIM/SPF); avoid spam trigger words like "FREE" in caps |
 
 ## Related Skills
 

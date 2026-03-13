@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [content-commerce, shoppable-content, blog, editorial, seo, product-embedding, cms, headless]
 triggers: ["content commerce", "shoppable blog", "shoppable content", "editorial merchandising", "blog to commerce", "product embedding in blog"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,314 +16,191 @@ difficulty: intermediate
 
 ## Overview
 
-Content commerce bridges editorial content — blog posts, buying guides, lookbooks — with direct product purchasing, capturing high-intent organic traffic and shortening the path from discovery to purchase. This skill covers embedding shoppable product widgets in CMS content, managing the relationship between articles and products, implementing schema.org markup for Google rich results, and tracking content-driven revenue attribution.
+Content commerce bridges editorial content — blog posts, buying guides, lookbooks — with direct product purchasing, capturing high-intent organic traffic and shortening the path from discovery to purchase. Shopify and WooCommerce both have built-in blog functionality where you can link products directly; headless setups require a CMS integration. The key goal is making it easy for your editorial team to embed products without engineering help, and tracking which content pieces actually drive revenue.
 
 ## When to Use This Skill
 
 - When a blog drives significant organic traffic but contributes little to revenue
-- When building a headless commerce setup where the CMS and storefront are separate systems
 - When editorial team needs a no-code way to embed products inside articles
 - When implementing SEO-optimized buying guides that rank for "best [product category]" queries
 - When building a lookbook or collection page with editorial text and shoppable product grids
-- When needing to track which content pieces drive the most revenue (content attribution)
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store with a blog/CMS, product catalog API access, analytics tracking
+- When needing to track which content pieces drive the most revenue
 
 ## Core Instructions
 
-1. **Design the content-product relationship model**
+### Step 1: Determine the merchant's platform and content setup
 
-   ```typescript
-   // CMS content model (e.g., Contentful, Sanity, or custom)
-   interface Article {
-     id: string;
-     slug: string;
-     title: string;
-     body: string;              // Rich text with product embeds as custom nodes
-     featuredProductIds: string[];  // Curated products for the sidebar/footer
-     categories: string[];
-     publishedAt: Date;
-   }
+| Platform | Content Tool | Shoppable Embedding Approach |
+|----------|-------------|------------------------------|
+| **Shopify** | Shopify Blog (built-in) | Use Shogun or PageFly page builder to embed product cards; or use Shopify's native blog with manual product links |
+| **WooCommerce** | WordPress native blog | Use WooCommerce product blocks (Gutenberg) or WooCommerce Shortcodes to embed products inline |
+| **BigCommerce** | BigCommerce Blog or WordPress | WordPress: use WooCommerce Shortcodes or a product block plugin; BigCommerce blog: manual product linking only |
+| **Headless / Custom CMS** | Contentful, Sanity, Prismic | Build a product embed component using the CMS's custom content type system and Storefront API |
 
-   interface ProductEmbed {
-     type: 'product_embed';
-     productId: string;
-     displayStyle: 'card' | 'inline' | 'full';
-     ctaText?: string;           // e.g., "Shop Now", "View Details"
-     position: 'inline' | 'sidebar' | 'post_body';
-   }
+### Step 2: Set up shoppable content
 
-   // Database table: article_products (many-to-many)
-   // article_id | product_id | embed_type | sort_order
-   ```
+---
 
-2. **Build a CMS product embed component**
+#### Shopify
 
-   For rich-text editors (e.g., Contentful Rich Text, Portable Text in Sanity), register a custom block type:
+**Option A: Shopify Blog with native product links (free, simple)**
 
-   ```typescript
-   // Sanity schema definition for a product embed block
-   // schemas/productEmbed.ts
-   export const productEmbedType = {
-     name: 'productEmbed',
-     title: 'Product Embed',
-     type: 'object',
-     fields: [
-       {
-         name: 'product',
-         title: 'Product',
-         type: 'reference',
-         to: [{ type: 'product' }],
-       },
-       {
-         name: 'displayStyle',
-         title: 'Display Style',
-         type: 'string',
-         options: { list: ['card', 'inline', 'full'] },
-         initialValue: 'card',
-       },
-       {
-         name: 'ctaText',
-         title: 'CTA Text',
-         type: 'string',
-         initialValue: 'Shop Now',
-       },
-     ],
-   };
-   ```
+1. Go to **Shopify Admin → Online Store → Blog Posts**
+2. In any blog post, highlight text and click the link icon to link to a product page (e.g., `/products/product-handle`)
+3. To embed a product image with a buy button, use a section or block in your theme:
+   - Go to **Online Store → Themes → Customize**
+   - On the blog post template, add a "Product" or "Featured Product" section and configure it for each post
+4. Limitations: no inline product cards; products appear as separate sections above/below the article body
 
-   React renderer for the product embed:
+**Option B: Shogun or PageFly (recommended for buying guides)**
 
-   ```tsx
-   // components/ProductEmbed.tsx
-   import { useEffect, useState } from 'react';
+1. Install **Shogun** or **PageFly** from the Shopify App Store
+2. Create a new landing page for your buying guide or lookbook
+3. Drag and drop **Product Card** elements directly into the editorial content
+4. Each product card shows image, price, and "Add to Cart" button with live Shopify inventory
+5. Publish the page and link to it from your blog or navigation
 
-   interface ProductEmbedProps {
-     productId: string;
-     displayStyle: 'card' | 'inline' | 'full';
-     ctaText: string;
-     articleId: string; // for attribution tracking
-   }
+**Option C: Instant (previously known as EcomSend) — for in-blog product embeds**
 
-   export function ProductEmbed({ productId, displayStyle, ctaText, articleId }: ProductEmbedProps) {
-     const [product, setProduct] = useState<Product | null>(null);
+1. Install the Instant page builder app
+2. Use the blog post editor to add product cards inline within article text
 
-     useEffect(() => {
-       fetch(`/api/products/${productId}?fields=name,price,images,slug,inStock`)
-         .then((r) => r.json())
-         .then(setProduct);
-     }, [productId]);
+---
 
-     if (!product) return <div className="product-embed-skeleton" />;
+#### WooCommerce
 
-     const handleClick = () => {
-       // Track content-to-commerce click for attribution
-       fetch('/api/analytics/content-click', {
-         method: 'POST',
-         body: JSON.stringify({ articleId, productId, ctaText }),
-       });
-     };
+**Using Gutenberg product blocks (built-in with WooCommerce):**
 
-     return (
-       <div className={`product-embed product-embed--${displayStyle}`} data-product-id={productId}>
-         <img src={product.images[0]?.url} alt={product.name} />
-         <div className="product-embed__info">
-           <h3>{product.name}</h3>
-           <p className="price">${(product.priceInCents / 100).toFixed(2)}</p>
-           {!product.inStock && <span className="out-of-stock">Out of stock</span>}
-         </div>
-         <a
-           href={`/products/${product.slug}?ref=article&article_id=${articleId}`}
-           onClick={handleClick}
-           className="btn btn-primary"
-         >
-           {ctaText}
-         </a>
-       </div>
-     );
-   }
-   ```
+1. Open any WordPress post in the Gutenberg editor
+2. Click the + block button and search for "Products"
+3. Insert a **Products (Beta)** block or **Hand-picked Products** block
+4. Search for products by name and select them — a product grid with prices and "Add to Cart" appears inline in the article
+5. For a single inline product card, use the **Single Product** block
 
-3. **Implement schema.org Article and Product markup for SEO**
+**Using WooCommerce Shortcodes (classic editor):**
 
-   Rich results in Google Search require structured data. Add both Article and ItemList schema:
+Insert a product anywhere in article text:
+```
+[product id="123"]
+[products ids="123,456,789" columns="3"]
+[product_page id="123"]
+```
 
-   ```typescript
-   function buildArticleSchema(article: Article, products: Product[]) {
-     return {
-       '@context': 'https://schema.org',
-       '@graph': [
-         {
-           '@type': 'Article',
-           headline: article.title,
-           datePublished: article.publishedAt.toISOString(),
-           dateModified: article.updatedAt.toISOString(),
-           author: { '@type': 'Organization', name: process.env.STORE_NAME },
-         },
-         {
-           '@type': 'ItemList',
-           name: `Products featured in: ${article.title}`,
-           itemListElement: products.map((p, i) => ({
-             '@type': 'ListItem',
-             position: i + 1,
-             item: {
-               '@type': 'Product',
-               name: p.name,
-               image: p.images[0]?.url,
-               url: `${process.env.STORE_URL}/products/${p.slug}`,
-               offers: {
-                 '@type': 'Offer',
-                 price: (p.priceInCents / 100).toFixed(2),
-                 priceCurrency: 'USD',
-                 availability: p.inventory > 0
-                   ? 'https://schema.org/InStock'
-                   : 'https://schema.org/OutOfStock',
-               },
-             },
-           })),
-         },
-       ],
-     };
-   }
-   ```
+---
 
-4. **Build an editorial merchandising API for curated collections**
+#### BigCommerce
 
-   Allow editors to create curated product selections tied to an article or campaign:
+1. For BigCommerce's built-in blog, you are limited to manual product links — no native product embed blocks
+2. **Recommended**: run WordPress on a subdomain (`blog.yourstore.com`) with the BigCommerce for WordPress plugin
+3. This gives you Gutenberg product blocks (same as WooCommerce setup above) while the main store runs on BigCommerce
 
-   ```typescript
-   // POST /api/cms/articles/:articleId/products
-   export async function setArticleProducts(req: Request, res: Response) {
-     const { articleId } = req.params;
-     const { productIds, displayConfig } = req.body;
+---
 
-     await db.articleProducts.deleteWhere({ articleId });
-     await db.articleProducts.createMany(
-       productIds.map((productId: string, i: number) => ({
-         articleId,
-         productId,
-         sortOrder: i,
-         displayConfig,
-       }))
-     );
+#### Custom / Headless
 
-     // Purge the article's edge cache
-     await purgeCache(`/blog/${articleId}`);
-     res.json({ ok: true });
-   }
+For headless setups with Contentful, Sanity, or Prismic, build a product embed content type:
 
-   // GET /api/cms/articles/:articleId/products
-   export async function getArticleProducts(req: Request, res: Response) {
-     const { articleId } = req.params;
-     const products = await db.articleProducts.findByArticle(articleId, {
-       include: ['product.images', 'product.variants'],
-       orderBy: 'sortOrder',
-     });
-     res.json(products);
-   }
-   ```
-
-5. **Track content-driven revenue with UTM attribution**
-
-   Append UTM parameters to all in-content product links and track at the order level:
-
-   ```typescript
-   function buildContentProductUrl(product: Product, article: Article): string {
-     const params = new URLSearchParams({
-       utm_source: 'content',
-       utm_medium: 'article',
-       utm_campaign: article.slug,
-       utm_content: product.slug,
-     });
-     return `${process.env.STORE_URL}/products/${product.slug}?${params}`;
-   }
-
-   // In the order webhook handler, capture UTM source for reporting
-   async function captureOrderAttribution(orderId: string, utmParams: Record<string, string>) {
-     await db.orderAttribution.create({
-       orderId,
-       source: utmParams.utm_source,
-       medium: utmParams.utm_medium,
-       campaign: utmParams.utm_campaign,
-       content: utmParams.utm_content,
-     });
-   }
-   ```
-
-## Examples
-
-### Auto-generate product recommendations from article keywords
-
-Use product tags and article keywords to automatically suggest related products without manual curation:
-
+**Sanity schema for a product embed:**
 ```typescript
-async function getAutoRecommendedProducts(article: Article, limit = 6): Promise<Product[]> {
-  // Extract keywords from article title and categories
-  const keywords = [
-    ...article.title.toLowerCase().split(' '),
-    ...article.categories,
-  ].filter((k) => k.length > 3); // filter stop words by length
+// schemas/productEmbed.ts
+export const productEmbedType = {
+  name: 'productEmbed',
+  title: 'Product Embed',
+  type: 'object',
+  fields: [
+    {
+      name: 'productId',
+      title: 'Product ID',
+      type: 'string',
+      description: 'Shopify/BigCommerce product ID or handle',
+    },
+    {
+      name: 'displayStyle',
+      title: 'Display Style',
+      type: 'string',
+      options: { list: ['card', 'inline', 'full'] },
+      initialValue: 'card',
+    },
+    {
+      name: 'ctaText',
+      title: 'CTA Text',
+      type: 'string',
+      initialValue: 'Shop Now',
+    },
+  ],
+};
+```
 
-  // Find products whose tags overlap with article keywords
-  const products = await db.products.findByTags(keywords, {
-    limit,
-    orderBy: { salesCount: 'desc' },
-    where: { status: 'active', inventory: { gt: 0 } },
-  });
+React component that fetches live price and inventory from the Storefront API:
+```tsx
+export function ProductEmbed({ productId, displayStyle, ctaText, articleSlug }: ProductEmbedProps) {
+  const [product, setProduct] = useState<Product | null>(null);
 
-  return products;
+  useEffect(() => {
+    fetch(`/api/products/${productId}?fields=name,price,images,slug,inStock`)
+      .then(r => r.json())
+      .then(setProduct);
+  }, [productId]);
+
+  if (!product) return <div className="product-embed-skeleton" />;
+
+  return (
+    <div className={`product-embed product-embed--${displayStyle}`}>
+      <img src={product.images[0]?.url} alt={product.name} />
+      <div className="product-embed__info">
+        <h3>{product.name}</h3>
+        <p>${(product.priceInCents / 100).toFixed(2)}</p>
+        {!product.inStock && <span>Out of stock</span>}
+      </div>
+      <a href={`/products/${product.slug}?utm_source=content&utm_campaign=${articleSlug}`}>
+        {ctaText}
+      </a>
+    </div>
+  );
 }
 ```
 
-### Buying guide performance report
+### Step 3: Add UTM attribution to all content links
 
-```sql
--- Content attribution: revenue driven by each article
-SELECT
-  oa.campaign AS article_slug,
-  COUNT(DISTINCT o.id) AS orders,
-  SUM(o.subtotal_cents) / 100.0 AS revenue,
-  AVG(o.subtotal_cents) / 100.0 AS aov
-FROM orders o
-JOIN order_attribution oa ON o.id = oa.order_id
-WHERE oa.source = 'content'
-  AND o.created_at >= NOW() - INTERVAL '90 days'
-GROUP BY oa.campaign
-ORDER BY revenue DESC
-LIMIT 20;
-```
+Append UTM parameters to every product link within content so you can track which articles drive revenue in Google Analytics:
+
+- For Shopify/WooCommerce native embeds: add `?utm_source=content&utm_medium=blog&utm_campaign=ARTICLE-SLUG` to product URLs manually or via a theme setting
+- For Shogun/PageFly: each button has a URL field — include UTM params there
+- For headless: build UTM parameters into the product embed component automatically using the article slug
+
+### Step 4: Track content-driven revenue
+
+In **Google Analytics 4**:
+1. Go to **Reports → Acquisition → Traffic Acquisition**
+2. Filter by `Session source = content` to see all orders attributed to blog content
+3. For more detail: go to **Explore → Funnel Exploration** and filter by `utm_medium = blog`
+
+In **Shopify Analytics**:
+1. Go to **Analytics → Reports → Sales by traffic source**
+2. Filter by source to see UTM-tagged content traffic
 
 ## Best Practices
 
-- **Load product embeds lazily** — product price and inventory change frequently; fetch live data at render time, not at CMS publish time
-- **Cache product embed data at the edge with a short TTL** (5–15 minutes) — balances freshness with performance
-- **Use UTM `utm_content` = product slug** so you can attribute which specific embedded product drove the conversion, not just which article
-- **Add nofollow to in-content product links** if the content is written by affiliates or partners — this protects your PageRank
-- **Provide an "out of stock" fallback** in the embed — show related products or a "notify me" button rather than a broken-looking card
-- **Enable editorial team self-service** — build a product picker UI in the CMS so writers can embed products without engineering help
-- **Track scroll depth on buying guides** — knowing that 60% of users drop off before reaching the embedded products tells you to move them higher up the page
+- **Fetch product prices live** — never hardcode prices in CMS content; prices change and stale prices erode trust
+- **Show "Out of Stock" state** in product embeds — a broken-looking card hurts conversion more than no card at all
+- **Place product embeds high in the article** — data shows most readers don't scroll past 60% of an article; embed the first product recommendation within the first 400 words
+- **Use UTM `utm_content` = product slug** — this lets you see which specific product in an article drove the conversion, not just which article
+- **Give editorial team a product search tool** — in Shopify, editors can search products by name when building pages in Shogun/PageFly; do not require them to know product IDs
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Product prices in articles are stale | Fetch prices from the storefront API at render time; never embed prices as static CMS content |
-| Out-of-stock products remain embedded in live articles | Add an inventory check to the article rendering pipeline and replace out-of-stock embeds with alternatives |
-| Article schema.org markup fails Google validation | Test with the Google Rich Results Test; ensure product `offers.price` is a number, not a formatted string with currency symbols |
-| CMS editors can't find products to embed | Build a product search/picker in the CMS editor that queries the storefront API — don't rely on editors knowing SKUs or product IDs |
-| Content attribution double-counts — same order attributed to both content and email | Use a priority hierarchy: paid search > email > content > organic; the first paid touch overrides content attribution |
+| Product prices in articles are stale | Always fetch prices from the storefront API at render time; never embed prices as static CMS content |
+| Out-of-stock products remain embedded in live articles | Add an inventory check in your product embed component; show "notify me" or a related product instead |
+| CMS editors can't find products to embed | Use Shogun/PageFly's product search widget; for headless, build a product picker that queries the Storefront API |
+| Content attribution double-counts — same order attributed to both content and email | In GA4, use last non-direct click as the attribution model, or manually review multi-touch paths in the Path Exploration report |
+| Buying guide SEO titles not ranking | Ensure article titles match the exact query format ("Best [Product Type] for [Use Case] in [Year]") and include product schema.org markup |
 
 ## Related Skills
 
 - @social-commerce
 - @influencer-tracking
-- @sms-marketing
+- @ecommerce-seo
 - @email-marketing-automation
-- @attribution-modeling
+- @marketing-attribution-dashboard

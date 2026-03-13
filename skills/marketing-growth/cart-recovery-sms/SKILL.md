@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [sms, cart-recovery, abandonment]
 triggers: ["set up SMS cart recovery", "reduce cart abandonment with SMS"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,374 +16,137 @@ difficulty: intermediate
 
 ## Overview
 
-SMS cart abandonment recovery consistently achieves 20–35% recovery rates — typically 3–5× higher than email — because text messages are read within 3 minutes of delivery for 90% of recipients. The key is a properly timed sequence (not spam), deep personalization using cart contents, and bulletproof compliance with TCPA in North America and GDPR/PECR in Europe. This skill covers the full implementation: opt-in capture, compliance infrastructure, message sequencing, cart data personalization, link shortening with UTM tracking, and performance measurement.
-
-## When to Use This Skill
+SMS cart abandonment recovery consistently achieves 20–35% recovery rates — typically 3–5× higher than email — because text messages are read within 3 minutes of delivery for 90% of recipients. The key is a properly timed sequence (not spam), deep personalization using cart contents, and bulletproof TCPA/GDPR compliance. Most merchants should use a dedicated SMS app rather than building custom infrastructure.
 
 > **Note:** For multi-channel cart recovery (email + SMS + push), see @cart-abandonment-recovery. This skill focuses on SMS-only recovery.
+
+## When to Use This Skill
 
 - When email-only cart recovery sequences plateau below a 10% recovery rate
 - When launching SMS as a new marketing channel and cart recovery is the highest-ROI starting point
 - When re-platforming to a new SMS provider and need to rebuild flows
-- When expanding to markets where SMS has higher deliverability than email
 - When A/B testing recovery channels to find the optimal message mix
-- When a high-value cart threshold warrants more aggressive recovery (carts > $100)
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, SMS provider account (Postscript, Attentive, or Twilio), TCPA-compliant opt-in mechanism
 
 ## Core Instructions
 
-### 1. Compliance infrastructure — build this first
+### Step 1: Choose the right SMS platform
 
-TCPA (US) requires express written consent before sending marketing SMS. GDPR (EU) requires a lawful basis (typically consent) and easy opt-out. Build this before any send logic.
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Postscript or Attentive | Deep Shopify integration, automatic cart event capture, built-in TCPA compliance, Shopify checkout opt-in widget |
+| **WooCommerce** | SMSBump (by Yotpo) or Klaviyo SMS | WooCommerce plugin available, hooks into WooCommerce cart events automatically |
+| **BigCommerce** | Attentive or Klaviyo SMS | Native BigCommerce integrations, automatic event tracking |
+| **Custom / Headless** | Klaviyo SMS (via API) or Twilio + custom logic | Klaviyo handles compliance and sequencing via API; Twilio for full custom control |
 
-```typescript
-// schema: sms_consents table
-interface SmsConsent {
-  id: string;
-  phone: string;           // E.164 format: +12125551234
-  email?: string;
-  consentMethod: 'checkout' | 'popup' | 'keyword' | 'api';
-  consentText: string;     // exact disclosure text shown at opt-in
-  ipAddress: string;
-  userAgent: string;
-  consentedAt: Date;
-  optedOutAt?: Date;
-  jurisdiction: 'US' | 'CA' | 'EU' | 'OTHER';
-  source: string;          // e.g. 'checkout-step-2', 'popup-homepage'
-}
-```
+### Step 2: Set up SMS opt-in (compliance first)
 
-Checkout opt-in widget (React):
+TCPA (US) requires express written consent before sending marketing SMS. Build this before any send logic.
 
-```tsx
-function SmsOptIn({ phone, onConsent }: { phone: string; onConsent: (agreed: boolean) => void }) {
-  const [checked, setChecked] = useState(false);
+---
 
-  const disclosureText = `By checking this box, you agree to receive recurring automated marketing text messages
-  (e.g. cart reminders) at the phone number provided. Consent is not a condition of purchase.
-  Message & data rates may apply. Message frequency varies. Reply STOP to unsubscribe.
-  View our Privacy Policy and Terms.`;
+#### Shopify
 
-  return (
-    <label className="flex items-start gap-2 text-sm">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => {
-          setChecked(e.target.checked);
-          onConsent(e.target.checked);
-        }}
-      />
-      <span>{disclosureText}</span>
-    </label>
-  );
-}
-```
+**Using Postscript:**
 
-Opt-out handler (critical — must process immediately):
+1. Install Postscript from the Shopify App Store
+2. Go to **Postscript → Opt-in Tools → Checkout Opt-in**
+3. Postscript automatically adds a compliant SMS opt-in checkbox to your Shopify checkout with the required TCPA disclosure text
+4. Enable **Keyword Opt-in** under **Opt-in Tools → Keywords** — customers can text your keyword to subscribe
+5. Postscript handles STOP/HELP responses, quiet hours, and consent storage automatically
 
-```typescript
-// POST /webhooks/sms/inbound  — handle STOP, UNSUBSCRIBE, CANCEL, QUIT, END, HELP
-async function handleInboundSms(body: string, from: string) {
-  const normalized = body.trim().toUpperCase();
-  const optOutKeywords = ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'QUIT', 'END'];
-  const helpKeywords   = ['HELP', 'INFO'];
+**Using Attentive:**
 
-  if (optOutKeywords.includes(normalized)) {
-    await db.smsConsents.update(
-      { optedOutAt: new Date() },
-      { where: { phone: from, optedOutAt: null } }
-    );
-    // Reply is mandatory under TCPA
-    return 'You have been unsubscribed and will receive no further messages. Reply START to resubscribe.';
-  }
+1. Install Attentive from the Shopify App Store
+2. Attentive's two-tap mobile opt-in (sign-up units) achieves higher opt-in rates than checkbox-only
+3. Go to **Attentive → Subscribers → Sign-up Units** to configure placement and offer
+4. Checkout integration is automatic after app install
 
-  if (helpKeywords.includes(normalized)) {
-    return `${process.env.STORE_NAME} alerts. Msg&data rates may apply. Reply STOP to cancel. Support: ${process.env.SUPPORT_EMAIL}`;
-  }
-}
-```
+---
 
-### 2. Capture cart state at abandonment
+#### WooCommerce
 
-Define "abandoned" as: cart created + checkout started, no purchase within N minutes.
+**Using SMSBump:**
 
-```typescript
-interface AbandonedCart {
-  sessionId: string;
-  customerId?: string;
-  phone?: string;
-  email?: string;
-  cartValue: number;
-  currency: string;
-  items: CartItem[];
-  checkoutUrl: string;    // recoverable link with session token
-  abandonedAt: Date;
-  recoveryState: 'pending' | 'sms1_sent' | 'sms2_sent' | 'sms3_sent' | 'recovered' | 'expired';
-}
+1. Install SMSBump plugin from WordPress plugin directory
+2. Go to **SMSBump → Opt-in → Checkout Opt-in** and enable the checkout checkbox with TCPA language
+3. Configure quiet hours under **SMSBump → Settings → Compliance** — enforce 8am–9pm in recipient timezone
+4. Go to **SMSBump → Automations → Cart Abandonment** and enable the abandonment flow
 
-// Run every 5 minutes via cron
-async function detectAbandonedCarts() {
-  const cutoff = new Date(Date.now() - 20 * 60 * 1000); // 20 min threshold
+---
 
-  const candidates = await db.carts.findAll({
-    where: {
-      status: 'checkout_started',
-      updatedAt: { lt: cutoff },
-      convertedAt: null,
-      recoveryState: 'pending',
-    },
-    include: ['items', 'customer'],
-  });
+#### BigCommerce
 
-  for (const cart of candidates) {
-    // Only schedule if we have phone + consent
-    if (cart.phone && await hasActiveConsent(cart.phone)) {
-      await scheduleRecoverySequence(cart);
-    }
-  }
-}
-```
+1. Install **Attentive** from the BigCommerce App Marketplace
+2. Configure the two-tap opt-in unit and checkout SMS opt-in through the Attentive dashboard
+3. BigCommerce cart events sync automatically after installation
 
-### 3. Build the timing sequence
+---
 
-Industry-tested timing for a 3-message sequence:
+### Step 3: Build the cart recovery sequence
 
-```typescript
-const SMS_RECOVERY_SCHEDULE = [
-  { step: 1, delayMinutes: 20,  type: 'reminder',   includeDiscount: false },
-  { step: 2, delayMinutes: 60,  type: 'social_proof', includeDiscount: false },
-  { step: 3, delayMinutes: 1440, type: 'last_chance', includeDiscount: true  }, // 24h
-];
+Use your SMS platform's automation builder. The optimal 3-message sequence:
 
-async function scheduleRecoverySequence(cart: AbandonedCart) {
-  for (const step of SMS_RECOVERY_SCHEDULE) {
-    await jobQueue.add(
-      'sms-recovery',
-      { cartId: cart.sessionId, step: step.step },
-      { delay: step.delayMinutes * 60 * 1000, attempts: 3, backoff: { type: 'exponential', delay: 5000 } }
-    );
-  }
-}
-```
+**Message 1 — Reminder (20–30 minutes after abandonment)**
+- No discount — most recoveries happen here without one
+- Include the product name and a direct checkout link
+- Example: "Hi [First Name], you left [Product Name] in your cart. Complete your order: [link] Reply STOP to opt out."
 
-### 4. Personalize and send each message
+**Message 2 — Social proof or urgency (60 minutes)**
+- Reference low stock or popularity
+- Example: "[Product Name] is almost gone — only 3 left. Your cart is saved: [link] Reply STOP to opt out."
 
-```typescript
-async function sendRecoverySms(cartId: string, step: number) {
-  const cart = await db.carts.findOne({ where: { sessionId: cartId }, include: ['items'] });
-  if (!cart || cart.recoveryState === 'recovered' || cart.recoveryState === 'expired') return;
+**Message 3 — Discount (24 hours)**
+- Only for carts above your minimum threshold (recommend $50+)
+- Use a unique single-use code
+- Example: "Last chance, [First Name]! Use [CODE] for 10% off before your cart expires. Checkout: [link] Reply STOP to opt out."
 
-  // Check consent is still active
-  if (!(await hasActiveConsent(cart.phone))) return;
+**Configuration in Postscript:**
+1. Go to **Postscript → Automations → New Automation → Checkout Abandoned**
+2. Add three messages with the timing above
+3. Add a filter on each step: "Has NOT placed an order since starting" — this auto-cancels on conversion
+4. For the discount message: use Postscript's built-in unique coupon generation (connects to Shopify's discount system)
+5. Set a cart value filter: only send the discount step for carts over $50
 
-  // Check quiet hours (8am–9pm local time)
-  if (!isWithinSendWindow(cart.phone)) {
-    await jobQueue.add('sms-recovery', { cartId, step }, { delay: getNextSendWindowMs(cart.phone) });
-    return;
-  }
+**Configuration in SMSBump (WooCommerce):**
+1. Go to **SMSBump → Automations → Cart Abandonment**
+2. Enable the three-step sequence with the same timing
+3. Add "Order Not Placed" condition to each step
+4. Connect WooCommerce coupon generation for the discount step
 
-  const recoveryLink = await generateRecoveryLink(cart);
-  const message = await buildMessage(cart, step, recoveryLink);
+### Step 4: Configure cart value thresholds and discount strategy
 
-  const result = await twilioClient.messages.create({
-    body: message,
-    from: process.env.TWILIO_PHONE_NUMBER,
-    to: cart.phone,
-    statusCallback: `${process.env.BASE_URL}/webhooks/sms/status`,
-  });
+1. **Set a minimum cart value** ($30–$50) for SMS recovery — low-value carts have negative ROI after SMS cost
+2. **Reserve discounts for the last message only** — offering discounts too early trains customers to abandon on purpose
+3. **Use single-use codes** — prevents sharing and controls attribution
+4. **Segment by customer value**: new customers get 10% off; repeat customers get free shipping only; VIP customers (5+ orders) get no discount
 
-  await db.smsMessages.create({
-    cartId, step, sid: result.sid, sentAt: new Date(), message,
-  });
-  await cart.update({ recoveryState: `sms${step}_sent` });
-}
+### Step 5: Measure performance
 
-function buildMessage(cart: AbandonedCart, step: number, link: string): string {
-  const firstName = cart.customer?.firstName ?? 'there';
-  const topItem   = cart.items[0];
-  const itemCount = cart.items.length;
-  const value     = formatCurrency(cart.cartValue, cart.currency);
-
-  const templates: Record<number, string> = {
-    1: `Hi ${firstName}, you left ${itemCount === 1 ? topItem.name : `${itemCount} items`} in your cart (${ value}). Complete your order: ${link}\nReply STOP to opt out.`,
-    2: `${firstName}, ${topItem.name} is popular — ${topItem.recentViewers ?? '12'} people viewed it today. Your cart is saved: ${link}\nReply STOP to opt out.`,
-    3: `Last chance, ${firstName}! Your cart expires soon. ${cart.discountCode ? `Use ${cart.discountCode} for 10% off.` : ''} Checkout: ${link}\nReply STOP to opt out.`,
-  };
-
-  return templates[step];
-}
-```
-
-### 5. Generate trackable recovery links
-
-```typescript
-import { nanoid } from 'nanoid';
-
-async function generateRecoveryLink(cart: AbandonedCart): Promise<string> {
-  const token = nanoid(16);
-  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48h TTL
-
-  await db.recoveryTokens.create({ token, cartId: cart.sessionId, expiresAt });
-
-  const longUrl = `${process.env.STORE_URL}/cart/recover?token=${token}&utm_source=sms&utm_medium=cart_recovery&utm_campaign=abandoned_cart`;
-
-  // Optionally shorten with Bitly or your own shortener
-  return longUrl;
-}
-
-// GET /cart/recover?token=...
-async function handleRecoveryClick(req: Request, res: Response) {
-  const { token } = req.query;
-  const record = await db.recoveryTokens.findOne({ where: { token, usedAt: null } });
-
-  if (!record || record.expiresAt < new Date()) {
-    return res.redirect('/cart');
-  }
-
-  const cart = await db.carts.findOne({ where: { sessionId: record.cartId } });
-  await record.update({ usedAt: new Date() });
-  await cart?.update({ recoveryState: 'recovered', recoveredVia: 'sms' });
-
-  // Restore cart session and redirect to checkout
-  req.session.cartId = cart?.sessionId;
-  res.redirect('/checkout');
-}
-```
-
-### 6. Discount generation for step 3
-
-```typescript
-async function generateRecoveryDiscount(cart: AbandonedCart): Promise<string | null> {
-  if (cart.cartValue < parseFloat(process.env.SMS_DISCOUNT_MIN_VALUE ?? '50')) return null;
-
-  const code = `SAVE10-${cart.sessionId.slice(-6).toUpperCase()}`;
-
-  // Create in your platform (example: Shopify Admin API)
-  await shopifyClient.post('/admin/api/2024-01/price_rules.json', {
-    price_rule: {
-      title: code,
-      value_type: 'percentage',
-      value: '-10.0',
-      customer_selection: 'all',
-      target_type: 'line_item',
-      target_selection: 'all',
-      allocation_method: 'across',
-      starts_at: new Date().toISOString(),
-      ends_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-      usage_limit: 1,
-      once_per_customer: true,
-    },
-  });
-
-  return code;
-}
-```
-
-### 7. Quiet hours and send-window enforcement
-
-```typescript
-import { getTimezone } from 'countries-and-timezones';
-import { parsePhoneNumber } from 'libphonenumber-js';
-import { DateTime } from 'luxon';
-
-function isWithinSendWindow(phone: string): boolean {
-  try {
-    const parsed   = parsePhoneNumber(phone);
-    const country  = parsed.country ?? 'US';
-    const tzInfo   = getTimezone(country);
-    const tz       = tzInfo?.timezones[0] ?? 'America/New_York';
-    const now      = DateTime.now().setZone(tz);
-    return now.hour >= 8 && now.hour < 21; // 8am–9pm local
-  } catch {
-    // Default to EST if parse fails
-    const now = DateTime.now().setZone('America/New_York');
-    return now.hour >= 8 && now.hour < 21;
-  }
-}
-```
+| Metric | Target | How to Find |
+|--------|--------|-------------|
+| Recovery rate | 15–25% of abandoned carts | SMS app → Automation analytics |
+| Click-through rate | 25–40% of delivered messages | SMS app → Message analytics |
+| Opt-out rate per step | < 3% | SMS app → Subscriber analytics |
+| Deliverability rate | > 95% | SMS app → Deliverability report |
 
 ## Best Practices
 
-- **Sequence length**: 2–3 messages maximum. More than 3 messages per abandonment event triggers spam complaints and opt-outs
-- **Message length**: Keep under 160 characters to avoid multi-part SMS charges; test on real devices before deploying
-- **First-name personalization**: Always include first name when available — it increases reply rate by ~15% vs. generic openers
-- **Cart value threshold**: Only trigger SMS recovery for carts above a minimum value (suggest $30–$50) to keep ROI positive
-- **Discount strategy**: Reserve discounts for the final message only; giving discounts too early trains customers to abandon intentionally
-- **Consent recency**: If a customer opted in more than 18 months ago with no activity, treat as expired for EU contacts
-- **Quiet hours enforcement**: Never send between 9pm–8am in the recipient's local timezone — this is legally required in many US states
-- **Status callbacks**: Process delivery receipts; suppress future messages to numbers that return hard errors (`undelivered`, `failed`)
-- **Phone normalization**: Always store and send in E.164 format. Validate with `libphonenumber-js` at collection time
-- **A/B test send times**: The 20-minute first message works well for most verticals, but fashion and impulse categories often do better at 15 minutes
-- **Link click tracking**: Track link clicks separately from recoveries — a 30% click rate with 10% recovery indicates checkout friction, not message quality
+- **Capture phone number before payment** — on Shopify, Postscript captures the phone number at checkout step 1 so you can recover even if the customer never completes payment
+- **Enforce quiet hours** — Postscript, Attentive, and SMSBump all enforce this automatically; verify it is enabled in settings (8am–9pm recipient local time)
+- **Keep messages under 160 characters** — longer messages split into multiple SMS and increase cost
+- **Always include STOP opt-out** — required by TCPA; all major SMS apps include this automatically
+- **Set a 7-day suppression after a completed sequence** — if a customer abandons again right after a recovery sequence, give them space
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Sending to unsubscribed numbers | Check consent table before every send, not just at sequence creation time |
-| Double-sending after platform restart | Use idempotency keys in your job queue; check `recoveryState` before each send |
-| Messages arriving at 2am | Always enforce quiet hours per recipient timezone, not sender timezone |
-| Recovery link expired before customer clicks | Use 48-hour TTL minimum; 72 hours for higher-value carts |
-| Discount code used by wrong customer | Generate unique single-use codes tied to the specific cart session ID |
-| Carrier filtering (message not delivered) | Avoid all-caps, excessive punctuation, and URL shorteners from free services; use verified short codes |
-| TCPA lawsuit exposure | Store consent records with full audit trail (IP, timestamp, exact disclosure text) for minimum 5 years |
-| Low opt-in rate at checkout | Test placement — pre-payment is better than post-payment; also test inline vs. modal |
-| High opt-out rate after first message | Message is too aggressive or cart value is too low; raise threshold and soften copy |
-| Abandoned cart detected too early | 20-minute threshold reduces false positives; don't trigger on carts under 5 minutes old |
-
-## Testing and Validation
-
-### Unit tests
-
-```typescript
-describe('SMS Recovery', () => {
-  it('does not send to opted-out phone numbers', async () => {
-    await db.smsConsents.create({ phone: '+15555555555', optedOutAt: new Date() });
-    const result = await sendRecoverySms('cart-123', 1);
-    expect(twilioClient.messages.create).not.toHaveBeenCalled();
-  });
-
-  it('respects quiet hours', async () => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-01-01T03:00:00Z')); // 10pm EST
-    const shouldSend = isWithinSendWindow('+12125551234');
-    expect(shouldSend).toBe(false);
-  });
-
-  it('generates unique recovery tokens per cart', async () => {
-    const link1 = await generateRecoveryLink(mockCart('cart-1'));
-    const link2 = await generateRecoveryLink(mockCart('cart-2'));
-    expect(link1).not.toEqual(link2);
-  });
-});
-```
-
-### Integration checklist
-
-- [ ] Opt-in checkbox renders at checkout with complete TCPA disclosure text
-- [ ] STOP keyword processed within 60 seconds of receipt
-- [ ] Recovery link redirects to pre-filled cart correctly
-- [ ] Quiet hours enforced for recipient timezone (test with +1, +5:30, -8 offsets)
-- [ ] No duplicate messages for the same cart (idempotency test)
-- [ ] Twilio status callbacks updating `deliveryStatus` in DB
-- [ ] Discount codes are single-use and expire after 48 hours
-- [ ] Consent records include IP address, timestamp, and disclosure text verbatim
-
-### KPIs to monitor
-
-- **Recovery rate**: orders recovered / abandonment events with valid SMS consent (target: 15–25%)
-- **Click-through rate**: recovery link clicks / messages delivered (target: 25–40%)
-- **Opt-out rate**: STOP replies / messages sent per step (healthy: under 3%)
-- **Deliverability rate**: delivered / sent (target: 95%+; below 90% triggers carrier review)
-- **Revenue per recovery SMS**: total recovered GMV / total SMS sent (compare to email equivalent)
+| SMS sent after order placed | Ensure each message step has "Order Not Placed" condition enabled in your automation |
+| Anonymous cart abandonment not captured | Postscript and Attentive capture phone at checkout step 1; enable this in your checkout settings |
+| Customers learn to abandon for discounts | Never discount on messages 1 or 2; skip discounts for repeat customers |
+| Carrier filtering (messages not delivered) | Avoid all-caps, free link shorteners, and excessive punctuation; use your platform's verified sending number |
+| High opt-out rate after first message | Message is too aggressive or cart value threshold is too low; raise the threshold and soften copy |
+| TCPA lawsuit exposure | Use your SMS platform's built-in compliance tools; never import phone numbers without proof of explicit consent |
 
 ## Related Skills
 

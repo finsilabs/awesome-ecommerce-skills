@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [chargebacks, disputes, fraud-prevention]
 triggers: ["chargeback management", "dispute handling", "prevent chargebacks", "fraud disputes", "visa compelling evidence", "mastercom", "chargeback representment"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,362 +16,136 @@ difficulty: advanced
 
 ## Overview
 
-A chargeback occurs when a cardholder disputes a transaction with their bank, forcing a reversal of funds and levying a fee (typically $15–$100 per dispute) on the merchant. Beyond the direct financial loss, a chargeback ratio above 1% (Visa) or 1.5% (Mastercard) triggers the card network's dispute monitoring programs, which can result in monthly fines and ultimately account termination.
+A chargeback occurs when a cardholder disputes a transaction with their bank, forcing a reversal of funds and levying a fee ($15–$100 per dispute) on the merchant. A chargeback ratio above 1% (Visa) or 1.5% (Mastercard) triggers the card network's dispute monitoring programs, which can result in monthly fines and ultimately account termination.
 
-This skill covers the full chargeback lifecycle: proactive prevention through fraud scoring and order velocity checks, automated evidence compilation for representment, integration with Visa Compelling Evidence 3.0 (CE 3.0) and Mastercard's Mastercom system, win-rate analysis, and threshold-based alerting before monitoring program thresholds are breached.
-
-Effective chargeback management requires two simultaneous tracks: (1) reducing the volume of disputes by catching fraud before authorization, and (2) winning more of the disputes that do occur by submitting complete, well-organized evidence packages automatically and within the response window.
+Effective chargeback management has two tracks: (1) preventing disputes with fraud scoring and clear communication, and (2) winning more disputes by submitting complete evidence within the response window. Most platforms now integrate directly with Stripe or PayPal for dispute management, making automated evidence submission accessible to all merchants.
 
 ## When to Use This Skill
 
 - When chargeback ratio is approaching 0.65% (the early-warning level Visa monitors before the 1% threshold)
-- When your team is manually compiling evidence packages in spreadsheets and missing response deadlines
-- When you need to integrate with Stripe Radar, Kount, Signifyd, or a custom fraud scoring system
-- When processing international transactions that have higher dispute rates due to authorization declines
-- When building a marketplace where seller-side fraud creates merchant liability
-- When you want to implement Visa CE 3.0 to shift liability on friendly fraud disputes
+- When your team is manually compiling evidence packages and missing response deadlines
+- When processing international transactions with higher dispute rates
 - When your dispute win rate is below 40% and you need to understand why
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+- When friendly fraud (customers who received goods but dispute anyway) is a significant problem
 
 ## Core Instructions
 
-### 1. Model the chargeback lifecycle
+### Step 1: Determine your platform and dispute management approach
 
-```sql
-CREATE TABLE chargebacks (
-  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  order_id              UUID NOT NULL REFERENCES orders(id),
-  charge_id             VARCHAR(255) NOT NULL,   -- Stripe charge_id or processor reference
-  processor             VARCHAR(50) NOT NULL,    -- 'stripe', 'paypal', 'adyen'
-  processor_dispute_id  VARCHAR(255) UNIQUE NOT NULL,
-  network               VARCHAR(20),             -- 'visa', 'mastercard', 'amex', 'discover'
-  reason_code           VARCHAR(20) NOT NULL,    -- e.g., '10.4', '13.1', '4853'
-  reason_category       VARCHAR(50) NOT NULL,    -- 'fraud', 'not_received', 'not_as_described', 'processing_error', 'authorization'
-  disputed_amount       NUMERIC(10, 2) NOT NULL,
-  currency              CHAR(3) NOT NULL DEFAULT 'USD',
-  chargeback_date       DATE NOT NULL,
-  response_due_date     DATE NOT NULL,
-  status                VARCHAR(50) NOT NULL DEFAULT 'open',
-  -- 'open', 'evidence_submitted', 'won', 'lost', 'accepted', 'pre_arbitration', 'arbitration'
-  outcome               VARCHAR(50),             -- 'won', 'lost', 'accepted'
-  outcome_date          DATE,
-  chargeback_fee        NUMERIC(8, 2) DEFAULT 0,
-  evidence_submitted_at TIMESTAMPTZ,
-  auto_submitted        BOOLEAN DEFAULT FALSE,
-  win_probability_score NUMERIC(4, 3),
-  notes                 TEXT,
-  created_at            TIMESTAMPTZ DEFAULT NOW(),
-  updated_at            TIMESTAMPTZ DEFAULT NOW()
-);
+| Platform | How Disputes Are Handled | Recommended Tool |
+|----------|------------------------|-----------------|
+| **Shopify Payments** | Disputes managed in Shopify Admin → Payments → Disputes | Shopify's built-in dispute response + Chargebacks911 or Kount for high volume |
+| **Shopify + Stripe** | Disputes appear in Stripe Dashboard + Shopify Admin | Stripe Radar for prevention; Stripe's dispute workflow for response |
+| **WooCommerce + Stripe** | Disputes in Stripe Dashboard; no WooCommerce-native interface | Stripe Radar for fraud scoring; Stripe Dashboard for dispute response |
+| **WooCommerce + PayPal** | Disputes in PayPal Resolution Center | PayPal Seller Protection + manual evidence submission in Resolution Center |
+| **BigCommerce** | Depends on payment gateway; Stripe and PayPal most common | Same as WooCommerce equivalent above |
+| **Custom / Headless** | Stripe Radar + Stripe dispute webhooks for automation | Build automated evidence collection triggered by `charge.dispute.created` webhook |
 
-CREATE TABLE chargeback_evidence (
-  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chargeback_id  UUID NOT NULL REFERENCES chargebacks(id),
-  evidence_type  VARCHAR(100) NOT NULL,
-  -- 'customer_communication', 'shipping_documentation', 'refund_policy', 'duplicate_charge_proof',
-  -- 'service_documentation', 'customer_signature', 'delivery_confirmation', 'prior_undisputed_transactions'
-  content        TEXT,
-  file_url       VARCHAR(1000),
-  collected_at   TIMESTAMPTZ DEFAULT NOW()
-);
+### Step 2: Set up fraud prevention (before chargebacks happen)
 
-CREATE INDEX idx_cb_status ON chargebacks (status, response_due_date);
-CREATE INDEX idx_cb_order ON chargebacks (order_id);
-CREATE INDEX idx_cb_date ON chargebacks (chargeback_date);
-```
+The most cost-effective chargeback strategy is prevention.
 
-### 2. Ingest disputes via Stripe webhooks
+#### Shopify
 
-```javascript
-// webhooks/stripe-disputes.js
-export async function handleDisputeWebhook(event) {
-  switch (event.type) {
-    case 'charge.dispute.created':
-      await onDisputeCreated(event.data.object);
-      break;
-    case 'charge.dispute.updated':
-      await onDisputeUpdated(event.data.object);
-      break;
-    case 'charge.dispute.closed':
-      await onDisputeClosed(event.data.object);
-      break;
-  }
-}
+1. **Enable Shopify Fraud Analysis**: Go to **Settings → Payments → Fraud prevention**. Shopify automatically analyzes orders and flags high-risk ones with indicators (billing/shipping address mismatch, CVV failure, AVS mismatch).
 
-async function onDisputeCreated(dispute) {
-  const charge = await stripe.charges.retrieve(dispute.charge, {
-    expand: ['payment_intent', 'payment_intent.metadata'],
-  });
+2. **Act on fraud indicators**: For orders with multiple red flags, go to **Orders → [Order] → Fraud analysis** and review the risk factors before fulfilling. Cancel and refund orders with a "High" risk level before they ship.
 
-  const orderId = charge.payment_intent?.metadata?.order_id;
-  const order = orderId ? await db.orders.findById(orderId) : null;
+3. **Enable Shopify Protect** (if on Shopify Payments): This is Shopify's built-in chargeback protection for fraudulent orders. Eligible orders are automatically covered — Shopify pays the chargeback amount and fee. Go to **Settings → Payments** to verify Protect is active on your account.
 
-  // Calculate response deadline — typically 7–21 days depending on network
-  const responseDueDays = getResponseDueDays(dispute.payment_method_details?.card?.network, dispute.reason);
-  const responseDueDate = new Date(dispute.created * 1000);
-  responseDueDate.setDate(responseDueDate.getDate() + responseDueDays);
+4. **Install Signifyd or NoFraud**: For higher-volume stores, install **Signifyd** or **NoFraud** from the Shopify App Store. These provide chargeback guarantees — if a fraud dispute occurs on an order they approved, they pay the chargeback.
 
-  const chargeback = await db.chargebacks.create({
-    data: {
-      order_id: orderId,
-      charge_id: dispute.charge,
-      processor: 'stripe',
-      processor_dispute_id: dispute.id,
-      network: charge.payment_method_details?.card?.network,
-      reason_code: dispute.reason,
-      reason_category: mapDisputeReasonToCategory(dispute.reason),
-      disputed_amount: dispute.amount / 100,
-      currency: dispute.currency.toUpperCase(),
-      chargeback_date: new Date(dispute.created * 1000),
-      response_due_date: responseDueDate,
-      status: 'open',
-    },
-  });
+#### WooCommerce
 
-  // Automatically collect and score evidence
-  const { score, evidence } = await collectAndScoreEvidence(chargeback, order, dispute);
+1. **Enable Stripe Radar**: In the Stripe Dashboard, go to **Radar → Rules** and configure fraud rules. Stripe Radar evaluates every transaction and blocks high-risk ones.
 
-  await db.chargebacks.update({
-    where: { id: chargeback.id },
-    data: { win_probability_score: score },
-  });
+2. **Add Stripe Radar rules** for your risk profile:
+   - Block payments where the billing zip code does not match
+   - Require 3D Secure for transactions above $500
+   - Block prepaid cards for digital goods (high fraud category)
 
-  // Auto-submit if score is high enough and there's enough time
-  const daysUntilDue = Math.floor((responseDueDate - new Date()) / 86400000);
-  if (score >= 0.65 && daysUntilDue >= 3) {
-    await submitDisputeEvidence(chargeback.id, evidence);
-  } else if (score < 0.25) {
-    // Very low win probability — consider accepting the dispute
-    await notifyTeamLowWinProbability(chargeback);
-  } else {
-    await notifyTeamForReview(chargeback, score, daysUntilDue);
-  }
-}
+3. **Enable AVS and CVV checks**: In **Stripe Dashboard → Settings → Radar** enable AVS and CVC checks. Go to **WooCommerce → Settings → Payments → Stripe** and enable the "Require a valid postal code from the customer" option.
 
-function getResponseDueDays(network, reason) {
-  if (network === 'amex') return 20;
-  if (network === 'discover') return 45;
-  // Visa and Mastercard: most reasons are 20 days, some fraud are 30
-  return reason?.includes('fraud') ? 30 : 20;
-}
-```
+#### BigCommerce
 
-### 3. Automate evidence collection
+1. Go to **Store Setup → Payment Methods** and enable your gateway's fraud filters
+2. For Stripe: configure Radar rules in the Stripe Dashboard (same as WooCommerce above)
+3. For PayPal: enable **PayPal Seller Protection** requirements — require signature confirmation for orders over $250
 
-```javascript
-// services/chargebacks/evidence-collector.js
-export async function collectAndScoreEvidence(chargeback, order, dispute) {
-  const evidence = {};
-  let scoreFactors = [];
+### Step 3: Respond to disputes effectively
 
-  // 1. Delivery confirmation — strongest evidence for "item not received"
-  if (order?.tracking_number) {
-    const deliveryProof = await fetchDeliveryConfirmation(order.tracking_number, order.carrier);
-    if (deliveryProof?.delivered) {
-      evidence.shipping_documentation = formatDeliveryEvidence(deliveryProof, order);
-      scoreFactors.push({ weight: 0.35, hit: true, label: 'delivery_confirmed' });
-    } else {
-      scoreFactors.push({ weight: 0.35, hit: false, label: 'delivery_confirmed' });
-    }
-  }
+#### Shopify Payments
 
-  // 2. Customer communication history
-  const communications = await fetchCustomerCommunications(order?.customer_email);
-  if (communications.length > 0) {
-    evidence.customer_communication = formatCommunicationEvidence(communications);
-    scoreFactors.push({ weight: 0.25, hit: true, label: 'customer_communication' });
-  }
+1. Go to **Settings → Payments → Disputes** — all open disputes appear here with response deadlines
+2. Click on a dispute to see the reason code and deadline (typically 7–21 days from the dispute date)
+3. Click **Submit evidence** and fill in:
+   - Tracking number and carrier confirmation of delivery
+   - Customer's IP address and billing address at time of purchase
+   - Email communications with the customer about the order
+   - Your refund policy (link to the policy page)
+   - For digital goods: proof of delivery and usage logs
+4. Submit before the deadline — Shopify notifies you via email when a new dispute is created
 
-  // 3. Refund policy acceptance
-  if (order?.policy_accepted_at) {
-    evidence.refund_policy = formatPolicyEvidence(order);
-    scoreFactors.push({ weight: 0.10, hit: true, label: 'policy_accepted' });
-  }
+**Shopify makes this straightforward**: it pre-fills much of the evidence from the order data (shipping address, IP, order details).
 
-  // 4. Visa CE 3.0 — prior undisputed transactions (most powerful for friendly fraud)
-  if (chargeback.network === 'visa' && chargeback.reason_category === 'fraud') {
-    const priorTxns = await findPriorUndisputedTransactions(order?.customer_email, chargeback.charge_id);
-    if (priorTxns.length >= 2) {
-      evidence.prior_undisputed_transactions = formatCE3Evidence(priorTxns, order);
-      scoreFactors.push({ weight: 0.30, hit: true, label: 'ce3_eligible' });
-    }
-  }
+#### Stripe Dashboard (WooCommerce, BigCommerce, Custom)
 
-  // 5. IP and device fingerprint matching
-  const deviceMatch = await checkDeviceFingerprint(order?.session_id, order?.customer_ip);
-  if (deviceMatch?.matches_cardholder_history) {
-    scoreFactors.push({ weight: 0.15, hit: true, label: 'device_match' });
-  }
+1. Go to **Stripe Dashboard → Disputes** — all open disputes with deadlines are listed
+2. Click on a dispute to open the evidence submission form
+3. Stripe's form has specific fields for each evidence type:
+   - **Shipping documentation**: paste the tracking number and carrier
+   - **Customer communication**: paste email correspondence
+   - **Refund policy**: paste your policy text or URL
+   - **Service documentation**: describe what was delivered and when
+4. Under **Uncategorized text**, add a narrative summary: "Customer placed order on [date], order shipped [date] via [carrier], tracking [number], delivered [date]"
+5. Click **Submit evidence** — Stripe sends the package to the card network
 
-  const score = scoreFactors.reduce((sum, f) => sum + (f.hit ? f.weight : 0), 0);
+**Key rule**: respond to every dispute, even low-value ones. Accepting a $10 chargeback still counts against your dispute ratio.
 
-  return { score, evidence };
-}
+#### PayPal Resolution Center (WooCommerce, BigCommerce)
 
-async function findPriorUndisputedTransactions(customerEmail, excludeChargeId) {
-  // CE 3.0 requires 2 prior non-disputed transactions in the past 120 days
-  // with the same card / email combination
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 120);
+1. Log in to your PayPal Business account and go to **Resolution Center → Cases**
+2. Click on the open case and select **Respond**
+3. For "Item Not Received" disputes: provide the tracking number and delivery confirmation
+4. For "Unauthorized Transaction" disputes: provide proof of shipment, IP address, and any communication with the customer
+5. Submit by the deadline shown on the case
 
-  return db.orders.findMany({
-    where: {
-      customer_email: customerEmail,
-      created_at: { gte: cutoff },
-      status: 'completed',
-      chargebacks: { none: {} },
-      NOT: { stripe_charge_id: excludeChargeId },
-    },
-    orderBy: { created_at: 'desc' },
-    take: 5,
-  });
-}
-```
+### Step 4: Use Visa CE 3.0 for friendly fraud
 
-### 4. Submit evidence to Stripe
+Visa Compelling Evidence 3.0 (CE 3.0) is a powerful tool for disputing friendly fraud (customer received goods but claims they did not authorize the purchase). If the customer has 2 prior non-disputed transactions on the same card in the past 120 days, you can submit these as evidence to shift liability to the issuer.
 
-```javascript
-// services/chargebacks/representment.js
-export async function submitDisputeEvidence(chargebackId, evidenceData) {
-  const chargeback = await db.chargebacks.findById(chargebackId);
+In **Stripe Dashboard**: when submitting evidence for a Visa fraud dispute, scroll to the **Prior undisputed transactions** section and add the charge IDs of 2 prior non-disputed purchases by the same customer. Stripe will format and submit this as CE 3.0 evidence.
 
-  // Build the Stripe evidence payload
-  const stripeEvidence = {
-    customer_name: evidenceData.customer_name,
-    customer_email_address: evidenceData.customer_email,
-    customer_ip_address: evidenceData.customer_ip,
-    billing_address: evidenceData.billing_address,
-    shipping_address: evidenceData.shipping_address,
-    shipping_date: evidenceData.shipping_date,
-    shipping_carrier: evidenceData.carrier,
-    shipping_tracking_number: evidenceData.tracking_number,
-    refund_policy: evidenceData.refund_policy_text,
-    refund_policy_disclosure: evidenceData.policy_url,
-    service_documentation: evidenceData.service_description,
-    customer_communication: evidenceData.customer_comms,
-    uncategorized_text: buildNarrativeSummary(chargeback, evidenceData),
-  };
+### Step 5: Monitor your dispute ratio
 
-  // Upload files if present (Stripe requires file IDs)
-  if (evidenceData.delivery_screenshot_path) {
-    const fileUpload = await stripe.files.create({
-      purpose: 'dispute_evidence',
-      file: {
-        data: readFileSync(evidenceData.delivery_screenshot_path),
-        name: 'delivery_confirmation.pdf',
-        type: 'application/pdf',
-      },
-    });
-    stripeEvidence.uncategorized_file = fileUpload.id;
-  }
+Set a calendar reminder to check your dispute ratio monthly. Both Stripe and Shopify Payments provide this data:
 
-  // Submit to Stripe
-  await stripe.disputes.update(chargeback.processor_dispute_id, {
-    evidence: stripeEvidence,
-    submit: true,
-  });
+- **Stripe**: Go to **Dashboard → Radar → Disputes** and filter by month. Count disputes / total transactions = dispute ratio
+- **Shopify Payments**: Go to **Settings → Payments → Disputes** and review the monthly summary
 
-  // Record the submission
-  await db.chargebacks.update({
-    where: { id: chargebackId },
-    data: {
-      status: 'evidence_submitted',
-      evidence_submitted_at: new Date(),
-      auto_submitted: true,
-    },
-  });
-
-  await db.chargebackEvidence.createMany({
-    data: Object.entries(stripeEvidence)
-      .filter(([, v]) => v)
-      .map(([type, content]) => ({
-        chargeback_id: chargebackId,
-        evidence_type: type,
-        content: String(content),
-      })),
-  });
-}
-
-function buildNarrativeSummary(chargeback, evidence) {
-  const lines = [
-    `Order ${chargeback.order_id} was placed on ${evidence.order_date} by ${evidence.customer_email}.`,
-    `The item was shipped via ${evidence.carrier} (tracking: ${evidence.tracking_number}) on ${evidence.shipping_date}.`,
-  ];
-  if (evidence.delivered) {
-    lines.push(`Delivery was confirmed on ${evidence.delivery_date} with signature ${evidence.signature ?? 'not required'}.`);
-  }
-  if (evidence.prior_orders_count > 0) {
-    lines.push(`This customer has placed ${evidence.prior_orders_count} prior orders without disputes.`);
-  }
-  return lines.join(' ');
-}
-```
-
-### 5. Monitor chargeback ratio and trigger alerts
-
-```javascript
-// services/chargebacks/monitoring.js
-const VISA_WARNING_THRESHOLD = 0.0065;   // 0.65% — early warning
-const VISA_CRITICAL_THRESHOLD = 0.0100;  // 1.00% — monitoring program
-const MC_WARNING_THRESHOLD = 0.0100;     // 1.00% — early warning
-const MC_CRITICAL_THRESHOLD = 0.0150;   // 1.50% — excessive chargeback program
-
-export async function computeMonthlyChargebackRatio(month) {
-  const [chargebacks, transactions] = await Promise.all([
-    db.chargebacks.count({
-      where: {
-        chargeback_date: { gte: startOfMonth(month), lte: endOfMonth(month) },
-        network: 'visa',
-      },
-    }),
-    db.orders.count({
-      where: {
-        created_at: { gte: startOfMonth(month), lte: endOfMonth(month) },
-        payment_processor: 'stripe',
-      },
-    }),
-  ]);
-
-  const ratio = chargebacks / (transactions || 1);
-
-  if (ratio >= VISA_CRITICAL_THRESHOLD) {
-    await sendCriticalAlert({ ratio, chargebacks, transactions, network: 'Visa', month });
-  } else if (ratio >= VISA_WARNING_THRESHOLD) {
-    await sendWarningAlert({ ratio, chargebacks, transactions, network: 'Visa', month });
-  }
-
-  return { ratio, chargebacks, transactions };
-}
-```
+**Alert thresholds:**
+- 0.65%: Warning level — review your fraud prevention rules
+- 0.90%: Critical level — Visa's early intervention program; contact your payment processor
+- 1.00%: Visa monitoring program enrollment — monthly fines begin
 
 ## Best Practices
 
-- **Respond to every dispute** — even low-value ones ($5–$20). Accepting chargebacks still counts against your ratio. Only accept if the dispute is clearly valid and the win probability is near zero.
-- **Collect evidence at order creation**, not when the dispute arrives. Delivery confirmations, IP addresses, and device fingerprints are often unavailable 60 days after the order.
-- **Use Visa CE 3.0 proactively** — submit prior undisputed transaction data for all Visa fraud disputes. It shifts liability to the issuer when you have two qualifying prior transactions.
-- **Segment win rates by reason code** — your strategy for "item not received" (10.4) is completely different from "not as described" (13.1). Track win rates separately per reason code.
-- **Set response deadline reminders at T-5 days** — the response window is non-negotiable. Build automated reminders 5 and 2 days before the deadline for any open dispute.
-- **Fight chargebacks on high-value orders** — prioritize evidence compilation for orders above your average order value. The ROI of winning a $500 dispute is much higher than a $25 one.
-- **Block repeat disputers** — customers with two or more chargebacks in 12 months should be flagged and require manual review for future purchases.
+- **Respond to every dispute** — even $5–$20 disputes count against your ratio; only accept (concede) a dispute if the win probability is near zero
+- **Collect evidence at order creation**, not when the dispute arrives — delivery confirmations, IP addresses, and device data are harder to obtain 60 days later
+- **Use Shopify Protect or Signifyd** if on Shopify — chargeback guarantees remove the financial risk entirely for covered orders
+- **Set response deadline reminders at T-5 days** — the response window is non-negotiable; build calendar reminders for all open disputes
+- **Block repeat disputers** — customers with 2+ chargebacks in 12 months should be flagged; Stripe Radar allows you to create a block rule for email addresses with prior disputes
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Missing the response deadline | Set automated calendar alerts at T-7 and T-2 days; never rely on manual tracking |
-| Evidence submitted but dispute still lost | Stripe requires evidence to be in a specific format; use the Stripe Dashboard to verify evidence was accepted before the deadline |
-| High friendly fraud rate | Implement Visa CE 3.0; add explicit refund policy acceptance at checkout with a checkbox and timestamp |
+| Missing the response deadline | Stripe and Shopify both send email alerts when a dispute is created; ensure alerts go to a monitored inbox, not a noreply@ address |
+| Evidence submitted but dispute still lost | Evidence must be factual and specific — vague statements lose; tracking numbers, delivery scans, and customer emails win |
+| High friendly fraud rate | Implement Visa CE 3.0 using prior transaction evidence; add an explicit refund policy acceptance checkbox at checkout |
 | Dispute ratio counted differently by processor and card network | Visa counts chargebacks-to-transactions in the same calendar month; use the same calculation window for your monitoring |
-| Chargebacks not linked to orders | Always pass `order_id` in Stripe metadata; without it, evidence collection is manual |
-| Pre-arbitration fees surprise | Understand the escalation path: dispute → representment → pre-arbitration → arbitration; each step has fees; know when to concede |
+| PayPal disputes not visible until escalated | Check PayPal Resolution Center daily, not just your email; disputes start as "Inquiries" before becoming "Disputes" |
+| Shopify Protect not covering all orders | Protect has eligibility requirements (card-present equivalent signals); review the Protect coverage report to see which order types qualify |
 
 ## Related Skills
 

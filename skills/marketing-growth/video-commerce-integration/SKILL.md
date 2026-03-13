@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [video-commerce, live-shopping, shoppable-video]
 triggers: ["add shoppable video", "set up live shopping"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,7 @@ difficulty: advanced
 
 ## Overview
 
-Video commerce transforms passive video content into direct purchase experiences by embedding product links, interactive hotspots, and one-click checkout into video players and live streams. Shoppable video on-site can increase video engagement by 3x and product page conversion by 40% compared to static image PDPs. Live shopping events — popularized by TikTok and Instagram LIVE — create urgency and interactivity that no static page can replicate. This skill covers embedding shoppable video on product pages, building a live shopping event player, integrating real-time inventory with video, and measuring video-to-purchase conversion.
+Video commerce transforms passive video content into direct purchase experiences by embedding product links, interactive hotspots, and one-click checkout into video players and live streams. Shoppable video on-site increases product page conversion by up to 40% compared to static image PDPs. Live shopping events — popularized by TikTok and Instagram LIVE — create urgency and interactivity that no static page can replicate. Dedicated video commerce platforms (Tolstoy, Videowise, Firework) handle the embedding, hotspot authoring, and analytics without custom development for most stores.
 
 ## When to Use This Skill
 
@@ -26,58 +26,92 @@ Video commerce transforms passive video content into direct purchase experiences
 - When UGC video content needs to be shoppable on product pages
 - When measuring the contribution of video content to purchase conversion rates
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, video commerce platform (YouTube Shopping, TikTok Shop, or Firework), product catalog API access
-
 ## Core Instructions
 
-### 1. Shoppable video data model
+### Step 1: Choose the right video commerce platform
+
+| Platform | Best For | Shopify | WooCommerce | BigCommerce | Price |
+|----------|---------|---------|-------------|-------------|-------|
+| **Tolstoy** | Shoppable video stories and feeds, Shopify-native | App Store | Via JS embed | Via JS embed | Free tier; $19+/mo |
+| **Videowise** | High-performance shoppable video with LCP optimization | App Store | — | — | $99+/mo |
+| **Firework** | Enterprise live shopping + shoppable short video | Via JS | Via JS | Via JS | Custom pricing |
+| **YouTube Shopping** | Link YouTube videos to product catalog | Google & YouTube channel | Via Google Listings & Ads plugin | Via Channel Manager | Free |
+| **TikTok Shop** | Native TikTok LIVE shopping + video product tags | TikTok channel | TikTok plugin | Via TikTok channel | Free (commission-based) |
+
+**Recommendation:** Use **Tolstoy** for Shopify if your goal is shoppable video stories and product page embeds — it requires no code and integrates with your Shopify catalog automatically. Use **YouTube Shopping** if you already have a YouTube channel with product review or tutorial content. For enterprise live shopping experiences, use **Firework**.
+
+### Step 2: Set up shoppable video on your store
+
+---
+
+#### Shopify with Tolstoy
+
+1. Install **Tolstoy** from the Shopify App Store
+2. Go to **Tolstoy → Videos → Upload** and upload your product videos or import from TikTok/Instagram
+3. In the video editor, click **Tag Products** → search your Shopify catalog → click the point in the video where the product appears to set the hotspot timestamp
+4. Go to **Tolstoy → Widgets → Floating Button** to add a shoppable video bubble to product pages (appears in the lower corner, auto-plays)
+5. Go to **Tolstoy → Widgets → Video Carousel** to add a horizontal scroll of shoppable videos above the product description
+6. In Shopify Theme Editor: search for "Tolstoy" in the app sections list and drag the widget to the desired position
+7. Go to **Tolstoy → Analytics** to track play rate, add-to-cart rate, and revenue attributed to each video
+
+---
+
+#### Shopify with YouTube Shopping
+
+1. Go to **Shopify Admin → Sales Channels → + → Google & YouTube**
+2. Connect your Google Merchant Center and YouTube channel
+3. Under **YouTube Shopping**, enable product tagging for your videos
+4. In YouTube Studio, go to **Shopping** and link your Merchant Center account
+5. Edit any YouTube video → click **Products** → search your catalog → tag the product
+6. Tagged products appear as a product shelf below your YouTube video and as clickable overlays during playback
+
+---
+
+#### WooCommerce
+
+1. For shoppable video carousels: install **VideoSuite** or **WP Video Popup** from the WordPress plugin directory, then use shortcodes to embed videos on product pages
+2. For YouTube Shopping integration: install **Google Listings & Ads** plugin (official Google plugin) → connect your Google Merchant Center → enable product tagging in YouTube Studio (same process as above)
+3. For native live shopping: use **TikTok for WooCommerce** plugin and run TikTok LIVE events (see @tiktok-shop-integration for setup)
+4. For a full shoppable video experience without custom code: use **Firework** via their JavaScript embed — add the embed script to your WooCommerce theme's `functions.php` via `wp_enqueue_script()`
+
+---
+
+#### BigCommerce
+
+1. For YouTube Shopping: go to **BigCommerce Admin → Channel Manager → Google & Meta** and connect Google Merchant Center; then enable YouTube Shopping in YouTube Studio
+2. For shoppable video widgets: add the **Tolstoy** or **Firework** JavaScript snippet via **BigCommerce → Storefront → Script Manager** (Scripts section → Create Script → All pages or specific page)
+3. Configure product tagging from within the Tolstoy or Firework dashboard — both platforms connect to your BigCommerce catalog via API credentials generated in **BigCommerce → Advanced Settings → API Accounts**
+
+---
+
+#### Custom / Headless
+
+For headless stores, build shoppable video with a custom player component and product hotspot overlay:
 
 ```typescript
-interface ShoppableVideo {
-  id:         string;
-  title:      string;
-  videoUrl:   string;        // HLS or MP4 URL served from CDN
-  thumbnailUrl: string;
-  duration:   number;        // seconds
-  type:       'recorded' | 'live';
-  products:   VideoProduct[];
-  hotspots:   VideoHotspot[];
-  status:     'draft' | 'published' | 'live' | 'archived';
-  createdAt:  Date;
-}
-
 interface VideoHotspot {
-  id:          string;
-  videoId:     string;
-  productId:   string;
-  timestamp:   number;    // seconds into video when hotspot appears
-  displayDuration: number; // how long it stays visible (seconds)
-  position:    { x: number; y: number };  // % from top-left (0-100 each)
+  id:              string;
+  productId:       string;
+  timestamp:       number;     // seconds into video when hotspot appears
+  displayDuration: number;     // how long it stays visible (seconds)
+  position:        { x: number; y: number };  // % from top-left (0–100)
 }
 
-interface VideoProduct {
-  productId:   string;
-  variantId?:  string;
-  featuredAt:  number;  // timestamp in video when product is featured
+interface ShoppableVideo {
+  id:           string;
+  videoUrl:     string;        // HLS (.m3u8) or MP4 URL from CDN
+  thumbnailUrl: string;
+  hotspots:     VideoHotspot[];
+  type:         'recorded' | 'live';
 }
 ```
 
-### 2. Video player with product hotspots
-
 ```typescript
-// React shoppable video player component
-import React, { useRef, useState, useEffect } from 'react';
+// React shoppable video player with time-based hotspot detection
+import { useRef, useState, useEffect } from 'react';
 
 function ShoppableVideoPlayer({ video }: { video: ShoppableVideo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [currentTime, setCurrentTime] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<VideoHotspot | null>(null);
   const [hotspotProduct, setHotspotProduct] = useState<Product | null>(null);
 
@@ -87,9 +121,6 @@ function ShoppableVideoPlayer({ video }: { video: ShoppableVideo }) {
 
     const onTimeUpdate = () => {
       const t = el.currentTime;
-      setCurrentTime(t);
-
-      // Find active hotspot at current timestamp
       const active = video.hotspots.find(h =>
         t >= h.timestamp && t <= h.timestamp + h.displayDuration
       ) ?? null;
@@ -111,188 +142,25 @@ function ShoppableVideoPlayer({ video }: { video: ShoppableVideo }) {
   }, [video.hotspots, activeHotspot]);
 
   return (
-    <div className="shoppable-video" style={{ position: 'relative' }}>
-      <video
-        ref={videoRef}
-        src={video.videoUrl}
-        poster={video.thumbnailUrl}
-        controls
-        playsInline
-        style={{ width: '100%' }}
-      />
-
+    <div style={{ position: 'relative' }}>
+      <video ref={videoRef} src={video.videoUrl} poster={video.thumbnailUrl}
+             controls playsInline style={{ width: '100%' }} />
       {activeHotspot && hotspotProduct && (
-        <ProductHotspotCard
-          product={hotspotProduct}
-          position={activeHotspot.position}
-          onAddToCart={(productId, variantId) => addToCart(productId, variantId)}
-        />
-      )}
-    </div>
-  );
-}
-
-function ProductHotspotCard({
-  product,
-  position,
-  onAddToCart,
-}: {
-  product: Product;
-  position: { x: number; y: number };
-  onAddToCart: (productId: string, variantId?: string) => void;
-}) {
-  return (
-    <div
-      className="hotspot-card"
-      style={{
-        position: 'absolute',
-        left:     `${position.x}%`,
-        top:      `${position.y}%`,
-        transform: 'translate(-50%, -100%)',
-        background: 'white',
-        padding:  '12px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        zIndex:   10,
-        minWidth: '200px',
-      }}
-    >
-      <img src={product.images[0]?.url} alt={product.name} width={60} height={60}
-           style={{ objectFit: 'cover', borderRadius: '4px' }} />
-      <p style={{ margin: '4px 0', fontWeight: 600 }}>{product.name}</p>
-      <p style={{ margin: '2px 0', color: '#666' }}>${product.price.toFixed(2)}</p>
-      <button
-        onClick={() => onAddToCart(product.id)}
-        style={{ width: '100%', marginTop: '8px', padding: '8px', background: '#000', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-      >
-        Add to cart
-      </button>
-    </div>
-  );
-}
-```
-
-### 3. Live shopping event infrastructure
-
-```typescript
-interface LiveShoppingEvent {
-  id:            string;
-  title:         string;
-  hostId:        string;
-  startTime:     Date;
-  endTime?:      Date;
-  streamKey:     string;      // for RTMP ingest (OBS, Restream, etc.)
-  playbackUrl:   string;      // HLS playback URL for viewers
-  featuredProducts: string[]; // product IDs to feature during the live
-  peakViewers:   number;
-  totalOrders:   number;
-  totalRevenue:  number;
-  status:        'scheduled' | 'live' | 'ended';
-}
-
-// Create a live shopping event
-async function createLiveShoppingEvent(params: {
-  title:       string;
-  hostId:      string;
-  startTime:   Date;
-  productIds:  string[];
-}) {
-  // Create stream in your video infrastructure (Mux, Cloudflare Stream, etc.)
-  const stream = await muxClient.Video.LiveStreams.create({
-    playback_policy: 'public',
-    new_asset_settings: { playback_policy: 'public' },
-  });
-
-  const event = await db.liveShoppingEvents.create({
-    title:            params.title,
-    hostId:           params.hostId,
-    startTime:        params.startTime,
-    streamKey:        stream.stream_key,
-    playbackUrl:      `https://stream.mux.com/${stream.playback_ids[0].id}.m3u8`,
-    featuredProducts: params.productIds,
-    status:           'scheduled',
-  });
-
-  // Send notifications to subscribers
-  await notifyLiveEventSubscribers(event.id);
-
-  return event;
-}
-
-// Real-time product featuring during live (host interface)
-async function featureProductInLive(eventId: string, productId: string) {
-  const event   = await db.liveShoppingEvents.findById(eventId);
-  const product = await db.products.findById(productId);
-
-  // Broadcast to all viewers via WebSocket
-  await wsServer.broadcast(`live:${eventId}`, {
-    type:    'feature-product',
-    product: {
-      id:       product.id,
-      name:     product.name,
-      price:    product.price,
-      imageUrl: product.images[0]?.url,
-      url:      `/products/${product.slug}`,
-      stockLevel: product.stockQuantity,
-    },
-  });
-
-  // Track the featuring
-  await db.liveProductFeaturing.create({ eventId, productId, featuredAt: new Date() });
-}
-```
-
-### 4. Live shopping viewer client
-
-```typescript
-// React live shopping viewer
-function LiveShoppingViewer({ eventId }: { eventId: string }) {
-  const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
-  const [viewerCount, setViewerCount] = useState(0);
-  const wsRef = useRef<WebSocket | null>(null);
-
-  useEffect(() => {
-    const ws = new WebSocket(`${process.env.WS_URL}/live/${eventId}`);
-    wsRef.current = ws;
-
-    ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      switch (msg.type) {
-        case 'feature-product':
-          setFeaturedProduct(msg.product);
-          break;
-        case 'viewer-count':
-          setViewerCount(msg.count);
-          break;
-        case 'event-ended':
-          setFeaturedProduct(null);
-          break;
-      }
-    };
-
-    return () => ws.close();
-  }, [eventId]);
-
-  return (
-    <div className="live-player">
-      {/* HLS video player (use hls.js for broad browser support) */}
-      <HlsPlayer src={`/api/live/${eventId}/stream`} />
-
-      <div className="live-stats">
-        <span className="live-badge">LIVE</span>
-        <span>{viewerCount.toLocaleString()} watching</span>
-      </div>
-
-      {featuredProduct && (
-        <div className="featured-product-banner">
-          <img src={featuredProduct.imageUrl} alt={featuredProduct.name} width={80} height={80} />
-          <div>
-            <strong>{featuredProduct.name}</strong>
-            <span>${featuredProduct.price.toFixed(2)}</span>
-          </div>
-          <button onClick={() => addToCart(featuredProduct.id)}>
-            Add to Cart
-          </button>
+        <div style={{
+          position: 'absolute',
+          left: `${activeHotspot.position.x}%`,
+          top: `${activeHotspot.position.y}%`,
+          transform: 'translate(-50%, -100%)',
+          background: 'white',
+          padding: '12px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 10,
+          minWidth: '200px',
+        }}>
+          <p style={{ fontWeight: 600 }}>{hotspotProduct.name}</p>
+          <p style={{ color: '#666' }}>${hotspotProduct.price.toFixed(2)}</p>
+          <button onClick={() => addToCart(hotspotProduct.id)}>Add to cart</button>
         </div>
       )}
     </div>
@@ -300,47 +168,84 @@ function LiveShoppingViewer({ eventId }: { eventId: string }) {
 }
 ```
 
-### 5. Video commerce analytics
+For LIVE shopping, use Mux for HLS stream creation and WebSockets to push the currently featured product to all viewers:
 
 ```typescript
-async function getVideoCommerceMetrics(videoId: string) {
-  const [views, completionRate, hotspotClicks, addToCarts, purchases] = await Promise.all([
-    db.videoViews.count({ where: { videoId } }),
-    db.videoViews.avgCompletion({ videoId }),
-    db.hotspotClicks.count({ where: { videoId } }),
-    db.cartEvents.count({ where: { videoId, type: 'add-to-cart' } }),
-    db.orders.count({ where: { sourceVideoId: videoId } }),
-  ]);
+async function createLiveShoppingEvent(title: string, productIds: string[]) {
+  const stream = await muxClient.Video.LiveStreams.create({
+    playback_policy: 'public',
+    new_asset_settings: { playback_policy: 'public' },
+  });
 
-  return {
-    views,
-    completionRate,
-    hotspotCTR:      hotspotClicks / views,
-    addToCartRate:   addToCarts / views,
-    purchaseRate:    purchases / views,
-    videoCVR:        purchases / views,
-  };
+  return db.liveShoppingEvents.create({
+    title,
+    streamKey:        stream.stream_key,   // configure in OBS/Restream
+    playbackUrl:      `https://stream.mux.com/${stream.playback_ids[0].id}.m3u8`,
+    featuredProducts: productIds,
+    status:           'scheduled',
+  });
+}
+
+// Broadcast the currently featured product to all live viewers
+async function featureProductInLive(eventId: string, productId: string) {
+  const product = await db.products.findById(productId);
+  await wsServer.broadcast(`live:${eventId}`, {
+    type:    'feature-product',
+    product: { id: product.id, name: product.name, price: product.price,
+               imageUrl: product.images[0]?.url },
+  });
 }
 ```
 
+### Step 3: Run a live shopping event (platform-native)
+
+For stores already using TikTok Shop or Instagram Shopping, native LIVE is the lowest-friction path:
+
+**TikTok LIVE Shopping:**
+1. Ensure all products you plan to feature are in **Active** status in TikTok Seller Center (review takes 24–48 hours)
+2. Open the TikTok app → tap + → Go LIVE → tap the shopping cart icon → select products to feature
+3. During the LIVE, pin and unpin products in real time — viewers tap the pinned product card to purchase without leaving the app
+4. See @tiktok-shop-integration for full TikTok Shop setup
+
+**Instagram Live Shopping:**
+1. Connect your Meta product catalog via the Facebook & Instagram channel (see @social-commerce)
+2. Open Instagram → create a LIVE → tap the shopping bag icon → add products from your catalog
+3. Tag products during the LIVE; they appear as tappable links for viewers
+
+**On-site LIVE with Firework:**
+1. Sign up for Firework and install the embed script on your storefront
+2. Go to **Firework → Live Events → Schedule** and create a new live event
+3. Connect your product catalog in **Firework → Catalog → Import** (supports Shopify, WooCommerce, and custom feeds)
+4. During the event, host controls the product spotlight from the Firework producer dashboard — viewers see the featured product card on your site in real time
+
+### Step 4: Measure video commerce performance
+
+| Metric | Where to Find |
+|--------|---------------|
+| Video play rate | Tolstoy Analytics / Firework Dashboard |
+| Hotspot click-through rate | Tolstoy Analytics → Interactions |
+| Add-to-cart from video | Tolstoy / Firework → Conversions |
+| Revenue attributed to video | Tolstoy → Revenue (uses UTM attribution) |
+| LIVE shopping orders | TikTok Seller Center → Analytics / Firework → Live Reports |
+
 ## Best Practices
 
-- **Keep hotspot cards small and dismissible** — product cards that cover too much of the video reduce watch time; a compact 200x150px card is less intrusive
 - **Trigger hotspots 1–2 seconds after a product appears on screen** — premature hotspots feel random; delayed ones feel responsive and contextual
-- **Use HLS for all video delivery** — adaptive bitrate streaming with HLS ensures smooth playback across all network conditions
-- **Pre-load product data for all hotspots in the video** — fetch all hotspot products on video load to avoid API latency during playback
-- **Host live events at consistent times** — Tuesday/Thursday evenings at 7pm EST builds a recurring audience; ad hoc live events get low attendance
-- **Keep live shopping events under 60 minutes** — attention drops sharply after 30–45 minutes; plan your product lineup accordingly
+- **Keep hotspot cards compact** — a card covering more than 20% of the video frame reduces watch time; use a minimal 200×120px card with product name, price, and add-to-cart
+- **Pre-load product data for all hotspots on video load** — avoids API latency mid-playback; fetch all hotspot products in one batch request when the video player initializes
+- **Use HLS for all video delivery** — adaptive bitrate streaming ensures smooth playback across all network conditions; upload MP4 source files and transcode to HLS via Mux or Cloudflare Stream
+- **Run LIVE events at consistent times** — Tuesday/Thursday evenings at 7pm in your primary timezone builds a returning audience; ad hoc live events get low attendance
+- **Keep live shopping events under 60 minutes** — attention drops sharply after 30–45 minutes; plan your product lineup and demo order in advance
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Hotspot position drifts on mobile (different video aspect ratio) | Use percentage-based positioning (% from top-left) rather than pixel coordinates |
-| Live stream delay causing product reveal mismatch | Use low-latency RTMP settings (5s latency) or WHIP for sub-second latency live shopping |
+| Hotspot position drifts on mobile | Use percentage-based positioning (% from top-left), not pixel coordinates — percentages scale with the video element |
+| Live stream delay causes product reveal mismatch | Use low-latency RTMP settings in OBS (5s latency) or enable WHIP for sub-second latency |
 | Video not loading on iOS Safari | Ensure videos use H.264 codec and AAC audio; VP9 is not universally supported on iOS |
-| Add-to-cart button not working in embedded players | Ensure the cart API endpoint allows cross-origin requests from the video embed domain |
-| Live event WebSocket scaling | Use a Redis pub/sub backend for WebSocket broadcasting; a single Node process cannot handle 1000+ concurrent connections |
+| Tolstoy video slowing page load | Tolstoy lazy-loads by default — ensure you are using the Tolstoy Shopify app block, not a custom embed that bypasses their performance optimizations |
+| LIVE shopping products not showing | Products must be in Active status before the event; for TikTok, review takes 24–48 hours — activate products the day before |
 
 ## Related Skills
 
@@ -348,4 +253,4 @@ async function getVideoCommerceMetrics(videoId: string) {
 - @tiktok-ads-integration
 - @ugc-campaign-management
 - @product-launch-campaigns
-- @conversion-rate-optimization
+- @social-commerce

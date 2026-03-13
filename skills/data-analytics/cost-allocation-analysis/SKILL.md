@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [cost-allocation, profitability, cogs, gross-margin, contribution-margin, overhead, unit-economics, analytics, sql]
 triggers: ["cost allocation", "true profitability", "allocate costs to products", "product margin analysis", "COGS allocation", "order profitability", "overhead allocation", "cost per order", "fully-loaded cost"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,436 +16,167 @@ difficulty: intermediate
 
 ## Overview
 
-Cost allocation analysis goes beyond simple revenue minus COGS to compute the fully-loaded cost of serving each order, product, and channel. This skill covers building the SQL queries and data pipelines to allocate four cost buckets — cost of goods sold (COGS), variable fulfillment costs (shipping, packaging), direct marketing spend, and shared overhead (warehousing, software, headcount) — down to the product and order level so that contribution margins and true profitability are surfaced accurately.
+Cost allocation analysis goes beyond simple revenue minus COGS to compute the fully-loaded cost of serving each order, product, and channel. Without proper cost allocation, high-revenue products may appear profitable while actually generating negative margin once fulfillment, marketing, and allocated overhead are factored in.
 
-Without proper cost allocation, high-revenue products may appear profitable while actually generating negative margin once fulfillment and allocated overhead are factored in. This skill gives operations and finance teams the data model and queries to detect these hidden losses.
+This skill guides you through allocating four cost buckets — COGS, variable fulfillment costs, direct marketing spend, and shared overhead — down to the product and order level using your existing platform tools, apps, and accounting integrations.
 
 ## When to Use This Skill
 
 - When the business needs to identify which products, SKUs, or channels are genuinely profitable after all costs
 - When building a P&L view that goes below gross margin to contribution margin and net margin
-- When reconciling reported gross margin against actual cash outflows to understand the discrepancy
 - When evaluating channel economics — understanding that marketplace orders carry marketplace fees on top of COGS
 - When product managers need to make pricing decisions backed by fully-loaded cost data
-- When finance is building monthly management accounts and needs automated cost allocation rather than manual spreadsheets
-- When the business is scaling and shared overhead (warehouse lease, 3PL minimums) is growing faster than revenue
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When finance is building monthly management accounts and needs automated cost allocation
+- When the business is scaling and shared overhead is growing faster than revenue
 
 ## Core Instructions
 
-1. **Design the cost allocation data model**
+### Step 1: Determine your platform and get your cost data
 
-   Four cost categories need separate tables because their allocation methods differ:
+The first step is getting accurate COGS into your platform or analytics tool. Without cost data at the product level, every margin calculation will be wrong.
 
-   ```sql
-   -- PostgreSQL: cost allocation schema
-   CREATE TABLE product_costs (
-     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     product_id    UUID NOT NULL REFERENCES products(id),
-     variant_id    UUID REFERENCES product_variants(id),
-     effective_from DATE NOT NULL,
-     effective_to   DATE,            -- NULL = currently active
-     cogs_cents    INTEGER NOT NULL, -- Landed cost per unit (includes freight, duties)
-     packaging_cents INTEGER NOT NULL DEFAULT 0,
-     created_at    TIMESTAMPTZ DEFAULT NOW()
-   );
+---
 
-   CREATE TABLE order_fulfillment_costs (
-     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     order_id      UUID NOT NULL REFERENCES orders(id),
-     shipping_label_cents INTEGER NOT NULL DEFAULT 0,
-     pick_pack_cents      INTEGER NOT NULL DEFAULT 0,
-     returns_reserve_cents INTEGER NOT NULL DEFAULT 0, -- Reserve for expected returns
-     recorded_at   TIMESTAMPTZ DEFAULT NOW()
-   );
+#### Shopify
 
-   CREATE TABLE channel_marketing_costs (
-     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     channel     TEXT NOT NULL,     -- 'google', 'meta', 'email', 'organic'
-     spend_date  DATE NOT NULL,
-     spend_cents INTEGER NOT NULL,
-     orders_attributed INTEGER NOT NULL DEFAULT 0, -- From attribution model
-     revenue_attributed_cents INTEGER NOT NULL DEFAULT 0,
-     UNIQUE (channel, spend_date)
-   );
+**Enter product costs in Shopify:**
+1. Go to **Products → [Product Name] → Variants**
+2. Scroll to the **Cost per item** field in each variant
+3. Enter your landed cost (purchase price + inbound freight + duties, divided by units)
+4. Shopify uses this cost in **Analytics → Profit by product** (available on all plans) and in **Inventory → Inventory valuation** reports
 
-   CREATE TABLE overhead_allocations (
-     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     period_start  DATE NOT NULL,
-     period_end    DATE NOT NULL,
-     category      TEXT NOT NULL,  -- 'warehousing', 'software', 'headcount', 'returns_processing'
-     total_cents   INTEGER NOT NULL,
-     allocation_basis TEXT NOT NULL, -- 'revenue_share', 'order_count', 'unit_count'
-     UNIQUE (period_start, category)
-   );
-   ```
+**View cost allocation reports in Shopify:**
+- Go to **Analytics → Reports → Profit by product** — shows gross profit per product (revenue minus COGS)
+- Go to **Analytics → Reports → Profit by channel** — shows gross margin by sales channel
 
-2. **Calculate per-order COGS from product costs**
+**For more detailed cost allocation, install a profit analytics app:**
+- **BeProfit** (Shopify App Store): Adds fulfillment cost tracking, ad spend integration, and per-order margin calculation
+- **Lifetimely** (Shopify App Store): Connects to ad platforms and shipping carriers to compute contribution margin per order
+- **TrueProfit** (Shopify App Store): Real-time profit dashboard with shipping cost tracking, ad spend allocation, and per-product P&L
 
-   Use time-effective product costs to compute the COGS of each order line item:
+**BeProfit setup for full cost allocation:**
+1. Install BeProfit from the Shopify App Store
+2. Go to **BeProfit → Cost Settings** and verify product costs (imported from Shopify's cost per item field)
+3. Connect shipping carriers under **BeProfit → Integrations → Shipping** — BeProfit pulls actual label costs from ShipStation, Shippo, EasyPost, or AfterShip
+4. Connect ad accounts under **BeProfit → Integrations → Marketing** — links Meta, Google, and TikTok spend to attributed orders
+5. Go to **BeProfit → Reports → Profit per Order** — see contribution margin after COGS, shipping, and marketing for every order
 
-   ```sql
-   -- Per-order COGS using point-in-time product costs
-   SELECT
-     o.id AS order_id,
-     o.created_at,
-     o.channel,
-     SUM(oi.quantity * COALESCE(pc.cogs_cents, 0)) / 100.0 AS cogs,
-     SUM(oi.quantity * COALESCE(pc.packaging_cents, 0)) / 100.0 AS packaging_cost,
-     SUM(oi.unit_price_cents * oi.quantity) / 100.0 AS revenue,
-     -- Gross margin
-     (SUM(oi.unit_price_cents * oi.quantity) -
-      SUM(oi.quantity * COALESCE(pc.cogs_cents, 0)) -
-      SUM(oi.quantity * COALESCE(pc.packaging_cents, 0))) / 100.0 AS gross_profit,
-     ROUND(100.0 *
-       (SUM(oi.unit_price_cents * oi.quantity) -
-        SUM(oi.quantity * COALESCE(pc.cogs_cents, 0)) -
-        SUM(oi.quantity * COALESCE(pc.packaging_cents, 0))) /
-       NULLIF(SUM(oi.unit_price_cents * oi.quantity), 0), 2) AS gross_margin_pct
-   FROM orders o
-   JOIN order_items oi ON oi.order_id = o.id
-   LEFT JOIN LATERAL (
-     SELECT cogs_cents, packaging_cents
-     FROM product_costs pc
-     WHERE pc.variant_id = oi.variant_id
-       AND pc.effective_from <= o.created_at::date
-       AND (pc.effective_to IS NULL OR pc.effective_to > o.created_at::date)
-     ORDER BY pc.effective_from DESC
-     LIMIT 1
-   ) pc ON TRUE
-   WHERE o.created_at BETWEEN :start_date AND :end_date
-     AND o.status NOT IN ('cancelled')
-   GROUP BY o.id, o.created_at, o.channel
-   ORDER BY o.created_at DESC;
-   ```
+---
 
-3. **Allocate shipping and fulfillment costs per order**
+#### WooCommerce
 
-   ```typescript
-   // Compute per-order contribution margin after fulfillment costs
-   async function getOrderContributionMargin(orderId: string) {
-     const [order, fulfillmentCost, cogsRows] = await Promise.all([
-       db.orders.findById(orderId, { include: ['items', 'items.variant'] }),
-       db.orderFulfillmentCosts.findFirst({ where: { orderId } }),
-       db.query(`
-         SELECT SUM(oi.quantity * pc.cogs_cents) AS total_cogs_cents
-         FROM order_items oi
-         JOIN product_costs pc ON pc.variant_id = oi.variant_id
-           AND pc.effective_from <= $1::date
-           AND (pc.effective_to IS NULL OR pc.effective_to > $1::date)
-         WHERE oi.order_id = $2
-       `, [order.createdAt, orderId]),
-     ]);
+**Enter product costs in WooCommerce:**
+- Use the **Cost of Goods** plugin (WooCommerce extension, $79/yr) to add a cost field to every product and variant
+- Alternatively, use **ATUM Inventory Management** (free) which includes COGS tracking
 
-     const revenue = order.subtotalCents / 100;
-     const discounts = order.discountCents / 100;
-     const cogs = (cogsRows[0]?.total_cogs_cents ?? 0) / 100;
-     const shipping = (fulfillmentCost?.shippingLabelCents ?? 0) / 100;
-     const pickPack = (fulfillmentCost?.pickPackCents ?? 0) / 100;
-     const returnsReserve = (fulfillmentCost?.returnsReserveCents ?? 0) / 100;
+**View cost allocation with Metorik:**
+1. Install **Metorik** (connects via WooCommerce REST API)
+2. Go to **Metorik → Products → Profitability** — shows gross margin per product once costs are entered in WooCommerce
+3. Go to **Metorik → Orders** — filter by any dimension and see per-order gross profit
 
-     const grossProfit = revenue - discounts - cogs;
-     const contributionMargin = grossProfit - shipping - pickPack - returnsReserve;
+**For fulfillment cost allocation:**
+- If using ShipStation or Shippo for label generation, these tools track actual shipping costs per order; export monthly reports and reconcile against WooCommerce order totals
 
-     return {
-       orderId,
-       revenue,
-       discounts,
-       netRevenue: revenue - discounts,
-       cogs,
-       grossProfit,
-       grossMarginPct: grossProfit / (revenue - discounts) * 100,
-       shippingCost: shipping,
-       pickPackCost: pickPack,
-       returnsReserve,
-       contributionMargin,
-       contributionMarginPct: contributionMargin / (revenue - discounts) * 100,
-     };
-   }
-   ```
+---
 
-4. **Allocate marketing spend to orders**
+#### BigCommerce
 
-   Use the attribution model output to spread channel marketing spend across the orders each channel drove:
+1. BigCommerce supports cost price at the product level: **Products → [Product] → Pricing → Cost price**
+2. Go to **Analytics → Merchandising** — shows revenue and cost of goods by product; provides gross margin % per product
+3. For advanced cost allocation, connect BigCommerce to **QuickBooks Commerce** (formerly TradeGecko) or use the **Inventory Source** app for landed cost tracking
+4. **Brightpearl** (available in the BigCommerce App Store) is a full retail operations platform that handles multi-channel cost allocation including fulfillment, marketplace fees, and overhead allocation
 
-   ```sql
-   -- Marketing cost per order via channel attribution
-   WITH channel_cpa AS (
-     SELECT
-       cmc.channel,
-       cmc.spend_date,
-       cmc.spend_cents,
-       cmc.orders_attributed,
-       -- Cost per acquired order for this channel on this day
-       ROUND(cmc.spend_cents::numeric / NULLIF(cmc.orders_attributed, 0), 0) AS cpa_cents
-     FROM channel_marketing_costs cmc
-     WHERE cmc.spend_date BETWEEN :start_date AND :end_date
-   ),
-   order_channel_cpa AS (
-     SELECT
-       oa.order_id,
-       SUM(ccpa.cpa_cents) / 100.0 AS marketing_cost_allocated
-     FROM order_attribution oa
-     JOIN channel_cpa ccpa ON ccpa.channel = oa.source
-       AND ccpa.spend_date = oa.attributed_date
-     GROUP BY oa.order_id
-   )
-   SELECT
-     o.id AS order_id,
-     o.created_at,
-     ocpa.marketing_cost_allocated,
-     -- Contribution margin after marketing
-     (order_cm.contribution_margin - COALESCE(ocpa.marketing_cost_allocated, 0)) AS post_marketing_margin
-   FROM orders o
-   LEFT JOIN order_channel_cpa ocpa ON ocpa.order_id = o.id
-   -- order_cm would be a CTE or view containing the contribution_margin from step 3
-   WHERE o.created_at BETWEEN :start_date AND :end_date
-     AND o.status NOT IN ('cancelled');
-   ```
+---
 
-5. **Allocate overhead costs by revenue share**
+### Step 2: Allocate the four cost categories
 
-   ```typescript
-   // Allocate monthly overhead to orders using revenue-share method
-   async function allocateOverheadToOrders(periodStart: Date, periodEnd: Date) {
-     // Fetch total overhead for the period
-     const overheadRows = await db.query(`
-       SELECT SUM(total_cents) AS total_overhead_cents
-       FROM overhead_allocations
-       WHERE period_start <= $1 AND period_end >= $2
-         AND allocation_basis = 'revenue_share'
-     `, [periodEnd, periodStart]);
+**Cost Category 1: COGS (product cost)**
+- Enter landed cost at the variant level in your platform (includes purchase price + inbound freight + duties)
+- Update costs whenever supplier pricing changes — use "effective date" tracking so historical orders are not affected
+- Most platforms and profit apps will pull this automatically
 
-     const totalOverhead = (overheadRows[0]?.total_overhead_cents ?? 0) / 100;
+**Cost Category 2: Fulfillment costs (shipping + pick/pack)**
+- **Direct website orders:** Pull actual label costs from your shipping platform (ShipStation, EasyPost, Shippo) and match to orders by order ID
+- **FBA orders:** Pull fulfillment fees from the Amazon Settlement Report (see @marketplace-fee-reconciliation for details)
+- **3PL orders:** Match 3PL invoices to order volume; most 3PLs charge per-order pick/pack fees that can be allocated directly
 
-     // Fetch total net revenue for the period
-     const revenueRow = await db.query(`
-       SELECT SUM(subtotal_cents - discount_cents) / 100.0 AS total_revenue
-       FROM orders
-       WHERE created_at BETWEEN $1 AND $2
-         AND status NOT IN ('cancelled')
-     `, [periodStart, periodEnd]);
+**Cost Category 3: Marketing spend**
+- Use your attribution tool (Triple Whale, BeProfit, or GA4 attribution) to allocate marketing spend to the orders each channel drove
+- Simpler approach: calculate Cost Per Order by channel (channel spend / channel orders) and apply that rate to each order attributed to that channel
 
-     const totalRevenue = revenueRow[0]?.total_revenue ?? 0;
-     const overheadRate = totalRevenue > 0 ? totalOverhead / totalRevenue : 0;
+**Cost Category 4: Overhead (warehouse, software, headcount)**
+- Calculate a monthly overhead rate: Total overhead / Total net revenue = overhead %
+- Apply this rate to each order's net revenue to allocate overhead
+- Example: If monthly overhead is $20,000 and monthly revenue is $200,000, overhead rate is 10% — allocate $10 overhead to a $100 order
 
-     // Apply the overhead rate to each order
-     await db.query(`
-       INSERT INTO order_overhead_allocations (order_id, overhead_amount, period_start, overhead_rate)
-       SELECT
-         id AS order_id,
-         (subtotal_cents - discount_cents) / 100.0 * $1 AS overhead_amount,
-         $2 AS period_start,
-         $1 AS overhead_rate
-       FROM orders
-       WHERE created_at BETWEEN $2 AND $3
-         AND status NOT IN ('cancelled')
-       ON CONFLICT (order_id, period_start) DO UPDATE
-         SET overhead_amount = EXCLUDED.overhead_amount,
-             overhead_rate = EXCLUDED.overhead_rate
-     `, [overheadRate, periodStart, periodEnd]);
+### Step 3: Build the cost waterfall
 
-     return { totalOverhead, totalRevenue, overheadRate };
-   }
-   ```
+Use this structure for your cost analysis (whether in a spreadsheet or your profit analytics app):
 
-6. **Build the fully-loaded P&L waterfall by channel**
+```
+Gross Revenue (selling price × units sold)
+  - Discounts & coupons applied
+  - Returns & refunds
+= Net Revenue
 
-   ```sql
-   -- Full P&L waterfall: gross revenue → net profit by channel
-   SELECT
-     o.channel,
-     COUNT(DISTINCT o.id) AS orders,
-     SUM(oi_rev.revenue) AS gross_revenue,
-     SUM(o.discount_cents) / 100.0 AS discounts,
-     SUM(oi_rev.revenue) - SUM(o.discount_cents) / 100.0 AS net_revenue,
-     SUM(oi_cogs.cogs) AS cogs,
-     SUM(oi_rev.revenue) - SUM(o.discount_cents) / 100.0 - SUM(oi_cogs.cogs) AS gross_profit,
-     SUM(ofc.shipping_label_cents + ofc.pick_pack_cents) / 100.0 AS fulfillment_costs,
-     SUM(COALESCE(ocpa.marketing_cost_allocated, 0)) AS marketing_costs,
-     SUM(COALESCE(ooa.overhead_amount, 0)) AS overhead_costs,
-     -- Net contribution margin
-     SUM(oi_rev.revenue) - SUM(o.discount_cents) / 100.0
-       - SUM(oi_cogs.cogs)
-       - SUM(ofc.shipping_label_cents + ofc.pick_pack_cents) / 100.0
-       - SUM(COALESCE(ocpa.marketing_cost_allocated, 0))
-       - SUM(COALESCE(ooa.overhead_amount, 0)) AS net_margin,
-     ROUND(100.0 * (
-       SUM(oi_rev.revenue) - SUM(o.discount_cents) / 100.0
-         - SUM(oi_cogs.cogs)
-         - SUM(ofc.shipping_label_cents + ofc.pick_pack_cents) / 100.0
-         - SUM(COALESCE(ocpa.marketing_cost_allocated, 0))
-         - SUM(COALESCE(ooa.overhead_amount, 0))
-     ) / NULLIF(SUM(oi_rev.revenue) - SUM(o.discount_cents) / 100.0, 0), 2) AS net_margin_pct
-   FROM orders o
-   LEFT JOIN LATERAL (
-     SELECT SUM(unit_price_cents * quantity) / 100.0 AS revenue
-     FROM order_items WHERE order_id = o.id
-   ) oi_rev ON TRUE
-   LEFT JOIN LATERAL (
-     SELECT SUM(oi.quantity * COALESCE(pc.cogs_cents, 0)) / 100.0 AS cogs
-     FROM order_items oi
-     LEFT JOIN product_costs pc ON pc.variant_id = oi.variant_id
-       AND pc.effective_from <= o.created_at::date
-       AND (pc.effective_to IS NULL OR pc.effective_to > o.created_at::date)
-     WHERE oi.order_id = o.id
-   ) oi_cogs ON TRUE
-   LEFT JOIN order_fulfillment_costs ofc ON ofc.order_id = o.id
-   LEFT JOIN order_channel_cpa ocpa ON ocpa.order_id = o.id
-   LEFT JOIN order_overhead_allocations ooa ON ooa.order_id = o.id
-   WHERE o.created_at BETWEEN :start_date AND :end_date
-     AND o.status NOT IN ('cancelled')
-   GROUP BY o.channel
-   ORDER BY net_margin DESC;
-   ```
+  - Product cost / COGS (landed cost per unit)
+  - Inbound freight & duties (if not included in COGS)
+= Gross Profit
+  Gross Margin % = Gross Profit / Net Revenue × 100
 
-## Examples
+  - Outbound shipping (actual label cost or carrier estimate)
+  - Pick & pack fees (3PL per-order fee)
+  - Payment processing fees (~2.9% + $0.30 for Stripe/Shopify Payments)
+  - Marketplace fees (Amazon referral + FBA fees; eBay final value fees)
+  - Packaging materials
+= Fulfillment-Adjusted Gross Profit
 
-### SKU-level profitability ranking
+  - Direct marketing spend (allocated via attribution model)
+= Contribution Margin
+  Contribution Margin % = Contribution Margin / Net Revenue × 100
 
-```sql
--- Rank all SKUs by contribution margin after all variable costs
-WITH sku_metrics AS (
-  SELECT
-    p.sku,
-    p.name AS product_name,
-    SUM(oi.quantity) AS units_sold,
-    SUM(oi.unit_price_cents * oi.quantity) / 100.0 AS revenue,
-    SUM(oi.quantity * COALESCE(pc.cogs_cents, 0)) / 100.0 AS cogs,
-    SUM(oi.quantity * COALESCE(pc.packaging_cents, 0)) / 100.0 AS packaging,
-    -- Variable shipping allocated proportionally by weight
-    SUM(ofc.shipping_label_cents * (oi.quantity * p.weight_grams) /
-        NULLIF(total_weight.total_grams, 0)) / 100.0 AS allocated_shipping
-  FROM order_items oi
-  JOIN products p ON oi.product_id = p.id
-  JOIN orders o ON oi.order_id = o.id
-  LEFT JOIN product_costs pc ON pc.product_id = p.id
-    AND pc.effective_from <= o.created_at::date
-    AND (pc.effective_to IS NULL OR pc.effective_to > o.created_at::date)
-  LEFT JOIN order_fulfillment_costs ofc ON ofc.order_id = o.id
-  LEFT JOIN LATERAL (
-    SELECT SUM(oi2.quantity * p2.weight_grams) AS total_grams
-    FROM order_items oi2
-    JOIN products p2 ON oi2.product_id = p2.id
-    WHERE oi2.order_id = oi.order_id
-  ) total_weight ON TRUE
-  WHERE o.created_at BETWEEN :start_date AND :end_date
-    AND o.status NOT IN ('cancelled')
-  GROUP BY p.sku, p.name
-)
-SELECT
-  sku,
-  product_name,
-  units_sold,
-  revenue,
-  cogs,
-  packaging,
-  allocated_shipping,
-  revenue - cogs - packaging - allocated_shipping AS contribution_margin,
-  ROUND(100.0 * (revenue - cogs - packaging - allocated_shipping) / NULLIF(revenue, 0), 2) AS cm_pct,
-  RANK() OVER (ORDER BY (revenue - cogs - packaging - allocated_shipping) / NULLIF(units_sold, 0) DESC) AS rank_by_unit_cm
-FROM sku_metrics
-ORDER BY cm_pct DESC;
+  - Allocated overhead (warehouse, software, headcount × overhead rate)
+= Net Operating Profit per Order
 ```
 
-### Detect negative-margin orders
+### Step 4: Identify negative-margin orders and products
 
-```typescript
-// Flag orders where contribution margin is negative (losing money on the order)
-async function findNegativeMarginOrders(start: Date, end: Date, threshold = 0) {
-  const rows = await db.query(`
-    SELECT
-      o.id,
-      o.order_number,
-      o.created_at,
-      o.channel,
-      o.subtotal_cents / 100.0 AS revenue,
-      COALESCE(oi_cogs.cogs, 0) AS cogs,
-      COALESCE(ofc.shipping_label_cents + ofc.pick_pack_cents, 0) / 100.0 AS fulfillment,
-      -- Net contribution
-      o.subtotal_cents / 100.0
-        - COALESCE(oi_cogs.cogs, 0)
-        - COALESCE(ofc.shipping_label_cents + ofc.pick_pack_cents, 0) / 100.0 AS contribution_margin
-    FROM orders o
-    LEFT JOIN LATERAL (
-      SELECT SUM(oi.quantity * COALESCE(pc.cogs_cents, 0)) / 100.0 AS cogs
-      FROM order_items oi
-      LEFT JOIN product_costs pc ON pc.variant_id = oi.variant_id
-        AND pc.effective_from <= o.created_at::date
-        AND (pc.effective_to IS NULL OR pc.effective_to > o.created_at::date)
-      WHERE oi.order_id = o.id
-    ) oi_cogs ON TRUE
-    LEFT JOIN order_fulfillment_costs ofc ON ofc.order_id = o.id
-    WHERE o.created_at BETWEEN $1 AND $2
-      AND o.status NOT IN ('cancelled')
-    HAVING o.subtotal_cents / 100.0
-      - COALESCE(oi_cogs.cogs, 0)
-      - COALESCE(ofc.shipping_label_cents + ofc.pick_pack_cents, 0) / 100.0 < $3
-    ORDER BY contribution_margin ASC
-    LIMIT 100
-  `, [start, end, threshold]);
+After building the cost waterfall, run these analyses:
 
-  return rows;
-}
-```
+**Find negative-margin products:**
+- In BeProfit (Shopify): Go to **Reports → Products** and sort by **Net Profit % ascending** — products at the bottom are destroying value
+- In Metorik (WooCommerce): Go to **Products → Profitability** and filter for contribution margin < 0
+- In Shopify Analytics: Go to **Profit by product** and sort by **Gross profit ascending**
+
+**Common causes of negative margin at the product level:**
+1. COGS entered incorrectly (not including freight/duties)
+2. High return rate for that SKU (returns eat into margin)
+3. Heavy discounting on that product (check average discount rate per product)
+4. Shipping cost exceeds margin on low-priced, heavy items (dimensional weight problem)
+
+**Find negative-margin channels:**
+- Amazon FBA orders often look profitable on gross margin but turn negative once FBA fulfillment fees (typically $3–$8/unit), referral fees (8–15%), and advertising spend are allocated
+- Compare your website contribution margin vs. Amazon contribution margin for the same SKU side by side
 
 ## Best Practices
 
-- **Use time-effective product costs** — COGS changes over time as supplier costs fluctuate; always join product costs using the order date as the point-in-time, not the latest cost record
-- **Store all costs in smallest currency units (cents)** — avoid floating-point arithmetic for cost calculations; use integer cents throughout and only divide by 100 for display
-- **Allocate overhead using the same period as the orders** — monthly overhead should be allocated proportionally to orders within that same calendar month; do not spread annual overhead linearly
-- **Separate fixed and variable costs** — shipping and pick/pack are variable (per-order); warehouse rent is fixed overhead; treating fixed costs as variable inflates per-order costs for low-volume periods
-- **Include a returns reserve in fulfillment costs** — if your return rate is 15%, allocate 15% of the average return processing cost as a reserve on each order at the time of sale
-- **Reconcile allocated costs against actuals monthly** — the sum of all allocated shipping costs should equal your actual shipping invoice; any gap indicates misconfigured weights or rates
-- **Build a cost update audit trail** — any change to `product_costs` should be an insert with a new `effective_from` date, never an update; this preserves historical margin calculations
-- **Handle marketplace fees as a cost layer** — Amazon, eBay, and Etsy fees should be modeled as a channel-specific surcharge in the contribution margin calculation, not as a discount on revenue
+- **Use time-effective product costs** — COGS changes over time; always record the cost as of when the order was placed, not the current cost; most profit apps handle this automatically
+- **Include all components of landed cost in COGS** — purchase price alone understates COGS by 15–40% for imported goods; add inbound freight, duties, and prep costs
+- **Handle marketplace fees as a cost layer, not a revenue reduction** — Amazon and eBay fees should appear as a fulfillment/selling cost in your waterfall, not netted against revenue
+- **Reconcile allocated costs against actuals monthly** — the sum of all allocated shipping costs should match your actual shipping invoices; any gap indicates orders where costs were not tracked
+- **Include a returns reserve in fulfillment costs** — if your return rate is 15%, reserve 15% of average return processing cost on every order at the time of sale
+- **Separate fixed and variable overhead** — shipping and pick/pack are variable (per-order); warehouse rent is fixed; treating fixed costs as variable inflates per-order costs in low-volume periods
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
 | Gross margin is positive but cash flow is negative | Overhead and fulfillment costs are not in the gross margin calculation; build the full waterfall to contribution margin before concluding a product is profitable |
-| Historical margin changes when COGS is updated | Always use `effective_from` / `effective_to` date ranges on product costs; never overwrite historical cost records |
-| Marketing costs not allocated to orders | Implement a channel attribution model (see @attribution-modeling) as a prerequisite; without it, marketing costs can only be allocated at the channel aggregate level |
-| Overhead allocation rate fluctuates wildly month-to-month | Use a rolling 3-month average revenue to compute the overhead rate rather than a single month to smooth out seasonality effects |
-| Negative-margin orders are hidden by channel averages | Always analyze at the individual order level, not just channel averages; a high-volume channel can average a positive margin while hiding a tail of deeply unprofitable orders |
-| SKU margins differ between product variants | Ensure `product_costs` rows exist at the variant level (`variant_id`) not just the product level; a product with multiple sizes may have different per-unit costs |
-
-## Testing and Validation
-
-1. **Reconciliation test — COGS**: Sum all `product_costs.cogs_cents * quantity` for a month's `order_items`. The result should match within 2% of the COGS figure in your accounting system (QuickBooks, Xero). Differences larger than 2% indicate missing cost records or incorrect effective dates.
-
-2. **Reconciliation test — shipping**: Sum all `order_fulfillment_costs.shipping_label_cents` for a month. Cross-check against the shipping carrier invoice (FedEx, UPS, USPS). Any gap indicates orders where fulfillment cost records were not created.
-
-3. **Margin sanity check**: No channel's net margin should exceed gross margin. If net margin > gross margin for any row, a cost allocation is missing or negative (data entry error in cost tables).
-
-4. **Unit test — time-effective costs**:
-   ```typescript
-   // Verify that orders placed before a cost change use the old cost
-   it('uses cost effective at order date, not latest cost', async () => {
-     const product = await createProduct();
-     await createCost(product.id, { cogsCents: 1000, effectiveFrom: '2026-01-01', effectiveTo: '2026-02-01' });
-     await createCost(product.id, { cogsCents: 1500, effectiveFrom: '2026-02-01', effectiveTo: null });
-
-     const janOrder = await createOrder({ productId: product.id, createdAt: '2026-01-15' });
-     const margin = await getOrderContributionMargin(janOrder.id);
-     expect(margin.cogs).toBe(10.00); // uses $10 cost, not $15
-
-     const febOrder = await createOrder({ productId: product.id, createdAt: '2026-02-15' });
-     const febMargin = await getOrderContributionMargin(febOrder.id);
-     expect(febMargin.cogs).toBe(15.00); // uses $15 cost
-   });
-   ```
-
-5. **Overhead allocation validation**: Verify that the sum of `order_overhead_allocations.overhead_amount` for a period equals `overhead_allocations.total_cents / 100` for that same period. A discrepancy indicates orders that were not included in the allocation run.
+| Historical margin changes when COGS is updated | Use point-in-time cost records; BeProfit and most profit analytics apps track historical cost changes automatically |
+| Marketing costs not allocated to orders | Use an attribution-aware profit app (BeProfit, Lifetimely) or calculate Cost Per Order by channel and apply manually |
+| Overhead allocation rate fluctuates wildly month-to-month | Use a rolling 3-month average revenue to compute the overhead rate rather than a single month |
+| Negative-margin orders are hidden by channel averages | View profit at the individual order level, not just channel averages; a high-volume channel can average positive margin while hiding a tail of unprofitable orders |
+| SKU margins differ between variants | Enter cost at the variant level (not just product level); a product with multiple sizes may have different per-unit costs |
 
 ## Related Skills
 

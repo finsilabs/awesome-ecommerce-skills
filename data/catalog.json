@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-13T01:36:20.031Z",
+  "generatedAt": "2026-03-13T03:44:52.974Z",
   "total": 178,
   "skills": [
     {
@@ -28,7 +28,10 @@
       ],
       "path": "skills/business-operations/accounts-payable-management",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -70,7 +73,10 @@
       ],
       "path": "skills/business-operations/b2b-commerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -110,7 +116,10 @@
       ],
       "path": "skills/business-operations/demand-forecasting",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -150,7 +159,10 @@
       ],
       "path": "skills/business-operations/marketplace-building",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -188,7 +200,10 @@
       ],
       "path": "skills/business-operations/merchandising-rules",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -228,7 +243,10 @@
       ],
       "path": "skills/business-operations/multi-channel-selling",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -268,7 +286,10 @@
       ],
       "path": "skills/business-operations/order-management-system",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -307,7 +328,10 @@
       ],
       "path": "skills/business-operations/returns-refund-policy",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -346,14 +370,17 @@
       ],
       "path": "skills/business-operations/vendor-management",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "catalog-import-export",
       "name": "Catalog Import Export",
-      "description": "Import and export your entire product catalog in CSV, JSON, or XML with validation, error reporting, and scheduled sync support",
+      "description": "Import and export your entire product catalog in bulk using your platform's native tools or dedicated apps, with validation and scheduled sync support",
       "category": "catalog-inventory",
       "risk": "safe",
       "source": "curated",
@@ -388,14 +415,17 @@
       ],
       "path": "skills/catalog-inventory/catalog-import-export",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "cogs-tracking-allocation",
       "name": "Cogs Tracking Allocation",
-      "description": "Track cost of goods sold with FIFO/LIFO/weighted average inventory valuation, landed cost allocation for imports, and variance analysis against standard costs",
+      "description": "Track cost of goods sold and landed costs using your platform's built-in tools or accounting integrations to compute accurate gross margin per order",
       "category": "catalog-inventory",
       "risk": "critical",
       "source": "curated",
@@ -418,14 +448,17 @@
       ],
       "path": "skills/catalog-inventory/cogs-tracking-allocation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "digital-products",
       "name": "Digital Products",
-      "description": "Sell software, ebooks, and other downloads with secure delivery, license key generation, download limits, and expiration controls",
+      "description": "Sell software, ebooks, and other downloads with secure delivery, license key generation, download limits, and expiration controls using platform apps",
       "category": "catalog-inventory",
       "risk": "critical",
       "source": "curated",
@@ -458,14 +491,17 @@
       ],
       "path": "skills/catalog-inventory/digital-products",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "inventory-tracking",
       "name": "Inventory Tracking",
-      "description": "Track stock levels in real time across all your warehouses with inventory reservation to prevent overselling and support for backorders",
+      "description": "Track stock levels in real time across your platform with inventory reservation to prevent overselling and support for backorders",
       "category": "catalog-inventory",
       "risk": "critical",
       "source": "curated",
@@ -498,14 +534,17 @@
       ],
       "path": "skills/catalog-inventory/inventory-tracking",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
     {
       "id": "low-stock-alerts",
       "name": "Low Stock Alerts",
-      "description": "Automatically alert your team and trigger reorders when products fall below custom thresholds, using sales velocity and demand forecasting",
+      "description": "Set up automated alerts when products fall below custom thresholds so you can reorder before running out of stock",
       "category": "catalog-inventory",
       "risk": "safe",
       "source": "curated",
@@ -538,7 +577,10 @@
       ],
       "path": "skills/catalog-inventory/low-stock-alerts",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -578,14 +620,17 @@
       ],
       "path": "skills/catalog-inventory/multi-warehouse",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
     {
       "id": "product-bundles-kits",
       "name": "Product Bundles Kits",
-      "description": "Sell grouped products as bundles or kits with automatic inventory deduction for each component, bundle pricing, and display logic",
+      "description": "Sell grouped products as bundles or kits with automatic inventory deduction, bundle pricing, and display logic using platform apps",
       "category": "catalog-inventory",
       "risk": "safe",
       "source": "curated",
@@ -619,14 +664,17 @@
       ],
       "path": "skills/catalog-inventory/product-bundles-kits",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "product-categorization",
       "name": "Product Categorization",
-      "description": "Build a clean product hierarchy with breadcrumb navigation, automated category assignment, and SEO-friendly URLs for each category level",
+      "description": "Build a clean product hierarchy with collections, categories, tags, and breadcrumb navigation using your platform's native tools",
       "category": "catalog-inventory",
       "risk": "safe",
       "source": "curated",
@@ -659,14 +707,17 @@
       ],
       "path": "skills/catalog-inventory/product-categorization",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "product-content-enrichment",
       "name": "Product Content Enrichment",
-      "description": "Use AI to auto-generate product descriptions, extract attributes from raw specs, and tag images to enrich your catalog at scale",
+      "description": "Use AI to auto-generate product descriptions, extract attributes, and tag images to enrich your catalog at scale using platform tools and AI writing apps",
       "category": "catalog-inventory",
       "risk": "safe",
       "source": "curated",
@@ -700,14 +751,17 @@
       ],
       "path": "skills/catalog-inventory/product-content-enrichment",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "product-data-modeling",
       "name": "Product Data Modeling",
-      "description": "Design a flexible product database schema that supports variants, custom attributes, product relationships, and category hierarchies",
+      "description": "Structure your product catalog using your platform's native data model for variants, attributes, metafields, and product relationships",
       "category": "catalog-inventory",
       "risk": "safe",
       "source": "curated",
@@ -738,14 +792,17 @@
       ],
       "path": "skills/catalog-inventory/product-data-modeling",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "variant-matrix",
       "name": "Variant Matrix",
-      "description": "Generate and manage all size/color/material combinations for a product with automatic SKU creation and per-variant pricing and inventory",
+      "description": "Generate and manage all size/color/material combinations for a product using your platform's variant tools with bulk price and inventory management",
       "category": "catalog-inventory",
       "risk": "safe",
       "source": "curated",
@@ -778,14 +835,17 @@
       ],
       "path": "skills/catalog-inventory/variant-matrix",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "customer-accounts",
       "name": "Customer Accounts",
-      "description": "Let shoppers register, manage their profile, save multiple addresses, and view their full order history in a personal account portal",
+      "description": "Let shoppers register, manage their profile, save multiple addresses, and view their full order history using your platform's built-in customer account system",
       "category": "customer-crm",
       "risk": "safe",
       "source": "curated",
@@ -816,14 +876,17 @@
       ],
       "path": "skills/customer-crm/customer-accounts",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
     {
       "id": "customer-lifetime-value",
       "name": "Customer Lifetime Value",
-      "description": "Calculate and predict the net profit value each customer will generate over their lifetime, then automate retention strategies for your highest-value segments",
+      "description": "Calculate and track the net profit value each customer generates, then automate retention strategies for your highest-value segments using platform tools",
       "category": "customer-crm",
       "risk": "safe",
       "source": "curated",
@@ -858,14 +921,17 @@
       ],
       "path": "skills/customer-crm/customer-lifetime-value",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
     {
       "id": "customer-segmentation",
       "name": "Customer Segmentation",
-      "description": "Segment customers by purchase recency, frequency, and spend (RFM) or behavioral signals to power targeted marketing and personalization",
+      "description": "Segment customers by purchase behavior, recency, and spend using Klaviyo, your platform's built-in tools, or a custom RFM analysis to power targeted marketing",
       "category": "customer-crm",
       "risk": "safe",
       "source": "curated",
@@ -900,14 +966,17 @@
       ],
       "path": "skills/customer-crm/customer-segmentation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
     {
       "id": "customer-support-integration",
       "name": "Customer Support Integration",
-      "description": "Connect Zendesk or Intercom to your store so support agents see full order history and customer details without switching tools",
+      "description": "Connect your helpdesk (Gorgias, Zendesk, Intercom) to your store so support agents see full order history and customer details without switching tools",
       "category": "customer-crm",
       "risk": "safe",
       "source": "curated",
@@ -920,7 +989,8 @@
         "order-context",
         "ticket",
         "crm-integration",
-        "support-automation"
+        "support-automation",
+        "gorgias"
       ],
       "triggers": [
         "zendesk integration",
@@ -942,14 +1012,17 @@
       ],
       "path": "skills/customer-crm/customer-support-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "live-chat-commerce",
       "name": "Live Chat Commerce",
-      "description": "Add real-time chat to your storefront so agents can share product links, assist with cart questions, and close sales in the conversation",
+      "description": "Add real-time chat to your storefront using a platform-native app so agents can share product links, assist with cart questions, and close sales",
       "category": "customer-crm",
       "risk": "safe",
       "source": "curated",
@@ -983,14 +1056,17 @@
       ],
       "path": "skills/customer-crm/live-chat-commerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
     {
       "id": "personalization-engine",
       "name": "Personalization Engine",
-      "description": "Show each shopper personalized product recommendations based on their browsing history and what similar customers bought using collaborative filtering",
+      "description": "Show each shopper personalized product recommendations using platform apps and recommendation tools based on browsing history and purchase patterns",
       "category": "customer-crm",
       "risk": "safe",
       "source": "curated",
@@ -1024,7 +1100,10 @@
       ],
       "path": "skills/customer-crm/personalization-engine",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1066,7 +1145,10 @@
       ],
       "path": "skills/customer-crm/product-reviews-ratings",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1108,7 +1190,10 @@
       ],
       "path": "skills/customer-crm/referral-program",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1150,7 +1235,10 @@
       ],
       "path": "skills/customer-crm/user-generated-content",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1193,7 +1281,10 @@
       ],
       "path": "skills/data-analytics/ab-testing-ecommerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1236,7 +1327,10 @@
       ],
       "path": "skills/data-analytics/attribution-modeling",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1271,7 +1365,10 @@
       ],
       "path": "skills/data-analytics/cash-flow-forecasting",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1314,7 +1411,10 @@
       ],
       "path": "skills/data-analytics/cost-allocation-analysis",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1356,7 +1456,10 @@
       ],
       "path": "skills/data-analytics/customer-analytics",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1391,7 +1494,10 @@
       ],
       "path": "skills/data-analytics/ecommerce-budgeting-forecasting",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1430,7 +1536,10 @@
       ],
       "path": "skills/data-analytics/ecommerce-data-warehouse",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1464,7 +1573,10 @@
       ],
       "path": "skills/data-analytics/financial-analytics-dashboard",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1499,7 +1611,10 @@
       ],
       "path": "skills/data-analytics/financial-reporting-dashboard",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1534,7 +1649,10 @@
       ],
       "path": "skills/data-analytics/marketing-spend-analysis",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1569,7 +1687,10 @@
       ],
       "path": "skills/data-analytics/marketplace-fee-reconciliation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1611,7 +1732,10 @@
       ],
       "path": "skills/data-analytics/product-analytics",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1646,7 +1770,10 @@
       ],
       "path": "skills/data-analytics/profit-margin-analysis",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1681,7 +1808,10 @@
       ],
       "path": "skills/data-analytics/revenue-recognition-accounting",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1724,7 +1854,10 @@
       ],
       "path": "skills/data-analytics/sales-reporting-dashboard",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1760,7 +1893,10 @@
       ],
       "path": "skills/data-analytics/unit-economics-tracking",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1799,7 +1935,10 @@
       ],
       "path": "skills/fulfillment-shipping/dropshipping-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1837,7 +1976,10 @@
       ],
       "path": "skills/fulfillment-shipping/free-shipping-thresholds",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
@@ -1881,7 +2023,10 @@
       ],
       "path": "skills/fulfillment-shipping/international-shipping",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -1920,7 +2065,10 @@
       ],
       "path": "skills/fulfillment-shipping/order-fulfillment-workflow",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1960,7 +2108,10 @@
       ],
       "path": "skills/fulfillment-shipping/returns-management",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -1999,7 +2150,10 @@
       ],
       "path": "skills/fulfillment-shipping/same-day-delivery",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -2040,7 +2194,10 @@
       ],
       "path": "skills/fulfillment-shipping/shipment-tracking",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -2079,7 +2236,10 @@
       ],
       "path": "skills/fulfillment-shipping/shipping-rate-calculator",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -2447,7 +2607,10 @@
       ],
       "path": "skills/infrastructure-performance/database-optimization-commerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -2485,7 +2648,10 @@
       ],
       "path": "skills/infrastructure-performance/ecommerce-caching",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -2527,7 +2693,10 @@
       ],
       "path": "skills/infrastructure-performance/edge-commerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -2570,7 +2739,10 @@
       ],
       "path": "skills/infrastructure-performance/flash-sale-scaling",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -2614,7 +2786,10 @@
       ],
       "path": "skills/infrastructure-performance/image-optimization-cdn",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -2655,7 +2830,10 @@
       ],
       "path": "skills/infrastructure-performance/load-testing-commerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -2698,7 +2876,10 @@
       ],
       "path": "skills/infrastructure-performance/monitoring-alerting-commerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -2734,7 +2915,10 @@
       ],
       "path": "skills/integrations-apis/analytics-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -2778,7 +2962,10 @@
       ],
       "path": "skills/integrations-apis/email-service-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
@@ -2818,7 +3005,10 @@
       ],
       "path": "skills/integrations-apis/erp-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -2861,7 +3051,10 @@
       ],
       "path": "skills/integrations-apis/marketplace-connectors",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -2897,7 +3090,10 @@
       ],
       "path": "skills/integrations-apis/pos-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -2939,7 +3135,10 @@
       ],
       "path": "skills/integrations-apis/product-information-management",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -2980,7 +3179,10 @@
       ],
       "path": "skills/integrations-apis/webhook-architecture",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3022,7 +3224,10 @@
       ],
       "path": "skills/marketing-growth/affiliate-program",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -3054,14 +3259,17 @@
       ],
       "path": "skills/marketing-growth/applovin-ads-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
     {
       "id": "cart-abandonment-recovery",
       "name": "Cart Abandonment Recovery",
-      "description": "Win back shoppers who leave with carts by sending timed email, SMS, and push sequences with escalating incentives to complete their purchase",
+      "description": "Win back shoppers who leave items in their cart by setting up timed email, SMS, and push sequences with escalating incentives to complete their purchase",
       "category": "marketing-growth",
       "risk": "safe",
       "source": "curated",
@@ -3094,7 +3302,10 @@
       ],
       "path": "skills/marketing-growth/cart-abandonment-recovery",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3124,7 +3335,10 @@
       ],
       "path": "skills/marketing-growth/cart-recovery-sms",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3165,7 +3379,10 @@
       ],
       "path": "skills/marketing-growth/content-commerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3206,7 +3423,10 @@
       ],
       "path": "skills/marketing-growth/conversion-rate-optimization",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3226,7 +3446,10 @@
       ],
       "triggers": [
         "increase average order value",
-        "add product recommendations"
+        "add product recommendations",
+        "cross-sell",
+        "upsell",
+        "frequently bought together"
       ],
       "tools": [
         "claude-code",
@@ -3237,9 +3460,12 @@
       ],
       "path": "skills/marketing-growth/cross-sell-upsell-engine",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
-      "difficulty": "advanced"
+      "difficulty": "intermediate"
     },
     {
       "id": "customer-retention-engine",
@@ -3256,7 +3482,10 @@
       ],
       "triggers": [
         "reduce churn",
-        "build retention campaigns"
+        "build retention campaigns",
+        "at-risk customers",
+        "proactive retention",
+        "repeat purchase rate"
       ],
       "tools": [
         "claude-code",
@@ -3267,9 +3496,12 @@
       ],
       "path": "skills/marketing-growth/customer-retention-engine",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
-      "difficulty": "advanced"
+      "difficulty": "intermediate"
     },
     {
       "id": "ecommerce-seo",
@@ -3292,7 +3524,8 @@
         "optimize ecommerce SEO",
         "add structured data",
         "generate sitemap",
-        "fix product page SEO"
+        "fix product page SEO",
+        "improve organic search ranking"
       ],
       "tools": [
         "claude-code",
@@ -3305,7 +3538,10 @@
       ],
       "path": "skills/marketing-growth/ecommerce-seo",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3320,11 +3556,17 @@
       "tags": [
         "email",
         "segmentation",
-        "personalization"
+        "personalization",
+        "rfm",
+        "klaviyo",
+        "list-hygiene"
       ],
       "triggers": [
         "segment email list",
-        "create email segments"
+        "create email segments",
+        "RFM segmentation",
+        "email list hygiene",
+        "targeted email campaigns"
       ],
       "tools": [
         "claude-code",
@@ -3335,7 +3577,10 @@
       ],
       "path": "skills/marketing-growth/email-list-segmentation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3378,7 +3623,10 @@
       ],
       "path": "skills/marketing-growth/email-marketing-automation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3420,7 +3668,10 @@
       ],
       "path": "skills/marketing-growth/exit-intent-popups",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
@@ -3435,11 +3686,17 @@
       "tags": [
         "first-party-data",
         "privacy",
-        "zero-party"
+        "zero-party",
+        "preference-center",
+        "quiz",
+        "progressive-profiling"
       ],
       "triggers": [
         "collect first-party data",
-        "build preference center"
+        "build preference center",
+        "product quiz",
+        "zero-party data",
+        "customer profile enrichment"
       ],
       "tools": [
         "claude-code",
@@ -3450,9 +3707,12 @@
       ],
       "path": "skills/marketing-growth/first-party-data-collection",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
-      "difficulty": "advanced"
+      "difficulty": "intermediate"
     },
     {
       "id": "google-ads-ecommerce",
@@ -3467,12 +3727,18 @@
         "pmax",
         "shopping",
         "sem",
-        "ppc"
+        "ppc",
+        "conversion-tracking",
+        "roas",
+        "smart-bidding"
       ],
       "triggers": [
         "set up Google Ads",
         "create shopping campaign",
-        "implement conversion tracking"
+        "implement conversion tracking",
+        "performance max",
+        "google shopping ads",
+        "google ads for ecommerce"
       ],
       "tools": [
         "claude-code",
@@ -3483,7 +3749,10 @@
       ],
       "path": "skills/marketing-growth/google-ads-ecommerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -3501,8 +3770,6 @@
         "product-feed",
         "pla",
         "google-ads",
-        "rss",
-        "content-api",
         "feed-optimization"
       ],
       "triggers": [
@@ -3524,7 +3791,10 @@
       ],
       "path": "skills/marketing-growth/google-shopping-feed",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3539,11 +3809,17 @@
       "tags": [
         "influencer",
         "creator-economy",
-        "partnerships"
+        "partnerships",
+        "grin",
+        "aspire",
+        "ltk"
       ],
       "triggers": [
         "find influencers",
-        "manage influencer campaigns"
+        "manage influencer campaigns",
+        "influencer platform",
+        "creator partnerships",
+        "influencer program"
       ],
       "tools": [
         "claude-code",
@@ -3554,7 +3830,10 @@
       ],
       "path": "skills/marketing-growth/influencer-marketplace-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3596,7 +3875,10 @@
       ],
       "path": "skills/marketing-growth/influencer-tracking",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3611,11 +3893,16 @@
       "tags": [
         "lifecycle",
         "customer-journey",
-        "automation"
+        "automation",
+        "klaviyo",
+        "customer-stages"
       ],
       "triggers": [
         "set up lifecycle marketing",
-        "customer journey automation"
+        "customer journey automation",
+        "lifecycle stages",
+        "customer journey mapping",
+        "post-purchase nurture"
       ],
       "tools": [
         "claude-code",
@@ -3626,9 +3913,12 @@
       ],
       "path": "skills/marketing-growth/lifecycle-marketing-automation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
-      "difficulty": "advanced"
+      "difficulty": "intermediate"
     },
     {
       "id": "loyalty-program-optimization",
@@ -3641,11 +3931,19 @@
       "tags": [
         "loyalty",
         "rewards",
-        "retention"
+        "retention",
+        "smile-io",
+        "yotpo",
+        "loyaltylion",
+        "points"
       ],
       "triggers": [
         "optimize loyalty program",
-        "design rewards program"
+        "design rewards program",
+        "launch loyalty program",
+        "points program",
+        "VIP tiers",
+        "customer loyalty"
       ],
       "tools": [
         "claude-code",
@@ -3656,7 +3954,10 @@
       ],
       "path": "skills/marketing-growth/loyalty-program-optimization",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3686,7 +3987,10 @@
       ],
       "path": "skills/marketing-growth/marketing-attribution-dashboard",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -3716,7 +4020,10 @@
       ],
       "path": "skills/marketing-growth/marketplace-advertising",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -3750,7 +4057,10 @@
       ],
       "path": "skills/marketing-growth/meta-ads-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -3780,7 +4090,10 @@
       ],
       "path": "skills/marketing-growth/predictive-personalization",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -3810,7 +4123,10 @@
       ],
       "path": "skills/marketing-growth/product-launch-campaigns",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3851,7 +4167,10 @@
       ],
       "path": "skills/marketing-growth/push-notifications",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
@@ -3881,7 +4200,10 @@
       ],
       "path": "skills/marketing-growth/referral-viral-loops",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -3911,7 +4233,10 @@
       ],
       "path": "skills/marketing-growth/review-generation-engine",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3941,7 +4266,10 @@
       ],
       "path": "skills/marketing-growth/seasonal-campaign-automation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -3984,7 +4312,10 @@
       ],
       "path": "skills/marketing-growth/sms-marketing",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4026,7 +4357,10 @@
       ],
       "path": "skills/marketing-growth/social-commerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4056,7 +4390,10 @@
       ],
       "path": "skills/marketing-growth/social-proof-widgets",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4088,7 +4425,10 @@
       ],
       "path": "skills/marketing-growth/tiktok-ads-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4118,7 +4458,10 @@
       ],
       "path": "skills/marketing-growth/tiktok-shop-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4148,7 +4491,10 @@
       ],
       "path": "skills/marketing-growth/ugc-campaign-management",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4178,7 +4524,10 @@
       ],
       "path": "skills/marketing-growth/video-commerce-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4208,7 +4557,10 @@
       ],
       "path": "skills/marketing-growth/win-back-reactivation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4244,7 +4596,10 @@
       ],
       "path": "skills/payments-checkout/accounts-receivable-automation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4285,7 +4640,10 @@
       ],
       "path": "skills/payments-checkout/buy-now-pay-later",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4325,7 +4683,10 @@
       ],
       "path": "skills/payments-checkout/cart-logic",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4360,7 +4721,10 @@
       ],
       "path": "skills/payments-checkout/chargeback-management-prevention",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4400,7 +4764,10 @@
       ],
       "path": "skills/payments-checkout/checkout-flow-optimization",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4436,7 +4803,10 @@
       ],
       "path": "skills/payments-checkout/currency-hedging-management",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4474,7 +4844,10 @@
       ],
       "path": "skills/payments-checkout/guest-checkout",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
@@ -4509,7 +4882,10 @@
       ],
       "path": "skills/payments-checkout/invoice-generation-automation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4549,7 +4925,10 @@
       ],
       "path": "skills/payments-checkout/multi-currency",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4589,7 +4968,10 @@
       ],
       "path": "skills/payments-checkout/order-processing-pipeline",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4624,7 +5006,10 @@
       ],
       "path": "skills/payments-checkout/payment-reconciliation-automation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4661,7 +5046,10 @@
       ],
       "path": "skills/payments-checkout/payment-terms-optimization",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4698,7 +5086,10 @@
       ],
       "path": "skills/payments-checkout/payout-split-management",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4739,7 +5130,10 @@
       ],
       "path": "skills/payments-checkout/paypal-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4777,7 +5171,10 @@
       ],
       "path": "skills/payments-checkout/stripe-integration",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -4818,7 +5215,10 @@
       ],
       "path": "skills/payments-checkout/subscription-billing",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4860,7 +5260,10 @@
       ],
       "path": "skills/payments-checkout/tax-calculation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -4876,7 +5279,13 @@
         "tax-compliance",
         "sales-tax",
         "vat",
-        "gst"
+        "gst",
+        "nexus",
+        "exemption-certificates",
+        "filing",
+        "avalara",
+        "taxjar",
+        "avalara-certcapture"
       ],
       "triggers": [
         "sales tax automation",
@@ -4895,11 +5304,16 @@
         "cursor",
         "gemini-cli",
         "copilot",
-        "codex-cli"
+        "codex-cli",
+        "kiro",
+        "opencode"
       ],
       "path": "skills/payments-checkout/tax-compliance-automation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -5700,7 +6114,10 @@
       ],
       "path": "skills/pricing-promotions/ab-testing-pricing",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -5738,7 +6155,10 @@
       ],
       "path": "skills/pricing-promotions/coupon-management",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -5776,7 +6196,10 @@
       ],
       "path": "skills/pricing-promotions/discount-engine",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -5815,7 +6238,10 @@
       ],
       "path": "skills/pricing-promotions/dynamic-pricing",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -5855,7 +6281,10 @@
       ],
       "path": "skills/pricing-promotions/flash-sale-engine",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -5893,7 +6322,10 @@
       ],
       "path": "skills/pricing-promotions/gift-cards",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -5934,7 +6366,10 @@
       ],
       "path": "skills/pricing-promotions/loyalty-points-system",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -5974,7 +6409,10 @@
       ],
       "path": "skills/pricing-promotions/price-rules-engine",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -6013,7 +6451,10 @@
       ],
       "path": "skills/pricing-promotions/volume-pricing",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6056,7 +6497,10 @@
       ],
       "path": "skills/security-compliance/account-security",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6098,7 +6542,10 @@
       ],
       "path": "skills/security-compliance/bot-protection",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6139,7 +6586,10 @@
       ],
       "path": "skills/security-compliance/data-retention-policies",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6171,7 +6621,10 @@
       ],
       "path": "skills/security-compliance/financial-audit-trail",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6204,7 +6657,10 @@
       ],
       "path": "skills/security-compliance/financial-compliance-sox",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -6246,7 +6702,10 @@
       ],
       "path": "skills/security-compliance/fraud-detection",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -6289,7 +6748,10 @@
       ],
       "path": "skills/security-compliance/gdpr-ecommerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6327,7 +6789,10 @@
       ],
       "path": "skills/security-compliance/pci-dss-compliance",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -6370,7 +6835,10 @@
       ],
       "path": "skills/security-compliance/secure-checkout",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6411,7 +6879,10 @@
       ],
       "path": "skills/storefront-ui/accessibility-commerce",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -6451,7 +6922,10 @@
       ],
       "path": "skills/storefront-ui/faceted-navigation",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6491,7 +6965,10 @@
       ],
       "path": "skills/storefront-ui/image-zoom-360",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6530,7 +7007,10 @@
       ],
       "path": "skills/storefront-ui/mega-menu-builder",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
@@ -6568,7 +7048,10 @@
       ],
       "path": "skills/storefront-ui/product-comparison",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6606,7 +7089,10 @@
       ],
       "path": "skills/storefront-ui/product-page-design",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6645,7 +7131,10 @@
       ],
       "path": "skills/storefront-ui/quick-view-modal",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
@@ -6683,7 +7172,10 @@
       ],
       "path": "skills/storefront-ui/recently-viewed-products",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
@@ -6723,7 +7215,10 @@
       ],
       "path": "skills/storefront-ui/responsive-storefront",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "beginner"
     },
@@ -6762,7 +7257,10 @@
       ],
       "path": "skills/storefront-ui/search-autocomplete",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     },
@@ -6802,7 +7300,10 @@
       ],
       "path": "skills/storefront-ui/storefront-theming",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "advanced"
     },
@@ -6842,7 +7343,10 @@
       ],
       "path": "skills/storefront-ui/wishlist-save-for-later",
       "platforms": [
-        "platform-agnostic"
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
       ],
       "difficulty": "intermediate"
     }

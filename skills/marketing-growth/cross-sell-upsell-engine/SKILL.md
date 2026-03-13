@@ -6,64 +6,133 @@ risk: safe
 source: curated
 date_added: "2026-03-12"
 tags: [cross-sell, upsell, recommendations, aov]
-triggers: ["increase average order value", "add product recommendations"]
+triggers: ["increase average order value", "add product recommendations", "cross-sell", "upsell", "frequently bought together"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
-difficulty: advanced
+platforms: [shopify, woocommerce, bigcommerce, custom]
+difficulty: intermediate
 ---
 
 # Cross-Sell and Upsell Engine
 
 ## Overview
 
-Cross-sells and upsells generate an average of 10–30% incremental revenue with minimal customer acquisition cost. The difference between an annoying recommendation widget and a revenue driver is relevance: affinity-based recommendations outperform category-based ones by 2–4×. This skill builds a full recommendation engine — from collaborative filtering on purchase history, to real-time cart-based affinity scoring, to rule-based manual overrides — with placement logic for PDP, cart, checkout, and post-purchase pages.
+Cross-sells and upsells generate 10–30% incremental revenue with minimal customer acquisition cost. Every major e-commerce platform has apps that handle the recommendation logic without custom code. The key decisions are: which placement to start with (PDP, cart, or post-purchase), what recommendation logic to use (manual bundles vs. algorithm-based), and how to avoid checkout friction. Start with one placement and measure before expanding.
 
 ## When to Use This Skill
 
-- When your average order value (AOV) is below industry benchmarks and you want to grow it without paid traffic
+- When average order value (AOV) is below industry benchmarks and you want to grow it without paid traffic
 - When launching a new recommendation widget on PDP, cart, or checkout pages
 - When replacing a generic "You may also like" carousel with affinity-based personalization
 - When building a bundle builder or "complete the look" feature
-- When you want to A/B test recommendation algorithms against each other
-- When order data is rich enough to mine (typically 1,000+ orders to get meaningful affinity signals)
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store with product catalog API access, recommendation engine or Shopify Functions/WooCommerce hooks for custom logic
+- When wanting to A/B test recommendation placements
 
 ## Core Instructions
 
-### 1. Data model and affinity score computation
+### Step 1: Choose the right tool for your platform
 
-Product affinity is the probability that a customer who buys product A also buys product B. Start with co-purchase frequency:
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Rebuy (most powerful) or Frequently Bought Together | Rebuy uses AI-based recommendations with multiple placement types; FBT is simpler and cheaper for basic "people also bought" |
+| **Shopify (Plus)** | Rebuy + Shopify Functions | Shopify Functions allows custom cart transforms for bundle discounts |
+| **WooCommerce** | WooCommerce built-in cross-sell/upsell + YITH WooCommerce Frequently Bought Together | WooCommerce has native upsell and cross-sell fields on every product; YITH adds the "FBT" widget |
+| **BigCommerce** | Also Bought or Boost Commerce (App Marketplace) | Both integrate natively with BigCommerce product catalog |
+| **Custom / Headless** | Rebuy API or Recombee | Both offer recommendation APIs; Rebuy integrates directly with Shopify/BigCommerce backends |
 
+### Step 2: Decide on placement — start with one
+
+| Placement | Expected AOV Lift | Conversion Risk | Start Here? |
+|-----------|------------------|-----------------|-------------|
+| Product page (below Add to Cart) | Moderate | Low | Yes — best starting point |
+| Cart page (sidebar or bottom) | High | Low | Yes — high intent, low friction |
+| Post-purchase page | High | None (order already placed) | Yes — zero risk to conversion |
+| Checkout page | High | Medium-High | No — test this last; can hurt CVR |
+
+**Recommendation**: start with product page + cart page. Add post-purchase after measuring results. Only add checkout recommendations if you have data showing they lift revenue without hurting CVR.
+
+### Step 3: Set up recommendations on your platform
+
+---
+
+#### Shopify
+
+**Using Rebuy (recommended for full-featured setup):**
+
+1. Install Rebuy from the Shopify App Store
+2. Go to **Rebuy → Smart Cart** to enable AI-powered cart recommendations — configure the number of products to show (2–3) and placement (cart drawer or cart page)
+3. Go to **Rebuy → Product Page Widgets** to add a "Frequently Bought Together" widget below the Add to Cart button
+4. Go to **Rebuy → Post-Purchase Offers** to add a one-click upsell on the order confirmation page
+5. Rebuy uses Shopify's order history to compute co-purchase affinity automatically — no manual configuration needed
+6. To create manual bundles: go to **Rebuy → Data Sources → Manual Recommendations** and pair specific products
+
+**Using Frequently Bought Together (simpler, cheaper):**
+
+1. Install from the Shopify App Store
+2. The app automatically analyzes order history to suggest product pairs
+3. Review auto-generated bundles under **FBT → Bundles** and remove irrelevant pairs
+4. Configure the widget appearance to match your theme
+5. Set a bundle discount (optional) — 5–10% off when both products are added together
+
+**For post-purchase upsells on Shopify:**
+- Use **ReConvert** or **CartHook** for post-purchase one-click upsell pages
+- These show immediately after checkout is completed but before the thank-you page
+
+---
+
+#### WooCommerce
+
+**Using WooCommerce native cross-sells and upsells:**
+
+1. Go to **WooCommerce → Products → [Edit any product]**
+2. In the **Linked Products** tab, add:
+   - **Upsells**: products to show on the product page as "You may also like" (higher-priced alternatives)
+   - **Cross-sells**: products to show in the cart sidebar
+3. WooCommerce shows cross-sells in the cart automatically — no additional plugin needed
+
+**Using YITH WooCommerce Frequently Bought Together (free version available):**
+
+1. Install from the WordPress plugin directory
+2. Go to **YITH → Frequently Bought Together → General Settings** and configure the widget title and discount amount
+3. On each product's edit page, go to the **FBT** tab and manually select companion products, or enable auto-recommendations
+4. The widget appears below the Add to Cart button automatically
+
+**For post-purchase upsells on WooCommerce:**
+- Use **CartFlows** + **AutomateWoo** for post-purchase funnel pages
+- Or use **WooFunnels / FunnelKit** which includes post-purchase upsell flows
+
+---
+
+#### BigCommerce
+
+1. Install **Also Bought** from the BigCommerce App Marketplace
+2. The app analyzes your order history and automatically generates "Customers Also Bought" recommendations
+3. Configure placement (product page, cart page) and number of products shown in the app settings
+4. For manual control: go to the product editor in BigCommerce Admin and use the **Related Products** feature to manually specify related items
+
+---
+
+#### Custom / Headless
+
+Use Rebuy's API or Recombee for headless storefronts:
+
+**Rebuy API (if your backend is Shopify/BigCommerce):**
 ```typescript
-// Run nightly via cron — computes affinity scores for all product pairs
+// Fetch recommendations from Rebuy for a given product
+const response = await fetch(
+  `https://rebuyengine.com/api/v1/products/recommended?key=${REBUY_API_KEY}&shopify_product_ids=${productId}&limit=4`
+);
+const { data } = await response.json();
+```
+
+**Build co-purchase recommendations from order data (only if no third-party tool):**
+```typescript
+// Compute product affinity from co-purchase frequency
+// Run nightly — minimum 1,000 orders for meaningful signal
 async function computeProductAffinity() {
-  // Step 1: build co-purchase matrix
-  const orders = await db.orders.findAll({
-    where: { status: 'completed' },
-    include: [{ model: db.lineItems, attributes: ['productId'] }],
-    attributes: ['id'],
-  });
+  const orders = await db.orders.findAll({ where: { status: 'completed' }, include: ['lineItems'] });
 
   const coMatrix: Record<string, Record<string, number>> = {};
-  const productFrequency: Record<string, number> = {};
-
   for (const order of orders) {
     const productIds = [...new Set(order.lineItems.map((li: any) => li.productId))];
-
-    // Count individual product occurrences
-    for (const pid of productIds) {
-      productFrequency[pid] = (productFrequency[pid] ?? 0) + 1;
-    }
-
-    // Count co-occurrences for every pair
     for (let i = 0; i < productIds.length; i++) {
       for (let j = i + 1; j < productIds.length; j++) {
         const [a, b] = [productIds[i], productIds[j]].sort();
@@ -72,325 +141,50 @@ async function computeProductAffinity() {
       }
     }
   }
-
-  // Step 2: compute lift (affinity score) = P(A∩B) / (P(A) * P(B))
-  const totalOrders = orders.length;
-  const affinityRecords: AffinityScore[] = [];
-
-  for (const [productA, peers] of Object.entries(coMatrix)) {
-    for (const [productB, coCount] of Object.entries(peers)) {
-      const pA = productFrequency[productA] / totalOrders;
-      const pB = productFrequency[productB] / totalOrders;
-      const pAB = coCount / totalOrders;
-      const lift = pAB / (pA * pB);
-      const confidence = pAB / pA;  // P(B|A)
-
-      if (coCount >= 3) {  // minimum support threshold
-        affinityRecords.push({ productA, productB, coCount, lift, confidence });
-        affinityRecords.push({ productA: productB, productB: productA, coCount, lift, confidence });
-      }
-    }
-  }
-
-  // Upsert into product_affinities table
-  await db.productAffinities.bulkCreate(affinityRecords, {
-    updateOnDuplicate: ['coCount', 'lift', 'confidence', 'updatedAt'],
-  });
+  // Store results and filter to pairs with at least 3 co-purchases
+  // Serve from a cached API endpoint with 1-hour TTL
 }
 ```
 
-### 2. Recommendation API
+### Step 4: Configure pricing and discount strategy
 
-```typescript
-interface RecommendationRequest {
-  productIds: string[];    // current product(s) being viewed or in cart
-  customerId?: string;
-  type: 'cross-sell' | 'upsell' | 'frequently-bought-together';
-  limit?: number;          // default 4
-  excludeIds?: string[];   // exclude items already in cart
-}
+- **Bundle discounts**: 5–10% off when both products are added together — enough to motivate, not enough to erode margin
+- **Upsell price range**: show upsells priced 10–50% above the current product; upsells above 2× the original price rarely convert
+- **Checkout recommendations**: limit to 1–2 low-cost add-ons (under $30) — multiple recommendations at checkout increase abandonment
+- **Post-purchase offers**: these can be higher-priced since the customer is already in a buying mindset
 
-interface RecommendationResult {
-  productId: string;
-  score: number;
-  reason: 'affinity' | 'manual' | 'trending' | 'category-fallback';
-}
+### Step 5: Measure results
 
-async function getRecommendations(req: RecommendationRequest): Promise<RecommendationResult[]> {
-  const limit = req.limit ?? 4;
+Track these metrics weekly in your recommendation app's analytics:
 
-  // Layer 1: Manual overrides (highest priority)
-  const manualRecs = await db.manualRecommendations.findAll({
-    where: { sourceProductId: { in: req.productIds }, type: req.type, active: true },
-    order: [['priority', 'ASC']],
-    limit,
-  });
-
-  if (manualRecs.length >= limit) {
-    return manualRecs.map(r => ({ productId: r.targetProductId, score: 1, reason: 'manual' }));
-  }
-
-  // Layer 2: Affinity-based (co-purchase lift)
-  const affinityRecs = await db.productAffinities.findAll({
-    where: {
-      productA: { in: req.productIds },
-      productB: { notIn: [...req.productIds, ...(req.excludeIds ?? [])] },
-      ...(req.type === 'upsell' ? { priceRatio: { gt: 1.1 } } : {}),
-    },
-    order: [['lift', 'DESC']],
-    include: [{ model: db.products, as: 'productBDetails', where: { active: true, stockQuantity: { gt: 0 } } }],
-    limit: limit * 3,  // over-fetch to allow deduplication
-  });
-
-  // Aggregate scores when multiple source products produce the same target
-  const scoreMap: Record<string, number> = {};
-  for (const rec of affinityRecs) {
-    scoreMap[rec.productB] = (scoreMap[rec.productB] ?? 0) + rec.lift * rec.confidence;
-  }
-
-  const affinityResults = Object.entries(scoreMap)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, limit - manualRecs.length)
-    .map(([productId, score]) => ({ productId, score, reason: 'affinity' as const }));
-
-  const combined = [...manualRecs.map(r => ({ productId: r.targetProductId, score: 1, reason: 'manual' as const })), ...affinityResults];
-
-  // Layer 3: Trending fallback if not enough results
-  if (combined.length < limit) {
-    const trendingRecs = await getTrendingProducts(req.productIds, req.excludeIds ?? [], limit - combined.length);
-    combined.push(...trendingRecs);
-  }
-
-  return combined.slice(0, limit);
-}
-```
-
-### 3. Upsell: same-category higher-priced products
-
-```typescript
-async function getUpsellCandidates(productId: string, limit = 3): Promise<RecommendationResult[]> {
-  const product = await db.products.findByPk(productId);
-  if (!product) return [];
-
-  // Find same-category products priced 10–50% higher
-  const upsells = await db.products.findAll({
-    where: {
-      categoryId: product.categoryId,
-      id: { ne: productId },
-      price: { gte: product.price * 1.10, lte: product.price * 1.50 },
-      active: true,
-      stockQuantity: { gt: 0 },
-    },
-    order: [
-      ['reviewScore', 'DESC'],
-      ['salesCount', 'DESC'],
-    ],
-    limit,
-  });
-
-  return upsells.map((p, i) => ({
-    productId: p.id,
-    score: 1 - i * 0.1,
-    reason: 'affinity',
-  }));
-}
-```
-
-### 4. Bundle builder with dynamic pricing
-
-```typescript
-interface Bundle {
-  primaryProductId: string;
-  bundledProductIds: string[];
-  discountType: 'percentage' | 'fixed';
-  discountValue: number;
-  displayedSavings: number;
-}
-
-async function createBundle(primaryProductId: string): Promise<Bundle | null> {
-  const primary = await db.products.findByPk(primaryProductId);
-  if (!primary) return null;
-
-  const recommendations = await getRecommendations({
-    productIds: [primaryProductId],
-    type: 'frequently-bought-together',
-    limit: 2,
-  });
-
-  const bundleProducts = await db.products.findAll({
-    where: { id: { in: recommendations.map(r => r.productId) } },
-  });
-
-  const totalOriginal = [primary, ...bundleProducts].reduce((sum, p) => sum + p.price, 0);
-  const discountValue  = 10; // 10% off bundle
-  const displayedSavings = totalOriginal * (discountValue / 100);
-
-  return {
-    primaryProductId,
-    bundledProductIds: bundleProducts.map(p => p.id),
-    discountType: 'percentage',
-    discountValue,
-    displayedSavings,
-  };
-}
-```
-
-### 5. React recommendation widget
-
-```tsx
-function CrossSellWidget({ productIds, type, title }: {
-  productIds: string[];
-  type: 'cross-sell' | 'upsell' | 'frequently-bought-together';
-  title?: string;
-}) {
-  const { data: recs, isLoading } = useSWR(
-    `/api/recommendations?productIds=${productIds.join(',')}&type=${type}&limit=4`,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
-
-  if (isLoading || !recs?.length) return null;
-
-  const handleAddToCart = async (productId: string, position: number) => {
-    await addToCart(productId);
-    analytics.track('recommendation_added_to_cart', {
-      recommendedProductId: productId,
-      sourceProductIds: productIds,
-      type,
-      position,
-      algorithm: recs.find(r => r.productId === productId)?.reason,
-    });
-  };
-
-  return (
-    <section aria-label={title ?? 'Recommended products'}>
-      <h2 className="text-lg font-semibold mb-4">{title ?? 'Frequently Bought Together'}</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {recs.map((rec: RecommendationResult, i: number) => (
-          <ProductCard
-            key={rec.productId}
-            productId={rec.productId}
-            onAddToCart={() => handleAddToCart(rec.productId, i + 1)}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-```
-
-### 6. Placement strategy by page type
-
-```typescript
-const PLACEMENT_CONFIG = {
-  pdp: {
-    type: 'frequently-bought-together',
-    title: 'Frequently Bought Together',
-    position: 'below-add-to-cart',
-    limit: 4,
-  },
-  cart: {
-    type: 'cross-sell',
-    title: 'Complete Your Order',
-    position: 'cart-sidebar',
-    limit: 3,
-  },
-  checkout: {
-    type: 'cross-sell',
-    title: 'Add Before You Checkout',
-    position: 'order-summary',
-    limit: 2,
-    maxPrice: 30,  // only show low-cost add-ons in checkout to reduce friction
-  },
-  'post-purchase': {
-    type: 'cross-sell',
-    title: 'Other Customers Also Bought',
-    position: 'confirmation-page',
-    limit: 4,
-  },
-};
-```
-
-### 7. Customer history personalization
-
-```typescript
-async function getPersonalizedRecommendations(customerId: string, limit = 8): Promise<RecommendationResult[]> {
-  const recentPurchases = await db.lineItems.findAll({
-    include: [{ model: db.orders, where: { customerId, status: 'completed' }, order: [['createdAt', 'DESC']], limit: 3 }],
-  });
-
-  const purchasedProductIds = recentPurchases.map(li => li.productId);
-  const alreadyPurchasedIds = await db.lineItems.findAll({
-    include: [{ model: db.orders, where: { customerId } }],
-    attributes: ['productId'],
-  }).then(rows => rows.map(r => r.productId));
-
-  return getRecommendations({
-    productIds: purchasedProductIds,
-    customerId,
-    type: 'cross-sell',
-    limit,
-    excludeIds: alreadyPurchasedIds,
-  });
-}
-```
+| Metric | Target | Where to Find |
+|--------|--------|---------------|
+| Recommendation CTR | 8–15% (PDP), 15–25% (cart) | Rebuy → Analytics, FBT → Reports |
+| Orders with recommended item added | 5–15% of all orders | App dashboard → Attach rate |
+| AOV lift from recommendations | $5–$20 depending on catalog | Compare AOV of orders with/without recommendation clicks |
 
 ## Best Practices
 
-- **Minimum support threshold**: require at least 3–5 co-purchases before including a pair in affinity scores; below this, the signal is noise
-- **Exclude out-of-stock items**: always join product affinities with current inventory — nothing is more frustrating than clicking a recommendation that is unavailable
-- **Price guardrails for upsells**: upsells should be 10–50% higher priced; going beyond 2× the original price tanks conversion
-- **Checkout placement is highest-converting but highest-risk**: test one low-price item only; multiple recs at checkout increase abandon rate
-- **Refresh affinity scores nightly**: purchasing patterns shift with seasons and new products; stale scores reduce relevance
-- **Track recommendation attribution separately**: tag orders with `recommendation_source` to measure incremental AOV vs. organic multi-item orders
-- **Manual overrides for new products**: new SKUs have no purchase history; manually configure them as recommended alongside bestsellers for the first 30 days
-- **Avoid cannibalistic upsells**: do not upsell a variant (same product, larger size) as if it is a different product — this confuses customers
+- **Exclude out-of-stock items from recommendations** — always — nothing is more frustrating than clicking a recommendation that is unavailable (Rebuy and most apps handle this automatically)
+- **Start with 3–4 recommendations max** — showing more products creates decision paralysis and reduces CTR
+- **Manual overrides for new products** — new SKUs have no purchase history; manually configure them as recommended alongside bestsellers for the first 30 days (all major apps have manual override)
+- **Refresh auto-recommendations after seasonal changes** — purchasing patterns shift; review recommendations quarterly
+- **Track recommendation attribution separately** — tag orders where a recommended item was added so you can measure true incremental AOV
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Recommendations are out of stock | Always filter with `active = true AND stockQuantity > 0` in the query |
-| Same product recommended to itself | Exclude source `productIds` from the results in all query layers |
-| Cold-start for new products | Add manual override rules or fall back to trending/bestseller data |
-| Algorithm recommends high-margin but irrelevant products | Prioritize lift score (affinity) over margin; irrelevant recs hurt trust |
-| Checkout recs increase cart abandonment | Limit to 1–2 low-cost items; remove if A/B test shows negative impact |
-| Widget renders empty on first visit | Implement trending fallback so the widget always has content |
-| Affinity scores biased by bulk orders | Exclude orders with more than 15 line items from co-purchase computation |
-| A/B test contamination | Assign recommendation algorithm variant at customer level, not session level |
-
-## Testing and Validation
-
-### A/B test setup
-
-```typescript
-function getRecommendationVariant(customerId: string): 'control' | 'affinity' | 'trending' {
-  // Stable assignment by customer ID hash
-  const hash = parseInt(customerId.slice(-4), 16) % 3;
-  return ['control', 'affinity', 'trending'][hash] as any;
-}
-```
-
-### Integration checklist
-
-- [ ] Affinity computation job runs nightly and completes within 10 minutes for 10k+ SKU catalog
-- [ ] API returns results in under 200ms (use Redis cache with 1-hour TTL)
-- [ ] Out-of-stock products never appear in recommendations
-- [ ] Recommendation click events tracked with product ID, source product, placement, and algorithm
-- [ ] Manual overrides can be created and activated via admin UI without code deploy
-- [ ] Bundle discount codes are generated uniquely per session
-
-### KPIs
-
-- **Recommendation CTR**: clicks / recommendation impressions (target: 8–15% on PDP, 15–25% on cart)
-- **Recommendation attach rate**: orders with at least one recommended item / total orders
-- **AOV lift**: AOV when recommendation clicked / AOV without click
-- **Revenue attributable to recommendations**: total GMV from orders where at least one item came from a recommendation
+| Checkout recommendations increase cart abandonment | A/B test before enabling; limit to 1 low-cost item under $30; remove if test shows negative impact |
+| Recommendations show the same product being viewed | Exclude the current product from recommendations (most apps do this automatically; verify in settings) |
+| Cold start — no recommendations for new products | Add manual recommendations in your app's admin panel; pair new products with bestsellers |
+| Recommendations irrelevant (e.g., suggest a phone case with a t-shirt) | Review auto-generated recommendations and block irrelevant pairs using the "block" feature in your app |
+| Bundle discount codes being shared publicly | Use your app's built-in auto-apply discount (no code to share) rather than coupon codes |
 
 ## Related Skills
 
 - @predictive-personalization
 - @customer-retention-engine
-- @product-launch-campaigns
+- @conversion-rate-optimization
 - @loyalty-program-optimization
 - @email-marketing-automation

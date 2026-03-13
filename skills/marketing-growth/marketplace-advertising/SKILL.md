@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [marketplace-ads, amazon-ads, sponsored-products]
 triggers: ["set up Amazon ads", "manage marketplace advertising"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,54 +16,156 @@ difficulty: advanced
 
 ## Overview
 
-Marketplace advertising (Amazon Sponsored Products, Walmart Connect, eBay Promoted Listings) puts your products in front of shoppers with high purchase intent directly on the platform where they are shopping. Unlike Google/Meta, marketplace ads run on a cost-per-click model within a closed ecosystem — meaning clicks and conversions happen on the marketplace, not your site. This skill covers Amazon Ads API integration, campaign structure, keyword strategy, ACOS optimization, bid management automation, and cross-marketplace reporting.
+Marketplace advertising (Amazon Sponsored Products, Walmart Connect, eBay Promoted Listings) puts your products in front of shoppers with high purchase intent directly on the platform where they are shopping. Unlike Google/Meta, marketplace ads run within a closed ecosystem — clicks and conversions happen on the marketplace, not your site. The strategic work is campaign structure, keyword harvesting, and bid management. Amazon's native Campaign Manager UI handles most of this without code; automation tools like Perpetua or Sellics add bid optimization rules on top.
 
 ## When to Use This Skill
 
-- When selling on Amazon and needing to automate Sponsored Products campaign management
+- When selling on Amazon and needing a structured campaign setup from scratch
 - When ACOS (Advertising Cost of Sale) is above your target and needs systematic optimization
 - When running campaigns across multiple marketplaces and needing unified reporting
-- When moving from manual bids to automated bid adjustment logic
-- When launching a new product and needing an auto-campaign to harvest keywords
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Active marketplace seller accounts (Amazon, eBay, Walmart) with advertising access enabled, marketplace Advertising API credentials
+- When wanting to automate keyword harvesting and bid adjustments without building custom scripts
+- When launching a new product and needing an auto-campaign to discover converting search terms
 
 ## Core Instructions
 
-### 1. Amazon Ads API setup
+### Step 1: Choose the right advertising management approach
 
-Register your app in the Amazon Advertising Console and obtain OAuth credentials:
+| Approach | Best For | Platforms | Price |
+|----------|---------|-----------|-------|
+| **Amazon Campaign Manager** (native) | All sellers, getting started | Amazon | Free (% of ad spend) |
+| **Perpetua** | Automation + goal-based bidding | Amazon, Walmart, Instacart | $250+/mo |
+| **Sellics (now Perpetua)** | Analytics-heavy sellers | Amazon | $250+/mo |
+| **Jungle Scout** | Sellers wanting product research + ads in one tool | Amazon | $49+/mo |
+| **Pacvue** | Enterprise, multi-marketplace | Amazon, Walmart, Target | Custom |
+| **Walmart Campaign Center** (native) | Walmart sellers | Walmart | Free (% of ad spend) |
+
+**Start with Amazon's native Campaign Manager** for campaign setup. Once you have 30 days of data, add **Perpetua** or **Jungle Scout** for automated bid optimization if managing more than 5 active campaigns.
+
+### Step 2: Set up your Amazon Sponsored Products campaigns
+
+Note: Marketplace advertising is independent of your Shopify/WooCommerce/BigCommerce store. Amazon campaigns run within Seller Central regardless of your ecommerce platform.
+
+---
+
+#### Amazon Seller Central — Campaign Setup
+
+**Create the two-campaign structure for each product group:**
+
+**Auto campaign (keyword discovery):**
+1. Go to **Amazon Seller Central → Advertising → Campaign Manager → Create Campaign**
+2. Select **Sponsored Products**
+3. Set:
+   - Campaign name: `[Product Name] - Auto`
+   - Daily budget: 30% of your total product budget (e.g., $15/day if total budget is $50/day)
+   - Targeting: **Automatic targeting**
+   - Default bid: $0.75
+4. Under **Automatic Targeting**, set bids for all four match types (close match, loose match, substitutes, complements) — start equal, optimize after 2 weeks of data
+5. Create the ad by selecting your ASIN
+
+**Manual campaign (scaling proven keywords):**
+1. Create a second campaign: `[Product Name] - Manual`
+2. Set:
+   - Daily budget: 70% of your total product budget
+   - Targeting: **Manual targeting → Keyword targeting**
+   - Match types: Add each seed keyword in both **Exact** (bid: $1.20) and **Phrase** (bid: $0.90)
+3. Add negative keywords at campaign level: "free", "DIY", "how to", competitor brand names
+
+---
+
+#### Harvest keywords from auto campaign (weekly task)
+
+After 7–14 days, move converting search terms from auto to manual:
+
+1. Go to **Campaign Manager → [Auto Campaign] → Search Term Report**
+2. Download the report for the last 14 days
+3. Filter for rows where:
+   - `7 Day Total Orders (#)` > 0
+   - `Advertising Cost of Sales (ACOS)` < your target ACOS (e.g., 30%)
+   - `Clicks` >= 5 (minimum data threshold)
+4. For each qualifying search term:
+   - Add it as an **Exact match** keyword in your manual campaign
+   - Add it as a **Negative exact** keyword in your auto campaign (prevents both campaigns from competing for the same query)
+
+---
+
+#### Walmart Campaign Center
+
+1. Go to **Walmart Seller Center → Advertising → Campaign Manager**
+2. Create a **Sponsored Products** campaign
+3. Walmart's setup mirrors Amazon's: choose automatic or manual targeting, set a daily budget and default bid
+4. Walmart's search term report works identically to Amazon's — run the same weekly harvest process
+
+---
+
+#### eBay Promoted Listings
+
+1. Go to **eBay Seller Hub → Marketing → Promoted Listings**
+2. Select **Promoted Listings Standard** (cost-per-sale, no cost for clicks)
+3. Set an ad rate (typically 5–15% of item sale price — higher rates = more visibility)
+4. Select listings to promote — focus on listings with high conversion rates
+5. eBay does not require keyword management for Standard; use **Promoted Listings Advanced** (CPC model) for keyword-level control
+
+### Step 3: Set ACOS targets by product margin
+
+ACOS = Advertising Cost ÷ Attributed Sales. Your target ACOS depends directly on your margin:
+
+| Product Gross Margin | Target ACOS | Notes |
+|---------------------|-------------|-------|
+| 60%+ | 25–35% | Aggressive growth acceptable |
+| 40–60% | 20–25% | Balanced growth |
+| 25–40% | 15–20% | Conservative; break-even focus |
+| < 25% | < 15% or pause ads | Low-margin products rarely work profitably on Amazon Ads |
+
+Set your target ACOS in **Campaign Manager → Bidding Strategy → Target ACOS** (dynamic bidding) — Amazon will automatically adjust bids up/down to hit your target.
+
+### Step 4: Bid optimization
+
+**Amazon's built-in dynamic bidding (no third-party tool needed):**
+1. Go to **Campaign Manager → [Campaign] → Edit**
+2. Under **Bidding**, select **Dynamic bids — up and down**
+3. Set a target ACOS — Amazon adjusts bids in real time
+4. This works well for established campaigns with 30+ days of data
+
+**Manual bid optimization rules (do weekly):**
+- Keywords with ACOS > 1.2× target and 10+ clicks → reduce bid by 15%
+- Keywords with ACOS < 0.8× target and 1,000+ impressions → increase bid by 10%
+- Keywords with 20+ clicks and zero sales → pause or add as negative
+
+**With Perpetua (automated):**
+1. Connect Perpetua to your Amazon Seller Central account
+2. Set a goal (target ACOS or target revenue) per campaign
+3. Perpetua runs bid optimization daily using machine learning — no manual weekly reviews needed
+4. Go to **Perpetua → Campaigns → Performance** to review automated recommendations before they execute
+
+### Step 5: Track performance
+
+Monitor these metrics in Campaign Manager weekly:
+
+| Metric | Healthy Target | Where to Find |
+|--------|----------------|---------------|
+| ACOS | Below your margin threshold | Campaign Manager → Campaigns |
+| Click-through rate (CTR) | > 0.3% for Sponsored Products | Campaign Manager → Ad Groups |
+| Conversion rate | > 10% for Sponsored Products | Search Term Report |
+| Impression Share | > 20% for top keywords | Search Term Impression Share report |
+| Total Ad Spend / Total Revenue ratio (TACoS) | < 10% for mature products | Calculate manually: total ad spend ÷ total product revenue |
+
+### Step 6: Custom / API-based management
+
+Use the Amazon Advertising API only if you are managing 50+ campaigns programmatically or building a custom reporting dashboard. For most sellers, Campaign Manager is sufficient.
 
 ```typescript
-// Amazon Advertising API client
-interface AmazonAdsConfig {
-  clientId:     string;
+// Amazon Advertising API client — only needed for programmatic campaign management
+async function getAmazonAdsToken(config: {
+  clientId: string;
   clientSecret: string;
   refreshToken: string;
-  profileId:    string;  // Amazon Ads profile ID (per marketplace)
-  region:       'NA' | 'EU' | 'FE';
-}
-
-const REGION_ENDPOINTS: Record<AmazonAdsConfig['region'], string> = {
-  NA: 'https://advertising-api.amazon.com',
-  EU: 'https://advertising-api-eu.amazon.com',
-  FE: 'https://advertising-api-fe.amazon.com',
-};
-
-async function getAmazonAdsToken(config: AmazonAdsConfig): Promise<string> {
+}): Promise<string> {
   const response = await fetch('https://api.amazon.com/auth/o2/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      grant_type:    'refresh_token',
-      client_id:     config.clientId,
+      grant_type: 'refresh_token',
+      client_id: config.clientId,
       client_secret: config.clientSecret,
       refresh_token: config.refreshToken,
     }),
@@ -72,227 +174,36 @@ async function getAmazonAdsToken(config: AmazonAdsConfig): Promise<string> {
   return access_token;
 }
 
-async function amazonAdsRequest(config: AmazonAdsConfig, method: string, path: string, body?: object) {
-  const token = await getAmazonAdsToken(config);
-  const base  = REGION_ENDPOINTS[config.region];
-
-  const response = await fetch(`${base}${path}`, {
-    method,
-    headers: {
-      'Authorization':        `Bearer ${token}`,
-      'Amazon-Advertising-API-ClientId': config.clientId,
-      'Amazon-Advertising-API-Scope':    config.profileId,
-      'Content-Type':         'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!response.ok) throw new Error(`Amazon Ads API ${response.status}: ${await response.text()}`);
-  return response.json();
+// Automated bid optimization — runs weekly as a scheduled job
+async function optimizeBids(adGroupId: string, targetAcos: number) {
+  // Get 30-day keyword performance from the Reporting API
+  // Filter keywords with insufficient data (< 10 clicks) — skip them
+  // Keywords with ACOS > targetAcos * 1.2: reduce bid 15%
+  // Keywords with ACOS < targetAcos * 0.8 and impressions > 1000: increase bid 10%
+  // Clamp all bids between $0.10 and $10.00
 }
 ```
 
-### 2. Campaign structure for Sponsored Products
-
-Use a two-campaign structure for every product group: auto-targeting to discover new keywords, and manual targeting to scale proven winners.
-
-```typescript
-async function createProductLaunchCampaigns(config: AmazonAdsConfig, params: {
-  campaignName: string;
-  asin:         string;
-  dailyBudget:  number;
-  seedKeywords: string[];
-}) {
-  // Auto campaign — Amazon auto-targets based on listing content
-  const autoCampaign = await amazonAdsRequest(config, 'POST', '/v2/sp/campaigns', {
-    name:              `${params.campaignName} - Auto`,
-    campaignType:      'sponsoredProducts',
-    targetingType:     'auto',
-    state:             'enabled',
-    dailyBudget:       params.dailyBudget * 0.3,  // 30% to auto for keyword discovery
-    startDate:         format(new Date(), 'yyyyMMdd'),
-  });
-
-  // Manual campaign — exact and phrase match on known keywords
-  const manualCampaign = await amazonAdsRequest(config, 'POST', '/v2/sp/campaigns', {
-    name:              `${params.campaignName} - Manual`,
-    campaignType:      'sponsoredProducts',
-    targetingType:     'manual',
-    state:             'enabled',
-    dailyBudget:       params.dailyBudget * 0.7,
-    startDate:         format(new Date(), 'yyyyMMdd'),
-  });
-
-  // Create ad groups and ads for each campaign
-  for (const [campaign, type] of [[autoCampaign, 'auto'], [manualCampaign, 'manual']] as const) {
-    const adGroup = await amazonAdsRequest(config, 'POST', '/v2/sp/adGroups', {
-      name:       `${params.campaignName} - ${type}`,
-      campaignId: campaign.campaignId,
-      defaultBid: type === 'auto' ? 0.75 : 1.20,
-      state:      'enabled',
-    });
-
-    // Create product ad
-    await amazonAdsRequest(config, 'POST', '/v2/sp/productAds', {
-      campaignId: campaign.campaignId,
-      adGroupId:  adGroup.adGroupId,
-      asin:       params.asin,
-      state:      'enabled',
-    });
-
-    // Add keywords to manual campaign
-    if (type === 'manual' && params.seedKeywords.length > 0) {
-      await amazonAdsRequest(config, 'POST', '/v2/sp/keywords', {
-        keywords: params.seedKeywords.flatMap(kw => [
-          { campaignId: campaign.campaignId, adGroupId: adGroup.adGroupId, keywordText: kw, matchType: 'exact',  state: 'enabled', bid: 1.20 },
-          { campaignId: campaign.campaignId, adGroupId: adGroup.adGroupId, keywordText: kw, matchType: 'phrase', state: 'enabled', bid: 0.90 },
-        ]),
-      });
-    }
-  }
-}
-```
-
-### 3. Harvest keywords from auto campaigns
-
-Weekly job to pull search term reports and promote converting queries to the manual campaign:
-
-```typescript
-async function harvestKeywordsFromAutoCampaign(config: AmazonAdsConfig, autoCampaignId: string, manualAdGroupId: string) {
-  // Request a search term report
-  const reportRequest = await amazonAdsRequest(config, 'POST', '/reporting/reports', {
-    reportDate:  format(subDays(new Date(), 7), 'yyyyMMdd'),
-    metrics:     'impressions,clicks,cost,orders7d,sales7d,acos7d',
-    recordType:  'targets',
-    segment:     'query',
-    campaignId:  autoCampaignId,
-  });
-
-  // Poll for report completion (async API)
-  const reportData = await pollReport(config, reportRequest.reportId);
-
-  // Filter for queries with conversions and acceptable ACOS
-  const targetAcos = parseFloat(process.env.TARGET_ACOS ?? '0.30');
-  const goodQueries = reportData.filter(row =>
-    row.sales7d > 0 &&
-    row.acos7d < targetAcos &&
-    row.clicks >= 5  // minimum data threshold
-  );
-
-  // Check which queries are already in the manual campaign
-  const existingKeywords = await getExistingKeywords(config, manualAdGroupId);
-  const newKeywords = goodQueries.filter(q => !existingKeywords.has(q.query.toLowerCase()));
-
-  if (newKeywords.length === 0) return;
-
-  // Add converting queries as exact match to manual campaign
-  await amazonAdsRequest(config, 'POST', '/v2/sp/keywords', {
-    keywords: newKeywords.map(q => ({
-      adGroupId:   manualAdGroupId,
-      keywordText: q.query,
-      matchType:   'exact',
-      state:       'enabled',
-      bid:         calculateOptimalBid(q),
-    })),
-  });
-
-  // Add as negatives to auto campaign (let manual campaign handle them)
-  await amazonAdsRequest(config, 'POST', '/v2/sp/negativeKeywords', {
-    keywords: newKeywords.map(q => ({
-      campaignId:  autoCampaignId,
-      keywordText: q.query,
-      matchType:   'negativeExact',
-      state:       'enabled',
-    })),
-  });
-}
-
-function calculateOptimalBid(row: { clicks: number; cost: number; sales7d: number; orders7d: number }): number {
-  const targetAcos = parseFloat(process.env.TARGET_ACOS ?? '0.30');
-  // convRate = conversions / clicks (conversion rate)
-  const convRate      = row.clicks > 0 ? row.orders7d / row.clicks : 0.02;
-  // avgOrderValue = attributed revenue / number of orders
-  const avgOrderValue = row.orders7d > 0 ? row.sales7d / row.orders7d : 20;
-  return Math.min(Math.max(targetAcos * convRate * avgOrderValue, 0.10), 5.00);  // clamp bid
-}
-```
-
-### 4. Bid optimization — ACOS-based adjustments
-
-```typescript
-// Run weekly bid optimization
-async function optimizeBids(config: AmazonAdsConfig, adGroupId: string) {
-  const keywords = await amazonAdsRequest(config, 'GET', `/v2/sp/keywords?adGroupId=${adGroupId}&state=enabled`);
-
-  // Get 30-day performance for each keyword
-  const performanceReport = await getKeywordPerformance(config, adGroupId, 30);
-  const targetAcos = parseFloat(process.env.TARGET_ACOS ?? '0.30');
-
-  const bidUpdates = [];
-
-  for (const kw of keywords) {
-    const perf = performanceReport.find(p => p.keywordId === kw.keywordId);
-    if (!perf || perf.clicks < 10) continue; // insufficient data
-
-    const currentAcos = perf.cost / perf.sales30d;
-    let newBid = kw.bid;
-
-    if (currentAcos > targetAcos * 1.2) {
-      // ACOS too high — reduce bid by 15%
-      newBid = kw.bid * 0.85;
-    } else if (currentAcos < targetAcos * 0.8 && perf.impressions > 1000) {
-      // ACOS very efficient and getting impressions — increase bid by 10% to capture more
-      newBid = kw.bid * 1.10;
-    }
-
-    // Clamp within bounds
-    newBid = Math.max(0.10, Math.min(newBid, 10.00));
-    if (Math.abs(newBid - kw.bid) > 0.01) {
-      bidUpdates.push({ keywordId: kw.keywordId, bid: parseFloat(newBid.toFixed(2)) });
-    }
-  }
-
-  if (bidUpdates.length > 0) {
-    await amazonAdsRequest(config, 'PUT', '/v2/sp/keywords', { keywords: bidUpdates });
-  }
-}
-```
-
-### 5. Walmart Connect integration (for Walmart sellers)
-
-```typescript
-async function walmartAdsRequest(method: string, path: string, body?: object) {
-  const response = await fetch(`https://developer.api.walmart.com/api-proxy/service/wpa/api/v1${path}`, {
-    method,
-    headers: {
-      'Authorization': `Basic ${Buffer.from(`${process.env.WALMART_CLIENT_ID}:${process.env.WALMART_CLIENT_SECRET}`).toString('base64')}`,
-      'Content-Type':  'application/json',
-      'WM_SVC.NAME':   'Walmart Ads API',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  return response.json();
-}
-```
+For most sellers, use **Perpetua** or **Jungle Scout's** built-in automation rather than the API — these tools provide the same bid logic with a UI and no infrastructure to manage.
 
 ## Best Practices
 
-- **Separate auto and manual campaigns** — auto campaigns discover keywords; manual campaigns scale the winners with controlled bids
-- **Harvest weekly, not daily** — weekly harvesting gives enough data per query to make statistically valid bid decisions
-- **Pause keywords with high spend and zero sales** — set a spend threshold (e.g., $20 with 0 sales) as an automatic pause trigger
-- **Use campaign-level negative keywords aggressively** — search terms containing "free", "diy", "how to", and competitor brand names rarely convert; add them as negatives at launch
-- **Monitor Share of Voice** — use the Amazon Search Term Impression Share report to see what percentage of auctions you are winning for your top keywords
-- **Align ACOS targets with product margins** — a 30% ACOS target only makes sense if your gross margin is above 50%; recalculate for each product group
-- **Run Sponsored Brands and Sponsored Display alongside Sponsored Products** — full-funnel coverage with all three formats typically reduces ACOS by 10–15% vs. Sponsored Products alone
+- **Separate auto and manual campaigns from day one** — auto campaigns discover keywords; manual campaigns scale the winners with controlled bids; mixing them creates reporting confusion
+- **Harvest keywords weekly for the first 60 days** — after initial launch, graduate the best terms to manual and add non-converters as negatives in the auto campaign
+- **Pause keywords spending $20+ with zero sales** — set this as a weekly rule; low-converting keywords drain budget without contributing to ACOS
+- **Use campaign-level negatives before launch** — add "free", "DIY", "how to", "used", "wholesale" as broad match negatives to all campaigns at launch
+- **Align ACOS targets with actual product margins** — a 30% ACOS target on a 25% margin product guarantees losses; recalculate for each product group
+- **Run Sponsored Brands alongside Sponsored Products** — occupying both the top banner (Sponsored Brands) and product grid (Sponsored Products) increases share of voice significantly
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Auto campaign spending entire budget on irrelevant queries | Add a comprehensive negative keyword list before launch; review search term reports within 48 hours of launch |
-| Bid changes not reflecting immediately | Amazon Ads API has propagation delays of up to 4 hours; do not make the same change twice |
-| ACOS calculation wrong | Amazon reports ACOS as (spend / attributed sales); verify attributed sales window matches your expectation (7-day vs 14-day) |
-| Manual campaign cannibalizing auto campaign | Use negative exact keywords in auto when graduating terms to manual — prevents both campaigns from competing in the same auction |
-| Rate limiting on API | Implement exponential backoff; Amazon Ads API has strict rate limits per endpoint (typically 5 req/sec) |
+| Auto campaign spending entirely on irrelevant queries | Add a comprehensive negative keyword list before launch; review search term report within 48 hours of first campaign |
+| Manual and auto campaigns competing for the same queries | Graduate terms from auto to manual and add them as negative exact keywords in the auto campaign |
+| ACOS looks high because of 14-day attribution window | Amazon attributes sales up to 14 days after a click; wait 14 days before evaluating a new campaign's ACOS |
+| Out-of-stock ASINs still accruing ad spend | Pause campaigns when inventory drops below 2 weeks of supply; resume on restock |
+| Low-margin products unprofitable despite hitting ACOS target | Calculate TACoS (total ad spend ÷ total product revenue) — if TACoS exceeds your contribution margin, the product does not support advertising |
 
 ## Related Skills
 

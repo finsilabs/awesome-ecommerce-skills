@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [same-day-delivery, local-delivery, time-slots, driver-dispatch, delivery-zones, last-mile]
 triggers: ["same day delivery", "local delivery", "time slot booking", "driver dispatch", "delivery zone", "last mile delivery"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,282 +16,202 @@ difficulty: advanced
 
 ## Overview
 
-Implement a same-day local delivery system covering delivery zone management (polygon-based coverage areas), customer time-slot booking with capacity limits, automated order routing to available drivers, and real-time delivery status updates. Designed for operations where you control your own delivery fleet or integrate with a local courier service.
+Same-day local delivery requires three things working together: a way for customers to select a delivery time slot at checkout, a way for you to dispatch orders to drivers, and a way to communicate delivery status back to customers. For most merchants, third-party last-mile services (DoorDash Drive, Uber Direct, Onfleet) are the fastest path to same-day delivery — they handle driver logistics so you focus on operations.
 
 ## When to Use This Skill
 
 - When launching a same-day or next-hour delivery service in a defined geographic area
 - When allowing customers to select a preferred delivery window at checkout
 - When building a driver dispatch dashboard that shows outstanding orders and optimizes routes
-- When integrating with a third-party last-mile courier (e.g., DoorDash Drive, Uber Direct, Onfleet)
+- When integrating with a third-party last-mile courier (DoorDash Drive, Uber Direct, Onfleet)
 - When managing capacity limits per time slot to prevent over-committing delivery resources
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify Shipping (carrier-calculated rates), Shopify Fulfillment Network, or apps like ShipStation. The Fulfillment API handles custom fulfillment workflows.
-**WooCommerce**: Use WooCommerce Shipping or plugins (ShipStation, WooCommerce Table Rate Shipping). Extend with woocommerce_shipping_methods filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with shipping configured, carrier API accounts if using custom rates
 
 ## Core Instructions
 
-1. **Define delivery zones and time slots**
+### Step 1: Determine your platform and delivery model
 
-   ```sql
-   CREATE TABLE delivery_zones (
-     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name           VARCHAR(64) NOT NULL,
-     polygon        GEOGRAPHY(POLYGON, 4326) NOT NULL,  -- PostGIS
-     min_order_cents INTEGER NOT NULL DEFAULT 0,
-     delivery_fee_cents INTEGER NOT NULL DEFAULT 0,
-     is_active      BOOLEAN NOT NULL DEFAULT true
-   );
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Local Delivery by Zapiet + DoorDash Drive or Uber Direct | Zapiet handles time-slot booking at checkout; DoorDash Drive / Uber Direct dispatch drivers automatically |
+| **WooCommerce** | WooCommerce Local Pickup Plus + Onfleet or your own drivers | Local Pickup Plus handles zones and time slots; Onfleet provides driver dispatch and tracking |
+| **BigCommerce** | Zapiet Delivery + Onfleet or Dispatch Science | Zapiet and similar apps add delivery scheduling; Dispatch Science optimizes routes |
+| **Custom / Headless** | Build time-slot booking + integrate Onfleet/DoorDash Drive API for dispatch | Full control over zone management, slot capacity, and driver routing |
 
-   CREATE INDEX idx_delivery_zones_poly ON delivery_zones USING GIST(polygon);
+**Choose your delivery model first:**
 
-   CREATE TABLE delivery_slots (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     zone_id         UUID NOT NULL REFERENCES delivery_zones(id),
-     slot_date       DATE NOT NULL,
-     window_start    TIME NOT NULL,   -- e.g. '14:00'
-     window_end      TIME NOT NULL,   -- e.g. '16:00'
-     capacity        INTEGER NOT NULL,
-     booked          INTEGER NOT NULL DEFAULT 0,
-     cutoff_time     TIMESTAMPTZ NOT NULL,  -- orders must be placed by this time
-     is_active       BOOLEAN NOT NULL DEFAULT true
-   );
+- **Your own drivers:** You control quality and cost but must manage driver availability, vehicles, and routing. Best for: florists, grocery, restaurants with a regular local customer base.
+- **On-demand couriers (DoorDash Drive, Uber Direct):** Drivers appear on demand with no fixed cost. Best for: merchants who need occasional same-day delivery without committing to a driver fleet.
+- **Hybrid:** Your drivers for scheduled slots; on-demand couriers for rush orders.
 
-   CREATE UNIQUE INDEX idx_slots_zone_date_window ON delivery_slots(zone_id, slot_date, window_start);
+### Step 2: Set up delivery zones and time slot booking
 
-   CREATE TABLE delivery_assignments (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     order_id        UUID NOT NULL REFERENCES orders(id),
-     slot_id         UUID NOT NULL REFERENCES delivery_slots(id),
-     driver_id       UUID,
-     status          VARCHAR(24) NOT NULL DEFAULT 'pending'
-                       CHECK (status IN ('pending', 'assigned', 'en_route', 'delivered', 'failed')),
-     eta             TIMESTAMPTZ,
-     delivered_at    TIMESTAMPTZ,
-     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
-   ```
+#### Shopify
 
-2. **Check if a delivery address is within a zone**
+**Using Zapiet — Pickup + Delivery (the most feature-complete app):**
 
-   ```typescript
-   async function findDeliveryZone(
-     lat: number,
-     lng: number
-   ): Promise<DeliveryZone | null> {
-     // PostGIS point-in-polygon query
-     const result = await db.raw(`
-       SELECT *
-       FROM delivery_zones
-       WHERE is_active = true
-         AND ST_Contains(polygon, ST_SetSRID(ST_MakePoint($1, $2), 4326))
-       ORDER BY min_order_cents DESC
-       LIMIT 1
-     `, [lng, lat]); // Note: PostGIS takes (lng, lat)
+1. Install **Zapiet — Pickup + Delivery** from the Shopify App Store
+2. In Zapiet, go to **Delivery → Zones** and define your delivery coverage area by:
+   - Postal/ZIP codes (simplest): list all ZIP codes you deliver to
+   - Radius from your store address
+   - Custom drawn polygon (requires higher Zapiet plan)
+3. Set up time slots in **Delivery → Time Slots**:
+   - Define daily windows (e.g., 10am–12pm, 12pm–2pm, 2pm–4pm, 4pm–6pm)
+   - Set capacity per slot (e.g., max 20 orders per 2-hour window)
+   - Set the order cutoff time for each slot (e.g., orders for the 2pm–4pm slot must be placed by 12pm)
+4. Set delivery fees per zone in **Delivery → Rates** (can be distance-based or flat)
+5. Customers see available time slots during Shopify checkout after entering their address
 
-     return result.rows[0] ?? null;
-   }
+**Order management in Zapiet:**
+- Go to Zapiet → Orders to see all delivery orders sorted by time slot
+- Export the pick list and manifest for your drivers from this view
+- Mark orders as "out for delivery" and "delivered" to update customers
 
-   async function geocodeAddress(address: string): Promise<{ lat: number; lng: number }> {
-     const resp = await fetch(
-       `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.GOOGLE_MAPS_API_KEY}`
-     );
-     const data = await resp.json();
-     const loc = data.results[0]?.geometry?.location;
-     if (!loc) throw new Error('Address could not be geocoded');
-     return { lat: loc.lat, lng: loc.lng };
-   }
-   ```
+#### WooCommerce
 
-3. **List available time slots for a zone and date**
+**Using WooCommerce Local Pickup Plus (WooCommerce.com official extension):**
 
-   ```typescript
-   async function getAvailableSlots(
-     zoneId: string,
-     date: Date
-   ): Promise<DeliverySlot[]> {
-     const now = new Date();
-     const dateStr = date.toISOString().slice(0, 10);
+1. Install **Local Pickup Plus** from WooCommerce.com
+2. Go to **WooCommerce → Settings → Shipping → Local Pickup Plus**
+3. Add pickup/delivery locations — for delivery, define your service area by postal code or radius
+4. Enable "Delivery date & time selection" to let customers pick slots
+5. Configure time slots and capacity in the plugin settings
 
-     const slots = await db.deliverySlots.findAll({
-       zone_id: zoneId,
-       slot_date: dateStr,
-       is_active: true,
-       cutoff_time: { gt: now },       // past cutoff = no longer bookable
-     });
+**For more advanced zone management:** use the **Flexible Shipping** plugin or **WooCommerce Table Rate Shipping** to create delivery rates based on postal code matching.
 
-     return slots.filter(slot => slot.booked < slot.capacity);
-   }
-   ```
+**For driver dispatch:** use **Onfleet** (onfleet.com) which has a WooCommerce webhook integration — new delivery orders automatically appear in Onfleet for driver assignment.
 
-4. **Book a delivery slot atomically**
+#### BigCommerce
 
-   ```typescript
-   async function bookDeliverySlot(
-     orderId: string,
-     slotId: string
-   ): Promise<DeliveryAssignment> {
-     return db.transaction(async tx => {
-       // Lock the slot row
-       const slot = await tx.raw(
-         'SELECT * FROM delivery_slots WHERE id = ? FOR UPDATE',
-         [slotId]
-       ).then(r => r.rows[0]);
+**Using Zapiet on BigCommerce:**
+1. Install Zapiet from the BigCommerce App Marketplace
+2. Same configuration as the Shopify workflow above — define zones, time slots, and capacity
 
-       if (!slot || !slot.is_active) throw new Error('SLOT_NOT_AVAILABLE');
-       if (slot.booked >= slot.capacity) throw new Error('SLOT_FULL');
-       if (new Date() > new Date(slot.cutoff_time)) throw new Error('SLOT_CUTOFF_PASSED');
+**Using ShipperHQ:**
+- ShipperHQ has local delivery zones and time-window restrictions built in
+- Go to ShipperHQ → Carrier Manager → Add Local Delivery carrier and define your zone rules
 
-       await tx.raw(
-         'UPDATE delivery_slots SET booked = booked + 1 WHERE id = ?',
-         [slotId]
-       );
+### Step 3: Connect to a driver dispatch platform
 
-       const assignment = await tx.deliveryAssignments.insert({
-         order_id: orderId,
-         slot_id: slotId,
-         status: 'pending',
-       });
+#### Using DoorDash Drive (on-demand, no fixed driver costs)
 
-       return assignment;
-     });
-   }
-   ```
+DoorDash Drive sends DoorDash gig-economy drivers to pick up and deliver your orders. Available in most major US cities.
 
-5. **Dispatch drivers and update delivery status**
+1. Sign up at developer.doordash.com/portal for a DoorDash Drive API key
+2. For Shopify: install **DoorDash Drive** from the Shopify App Store — it creates a DoorDash delivery automatically when you mark an order for dispatch
+3. DoorDash notifies the customer with a real-time tracking link via SMS
+4. You pay per delivery (typically $7–$15 depending on distance)
 
-   ```typescript
-   async function assignDriverToOrder(
-     assignmentId: string,
-     driverId: string
-   ): Promise<void> {
-     await db.deliveryAssignments.update(assignmentId, {
-       driver_id: driverId,
-       status: 'assigned',
-     });
+#### Using Uber Direct (on-demand)
 
-     // Notify driver via push notification or SMS
-     const assignment = await db.deliveryAssignments.findById(assignmentId);
-     const order = await db.orders.findById(assignment.order_id);
+Similar to DoorDash Drive — Uber Direct uses Uber drivers for local delivery.
 
-     await pushNotification.send(driverId, {
-       title: 'New delivery assigned',
-       body: `Order #${order.order_number} — ${order.shipping_address.line1}`,
-       data: { assignmentId, orderId: assignment.order_id },
-     });
-   }
+1. Sign up at developer.uber.com/products/uber-direct
+2. Install the Uber Direct app if available for your platform, or use the REST API
+3. Create a delivery by sending the pickup address (your store) and drop-off address (customer) to the Uber Direct API
 
-   async function updateDeliveryStatus(
-     assignmentId: string,
-     status: 'en_route' | 'delivered' | 'failed',
-     driverLat?: number,
-     driverLng?: number
-   ): Promise<void> {
-     const updates: any = { status };
-     if (status === 'delivered') updates.delivered_at = new Date();
-     if (driverLat && driverLng) updates.eta = await estimateETA(driverLat, driverLng, assignmentId);
+#### Using Onfleet (your own drivers + route optimization)
 
-     await db.deliveryAssignments.update(assignmentId, updates);
+Best if you have your own delivery team and need route optimization and real-time tracking.
 
-     const assignment = await db.deliveryAssignments.findById(assignmentId);
+1. Sign up at onfleet.com (starts at $349/month for up to 3 drivers)
+2. Install the WooCommerce webhook integration or use Zapier to connect your platform to Onfleet
+3. New orders auto-create Onfleet tasks
+4. Dispatchers assign tasks to drivers in the Onfleet web dashboard
+5. Drivers get a mobile app with turn-by-turn navigation and proof-of-delivery photo capture
+6. Customers receive an SMS with a real-time tracking link when the driver starts their route
 
-     if (status === 'delivered') {
-       await db.orders.update(assignment.order_id, { status: 'delivered' });
-       await sendDeliveryConfirmationEmail(assignment.order_id);
-     }
+### Step 4: Handle edge cases
 
-     // Push real-time update to customer via WebSocket
-     await websocketHub.sendToOrder(assignment.order_id, { type: 'DELIVERY_UPDATE', status, eta: updates.eta });
-   }
-   ```
+**Slot fills up after customer views it:**
+- Most apps (Zapiet, Onfleet scheduling) use real-time slot availability checks at checkout
+- Enable slot capacity enforcement in your app settings to prevent overbooking
 
-## Examples
+**Address outside delivery zone:**
+- Zapiet checks the delivery zone before showing time slots — if the address is outside your zone, delivery options are hidden and only pickup/standard shipping shows
+- Test this thoroughly with addresses near your zone boundary before going live
 
-### Admin: auto-generate slots for a zone for the next 7 days
+**Driver can't fulfill an order:**
+- For DoorDash Drive / Uber Direct: the platform automatically reassigns to another driver
+- For your own drivers (Onfleet): the dispatcher must manually reassign in the dashboard; set up Onfleet alerts for unassigned tasks approaching their slot window
+
+**Cutoff time management:**
+- Set your order cutoff 2–3 hours before the delivery window to give time for picking, packing, and loading
+- Zapiet automatically hides time slots that have passed their cutoff
+
+### Step 5: Custom / Headless Implementation
+
+For headless stores that need full control over zone management and slot booking:
 
 ```typescript
-async function generateWeeklySlots(zoneId: string): Promise<void> {
-  const DAILY_WINDOWS = [
-    { start: '10:00', end: '12:00', capacity: 15 },
-    { start: '12:00', end: '14:00', capacity: 20 },
-    { start: '14:00', end: '16:00', capacity: 20 },
-    { start: '16:00', end: '18:00', capacity: 15 },
-    { start: '18:00', end: '20:00', capacity: 10 },
-  ];
-
-  for (let i = 0; i < 7; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() + i + 1);
-    const dateStr = date.toISOString().slice(0, 10);
-
-    for (const window of DAILY_WINDOWS) {
-      const cutoffTime = new Date(`${dateStr}T${window.start}:00`);
-      cutoffTime.setHours(cutoffTime.getHours() - 2); // cutoff 2h before window
-
-      await db.deliverySlots.insert({
-        zone_id: zoneId,
-        slot_date: dateStr,
-        window_start: window.start,
-        window_end: window.end,
-        capacity: window.capacity,
-        cutoff_time: cutoffTime,
-      }).catch(() => {}); // ignore duplicate key if already generated
-    }
-  }
+// Check if a customer address is in a delivery zone
+async function checkDeliveryEligibility(params: {
+  customerZip: string;
+  deliveryZones: { name: string; zipCodes: string[]; deliveryFeeCents: number }[];
+}): Promise<{ eligible: boolean; zone?: string; feeCents?: number }> {
+  const zone = params.deliveryZones.find(z => z.zipCodes.includes(params.customerZip));
+  if (!zone) return { eligible: false };
+  return { eligible: true, zone: zone.name, feeCents: zone.deliveryFeeCents };
 }
-```
 
-### Customer-facing slot selection component (React)
+// Get available time slots for today (slots with remaining capacity)
+async function getAvailableSlots(params: {
+  date: Date;
+  zone: string;
+  slots: { id: string; label: string; capacity: number; booked: number; cutoffTime: Date }[];
+}): Promise<{ id: string; label: string; spotsRemaining: number }[]> {
+  const now = new Date();
+  return params.slots
+    .filter(slot => slot.cutoffTime > now && slot.booked < slot.capacity)
+    .map(slot => ({
+      id: slot.id,
+      label: slot.label,
+      spotsRemaining: slot.capacity - slot.booked,
+    }));
+}
 
-```tsx
-function DeliverySlotPicker({ zoneId, onSelect }: { zoneId: string; onSelect: (slotId: string) => void }) {
-  const [slots, setSlots] = useState<DeliverySlot[]>([]);
-  const [selectedDate, setSelectedDate] = useState(tomorrow());
-
-  useEffect(() => {
-    fetch(`/api/delivery/slots?zoneId=${zoneId}&date=${selectedDate.toISOString().slice(0, 10)}`)
-      .then(r => r.json())
-      .then(setSlots);
-  }, [zoneId, selectedDate]);
-
-  return (
-    <div>
-      <input type="date" value={selectedDate.toISOString().slice(0, 10)}
-        onChange={e => setSelectedDate(new Date(e.target.value))} />
-      {slots.map(slot => (
-        <button key={slot.id} onClick={() => onSelect(slot.id)}>
-          {slot.window_start}–{slot.window_end} ({slot.capacity - slot.booked} spots left)
-        </button>
-      ))}
-    </div>
-  );
+// Dispatch a delivery via DoorDash Drive API
+async function dispatchDoorDashDelivery(params: {
+  externalDeliveryId: string;
+  pickupAddress: Address;
+  dropoffAddress: Address;
+  customerPhone: string;
+  pickupWindow: { startTime: string; endTime: string }; // ISO 8601
+}): Promise<{ trackingUrl: string; fee: number }> {
+  const response = await fetch('https://openapi.doordash.com/drive/v2/deliveries', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.DOORDASH_DRIVE_JWT}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      external_delivery_id: params.externalDeliveryId,
+      pickup_address: `${params.pickupAddress.street1}, ${params.pickupAddress.city}, ${params.pickupAddress.state} ${params.pickupAddress.zip}`,
+      dropoff_address: `${params.dropoffAddress.street1}, ${params.dropoffAddress.city}, ${params.dropoffAddress.state} ${params.dropoffAddress.zip}`,
+      dropoff_phone_number: params.customerPhone,
+      pickup_time: params.pickupWindow.startTime,
+    }),
+  });
+  const data = await response.json();
+  return { trackingUrl: data.tracking_url, fee: data.fee };
 }
 ```
 
 ## Best Practices
 
-- **Lock the slot row before booking** — use `SELECT ... FOR UPDATE` to prevent double-booking when two customers simultaneously claim the last spot in a slot
-- **Store delivery zones as PostGIS polygons** — polygon geometry enables exact in/out checks; don't approximate with bounding boxes or radius circles
-- **Set slot cutoff times generously** — give the warehouse at least 2 hours between order cutoff and window start to pick, pack, and load orders for that slot
-- **Generate slots in advance** — run a weekly job to pre-generate the next 7 days of slots so checkout never blocks on slot creation
-- **Send ETA push notifications as the driver approaches** — update ETA every 2–3 minutes once the driver marks `en_route`; customers with live ETAs have significantly fewer "where is my delivery" support contacts
-- **Plan for driver failures** — if a driver reports `failed`, immediately offer the customer a re-schedule to the next available slot and trigger a re-assignment
-- **Monitor slot fill rates** — if slots consistently fill 100%, add capacity; if they're consistently under 30%, reduce capacity or consolidate windows
+- **Start with ZIP code zones, not radius or polygon** — ZIP-code-based zones are easier to manage, easier to communicate to customers ("We deliver to these zip codes"), and don't require geocoding
+- **Set slot cutoff times generously** — give your warehouse at least 2 hours between order cutoff and window start to pick, pack, and hand off to drivers
+- **Generate delivery manifests before each slot window** — print the manifest 30 minutes before your driver leaves; it should list each order with address, time slot, and special instructions
+- **Send ETA push notifications as the driver approaches** — customers with live ETAs submit far fewer "where is my delivery" support contacts; Onfleet and DoorDash Drive both handle this automatically
+- **Monitor slot fill rates** — if slots fill up consistently hours before the window, add capacity; if they're under 50% filled at cutoff, consolidate or reduce windows
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Two customers book the last slot simultaneously | Use `SELECT ... FOR UPDATE` + `booked < capacity` check in a single transaction |
-| Geocoding returns an address outside the zone polygon | Always re-validate the zone in the checkout API, not just during zone lookup on the address entry page |
-| Driver app loses GPS and stops sending location updates | Implement a heartbeat check — if no update for 5 minutes while `en_route`, alert dispatch |
-| Cutoff calculation is in the wrong timezone | Store `cutoff_time` as a UTC TIMESTAMPTZ computed from the slot's local time + zone timezone; never use client-local time |
+| Two customers book the last spot in a slot simultaneously | Use atomic slot decrement with capacity check — Zapiet handles this; for custom builds use database-level locks or atomic updates |
+| Customer enters an address outside the delivery zone but sees time slots | Validate zone eligibility server-side at checkout, not just client-side; Zapiet enforces this automatically |
+| Cutoff time displayed in wrong timezone for customer | Always store and compare times in UTC; display to customers in their local timezone using the browser's `Intl` API |
+| Driver assigned to more orders than they can fulfill in the window | Cap orders per driver per slot and enable route optimization in Onfleet; set realistic capacity limits when building your slot schedule |
 
 ## Related Skills
 

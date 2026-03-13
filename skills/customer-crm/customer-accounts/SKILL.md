@@ -1,6 +1,6 @@
 ---
 name: customer-accounts
-description: "Let shoppers register, manage their profile, save multiple addresses, and view their full order history in a personal account portal"
+description: "Let shoppers register, manage their profile, save multiple addresses, and view their full order history using your platform's built-in customer account system"
 category: customer-crm
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [customer, accounts, registration, profile, address-book, order-history, authentication]
 triggers: ["build customer accounts", "add user registration", "create customer portal", "implement address book"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: beginner
 ---
 
@@ -16,491 +16,238 @@ difficulty: beginner
 
 ## Overview
 
-Implement customer account management for e-commerce including registration, login, profile editing, address book CRUD, saved payment methods, order history with tracking, and wishlist functionality. This skill covers the data model, API endpoints, session management patterns, and UX considerations for both guest-to-registered conversion and returning customer experiences.
+Customer accounts let shoppers save addresses for faster checkout, view order history, track shipments, and manage their profile. Every major e-commerce platform has this built in — Shopify, WooCommerce, and BigCommerce all provide account registration, login, address books, and order history without any custom development. The main decisions are: whether to make accounts optional or required, and whether to extend the platform's default account pages with additional functionality.
 
 ## When to Use This Skill
 
-- When adding user registration and login to a storefront
-- When building an account dashboard with order history
-- When implementing an address book for faster checkout
+- When enabling customer registration and login on a new storefront
+- When customizing the account dashboard with order history and tracking
+- When adding an address book to speed up returning customer checkout
 - When converting guest checkout users into registered customers
 - When adding wishlist or saved-for-later functionality
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
-**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
-
 ## Core Instructions
 
-1. **Design the customer data model**
+### Step 1: Determine platform and enable customer accounts
 
-   ```sql
-   CREATE TABLE customers (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     email           VARCHAR(255) UNIQUE NOT NULL,
-     password_hash   VARCHAR(255),          -- null for social/magic-link auth
-     first_name      VARCHAR(100),
-     last_name       VARCHAR(100),
-     phone           VARCHAR(20),
-     accepts_marketing BOOLEAN DEFAULT false,
-     email_verified  BOOLEAN DEFAULT false,
-     status          VARCHAR(20) DEFAULT 'active'
-                     CHECK (status IN ('active', 'disabled', 'invited')),
-     tags            TEXT[] DEFAULT '{}',
-     note            TEXT,
-     total_orders    INTEGER DEFAULT 0,
-     total_spent     NUMERIC(12,2) DEFAULT 0,
-     last_order_at   TIMESTAMPTZ,
-     created_at      TIMESTAMPTZ DEFAULT now(),
-     updated_at      TIMESTAMPTZ DEFAULT now()
-   );
+| Platform | Account System | Recommended Extension |
+|----------|---------------|----------------------|
+| **Shopify** | Native customer accounts (classic or new) | Customer Accounts Concierge or Flits for enhanced account pages |
+| **WooCommerce** | My Account page (built-in, customizable) | YITH WooCommerce Wishlist; WooCommerce Memberships for gated content |
+| **BigCommerce** | Customer account portal (built-in) | Customer Groups for tiered access; LoyaltyLion for loyalty integration |
+| **Custom / Headless** | Build with JWT sessions and bcrypt password hashing | Required for complete control over authentication and account UX |
 
-   CREATE TABLE customer_addresses (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     customer_id     UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
-     first_name      VARCHAR(100) NOT NULL,
-     last_name       VARCHAR(100) NOT NULL,
-     company         VARCHAR(255),
-     street1         VARCHAR(255) NOT NULL,
-     street2         VARCHAR(255),
-     city            VARCHAR(100) NOT NULL,
-     state           VARCHAR(100),
-     postal_code     VARCHAR(20) NOT NULL,
-     country         VARCHAR(2) NOT NULL,    -- ISO 3166-1 alpha-2
-     phone           VARCHAR(20),
-     is_default      BOOLEAN DEFAULT false,
-     label           VARCHAR(50),            -- "Home", "Work", etc.
-     created_at      TIMESTAMPTZ DEFAULT now()
-   );
+---
 
-   CREATE INDEX idx_addresses_customer ON customer_addresses(customer_id);
-   ```
+### Step 2: Platform-specific setup
 
-2. **Implement registration with password hashing**
+---
 
-   ```typescript
-   import bcrypt from 'bcrypt';
-   import { z } from 'zod';
+#### Shopify
 
-   const registerSchema = z.object({
-     email: z.string().email(),
-     password: z.string().min(8).max(128),
-     firstName: z.string().min(1).max(100),
-     lastName: z.string().min(1).max(100),
-     acceptsMarketing: z.boolean().optional().default(false),
-   });
+Shopify offers two account experiences: **Classic accounts** and the newer **New customer accounts** (available on all plans).
 
-   // POST /api/customers/register
-   async function register(req: Request, res: Response) {
-     const input = registerSchema.parse(req.body);
+**Enable accounts and choose the experience:**
 
-     // Check for existing account
-     const existing = await db.customers.findByEmail(input.email.toLowerCase());
-     if (existing) {
-       return res.status(409).json({ error: 'An account with this email already exists' });
-     }
+1. Go to **Settings → Customer accounts**
+2. Choose between:
+   - **Classic accounts**: traditional email + password login with customizable account pages via Liquid theme
+   - **New customer accounts**: passwordless login via email link; Shopify-hosted pages that Shopify controls (faster to set up, less customizable)
+3. Set accounts as **Optional** (recommended) or **Required**
 
-     // Hash password with bcrypt (cost factor 12)
-     const passwordHash = await bcrypt.hash(input.password, 12);
+**Classic accounts setup:**
 
-     const customer = await db.customers.create({
-       email: input.email.toLowerCase(),
-       passwordHash,
-       firstName: input.firstName,
-       lastName: input.lastName,
-       acceptsMarketing: input.acceptsMarketing,
-       status: 'active',
-     });
+1. Enable **Classic accounts** in Settings → Customer accounts
+2. The account page appears at `/account` — your theme controls the layout
+3. Customize the account page in **Online Store → Themes → Customize → Customer account pages**
+4. Key pages: Login, Register, Account overview, Order detail, Addresses
 
-     // Send verification email
-     await sendVerificationEmail(customer);
+**Making accounts optional (strongly recommended):**
+- Always allow guest checkout — never force registration before purchase
+- After checkout, show a "Create account to save your details" prompt
+- Shopify handles the "convert guest to account" flow automatically when a customer registers with the same email used for a past order
 
-     // Create session
-     const session = await createSession(customer.id);
+**Extending account pages:**
 
-     res.status(201).json({
-       customer: sanitizeCustomer(customer),
-       token: session.token,
-     });
-   }
-   ```
+For enhanced account functionality (wishlist, loyalty points, social login, recent orders with tracking):
+- Install **Flits** from the App Store — comprehensive account page customization
+- Or install **Customer Accounts Concierge** — adds wishlist, recently viewed, reorder functionality
 
-3. **Build the login and session management flow**
+---
 
-   ```typescript
-   // POST /api/customers/login
-   async function login(req: Request, res: Response) {
-     const { email, password } = req.body;
+#### WooCommerce
 
-     const customer = await db.customers.findByEmail(email.toLowerCase());
-     if (!customer || !customer.passwordHash) {
-       // Use the same error for both cases to prevent email enumeration
-       return res.status(401).json({ error: 'Invalid email or password' });
-     }
+WooCommerce has a built-in **My Account** page that includes order history, addresses, and profile management.
 
-     if (customer.status === 'disabled') {
-       return res.status(403).json({ error: 'This account has been disabled' });
-     }
+**Set up My Account:**
 
-     const valid = await bcrypt.compare(password, customer.passwordHash);
-     if (!valid) {
-       return res.status(401).json({ error: 'Invalid email or password' });
-     }
+1. Go to **WooCommerce → Settings → Accounts & Privacy**
+2. Configure:
+   - **Guest checkout**: check "Allow customers to place orders without an account"
+   - **Account creation**: optionally auto-create accounts during checkout
+   - **Account erasure**: enable "Allow customers to request account deletion"
+3. The My Account page is created automatically at `/my-account/`
 
-     const session = await createSession(customer.id);
+**Customize My Account tabs:**
 
-     res.json({
-       customer: sanitizeCustomer(customer),
-       token: session.token,
-     });
-   }
+The default tabs are: Dashboard, Orders, Downloads, Addresses, Account details, Logout. Add or remove tabs:
+1. Add custom tabs by using the `woocommerce_account_menu_items` filter in your child theme's functions.php, or install a plugin like **YITH WooCommerce Customize My Account Page**
+2. Reorder tabs by modifying the array in the filter
 
-   // Strip sensitive fields before returning customer data
-   function sanitizeCustomer(customer: Customer) {
-     const { passwordHash, ...safe } = customer;
-     return safe;
-   }
+**Address book:**
 
-   // JWT-based session creation
-   import jwt from 'jsonwebtoken';
+1. Go to **WooCommerce → Settings → Accounts → Allow customers to store multiple addresses**
+2. Customers can add/edit multiple addresses in **My Account → Addresses**
+3. WooCommerce pre-fills checkout with the default address automatically
 
-   async function createSession(customerId: string) {
-     const token = jwt.sign(
-       { sub: customerId, type: 'customer' },
-       process.env.JWT_SECRET,
-       { expiresIn: '7d' }
-     );
-     return { token };
-   }
-   ```
+**Wishlist:**
+- Install **YITH WooCommerce Wishlist** (free/premium)
+- Adds a "Add to Wishlist" button on product pages and a wishlist page in My Account
 
-4. **Implement the address book CRUD**
+**Converting guest to registered after purchase:**
 
-   ```typescript
-   // GET /api/customers/me/addresses
-   async function listAddresses(req: AuthRequest, res: Response) {
-     const addresses = await db.customerAddresses.findByCustomer(req.customerId);
-     res.json({ addresses });
-   }
+WooCommerce shows a "Create account" prompt in order confirmation emails automatically when accounts are enabled but optional.
 
-   // POST /api/customers/me/addresses
-   async function addAddress(req: AuthRequest, res: Response) {
-     const input = addressSchema.parse(req.body);
+---
 
-     // If this is the first address or marked as default, update defaults
-     const existing = await db.customerAddresses.findByCustomer(req.customerId);
+#### BigCommerce
 
-     if (input.isDefault || existing.length === 0) {
-       // Unset any existing default
-       await db.customerAddresses.clearDefaults(req.customerId);
-       input.isDefault = true;
-     }
+BigCommerce has a built-in customer portal.
 
-     const address = await db.customerAddresses.create({
-       customerId: req.customerId,
-       ...input,
-     });
+**Enable and configure:**
 
-     res.status(201).json({ address });
-   }
+1. Go to **Store Setup → Store Settings → Display → Customer Account Access**
+2. Set to "Optional" to allow guest checkout
+3. Account pages are managed by your theme — customize in the Stencil theme editor
 
-   // PUT /api/customers/me/addresses/:id
-   async function updateAddress(req: AuthRequest, res: Response) {
-     const address = await db.customerAddresses.findById(req.params.id);
+**Customer groups:**
 
-     // Ensure the address belongs to this customer
-     if (!address || address.customerId !== req.customerId) {
-       return res.status(404).json({ error: 'Address not found' });
-     }
+Use customer groups for tiered access, B2B pricing, or member-only categories:
+1. Go to **Customers → Customer Groups → Add Group**
+2. Set group-specific pricing, category visibility, or shipping rules
+3. Assign customers to groups manually or auto-assign based on purchase history
 
-     const input = addressSchema.partial().parse(req.body);
+**Address book:**
+- Built-in under the customer account portal
+- Customers can save multiple addresses and select them at checkout
 
-     if (input.isDefault) {
-       await db.customerAddresses.clearDefaults(req.customerId);
-     }
+---
 
-     const updated = await db.customerAddresses.update(req.params.id, input);
-     res.json({ address: updated });
-   }
+#### Custom / Headless
 
-   // DELETE /api/customers/me/addresses/:id
-   async function deleteAddress(req: AuthRequest, res: Response) {
-     const address = await db.customerAddresses.findById(req.params.id);
-
-     if (!address || address.customerId !== req.customerId) {
-       return res.status(404).json({ error: 'Address not found' });
-     }
-
-     await db.customerAddresses.delete(req.params.id);
-
-     // If we deleted the default, make the first remaining address the default
-     if (address.isDefault) {
-       const remaining = await db.customerAddresses.findByCustomer(req.customerId);
-       if (remaining.length > 0) {
-         await db.customerAddresses.update(remaining[0].id, { isDefault: true });
-       }
-     }
-
-     res.status(204).end();
-   }
-   ```
-
-5. **Build the order history endpoint**
-
-   ```typescript
-   // GET /api/customers/me/orders?page=1&limit=10
-   async function listOrders(req: AuthRequest, res: Response) {
-     const page = parseInt(req.query.page as string) || 1;
-     const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
-     const offset = (page - 1) * limit;
-
-     const [orders, totalCount] = await Promise.all([
-       db.orders.findByCustomer(req.customerId, { limit, offset }),
-       db.orders.countByCustomer(req.customerId),
-     ]);
-
-     // Enrich with tracking info
-     const enrichedOrders = await Promise.all(
-       orders.map(async (order) => ({
-         ...order,
-         lineItems: await db.orderLineItems.findByOrder(order.id),
-         tracking: await db.shipments.findByOrder(order.id),
-       }))
-     );
-
-     res.json({
-       orders: enrichedOrders,
-       pagination: {
-         page,
-         limit,
-         totalCount,
-         totalPages: Math.ceil(totalCount / limit),
-       },
-     });
-   }
-
-   // GET /api/customers/me/orders/:id
-   async function getOrder(req: AuthRequest, res: Response) {
-     const order = await db.orders.findById(req.params.id);
-
-     if (!order || order.customerId !== req.customerId) {
-       return res.status(404).json({ error: 'Order not found' });
-     }
-
-     const [lineItems, shipments, discounts] = await Promise.all([
-       db.orderLineItems.findByOrder(order.id),
-       db.shipments.findByOrder(order.id),
-       db.orderDiscounts.findByOrder(order.id),
-     ]);
-
-     res.json({
-       order: { ...order, lineItems, shipments, discounts },
-     });
-   }
-   ```
-
-6. **Convert guest checkout to registered account**
-
-   ```typescript
-   // POST /api/customers/create-from-order
-   async function convertGuestToCustomer(req: Request, res: Response) {
-     const { orderId, password } = req.body;
-
-     const order = await db.orders.findById(orderId);
-     if (!order || !order.email) {
-       return res.status(404).json({ error: 'Order not found' });
-     }
-
-     // Check if an account already exists
-     const existing = await db.customers.findByEmail(order.email);
-     if (existing) {
-       return res.status(409).json({
-         error: 'An account already exists with this email. Please log in.',
-       });
-     }
-
-     const passwordHash = await bcrypt.hash(password, 12);
-
-     const customer = await db.customers.create({
-       email: order.email,
-       passwordHash,
-       firstName: order.shippingAddress.firstName,
-       lastName: order.shippingAddress.lastName,
-       phone: order.phone,
-       totalOrders: 1,
-       totalSpent: order.totalPrice,
-       lastOrderAt: order.createdAt,
-     });
-
-     // Associate the order with the new customer
-     await db.orders.update(orderId, { customerId: customer.id });
-
-     // Copy shipping address to address book
-     await db.customerAddresses.create({
-       customerId: customer.id,
-       ...order.shippingAddress,
-       isDefault: true,
-     });
-
-     const session = await createSession(customer.id);
-
-     res.status(201).json({
-       customer: sanitizeCustomer(customer),
-       token: session.token,
-     });
-   }
-   ```
-
-## Examples
-
-### Password reset flow
+For headless storefronts, build a complete account system with secure authentication:
 
 ```typescript
-import crypto from 'crypto';
+// lib/auth.ts
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 
-// POST /api/customers/forgot-password
-async function forgotPassword(req: Request, res: Response) {
-  const { email } = req.body;
+const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).max(128),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  acceptsMarketing: z.boolean().default(false),
+});
+
+// POST /api/customers/register
+export async function register(req: Request, res: Response) {
+  const input = registerSchema.parse(req.body);
+
+  const existing = await db.customers.findByEmail(input.email.toLowerCase());
+  if (existing) return res.status(409).json({ error: 'An account with this email already exists' });
+
+  const passwordHash = await bcrypt.hash(input.password, 12);  // Cost factor 12 minimum
+  const customer = await db.customers.create({ ...input, email: input.email.toLowerCase(), passwordHash });
+
+  await sendVerificationEmail(customer);
+  const token = jwt.sign({ sub: customer.id, type: 'customer' }, process.env.JWT_SECRET!, { expiresIn: '7d' });
+
+  res.status(201).json({ customer: omit(customer, ['passwordHash']), token });
+}
+
+// POST /api/customers/login
+export async function login(req: Request, res: Response) {
+  const { email, password } = req.body;
   const customer = await db.customers.findByEmail(email.toLowerCase());
 
-  // Always return success to prevent email enumeration
-  if (!customer) {
-    return res.json({ message: 'If an account exists, a reset link has been sent.' });
-  }
+  // Use the same error for both "not found" and "wrong password" to prevent email enumeration
+  if (!customer || !customer.passwordHash) return res.status(401).json({ error: 'Invalid email or password' });
+  if (customer.status === 'disabled') return res.status(403).json({ error: 'This account has been disabled' });
 
-  // Generate a secure, time-limited token
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const valid = await bcrypt.compare(password, customer.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
 
-  await db.passwordResets.create({
-    customerId: customer.id,
-    tokenHash: resetTokenHash,
-    expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
-  });
-
-  await sendPasswordResetEmail(customer.email, resetToken);
-
-  res.json({ message: 'If an account exists, a reset link has been sent.' });
+  const token = jwt.sign({ sub: customer.id, type: 'customer' }, process.env.JWT_SECRET!, { expiresIn: '7d' });
+  res.json({ customer: omit(customer, ['passwordHash']), token });
 }
 
-// POST /api/customers/reset-password
-async function resetPassword(req: Request, res: Response) {
-  const { token, newPassword } = req.body;
+// Address book CRUD — GET /api/customers/me/addresses
+export async function listAddresses(req: AuthRequest, res: Response) {
+  const addresses = await db.customerAddresses.findMany({ where: { customerId: req.customerId } });
+  res.json({ addresses });
+}
 
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const resetRecord = await db.passwordResets.findByToken(tokenHash);
+// POST /api/customers/me/addresses
+export async function addAddress(req: AuthRequest, res: Response) {
+  const existing = await db.customerAddresses.findMany({ where: { customerId: req.customerId } });
+  const input = { ...addressSchema.parse(req.body), customerId: req.customerId };
 
-  if (!resetRecord || resetRecord.expiresAt < new Date()) {
-    return res.status(400).json({ error: 'Invalid or expired reset token' });
+  if (input.isDefault || existing.length === 0) {
+    await db.customerAddresses.updateMany({ where: { customerId: req.customerId }, data: { isDefault: false } });
+    input.isDefault = true;
   }
 
-  const passwordHash = await bcrypt.hash(newPassword, 12);
-  await db.customers.update(resetRecord.customerId, { passwordHash });
+  const address = await db.customerAddresses.create({ data: input });
+  res.status(201).json({ address });
+}
 
-  // Invalidate the token
-  await db.passwordResets.delete(resetRecord.id);
+// GET /api/customers/me/orders — paginated order history with tracking
+export async function listOrders(req: AuthRequest, res: Response) {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
 
-  // Invalidate all existing sessions
-  await db.sessions.deleteByCustomer(resetRecord.customerId);
+  const [orders, total] = await Promise.all([
+    db.orders.findMany({ where: { customerId: req.customerId }, skip: (page - 1) * limit, take: limit, orderBy: { createdAt: 'desc' }, include: { lineItems: true, shipments: true } }),
+    db.orders.count({ where: { customerId: req.customerId } }),
+  ]);
 
-  res.json({ message: 'Password has been reset. Please log in.' });
+  res.json({ orders, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
 }
 ```
 
-### Account dashboard React component
+---
 
-```tsx
-function AccountDashboard() {
-  const { customer } = useCustomer();
-  const { orders, isLoading } = useOrders({ limit: 5 });
+### Step 3: Configure post-checkout account creation
 
-  return (
-    <div className="account-dashboard">
-      <h1>Welcome back, {customer.firstName}</h1>
+The highest-converting moment to ask for account creation is immediately after a successful first purchase, not before.
 
-      <div className="dashboard-grid">
-        <section className="dashboard-card">
-          <h2>Recent Orders</h2>
-          {isLoading ? (
-            <OrdersSkeleton count={3} />
-          ) : orders.length === 0 ? (
-            <p>No orders yet. <a href="/collections">Start shopping</a></p>
-          ) : (
-            <ul className="orders-list">
-              {orders.map(order => (
-                <li key={order.id} className="order-item">
-                  <div className="order-header">
-                    <span className="order-number">#{order.orderNumber}</span>
-                    <time dateTime={order.createdAt}>
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </time>
-                  </div>
-                  <div className="order-details">
-                    <span className="order-status">{order.fulfillmentStatus}</span>
-                    <span className="order-total">
-                      {formatCurrency(order.totalPrice)}
-                    </span>
-                  </div>
-                  <a href={`/account/orders/${order.id}`}>View details</a>
-                </li>
-              ))}
-            </ul>
-          )}
-          <a href="/account/orders" className="view-all">View all orders</a>
-        </section>
+**Shopify:** The order confirmation page includes a "Create account" button automatically when customer accounts are enabled but optional. Customize the message in **Online Store → Themes → Customize → Order status page**.
 
-        <section className="dashboard-card">
-          <h2>Account Details</h2>
-          <dl>
-            <dt>Name</dt>
-            <dd>{customer.firstName} {customer.lastName}</dd>
-            <dt>Email</dt>
-            <dd>{customer.email}</dd>
-          </dl>
-          <a href="/account/profile">Edit profile</a>
-        </section>
+**WooCommerce:** Customize the "Thank you" page message in **WooCommerce → Settings → Accounts** or use the **Checkout Field Editor** plugin to add a post-checkout account creation prompt.
 
-        <section className="dashboard-card">
-          <h2>Default Address</h2>
-          <AddressDisplay address={customer.defaultAddress} />
-          <a href="/account/addresses">Manage addresses</a>
-        </section>
-      </div>
-    </div>
-  );
-}
-```
+**What to say:** "Save your details for faster checkout next time" is more compelling than "Create an account" — focus on the benefit, not the action.
 
 ## Best Practices
 
-- **Never return different error messages for existing vs. non-existing emails** — this enables email enumeration attacks; use generic "invalid email or password"
-- **Hash passwords with bcrypt (cost factor 12+)** — never store plaintext passwords; bcrypt is designed for password hashing with built-in salting. For production deployments, see @account-security for Argon2id hashing (preferred over bcrypt), short-lived access tokens with refresh token rotation, and brute-force protection.
-- **Always verify email ownership** — send a verification email before allowing password-based login to prevent account squatting
-- **Rate-limit login and registration endpoints** — prevent brute-force attacks with IP-based and email-based rate limiting
-- **Support guest checkout** — never force registration before purchase; offer post-purchase account creation instead
-- **Paginate order history** — customers with hundreds of orders will crash the browser if you load all orders at once
-- **Auto-populate checkout from saved addresses** — the primary value of accounts is faster checkout; make the default address pre-fill automatic
-- **Let customers delete their accounts** — GDPR and CCPA require this; implement a soft-delete with a grace period before permanent deletion
+- **Always make accounts optional** — never force registration before purchase; post-purchase conversion rates are much higher than pre-purchase
+- **Offer social login** where possible (Google, Facebook) — reduces friction significantly for mobile users; use apps like **Single Sign-On (SSO)** for Shopify or **WooCommerce Social Login** for WooCommerce
+- **Auto-populate checkout from saved addresses** — the primary value of accounts is faster checkout; ensure the default address pre-fills automatically
+- **Send a re-engagement email 24 hours after checkout** to guest buyers inviting them to create an account — timing matters
+- **Enable GDPR/CCPA account deletion** — every platform supports this; make sure the "delete my account" option is easy to find; see your platform's documentation for the data erasure workflow
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Customers can't log in after password reset | Ensure all existing sessions are invalidated when the password is changed |
-| Address validation errors on international addresses | Don't require state/province for countries that don't use them; make `state` optional |
-| Order history shows orders from before account creation | When converting guest to registered, associate past orders by email match (with customer consent) |
-| JWT tokens are too long-lived | Use short-lived access tokens (15 min) with a refresh token pattern, or use server-side sessions |
-| No way to merge duplicate customer records | Implement a customer merge tool that consolidates orders, addresses, and activity from two records |
+| Customers can't see past orders after creating an account | On Shopify, past orders from guest checkout are linked when the customer registers with the same email; verify the account linking is enabled in Settings → Customer accounts |
+| Address validation fails for international customers | Don't mark state/province as required — many countries don't have them; WooCommerce handles this with country-dependent field visibility |
+| JWT tokens too long-lived | Use 15-minute access tokens with refresh tokens for better security, or use server-side sessions with a secure, HttpOnly cookie |
+| No way to merge duplicate customer records | Shopify and WooCommerce both support customer merge in the admin; for custom builds, build a merge tool that consolidates orders and addresses |
 
 ## Related Skills
 
-- @checkout-flow-optimization
-- @pci-dss-compliance
-- @ecommerce-seo
-- @erp-integration
 - @customer-segmentation
+- @customer-lifetime-value
+- @personalization-engine

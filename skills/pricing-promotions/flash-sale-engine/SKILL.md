@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [flash-sale, countdown-timer, queue, stock-limits, promotions, time-limited, waiting-room]
 triggers: ["flash sale", "limited time offer", "countdown timer sale", "flash deal", "time-limited discount", "sale queue"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,270 +16,192 @@ difficulty: advanced
 
 ## Overview
 
-Implement a flash sale system that handles high-concurrency traffic spikes with countdown timers, per-sale stock limits, and an optional virtual waiting room queue. The engine coordinates sale scheduling, atomic stock reservations, and real-time timer synchronization across all client sessions without overselling.
+Flash sales are time-limited discounts — typically 2–24 hours — that create urgency and drive conversion spikes. They require three things to work reliably: a countdown timer visible to shoppers, per-sale quantity limits that prevent overselling, and automatic price restoration when the sale ends. For high-traffic launches (product drops, Black Friday doorbusters), a virtual waiting room is also essential to prevent bot scalping. Most platforms have apps that handle this without custom code.
 
 ## When to Use This Skill
 
 - When launching time-limited sale events (e.g., 24-hour deals, Black Friday doorbusters) that must end at an exact time
 - When a product has limited flash-sale quantity separate from the main inventory
 - When expecting traffic spikes large enough to cause overselling with naive inventory checks
-- When you need a waiting room / queue to fairly admit customers during high-demand drops
+- When you need a waiting room or queue to fairly admit customers during high-demand drops
 - When building a deals platform where multiple flash sales run simultaneously across different products
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
-**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
 
 ## Core Instructions
 
-1. **Design the flash sale schema**
+### Step 1: Determine the merchant's platform and choose the right tool
 
-   ```sql
-   CREATE TABLE flash_sales (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     product_id      UUID NOT NULL REFERENCES products(id),
-     sale_price      INTEGER NOT NULL,           -- cents
-     original_price  INTEGER NOT NULL,           -- cents, for display
-     sale_quantity   INTEGER NOT NULL,           -- total units available for this sale
-     sold_count      INTEGER NOT NULL DEFAULT 0,
-     starts_at       TIMESTAMPTZ NOT NULL,
-     ends_at         TIMESTAMPTZ NOT NULL,
-     status          VARCHAR(16) NOT NULL DEFAULT 'scheduled'
-                       CHECK (status IN ('scheduled', 'active', 'sold_out', 'ended')),
-     queue_enabled   BOOLEAN NOT NULL DEFAULT false,
-     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Countdown Timer Bar, FOMO, or Hextom Flash Sales app | These apps handle countdown timers, scheduled price changes, and inventory display without custom code |
+| **Shopify Plus** | Launchpad (free for Plus) | Shopify's official flash sale app — schedules price changes, enables/disables discount codes, and restores prices automatically |
+| **WooCommerce** | YITH WooCommerce Flash Sales or WooCommerce Sales Countdown | Manage sale prices with countdown timers directly on product pages |
+| **BigCommerce** | BigCommerce Promotions with custom script for countdown timer | BigCommerce's promotions engine handles discounts; use a storefront script for the timer UI |
+| **High-traffic drops (any platform)** | Cloudflare Waiting Room | Cloudflare's managed waiting room queues visitors fairly; prevents scalper bots from monopolizing limited stock |
+| **Custom / Headless** | Build with Redis for atomic stock and SSE/WebSocket for timer | Full control for custom platforms where apps don't apply |
 
-   CREATE INDEX idx_flash_sales_status_time ON flash_sales(status, starts_at, ends_at);
-   ```
+### Step 2: Configure the flash sale on your platform
 
-2. **Activate and deactivate sales on schedule**
+---
 
-   ```typescript
-   import { CronJob } from 'cron';
+#### Shopify
 
-   // Check every minute for sales that need status transitions
-   new CronJob('* * * * *', async () => {
-     const now = new Date();
+**Option A: Shopify Launchpad (Plus only, free)**
 
-     // Activate sales that just started
-     await db.raw(`
-       UPDATE flash_sales
-       SET status = 'active'
-       WHERE status = 'scheduled' AND starts_at <= ? AND ends_at > ?
-     `, [now, now]);
+Launchpad is the official Shopify tool for scheduling promotional events:
 
-     // End sales that have expired
-     await db.raw(`
-       UPDATE flash_sales
-       SET status = 'ended'
-       WHERE status = 'active' AND ends_at <= ?
-     `, [now]);
-   }, null, true);
+1. In your Shopify admin, go to **Apps → Launchpad**
+2. Click **Create event**
+3. Set the event name (e.g., "Black Friday Flash Sale 2026"), start time, and end time
+4. Under **Price changes**: select products and set the sale price for each
+5. Under **Publish/unpublish collections**: optionally show/hide sale collections during the event
+6. Under **Discount codes**: enable or disable specific discount codes during the event
+7. Click **Schedule** — Launchpad activates the changes at the start time and reverses them automatically at the end time
 
-   // Real-time check when serving a product page
-   async function getActiveSale(productId: string): Promise<FlashSale | null> {
-     const now = new Date();
-     return db.flashSales.findOne({
-       product_id: productId,
-       status: 'active',
-       starts_at: { lte: now },
-       ends_at: { gt: now },
-     });
-   }
-   ```
+**Important**: Set sale quantities separately from your main inventory. If you only want to sell 100 units at the flash sale price, reduce the product's available inventory to 100 before the sale, then restock after. Launchpad does not manage sale quantities natively.
 
-3. **Atomically reserve flash sale stock**
+**Option B: Hextom Flash Sales app (non-Plus)**
 
-   ```typescript
-   // Uses a Redis counter for high-throughput reservation, synced to DB
-   import { Redis } from 'ioredis';
-   const redis = new Redis(process.env.REDIS_URL);
+1. Install **Hextom Flash Sales** from the Shopify App Store (~$10/month)
+2. Create a sale with a specific product list, discount percentage, and duration
+3. The app adds a countdown timer widget to product pages and updates prices automatically
+4. Configure the countdown timer appearance in the app settings
 
-   async function reserveFlashSaleUnit(
-     saleId: string,
-     customerId: string
-   ): Promise<{ reserved: boolean; reason?: string }> {
-     const sale = await db.flashSales.findById(saleId);
+**Per-product quantity caps:**
+Use Shopify's built-in **inventory tracking** to set flash sale quantities:
+1. Edit the product variant → set inventory quantity to your flash sale cap
+2. Enable **Track quantity** and **Stop selling when out of stock**
+3. After the sale ends, restock the inventory to the real quantity
 
-     if (!sale || sale.status !== 'active') {
-       return { reserved: false, reason: 'SALE_NOT_ACTIVE' };
-     }
-     if (new Date() > sale.ends_at) {
-       return { reserved: false, reason: 'SALE_ENDED' };
-     }
+---
 
-     // Atomic increment in Redis — avoids DB lock contention
-     const redisKey = `flash_sale:${saleId}:sold`;
-     const newCount = await redis.incr(redisKey);
+#### WooCommerce
 
-     if (newCount > sale.sale_quantity) {
-       // Decrement back — we overshot
-       await redis.decr(redisKey);
-       return { reserved: false, reason: 'SOLD_OUT' };
-     }
+**Option A: YITH WooCommerce Flash Sales plugin**
 
-     // Persist reservation to DB asynchronously (fire and forget — can reconcile later)
-     db.flashSaleReservations.insert({ sale_id: saleId, customer_id: customerId, reserved_at: new Date() })
-       .catch(err => console.error('Failed to persist reservation:', err));
+1. Install **YITH WooCommerce Flash Sales** from the plugin directory or YITH.com
+2. Go to **YITH → Flash Sales → Add New Flash Sale**
+3. Set:
+   - Products included in the sale
+   - Sale price or discount percentage
+   - Start date/time and end date/time
+   - Maximum quantity available at the flash sale price (separate from main stock)
+4. The plugin automatically shows a countdown timer on product pages and reverts prices at the end time
 
-     return { reserved: true };
-   }
-   ```
+**Option B: WooCommerce native sale pricing with an add-on for countdown**
 
-4. **Implement a virtual waiting room queue**
+WooCommerce supports **Sale price** and **Schedule** natively on every product:
+1. Edit the product → **Pricing** tab
+2. Enter the **Sale price**
+3. Click **Schedule** to set start and end dates
+4. The sale price activates and deactivates automatically
 
-   ```typescript
-   // Queue backed by Redis Sorted Set — score = join timestamp
-   const QUEUE_TTL_SECONDS = 300; // 5 minutes to complete purchase once admitted
+Add a countdown timer with **Countdown Timer for WooCommerce** (free plugin) or **WooCommerce Sales Countdown Timer**.
 
-   async function joinQueue(saleId: string, customerId: string): Promise<number> {
-     const score = Date.now();
-     await redis.zadd(`flash_sale:${saleId}:queue`, score, customerId);
-     const position = await redis.zrank(`flash_sale:${saleId}:queue`, customerId);
-     return (position ?? 0) + 1; // 1-indexed position
-   }
+**Per-product flash sale quantity:**
+Reduce the product's stock quantity to the flash sale cap before the sale begins, then restore it manually or via a scheduled script afterward.
 
-   async function admitNextBatch(saleId: string, batchSize: number): Promise<string[]> {
-     // Atomically pop the front N customers from the queue
-     const admitted = await redis.zpopmin(`flash_sale:${saleId}:queue`, batchSize);
-     const customerIds: string[] = [];
+---
 
-     for (let i = 0; i < admitted.length; i += 2) {
-       const customerId = admitted[i];
-       customerIds.push(customerId);
-       // Give them a time-limited admission token
-       await redis.setex(`flash_sale:${saleId}:admitted:${customerId}`, QUEUE_TTL_SECONDS, '1');
-     }
+#### BigCommerce
 
-     return customerIds;
-   }
+1. Go to **Marketing → Promotions → Create Promotion**
+2. Set:
+   - **Promotion type**: Percentage off, or dollar amount off
+   - **Applies to**: Specific products or categories
+   - **Active date range**: Start and end time (BigCommerce restores prices automatically)
+3. For a countdown timer, add a custom script:
+   - Go to **Storefront → Script Manager → Create a Script**
+   - Scope: Specific pages → Product pages
+   - Add a JavaScript timer that counts down to the promotion end time
 
-   async function isAdmitted(saleId: string, customerId: string): Promise<boolean> {
-     const token = await redis.get(`flash_sale:${saleId}:admitted:${customerId}`);
-     return token === '1';
-   }
-   ```
+**Quantity limits on BigCommerce:**
+Set a **Maximum uses** limit on the promotion to cap how many orders can use the flash sale discount, or use the product's inventory tracking to limit stock.
 
-5. **Provide the countdown timer to clients via SSE or WebSocket**
+---
 
-   ```typescript
-   // Server-Sent Events endpoint for real-time countdown
-   app.get('/api/flash-sales/:saleId/timer', async (req, res) => {
-     const sale = await db.flashSales.findById(req.params.saleId);
-     if (!sale) return res.status(404).end();
+#### Waiting Room for High-Demand Drops (Any Platform)
 
-     res.setHeader('Content-Type', 'text/event-stream');
-     res.setHeader('Cache-Control', 'no-cache');
-     res.setHeader('Connection', 'keep-alive');
+For product drops expecting high traffic (limited sneakers, concert tickets, exclusive merchandise):
 
-     const interval = setInterval(() => {
-       const now = Date.now();
-       const remaining = Math.max(0, sale.ends_at.getTime() - now);
-       const stockLeft = sale.sale_quantity - sale.sold_count;
+**Cloudflare Waiting Room (recommended)**
 
-       res.write(`data: ${JSON.stringify({ remaining, stockLeft, status: sale.status })}\n\n`);
+1. In your Cloudflare dashboard, go to **Traffic → Waiting Room**
+2. Click **Create Waiting Room**
+3. Set:
+   - **Hostname** and **Path**: the product page URL pattern (e.g., `/products/limited-edition-*`)
+   - **Total active users**: maximum concurrent users allowed on the page
+   - **New users per minute**: rate at which waiting customers are admitted
+4. Cloudflare serves a customizable waiting room page to queued visitors
+5. Customers are admitted in FIFO order; bots are filtered by Cloudflare's bot management
 
-       if (remaining === 0) {
-         clearInterval(interval);
-         res.end();
-       }
-     }, 1000);
+This requires a Cloudflare Business or Enterprise plan. For lower-cost alternatives, consider **Queue-it** or **Fastly's Waiting Room**.
 
-     req.on('close', () => clearInterval(interval));
-   });
-   ```
+---
 
-   Client-side countdown:
-   ```typescript
-   const eventSource = new EventSource(`/api/flash-sales/${saleId}/timer`);
-   eventSource.onmessage = (e) => {
-     const { remaining, stockLeft } = JSON.parse(e.data);
-     const hours = Math.floor(remaining / 3600000);
-     const minutes = Math.floor((remaining % 3600000) / 60000);
-     const seconds = Math.floor((remaining % 60000) / 1000);
-     document.getElementById('countdown').textContent =
-       `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-     document.getElementById('stock-left').textContent = `${stockLeft} left`;
-   };
-   ```
+#### Custom / Headless
 
-## Examples
-
-### Schedule a flash sale for a specific product
+For custom storefronts, implement atomic stock reservation using Redis for high-concurrency safety:
 
 ```typescript
-await db.flashSales.insert({
-  product_id: 'prod_abc123',
-  sale_price: 1999,        // $19.99
-  original_price: 4999,    // $49.99 — 60% off
-  sale_quantity: 200,
-  starts_at: new Date('2026-11-29T08:00:00Z'), // Black Friday 8am UTC
-  ends_at:   new Date('2026-11-29T20:00:00Z'), // ends at 8pm UTC
-  queue_enabled: true,
-});
-```
+import { Redis } from 'ioredis';
+const redis = new Redis(process.env.REDIS_URL);
 
-### React countdown timer component
+// Atomically reserve one unit from the flash sale allocation
+async function reserveFlashSaleUnit(saleId: string, customerId: string): Promise<boolean> {
+  const key = `flash_sale:${saleId}:sold`;
+  const maxKey = `flash_sale:${saleId}:max`;
+  const max = parseInt(await redis.get(maxKey) ?? '0');
+  if (max === 0) return false; // sale not configured
 
-```tsx
-function FlashSaleCountdown({ saleId }: { saleId: string }) {
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
-  const [stockLeft, setStockLeft] = useState<number | null>(null);
-
-  useEffect(() => {
-    const es = new EventSource(`/api/flash-sales/${saleId}/timer`);
-    es.onmessage = (e) => {
-      const { remaining, stockLeft } = JSON.parse(e.data);
-      setTimeLeft({
-        hours: Math.floor(remaining / 3600000),
-        minutes: Math.floor((remaining % 3600000) / 60000),
-        seconds: Math.floor((remaining % 60000) / 1000),
-      });
-      setStockLeft(stockLeft);
-    };
-    return () => es.close();
-  }, [saleId]);
-
-  return (
-    <div className="flash-sale-banner">
-      <span className="timer">{timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s</span>
-      {stockLeft !== null && <span className="stock">{stockLeft} remaining</span>}
-    </div>
-  );
+  // Atomic increment — safe under high concurrency
+  const newCount = await redis.incr(key);
+  if (newCount > max) {
+    await redis.decr(key); // Undo the over-increment
+    return false; // Sold out
+  }
+  return true;
 }
+
+// Send countdown timer data to the client via Server-Sent Events
+app.get('/api/sales/:saleId/timer', async (req, res) => {
+  const { endsAt, maxQuantity } = await db.flashSales.findById(req.params.saleId);
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+
+  const interval = setInterval(async () => {
+    const remaining = Math.max(0, new Date(endsAt).getTime() - Date.now());
+    const sold = parseInt(await redis.get(`flash_sale:${req.params.saleId}:sold`) ?? '0');
+    res.write(`data: ${JSON.stringify({ remaining, stockLeft: maxQuantity - sold })}\n\n`);
+    if (remaining === 0) { clearInterval(interval); res.end(); }
+  }, 1000);
+
+  req.on('close', () => clearInterval(interval));
+});
 ```
 
 ## Best Practices
 
-- **Use Redis for the sold counter, not a SELECT + UPDATE** — a Redis `INCR` is atomic and handles thousands of concurrent requests per second without locking
-- **Reconcile Redis counters to the database** — run a periodic job that reads the Redis counter and updates `sold_count` in the DB; never rely solely on Redis for permanent state
-- **Use server-authoritative end times** — never let the client calculate the end time; always send the authoritative UTC end timestamp from the server to prevent timer drift
-- **Set sale quantity separately from main inventory** — flash sale stock is a separate allocation; decrement both flash sale `sold_count` and main inventory when an order is confirmed
-- **Expire queue admission tokens** — give admitted customers a 5-minute window to complete checkout; expire the token and re-queue them if they don't
-- **Pre-warm your infrastructure** — for high-traffic drops, pre-scale your app servers and Redis connections 30 minutes before sale start
-- **Display "while supplies last" if stock is low** — showing live stock counts (e.g., "12 left") creates urgency, but avoid showing exact counts for large quantities as it looks artificial
-- **Test the queue under load** — use k6 or Locust to simulate the expected spike and verify the queue admission logic holds up
+- **Use server-authoritative end times** — never let the client calculate when the sale ends; always read the UTC end timestamp from the server to prevent timer drift across browsers
+- **Set sale quantity separately from main inventory** — flash sale stock is a separate allocation; do not reduce your total inventory by the flash sale quantity until an order is confirmed
+- **Pre-scale infrastructure before high-traffic drops** — load test your checkout with expected peak traffic 48 hours before a major sale; scale your hosting accordingly
+- **Display "while supplies last" when stock is low** — showing live stock counts (e.g., "8 left") creates urgency, but avoid showing exact counts for large quantities as it appears artificial
+- **Test the full sale cycle in staging** — run a complete sale from scheduled start through automatic price restoration before going live
+- **Never manually edit prices during an active Launchpad/app-managed sale** — manual edits can prevent the automatic restoration from working correctly
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Overselling when Redis and DB are out of sync | On order confirmation, do a final DB-level `UPDATE flash_sales SET sold_count = sold_count + 1 WHERE sold_count < sale_quantity` and rollback if no rows updated |
-| Countdown timer drifts across browsers | Send the absolute `ends_at` UTC timestamp from the server; calculate `remaining = ends_at - Date.now()` client-side on each tick |
-| Sale activates a few seconds late due to cron interval | Use `starts_at <= NOW()` check in the product API response rather than relying solely on the cron status flip |
-| Bots exhaust all stock before real customers can buy | Implement admission rate limiting, CAPTCHA on queue join, and IP velocity checks |
-| Queue position updates require polling | Push queue position updates via WebSocket or SSE; polling at scale creates unnecessary server load |
+| Price not restored after sale ends | Use Launchpad or a countdown app with auto-restore; if using manual scheduling, set a calendar reminder and verify restoration; build a fallback check that validates prices against a "source of truth" table |
+| Overselling during traffic spike | Use Redis atomic increment for custom builds; for platforms, set product inventory to the flash sale cap before the sale starts |
+| Countdown timer shows different time in different timezones | Always base the countdown on the sale's absolute UTC end time; calculate `remaining = endsAt - Date.now()` client-side |
+| Bots exhaust all stock before real customers can buy | Use Cloudflare Waiting Room or a similar queuing system; enforce per-customer purchase limits in your order system |
+| App-managed countdown timer conflicts with manual price changes | Do not modify prices through the Shopify admin while a Launchpad event or countdown app is active |
 
 ## Related Skills
 
 - @coupon-management
 - @dynamic-pricing
 - @price-rules-engine
+- @bot-protection
 - @order-management-system
-- @shipment-tracking

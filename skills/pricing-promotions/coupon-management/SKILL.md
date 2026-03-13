@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [coupons, discounts, promotions, validation, bulk-generation, promo-codes]
 triggers: ["add coupon system", "create promo codes", "discount codes", "coupon validation", "bulk generate coupons"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Build a coupon system that handles the full lifecycle: creation with configurable rules, validation at checkout, usage tracking, and bulk code generation. Supports percentage and fixed-amount discounts, minimum order requirements, usage limits per coupon and per customer, expiration dates, and single-use codes for targeted campaigns.
+Coupon systems let merchants create promotional codes with configurable rules: percentage or fixed-amount discounts, minimum order requirements, usage limits per coupon or per customer, and expiration dates. Every major e-commerce platform includes a built-in coupon system — you almost never need to build one from scratch. This skill walks you through setting up coupon management on each platform and explains when to reach for an app or plugin for advanced requirements like bulk unique codes or campaign tracking.
 
 ## When to Use This Skill
 
@@ -26,257 +26,189 @@ Build a coupon system that handles the full lifecycle: creation with configurabl
 - When building an admin interface to create and monitor coupon performance
 - When enforcing complex coupon rules such as product/category exclusions or customer segment restrictions
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
-**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
-
 ## Core Instructions
 
-1. **Design the coupon schema**
+### Step 1: Determine the merchant's platform and the right tool
 
-   ```sql
-   CREATE TABLE coupons (
-     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     code         VARCHAR(64) NOT NULL UNIQUE,
-     type         VARCHAR(16) NOT NULL CHECK (type IN ('percentage', 'fixed_amount', 'free_shipping')),
-     value        NUMERIC(10,2) NOT NULL,          -- e.g. 20.00 = 20% off or $20 off
-     min_order_amount NUMERIC(10,2) DEFAULT 0,
-     max_discount_amount NUMERIC(10,2),            -- cap for percentage discounts
-     usage_limit  INTEGER,                          -- NULL = unlimited
-     usage_count  INTEGER NOT NULL DEFAULT 0,
-     per_customer_limit INTEGER DEFAULT 1,
-     starts_at    TIMESTAMPTZ,
-     expires_at   TIMESTAMPTZ,
-     is_active    BOOLEAN NOT NULL DEFAULT true,
-     product_ids  UUID[],                           -- NULL = applies to all products
-     category_ids UUID[],
-     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+| Platform | Built-in Capability | When to Add an App/Plugin |
+|----------|-------------------|--------------------------|
+| **Shopify** | Shopify Discounts — supports percentage, fixed amount, free shipping, BOGO; usage limits, expiry, minimum purchase | When you need bulk unique codes (Shopify supports import), customer-group-specific coupons, or loyalty integration (Smile.io, LoyaltyLion) |
+| **WooCommerce** | WooCommerce Coupons — built into core; percentage, fixed cart, fixed product, free shipping types | When you need bulk unique code generation: WooCommerce Smart Coupons plugin; advanced rules: YITH WooCommerce Dynamic Pricing & Discounts |
+| **BigCommerce** | Coupon codes built in — percentage, fixed amount, free shipping, free product types | When you need B2B-specific codes or advanced restrictions; BigCommerce app marketplace has options like Coupon Manager Pro |
+| **Custom / Headless** | Must build — see Custom section below | N/A — you are building the system |
 
-   CREATE TABLE coupon_redemptions (
-     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     coupon_id    UUID NOT NULL REFERENCES coupons(id),
-     customer_id  UUID NOT NULL,
-     order_id     UUID NOT NULL,
-     discount_amount NUMERIC(10,2) NOT NULL,
-     redeemed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+### Step 2: Set up standard coupons on your platform
 
-   CREATE INDEX idx_coupons_code ON coupons(code);
-   CREATE INDEX idx_redemptions_customer_coupon ON coupon_redemptions(customer_id, coupon_id);
-   ```
+---
 
-2. **Validate a coupon at checkout**
+#### Shopify
 
-   ```typescript
-   interface CouponValidationResult {
-     valid: boolean;
-     discountAmount: number;
-     errorCode?: 'EXPIRED' | 'USAGE_LIMIT_REACHED' | 'MIN_ORDER_NOT_MET' | 'NOT_FOUND' | 'CUSTOMER_LIMIT_REACHED';
-   }
+1. Go to **Discounts** in the Shopify admin sidebar
+2. Click **Create discount** and choose the type:
+   - **Amount off products** — percentage or fixed amount off specific products/collections
+   - **Amount off order** — percentage or fixed amount off the entire cart
+   - **Buy X get Y** — BOGO and bundle offers
+   - **Free shipping** — removes shipping cost when code is applied
+3. Configure the code:
+   - Enter a code (e.g., `SUMMER20`) or click **Generate code** for a random one
+   - Set **Minimum purchase requirements** (minimum subtotal or minimum quantity)
+   - Set **Customer eligibility** — all customers, specific customer segments, or specific customers
+   - Set **Maximum discount uses** — total uses and/or one use per customer
+   - Set **Active dates** — start and optional end date
+4. Click **Save discount**
 
-   async function validateCoupon(
-     code: string,
-     customerId: string,
-     orderSubtotal: number,
-     itemIds: string[]
-   ): Promise<CouponValidationResult> {
-     const coupon = await db.coupons.findByCode(code.toUpperCase().trim());
+**Bulk unique codes on Shopify:**
+1. In the same Discounts screen, choose **Generate codes** instead of entering a single code
+2. Set the quantity (up to 100 at a time from the UI; use the Shopify Admin API for larger volumes)
+3. All generated codes share the same rules (discount value, expiry, usage limits)
+4. Export the codes to CSV for use in your email marketing platform
 
-     if (!coupon || !coupon.is_active) {
-       return { valid: false, errorCode: 'NOT_FOUND', discountAmount: 0 };
-     }
+**Shopify Plus — Shopify Scripts for advanced stacking:**
+- Use **Shopify Scripts** (Shopify Plus only) for custom coupon logic: e.g., different discount percentages by customer tag, auto-apply coupons without a code
+- Access via **Apps → Script Editor** in your Shopify admin
 
-     const now = new Date();
-     if (coupon.starts_at && coupon.starts_at > now) {
-       return { valid: false, errorCode: 'NOT_FOUND', discountAmount: 0 };
-     }
-     if (coupon.expires_at && coupon.expires_at < now) {
-       return { valid: false, errorCode: 'EXPIRED', discountAmount: 0 };
-     }
-     if (coupon.usage_limit !== null && coupon.usage_count >= coupon.usage_limit) {
-       return { valid: false, errorCode: 'USAGE_LIMIT_REACHED', discountAmount: 0 };
-     }
-     if (orderSubtotal < coupon.min_order_amount) {
-       return { valid: false, errorCode: 'MIN_ORDER_NOT_MET', discountAmount: 0 };
-     }
+---
 
-     // Per-customer limit check
-     if (coupon.per_customer_limit !== null) {
-       const redemptionCount = await db.couponRedemptions.countByCustomerAndCoupon(customerId, coupon.id);
-       if (redemptionCount >= coupon.per_customer_limit) {
-         return { valid: false, errorCode: 'CUSTOMER_LIMIT_REACHED', discountAmount: 0 };
-       }
-     }
+#### WooCommerce
 
-     const discountAmount = calculateDiscount(coupon, orderSubtotal, itemIds);
-     return { valid: true, discountAmount };
-   }
+1. Go to **WooCommerce → Coupons → Add coupon**
+2. Set the **Coupon code** (unique identifier customers type at checkout)
+3. Under **General** tab:
+   - **Discount type**: Percentage discount, Fixed cart discount, Fixed product discount
+   - **Coupon amount**: The discount value
+   - **Free shipping**: Toggle to make this code grant free shipping
+   - **Coupon expiry date**: Date after which the code stops working
+4. Under **Usage restriction** tab:
+   - **Minimum spend**: Cart subtotal must exceed this amount
+   - **Maximum spend**: Cart subtotal cannot exceed this amount
+   - **Individual use only**: Cannot be combined with other coupons
+   - **Exclude sale items**: Don't apply to already-reduced items
+   - **Products** and **Exclude products**: Restrict or exclude specific products
+   - **Product categories** and **Exclude categories**: Restrict or exclude by category
+   - **Email restrictions**: Limit to specific customer emails
+5. Under **Usage limits** tab:
+   - **Usage limit per coupon**: Total number of times this code can be used
+   - **Usage limit per user**: How many times a single customer can use it
+6. Click **Publish**
 
-   function calculateDiscount(coupon: Coupon, subtotal: number, itemIds: string[]): number {
-     if (coupon.type === 'fixed_amount') return Math.min(coupon.value, subtotal);
-     if (coupon.type === 'percentage') {
-       const raw = subtotal * (coupon.value / 100);
-       return coupon.max_discount_amount ? Math.min(raw, coupon.max_discount_amount) : raw;
-     }
-     if (coupon.type === 'free_shipping') return 0; // handled separately in shipping calc
-     return 0;
-   }
-   ```
+**Bulk unique codes on WooCommerce:**
+- Install **WooCommerce Smart Coupons** (premium plugin, ~$99/year from StoreApps)
+- Go to **WooCommerce → Smart Coupons → Generate Coupons**
+- Set quantity, discount amount, expiry, and prefix — generates a CSV of unique codes
+- Import or distribute via your email platform
 
-3. **Redeem a coupon atomically inside the order transaction**
+---
 
-   ```typescript
-   async function redeemCoupon(
-     tx: DatabaseTransaction,
-     couponId: string,
-     customerId: string,
-     orderId: string,
-     discountAmount: number
-   ): Promise<void> {
-     // Increment usage_count with optimistic locking to prevent race conditions
-     const updated = await tx.raw(`
-       UPDATE coupons
-       SET usage_count = usage_count + 1
-       WHERE id = ? AND (usage_limit IS NULL OR usage_count < usage_limit)
-       RETURNING id
-     `, [couponId]);
+#### BigCommerce
 
-     if (updated.rowCount === 0) {
-       throw new Error('COUPON_EXHAUSTED'); // race condition — coupon was just used up
-     }
+1. Go to **Marketing → Coupon Codes → Create Coupon Code**
+2. Fill in:
+   - **Code**: The code customers enter (or use the auto-generate button)
+   - **Type**: Percentage off order, Dollar amount off order, Percentage off product, Dollar amount off product, Free shipping, Free product
+   - **Discount amount**: The value
+   - **Applies to**: All items, items from specific categories, or specific products
+3. Under **Restrictions**:
+   - **Minimum order**: Subtotal must exceed this amount
+   - **Max uses**: Total redemptions allowed
+   - **Max uses per customer**: Per-account limit
+   - **Expiration date**: When the code stops working
+4. Click **Save**
 
-     await tx.couponRedemptions.insert({
-       coupon_id: couponId,
-       customer_id: customerId,
-       order_id: orderId,
-       discount_amount: discountAmount,
-     });
-   }
-   ```
+**Bulk codes on BigCommerce:**
+Use the BigCommerce Promotions API (`POST /v2/coupons`) to generate codes programmatically, then export for distribution.
 
-4. **Bulk generate unique single-use codes**
+---
 
-   ```typescript
-   import crypto from 'crypto';
+#### Custom / Headless
 
-   function generateCouponCode(prefix = 'PROMO', length = 8): string {
-     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // omit ambiguous chars (0/O, 1/I)
-     const bytes = crypto.randomBytes(length);
-     const code = Array.from(bytes)
-       .map(b => chars[b % chars.length])
-       .join('');
-     return `${prefix}-${code}`;
-   }
-
-   async function bulkGenerateCoupons(
-     template: Omit<Coupon, 'id' | 'code' | 'usage_count'>,
-     quantity: number
-   ): Promise<string[]> {
-     const codes: string[] = [];
-     const batchSize = 500;
-
-     while (codes.length < quantity) {
-       const batch = Array.from({ length: Math.min(batchSize, quantity - codes.length) }, () =>
-         generateCouponCode(template.prefix)
-       );
-
-       // Insert and get back the codes that didn't collide
-       const inserted = await db.coupons.insertMany(
-         batch.map(code => ({ ...template, code, usage_limit: 1, per_customer_limit: 1 })),
-         { onConflict: 'ignore' }
-       );
-       codes.push(...inserted.map(r => r.code));
-     }
-
-     return codes;
-   }
-   ```
-
-5. **Expose a clean API for the checkout frontend**
-
-   ```typescript
-   // POST /api/coupons/validate
-   app.post('/api/coupons/validate', requireAuth, async (req, res) => {
-     const { code, orderSubtotal, itemIds } = req.body;
-     const result = await validateCoupon(code, req.user.id, orderSubtotal, itemIds);
-
-     if (!result.valid) {
-       return res.status(422).json({ error: result.errorCode });
-     }
-     res.json({ discountAmount: result.discountAmount, code: code.toUpperCase().trim() });
-   });
-
-   // DELETE /api/coupons/:id  (admin)
-   app.delete('/api/coupons/:id', requireAdmin, async (req, res) => {
-     await db.coupons.update(req.params.id, { is_active: false });
-     res.json({ success: true });
-   });
-   ```
-
-## Examples
-
-### Create a 20%-off coupon with a $50 minimum order, capped at $30 discount
+For headless stores, you need to build the validation and redemption logic. The key requirements are atomic redemption (prevent race conditions when two customers use the last available redemption simultaneously) and idempotent order processing.
 
 ```typescript
-await db.coupons.insert({
-  code: 'SUMMER20',
-  type: 'percentage',
-  value: 20,
-  min_order_amount: 50.00,
-  max_discount_amount: 30.00,
-  usage_limit: 500,
-  per_customer_limit: 1,
-  expires_at: new Date('2026-09-01T00:00:00Z'),
-  is_active: true,
-});
+// Coupon validation at checkout
+async function validateCoupon(
+  code: string,
+  customerId: string,
+  orderSubtotalCents: number
+): Promise<{ valid: boolean; discountCents: number; error?: string }> {
+  const coupon = await db.coupons.findOne({ code: code.toUpperCase().trim(), is_active: true });
+  if (!coupon) return { valid: false, discountCents: 0, error: 'Code not found' };
+
+  const now = new Date();
+  if (coupon.expires_at && coupon.expires_at < now) return { valid: false, discountCents: 0, error: 'Code expired' };
+  if (coupon.usage_limit && coupon.usage_count >= coupon.usage_limit) return { valid: false, discountCents: 0, error: 'Code fully used' };
+  if (coupon.min_order_cents && orderSubtotalCents < coupon.min_order_cents) return { valid: false, discountCents: 0, error: `Minimum order $${coupon.min_order_cents / 100}` };
+
+  // Per-customer limit check
+  if (coupon.per_customer_limit) {
+    const uses = await db.couponRedemptions.count({ coupon_id: coupon.id, customer_id: customerId });
+    if (uses >= coupon.per_customer_limit) return { valid: false, discountCents: 0, error: 'Already used' };
+  }
+
+  const discountCents = coupon.type === 'percentage'
+    ? Math.round(orderSubtotalCents * (coupon.value / 100))
+    : Math.min(coupon.value_cents, orderSubtotalCents);
+
+  return { valid: true, discountCents };
+}
+
+// Atomic redemption — use inside the order creation transaction
+async function redeemCoupon(tx: Tx, couponId: string, customerId: string, orderId: string, discountCents: number) {
+  // Atomic increment with guard — prevents over-redemption under concurrency
+  const result = await tx.raw(
+    `UPDATE coupons SET usage_count = usage_count + 1
+     WHERE id = ? AND (usage_limit IS NULL OR usage_count < usage_limit)
+     RETURNING id`,
+    [couponId]
+  );
+  if (result.rowCount === 0) throw new Error('COUPON_EXHAUSTED');
+
+  await tx.couponRedemptions.insert({ coupon_id: couponId, customer_id: customerId, order_id: orderId, discount_cents: discountCents });
+}
 ```
 
-### Generate 10,000 single-use email campaign codes
+**Bulk code generation for email campaigns:**
 
 ```typescript
-const codes = await bulkGenerateCoupons(
-  {
-    type: 'fixed_amount',
-    value: 10.00,
-    min_order_amount: 0,
-    expires_at: new Date('2026-06-30T00:00:00Z'),
-    is_active: true,
-    prefix: 'EMAIL',
-  },
-  10000
-);
+import crypto from 'crypto';
 
-// Export to CSV for your email marketing platform
-const csv = ['code', ...codes].join('\n');
-await fs.writeFile('campaign-codes.csv', csv);
+function generateCode(prefix = 'PROMO', length = 8): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
+  return prefix + '-' + Array.from(crypto.randomBytes(length))
+    .map(b => chars[b % chars.length]).join('');
+}
+
+async function bulkGenerate(template: CouponTemplate, quantity: number): Promise<string[]> {
+  const codes: string[] = [];
+  while (codes.length < quantity) {
+    const batch = Array.from({ length: Math.min(500, quantity - codes.length) }, () => generateCode(template.prefix));
+    const inserted = await db.coupons.insertMany(
+      batch.map(code => ({ ...template, code, usage_limit: 1, per_customer_limit: 1 })),
+      { onConflict: 'ignore' }
+    );
+    codes.push(...inserted.map(r => r.code));
+  }
+  return codes;
+}
 ```
 
 ## Best Practices
 
-- **Normalize coupon codes** — always store and compare codes in uppercase, trim whitespace to prevent "code not found" errors from case differences
-- **Use database transactions** — validate and redeem in the same transaction as order creation to prevent inventory overselling and coupon over-redemption
-- **Increment `usage_count` atomically** — use `UPDATE ... WHERE usage_count < usage_limit` rather than read-then-write to handle concurrent checkouts correctly
-- **Never expose internal IDs in coupon codes** — codes should be opaque random strings, not sequential integers that are easy to enumerate
-- **Log every validation attempt** — store failed validations with reason codes for fraud detection and campaign analytics
-- **Soft-delete coupons** — set `is_active = false` rather than deleting rows to preserve redemption history for accounting
-- **Index the `code` column** — coupon lookup happens on every checkout; an unindexed code column will cause slow queries at scale
-- **Set `per_customer_limit = 1` by default** for campaign codes — prevents a single customer from claiming multiple unique codes if they have multiple email addresses
+- **Normalize codes to uppercase** — store and compare codes in uppercase and trim whitespace to prevent "code not found" errors from minor formatting differences
+- **Use single-use codes for targeted campaigns** — set usage limit to 1 per code when distributing unique codes via email to prevent sharing
+- **Validate at order creation, not just at cart** — re-check coupon validity (expiry, usage limits) when the order is actually placed to handle race conditions
+- **Soft-delete coupons** — deactivate rather than delete to preserve redemption history for accounting
+- **Track discount abuse** — if a customer has abandoned and recovered with a discount code three or more times, consider excluding them from discount campaigns
+- **Cap maximum discount amounts** — for percentage coupons, set a maximum dollar discount to prevent runaway promotions (e.g., 20% off capped at $50)
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Two customers redeem the last use of a coupon simultaneously | Use an atomic `UPDATE ... WHERE usage_count < usage_limit` and check `rowCount === 1` |
-| Coupon applied before shipping, then free-shipping coupon stacks | Evaluate coupon type first — flag `free_shipping` type coupons and skip from subtotal discount calculation |
-| Bulk-generated codes collide with existing codes | Use `INSERT ... ON CONFLICT DO NOTHING` and keep generating until the target quantity is reached |
-| Customers bypass per-customer limit with multiple accounts | Supplement customer-ID checks with email-address checks or IP rate limiting for anonymous sessions |
-| Coupon still works after order cancellation | Decrement `usage_count` and delete the redemption row when an order is cancelled or refunded |
+| Two customers redeem the last use simultaneously | Use atomic `UPDATE ... WHERE usage_count < usage_limit` and verify rowCount === 1 (custom builds); platforms handle this natively |
+| Coupon still valid after order cancellation | Decrement the usage count when an order is cancelled or refunded; Shopify does this automatically |
+| Per-customer limit bypassed with multiple accounts | Supplement customer-ID checks with email checks; for high-value campaigns, require verified phone numbers |
+| Bulk-generated codes collide with existing ones | Use `INSERT ... ON CONFLICT DO NOTHING` and regenerate collisions until target quantity is met |
+| Free-shipping coupon stacks with a percentage discount unexpectedly | Define your stacking policy explicitly; on Shopify, use the "Can be combined with" settings on each discount |
 
 ## Related Skills
 

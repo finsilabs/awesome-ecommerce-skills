@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [meta, facebook, instagram, advertising, capi, pixel]
 triggers: ["set up Facebook ads", "implement Meta CAPI", "create dynamic product ads"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,341 +16,218 @@ difficulty: advanced
 
 ## Overview
 
-Meta (Facebook/Instagram) is the dominant paid social channel for ecommerce, but reliable attribution requires pairing the browser-based Meta Pixel with the server-side Conversions API (CAPI). Post-iOS 14, browser signals alone under-report 30–60% of conversions; CAPI restores signal fidelity by sending purchase events directly from your server. This skill covers the full stack: Pixel setup, CAPI server-side events, Product Catalog Feed sync for Dynamic Product Ads, Custom and Lookalike Audiences, campaign structure for ecommerce, and ROAS optimization.
+Meta (Facebook/Instagram) is the dominant paid social channel for ecommerce, but reliable attribution requires pairing the browser-based Meta Pixel with server-side Conversions API (CAPI). Post-iOS 14, browser signals alone under-report 30–60% of conversions; CAPI restores signal fidelity by sending purchase events directly from your server. For Shopify, WooCommerce, and BigCommerce, official integrations handle both Pixel and CAPI automatically — no custom code required. Custom code only belongs in the Custom/Headless section.
 
 ## When to Use This Skill
 
 - When setting up Meta advertising for a new ecommerce store
 - When conversion data in Ads Manager looks under-reported after iOS 14 rollout
 - When launching Dynamic Product Ads (DPA) and needing catalog feed sync
-- When rebuilding tracking after a platform migration (Shopify → headless, etc.)
 - When ROAS is declining and you need to restore the signal quality Meta's algorithm relies on
 - When adding retargeting audiences based on product viewers and add-to-cart events
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Meta Business Manager account, Meta Pixel and/or Conversions API credentials, product catalog feed URL
-
 ## Core Instructions
 
-### 1. Install Meta Pixel (browser-side)
+### Step 1: Choose your integration approach
 
-Load the base Pixel code in your `<head>` on every page. Replace `YOUR_PIXEL_ID` with the ID from Events Manager:
+| Platform | Recommended Method | CAPI Support | Catalog Sync |
+|----------|--------------------|-------------|-------------|
+| **Shopify** | Native Meta Sales Channel | Yes (built-in) | Yes (automatic) |
+| **WooCommerce** | Facebook for WooCommerce plugin | Yes (built-in) | Yes (automatic) |
+| **BigCommerce** | Meta channel in Channel Manager | Yes (built-in) | Yes (automatic) |
+| **Custom / Headless** | Meta Pixel + facebook-nodejs-business-sdk | Manual CAPI implementation | Manual feed generation |
 
-```html
-<!-- Meta Pixel Base Code -->
-<script>
-  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-  document,'script','https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', 'YOUR_PIXEL_ID');
-  fbq('track', 'PageView');
-</script>
-<noscript>
-  <img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"/>
-</noscript>
-```
+All three major platforms have official Meta integrations that install both the Pixel and CAPI in a single setup — use these rather than manually pasting Pixel code.
 
-Fire standard events on key pages:
+### Step 2: Connect your platform to Meta
 
+---
+
+#### Shopify
+
+1. Go to **Shopify Admin → Sales Channels → + → Facebook & Instagram**
+2. Install the Facebook & Instagram sales channel
+3. Connect your Meta Business Manager account and select your Facebook Page and Ad Account
+4. Under **Data Sharing**, select **Maximum** — this enables server-side CAPI in addition to the browser Pixel
+5. Shopify automatically:
+   - Installs the Meta Pixel on all pages
+   - Fires ViewContent, AddToCart, InitiateCheckout, and Purchase events
+   - Sends the same events via CAPI from Shopify's servers (deduplication handled automatically)
+   - Syncs your product catalog to Meta Commerce Manager for Dynamic Product Ads
+6. Go to **Facebook & Instagram → Overview** to verify pixel connection status
+7. In **Meta Events Manager → Data Sources → [Your Pixel]**: check Event Match Quality (EMQ) score — aim for 7+/10
+
+---
+
+#### WooCommerce
+
+1. Install **Facebook for WooCommerce** (free, official Meta plugin) from the WordPress plugin directory
+2. Go to **WooCommerce → Facebook → Get Started** and connect your Meta Business Manager account
+3. Under **Facebook Connection → Data Sharing Level**: select **Maximum**
+4. The plugin installs the Meta Pixel across all pages and fires standard events automatically
+5. CAPI is enabled automatically under the Maximum data sharing setting
+6. Go to **WooCommerce → Facebook → Product Sync** to trigger an initial product catalog sync to Meta Commerce Manager
+7. Verify catalog sync status in **Meta Commerce Manager → Catalog → Data Sources**
+
+---
+
+#### BigCommerce
+
+1. Go to **BigCommerce Admin → Channel Manager → Add a Channel**
+2. Select **Facebook & Instagram**
+3. Connect your Meta Business Manager account
+4. Enable **Enhanced Conversions** (CAPI) during setup
+5. BigCommerce syncs your product catalog automatically and registers it in Meta Commerce Manager for Dynamic Product Ads
+6. Check product sync status in **Channel Manager → Facebook & Instagram → Products**
+
+---
+
+#### Custom / Headless
+
+For headless stores, you must install both the browser Pixel and server-side CAPI manually.
+
+**Browser-side Pixel (add to `<head>` on every page):**
 ```javascript
-// Product detail page
+// Replace YOUR_PIXEL_ID with your Pixel ID from Meta Events Manager
+fbq('init', 'YOUR_PIXEL_ID');
+fbq('track', 'PageView');
+
+// Product page
 fbq('track', 'ViewContent', {
   content_ids: [product.sku],
   content_type: 'product',
   value: product.price,
   currency: 'USD',
-  content_name: product.name,
 });
 
-// Add to cart
-fbq('track', 'AddToCart', {
-  content_ids: cart.items.map(i => i.sku),
-  content_type: 'product',
-  value: cart.totalValue,
-  currency: 'USD',
-  num_items: cart.items.length,
-});
-
-// Initiate checkout
-fbq('track', 'InitiateCheckout', {
-  content_ids: cart.items.map(i => i.sku),
-  content_type: 'product',
-  value: cart.totalValue,
-  currency: 'USD',
-  num_items: cart.items.length,
-});
-
-// Purchase — fire on order confirmation page
+// Purchase — pass eventID for deduplication with CAPI
+const purchaseEventId = `purchase-${orderId}`;
 fbq('track', 'Purchase', {
   content_ids: order.lineItems.map(i => i.sku),
-  content_type: 'product',
-  value: order.subtotal,       // use subtotal, not total with tax
+  value: order.subtotal,
   currency: order.currencyCode,
-  num_items: order.lineItems.length,
-  order_id: order.id,          // deduplication key
-});
+  order_id: order.id,
+}, { eventID: purchaseEventId });
 ```
 
-### 2. Implement Conversions API (CAPI) — server-side
-
-Install the official SDK:
-
-```bash
-npm install facebook-nodejs-business-sdk
-```
-
-Create a shared CAPI client:
-
+**Server-side CAPI (send from your order webhook):**
 ```typescript
-import { FacebookAdsApi, ServerSideApi, EventRequest, UserData, CustomData, Content } from 'facebook-nodejs-business-sdk';
+import { FacebookAdsApi, ServerEvent, UserData, CustomData, EventRequest } from 'facebook-nodejs-business-sdk';
 
-const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN!;
-const PIXEL_ID     = process.env.META_PIXEL_ID!;
+FacebookAdsApi.init(process.env.META_CAPI_ACCESS_TOKEN!);
 
-FacebookAdsApi.init(ACCESS_TOKEN);
+async function trackPurchaseCapi(order: Order, req: Request) {
+  const eventId = `purchase-${order.id}`; // MUST match the eventID passed to fbq()
 
-export async function sendCapiEvent(params: {
-  eventName: string;
-  eventId: string;       // MUST match fbq eventID for deduplication
-  eventTime: number;     // Unix seconds
-  userData: {
-    email?: string;
-    phone?: string;
-    firstName?: string;
-    lastName?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    country?: string;
-    clientIpAddress?: string;
-    clientUserAgent?: string;
-    fbp?: string;         // _fbp cookie value
-    fbc?: string;         // _fbc cookie value
-  };
-  customData?: {
-    value?: number;
-    currency?: string;
-    contentIds?: string[];
-    contentType?: string;
-    numItems?: number;
-    orderId?: string;
-  };
-}) {
-  const userData = new UserData();
-  if (params.userData.email)           userData.setEmail(params.userData.email);
-  if (params.userData.phone)           userData.setPhone(params.userData.phone);
-  if (params.userData.firstName)       userData.setFirstName(params.userData.firstName);
-  if (params.userData.lastName)        userData.setLastName(params.userData.lastName);
-  if (params.userData.zip)             userData.setZip(params.userData.zip);
-  if (params.userData.country)         userData.setCountry(params.userData.country);
-  if (params.userData.clientIpAddress) userData.setClientIpAddress(params.userData.clientIpAddress);
-  if (params.userData.clientUserAgent) userData.setClientUserAgent(params.userData.clientUserAgent);
-  if (params.userData.fbp)             userData.setFbp(params.userData.fbp);
-  if (params.userData.fbc)             userData.setFbc(params.userData.fbc);
+  const userData = new UserData()
+    .setEmail(order.customerEmail)    // SDK hashes PII automatically (SHA-256)
+    .setPhone(order.customerPhone)
+    .setFirstName(order.customerFirstName)
+    .setLastName(order.customerLastName)
+    .setZip(order.shippingAddress?.zip)
+    .setCountry(order.shippingAddress?.countryCode)
+    .setClientIpAddress(req.ip)
+    .setClientUserAgent(req.headers['user-agent'] as string)
+    .setFbp(req.cookies['_fbp'])   // _fbp cookie = browser identity signal
+    .setFbc(req.cookies['_fbc']);  // _fbc cookie = click identity signal
 
-  const customData = new CustomData();
-  if (params.customData?.value)        customData.setValue(params.customData.value);
-  if (params.customData?.currency)     customData.setCurrency(params.customData.currency);
-  if (params.customData?.contentIds)   customData.setContentIds(params.customData.contentIds);
-  if (params.customData?.contentType)  customData.setContentType(params.customData.contentType);
-  if (params.customData?.numItems)     customData.setNumItems(params.customData.numItems);
-  if (params.customData?.orderId)      customData.setOrderId(params.customData.orderId);
+  const customData = new CustomData()
+    .setValue(order.subtotal)
+    .setCurrency(order.currencyCode)
+    .setContentIds(order.lineItems.map(i => i.sku))
+    .setContentType('product')
+    .setNumItems(order.lineItems.length)
+    .setOrderId(order.id);
 
-  const event = new (require('facebook-nodejs-business-sdk').ServerEvent)()
-    .setEventName(params.eventName)
-    .setEventId(params.eventId)
-    .setEventTime(params.eventTime)
+  const event = new ServerEvent()
+    .setEventName('Purchase')
+    .setEventId(eventId)
+    .setEventTime(Math.floor(Date.now() / 1000))
     .setUserData(userData)
     .setCustomData(customData)
     .setActionSource('website');
 
-  const request = new EventRequest(ACCESS_TOKEN, PIXEL_ID).setEvents([event]);
-  return request.execute();
+  await new EventRequest(process.env.META_CAPI_ACCESS_TOKEN!, process.env.META_PIXEL_ID!)
+    .setEvents([event])
+    .execute();
 }
 ```
 
-Fire CAPI on the purchase webhook (never rely solely on the pixel):
+**Product Catalog Feed for Dynamic Product Ads:**
+Generate a CSV feed and serve it at a stable URL. Register it in **Meta Commerce Manager → Catalog → Data Sources → Add Data Feed**.
 
 ```typescript
-// Called from order.paid webhook handler
-async function trackPurchaseCapi(order: Order, req: Request) {
-  const eventId = `purchase-${order.id}`;  // same ID passed to fbq() on confirmation page
-
-  await sendCapiEvent({
-    eventName: 'Purchase',
-    eventId,
-    eventTime: Math.floor(Date.now() / 1000),
-    userData: {
-      email:            order.customerEmail,
-      phone:            order.customerPhone,
-      firstName:        order.customerFirstName,
-      lastName:         order.customerLastName,
-      zip:              order.shippingAddress?.zip,
-      country:          order.shippingAddress?.countryCode,
-      clientIpAddress:  req.ip,
-      clientUserAgent:  req.headers['user-agent'],
-      fbp:              req.cookies['_fbp'],
-      fbc:              req.cookies['_fbc'],
-    },
-    customData: {
-      value:       order.subtotal,
-      currency:    order.currencyCode,
-      contentIds:  order.lineItems.map(i => i.sku),
-      contentType: 'product',
-      numItems:    order.lineItems.length,
-      orderId:     order.id,
-    },
-  });
-}
+// Generate CSV with required columns: id, title, description, availability, condition, price, link, image_link, brand
+// Schedule regeneration every 4 hours — serve at a stable /feeds/meta-catalog.csv endpoint
 ```
 
-### 3. Event deduplication
+### Step 3: Campaign structure for ecommerce
 
-Pass a unique `eventID` in both the Pixel call and the CAPI call. Meta will automatically deduplicate when both are received:
+Build a three-tier campaign structure in **Meta Ads Manager**:
 
-```javascript
-// Client-side — generate once per event
-const purchaseEventId = `purchase-${orderId}-${Date.now()}`;
-fbq('track', 'Purchase', { order_id: orderId, value: subtotal, currency: 'USD' }, { eventID: purchaseEventId });
+**Campaign 1: Prospecting**
+- Objective: Sales → Purchases
+- Budget: 60% of total Meta budget
+- Audience: Broad (US 18–65, no interest targeting) — use Advantage+ targeting
+- Ads: 3–5 creatives (static image, video, carousel, UGC)
+- Use **Advantage+ Shopping Campaigns (ASC)** — Meta's automated format consistently outperforms manual campaign structures for ecommerce
 
-// Store in hidden form field or cookie so server can read it
-document.cookie = `last_purchase_event_id=${purchaseEventId}`;
-```
+**Campaign 2: Retargeting**
+- Budget: 30% of total Meta budget
+- Ad Set 1: Viewed product but did not add to cart (last 7 days)
+  - Audience: Website custom audience → ViewContent event, last 7 days
+  - Ads: Dynamic Product Ads (DPA) carousel showing viewed products
+- Ad Set 2: Added to cart but did not purchase (last 3 days)
+  - Audience: Website custom audience → AddToCart, last 3 days; exclude Purchases last 3 days
+  - Ads: DPA + urgency messaging
 
-On the server, read `purchaseEventId` from the request and pass it as `eventId` in `sendCapiEvent`.
+**Campaign 3: Retention / LTV**
+- Budget: 10% of total Meta budget
+- Ad Set: Customer list audience (upload from Shopify → Customers export)
+  - Exclude customers who purchased in the last 30 days
+  - Ads: New arrivals, cross-sell products
+- Ad Set: 1% Lookalike of top purchasers (great for prospecting)
 
-### 4. Product Catalog Feed for Dynamic Product Ads
+### Step 4: Set up Dynamic Product Ads
 
-Generate a feed file (CSV or XML) conforming to Meta's catalog spec:
+For Shopify and WooCommerce, the official integrations auto-sync the product catalog. Verify setup:
 
-```typescript
-import { createObjectCsvWriter } from 'csv-writer';
+1. Go to **Meta Commerce Manager → Catalogs → [Your Catalog]**
+2. Check **Data Sources** — confirm your platform's feed is syncing and last updated within 24 hours
+3. Check **Items** — verify products show correct prices, availability, and images
+4. In **Ads Manager → Create Ad Set**: select your catalog under **Catalog Sales** campaign objective
+5. Choose **Dynamic formats and creatives** — Meta automatically selects the best ad format per user
 
-async function generateMetaCatalogFeed(outputPath: string) {
-  const products = await db.products.findAll({
-    where: { active: true, stockQuantity: { gt: 0 } },
-    include: ['images', 'categories'],
-  });
+### Step 5: Verify Event Match Quality
 
-  const writer = createObjectCsvWriter({
-    path: outputPath,
-    header: [
-      { id: 'id',               title: 'id' },
-      { id: 'title',            title: 'title' },
-      { id: 'description',      title: 'description' },
-      { id: 'availability',     title: 'availability' },
-      { id: 'condition',        title: 'condition' },
-      { id: 'price',            title: 'price' },
-      { id: 'link',             title: 'link' },
-      { id: 'image_link',       title: 'image_link' },
-      { id: 'brand',            title: 'brand' },
-      { id: 'google_product_category', title: 'google_product_category' },
-    ],
-  });
+In **Meta Events Manager → Data Sources → [Your Pixel] → Overview**:
 
-  const records = products.map(p => ({
-    id:          p.sku,
-    title:       p.name.substring(0, 150),
-    description: p.description.replace(/<[^>]*>/g, '').substring(0, 5000),
-    availability: p.stockQuantity > 0 ? 'in stock' : 'out of stock',
-    condition:   'new',
-    price:       `${p.price.toFixed(2)} USD`,
-    link:        `${process.env.STORE_URL}/products/${p.slug}`,
-    image_link:  p.images[0]?.url ?? '',
-    brand:       p.brandName ?? process.env.STORE_NAME,
-    google_product_category: p.gpcCategory ?? '5000',
-  }));
-
-  await writer.writeRecords(records);
-}
-```
-
-Schedule feed regeneration every 4 hours via cron. Serve the file at a stable public URL and register it in Meta Commerce Manager > Catalog > Data Sources.
-
-### 5. Campaign structure for ecommerce
-
-Build a three-tier campaign structure:
-
-```
-Campaign 1: Prospecting (Advantage+ or broad targeting)
-  Ad Set: US 18-65 broad (no interest targeting needed for Advantage+)
-    Ads: 3-5 creatives (static, video carousel, UGC)
-
-Campaign 2: Retargeting — Engaged Visitors (last 30 days)
-  Ad Set: ViewContent but not AddToCart (7 days)
-    Ads: DPA carousel with product images
-  Ad Set: AddToCart but not Purchase (3 days)
-    Ads: DPA + urgency copy
-
-Campaign 3: Retention / LTV (existing customers)
-  Ad Set: Customers — exclude last 30 days purchases
-    Ads: New arrivals, cross-sell catalog
-  Ad Set: Lookalike 1% of top purchasers
-    Ads: Brand/prospecting creatives
-```
-
-### 6. Custom Audiences and Lookalikes
-
-```typescript
-// Create a customer list audience via Marketing API (run periodically)
-import { CustomAudience } from 'facebook-nodejs-business-sdk';
-
-async function syncCustomerAudience(adAccountId: string) {
-  const customers = await db.customers.findAll({
-    where: { emailVerified: true },
-    select: ['email', 'phone', 'firstName', 'lastName'],
-  });
-
-  // Hash PII client-side before sending
-  const { createHash } = await import('crypto');
-  const hash = (val: string) => createHash('sha256').update(val.toLowerCase().trim()).digest('hex');
-
-  const schema = ['EMAIL', 'PHONE', 'FN', 'LN'];
-  const data = customers.map(c => [
-    hash(c.email),
-    c.phone ? hash(c.phone.replace(/\D/g, '')) : '',
-    hash(c.firstName),
-    hash(c.lastName),
-  ]);
-
-  const audience = new CustomAudience(adAccountId);
-  await audience.createUser({ payload: { schema, data } });
-}
-```
+| Signal | How to Improve |
+|--------|---------------|
+| EMQ below 6 | Send more user data (email, phone, fbp/fbc cookies) |
+| CAPI not firing | Check platform integration is set to Maximum data sharing |
+| Duplicate conversions | Verify deduplication — eventID must match between Pixel and CAPI |
+| ViewContent not firing | Check the platform integration is active and pixel is on product pages |
 
 ## Best Practices
 
-- **Always use CAPI + Pixel together** — dual signals improve Event Match Quality (EMQ) score in Events Manager; aim for 7+ out of 10
-- **Hash all PII before sending** — email, phone, name must be SHA-256 hashed; the SDK does this automatically if you use the official client
-- **Pass `fbp` and `fbc` cookies** — these are the strongest identity signals for matching, especially post-iOS 14
-- **Use `order_id` as the deduplication key** — prevents duplicate conversion counting when both Pixel and CAPI fire
+- **Use Advantage+ Shopping Campaigns (ASC) for prospecting** — Meta's automated campaign type consistently outperforms manual structure for ecommerce; start here, not manual campaigns
+- **Set data sharing to Maximum on Shopify/WooCommerce** — this single setting enables CAPI and is worth significantly more accurate attribution than the default
+- **Pass `_fbp` and `_fbc` cookies in CAPI** — these are the strongest identity signals for iOS 14+ attribution; include them in every CAPI event
+- **Use `order_id` as the deduplication key** — prevents duplicate conversion counting when both Pixel and CAPI fire for the same purchase
 - **Exclude recent purchasers from prospecting** — add a 30-day purchaser exclusion to cold campaigns to protect budget
-- **Use Advantage+ Shopping Campaigns (ASC)** — Meta's automated campaign type outperforms manual campaign structures in most ecommerce accounts
-- **Test creatives in sets of 5** — run at least 5 ad variations per ad set; let the algorithm optimize before judging performance
-- **Set a 7-day click / 1-day view attribution window** — align with the default window; tighter windows (1-day click) work better for lower-funnel retargeting
-- **Monitor Event Match Quality weekly** — a drop below 6 signals a tracking issue; check CAPI payload completeness
+- **Refresh creative every 4–6 weeks** — Meta campaigns show creative fatigue quickly; rotate 3–5 variations per ad set
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Duplicate purchase conversions in Ads Manager | Ensure `eventID` is identical in both Pixel and CAPI calls for the same event |
-| CAPI purchases counted but Pixel not firing | Check Content Security Policy — `connect.facebook.net` must be allowed; also check cookie blockers in test |
-| Dynamic Product Ads show wrong price | Regenerate catalog feed after price changes; do not cache the feed for more than 4 hours |
-| "Invalid parameter" CAPI error on phone | Normalize phone to E.164 format (`+12125551234`) before hashing |
-| Low EMQ score despite sending email | Also send `fbp` cookie, `ip`, and `user-agent` — these signals significantly boost match rate |
-| Ad account disabled for policy violation | Never send raw (unhashed) PII; always use the SDK's built-in normalization and hashing |
-| Attribution looks inflated | Compare Ads Manager data against Google Analytics and your order DB; use a 7-day click window for a fairer comparison |
-| iOS 14+ campaign reach is low | Enable Aggregated Event Measurement; verify your domain and prioritize your top 8 conversion events |
+| Duplicate purchase conversions in Ads Manager | Ensure `eventID` is identical in both Pixel and CAPI calls for the same event; Shopify's native integration handles this automatically |
+| Conversions under-reported after iOS 14 | Set data sharing to Maximum in the Shopify Facebook channel settings or enable CAPI in WooCommerce Facebook plugin |
+| Dynamic Product Ads show wrong price | Shopify/WooCommerce catalog syncs happen up to every 24 hours; for time-sensitive price changes, trigger a manual sync |
+| Low EMQ score despite native integration | Go to Meta Events Manager → check that both browser and server events are showing; verify the integration is fully authorized |
+| iOS 14+ campaign reach is low | Go to Meta Business Manager → Brand Safety → Domains → Verify your domain; enable Aggregated Event Measurement |
+| Ad account disabled | Never send raw (unhashed) PII through the API; use the official SDK which hashes all data automatically |
 
 ## Related Skills
 

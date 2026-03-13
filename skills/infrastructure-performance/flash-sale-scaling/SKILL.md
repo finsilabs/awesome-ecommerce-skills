@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [scaling, auto-scaling, queue, circuit-breaker, flash-sale, redis, sqs, kubernetes, traffic-spike]
 triggers: ["flash sale scaling", "traffic spike handling", "auto scaling ecommerce", "queue based ordering", "circuit breaker commerce", "high traffic sale", "black friday scaling"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,7 @@ difficulty: advanced
 
 ## Overview
 
-Flash sales and product drops generate traffic spikes that can be 50–100× normal load, arriving within seconds of sale start. Without preparation, the checkout service collapses, inventory oversells, and customers see error pages — which destroys the brand. This skill covers the infrastructure patterns needed to handle extreme traffic: pre-warming auto-scaling, queue-based order intake with back-pressure, Redis-based atomic inventory reservation, and circuit breakers that degrade gracefully under load.
+Flash sales and product drops generate traffic spikes 50–100× normal load, arriving within seconds of sale start. Without preparation, the checkout service collapses, inventory oversells, and customers see error pages. This skill covers the infrastructure patterns needed to handle extreme traffic: pre-warming, queue-based order intake with back-pressure, Redis-based atomic inventory reservation, and circuit breakers that degrade gracefully under load.
 
 ## When to Use This Skill
 
@@ -24,403 +24,237 @@ Flash sales and product drops generate traffic spikes that can be 50–100× nor
 - When past sales have caused checkout timeouts, oversells, or database failures
 - When Black Friday/Cyber Monday planning is underway and infrastructure needs review
 - When a new product announcement is expected to drive sudden high-demand traffic
-- When conducting capacity planning for peak periods
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify manages infrastructure, CDN, and scaling. Focus on Liquid template performance, image optimization via Shopify's CDN, and app performance.
-**WooCommerce**: You manage hosting and performance. Use caching plugins (WP Rocket, Redis Object Cache), CDN (Cloudflare), and optimize database queries.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your hosting/infrastructure, monitoring tools
 
 ## Core Instructions
 
-1. **Pre-warm infrastructure before the sale**
+### Step 1: Determine your platform and what you can control
 
-   Auto-scaling reacts to traffic — it cannot scale fast enough if 10,000 users arrive simultaneously. Pre-warm before the sale:
+| Platform | Flash Sale Scaling Strategy | Key Actions |
+|----------|---------------------------|------------|
+| **Shopify** | Shopify scales automatically — no infrastructure work needed | Focus on theme speed (cache pages, optimize images), enable Shopify's **queue page** for high-demand launches, use **Launchpad** (Shopify Plus) to schedule and automate the sale |
+| **WooCommerce** | You own the server — significant prep required | Upgrade to a scalable host (Cloudways, Kinsta, WP Engine), enable Redis Object Cache + WP Rocket page cache, configure Cloudflare, run load tests 1–2 weeks before |
+| **BigCommerce** | BigCommerce scales automatically | Use **BigCommerce's flash sale feature** (preview: shows estimated wait time); focus on catalog readiness and theme performance |
+| **Custom / Headless** | Full infrastructure control needed | Apply all patterns below: pre-warm scaling, Redis inventory, queue-based checkout, circuit breakers |
 
-   ```bash
-   # Kubernetes: scale checkout deployment up 30 minutes before sale
-   kubectl scale deployment checkout-service --replicas=50
+### Step 2: Platform-specific flash sale preparation
 
-   # AWS ECS: update desired count
-   aws ecs update-service \
-     --cluster production \
-     --service checkout-service \
-     --desired-count 50
+---
 
-   # Pre-warm Lambda functions by invoking them concurrently
-   # (prevents cold starts during the sale)
-   for i in $(seq 1 100); do
-     aws lambda invoke --function-name checkout-handler --invocation-type Event /dev/null &
-   done
-   wait
-   ```
+#### Shopify
 
-   Configure auto-scaling with a scheduled action:
-   ```yaml
-   # k8s/hpa-flash-sale.yaml
-   apiVersion: autoscaling/v2
-   kind: HorizontalPodAutoscaler
-   metadata:
-     name: checkout-hpa
-   spec:
-     scaleTargetRef:
-       apiVersion: apps/v1
-       kind: Deployment
-       name: checkout-service
-     minReplicas: 50     # High minimum during sale window
-     maxReplicas: 200
-     metrics:
-       - type: Resource
-         resource:
-           name: cpu
-           target:
-             type: Utilization
-             averageUtilization: 60
-       - type: External
-         external:
-           metric:
-             name: queue_depth
-             selector:
-               matchLabels:
-                 queue: order-intake
-           target:
-             type: AverageValue
-             averageValue: "100"
-   ```
+Shopify handles scaling automatically and can handle virtually any traffic spike. Your prep work is:
 
-2. **Implement atomic inventory reservation with Redis**
+1. **Enable Shopify's high-demand checkout queue** (Shopify Plus):
+   - Go to **Online Store → Preferences → Checkout**
+   - Enable **Checkout concurrency** — this activates Shopify's virtual waiting room for high-traffic drops
+   - For limited-inventory products (product drops): use the built-in inventory reservation so customers who enter checkout have their item held for 10 minutes
 
-   Database-level inventory checks under high concurrency lead to oversells. Use Redis atomic operations:
+2. **Use Launchpad (Shopify Plus) for sale scheduling**:
+   - Install **Launchpad** from the Shopify App Store (free for Plus merchants)
+   - Schedule sale start/end times, price changes, and inventory availability in advance
+   - Launchpad handles atomic activation at the scheduled time — avoid manual price changes under load
 
-   ```typescript
-   import Redis from 'ioredis';
+3. **Pre-test your store performance** (all Shopify plans):
+   - Go to **Online Store → Themes** and click **View report** to see your store's Core Web Vitals
+   - Run Google PageSpeed Insights on your most critical pages (product page, collection page, checkout)
+   - Fix any red/orange issues before the sale — compressing images is the most common fix
 
-   const redis = new Redis(process.env.REDIS_URL!);
+4. **Notify Shopify support before major launches** (Shopify Plus):
+   - Submit a **Flash Sale notification** via your Plus support channel — Shopify can pre-allocate resources and monitor your store during the event
 
-   // Initialize inventory in Redis before the sale
-   export async function initializeInventory(productId: string, quantity: number) {
-     await redis.set(`inventory:${productId}`, quantity);
-   }
+---
 
-   // Atomic reservation using a Redis Lua script.
-   // redis.call() here is the Redis server-side Lua API — not JavaScript eval.
-   // The script runs atomically on the Redis server with no race conditions.
-   const LUA_RESERVE_SCRIPT = `
-     local key = KEYS[1]
-     local qty = tonumber(ARGV[1])
-     local current = tonumber(redis.call('GET', key))
-     if current == nil then return -1 end
-     if current < qty then return 0 end
-     redis.call('DECRBY', key, qty)
-     return 1
-   `;
+#### WooCommerce
 
-   // ioredis exposes the Redis EVAL command as redis.eval()
-   // This sends the Lua script to the Redis server for atomic server-side execution
-   export async function reserveInventory(
-     productId: string,
-     quantity: number
-   ): Promise<'reserved' | 'out_of_stock' | 'not_found'> {
-     const result = await redis.eval(
-       LUA_RESERVE_SCRIPT,
-       1,                          // Number of keys
-       `inventory:${productId}`,   // KEYS[1]
-       quantity.toString()         // ARGV[1]
-     ) as number;
+WooCommerce requires significant infrastructure work before a high-traffic event:
 
-     switch (result) {
-       case 1:  return 'reserved';
-       case 0:  return 'out_of_stock';
-       default: return 'not_found';
-     }
-   }
+**Hosting upgrade (most critical):**
+1. Ensure your hosting plan can scale: use **Cloudways** (horizontal scaling with one click), **Kinsta** (auto-scaling), or **WP Engine** (auto-scaling add-on) — not shared hosting
+2. If on shared hosting, migrate to a VPS or managed WordPress host at least 1 week before the sale to allow stabilization
+3. On Cloudways: go to **Servers → [server] → Vertical Scaling** before the event and select a larger server size; scale back down after
 
-   // Release reservation if order fails
-   export async function releaseInventory(productId: string, quantity: number) {
-     await redis.incrby(`inventory:${productId}`, quantity);
-   }
+**Cache stack:**
+1. Install and configure **WP Rocket** (page cache) + **Redis Object Cache** (database query cache)
+2. WP Rocket: enable **Preload cache** to warm pages before the sale starts
+3. Redis Object Cache: verify Redis is active (green status in **Settings → Redis**)
+4. Enable Cloudflare and set **Caching level** to **Standard**; add your store URLs to Cloudflare Page Rules with **Cache Everything** for product and shop pages
 
-   // Sync Redis inventory back to database periodically
-   export async function syncInventoryToDatabase() {
-     const keys = await redis.keys('inventory:*');
-     for (const key of keys) {
-       const productId = key.replace('inventory:', '');
-       const quantity = parseInt(await redis.get(key) ?? '0');
-       await db.products.updateInventory(productId, quantity);
-     }
-   }
-   ```
+**Inventory oversell prevention:**
+1. Enable WooCommerce's built-in inventory management: **WooCommerce → Settings → Products → Inventory** → check **Enable Stock Management**
+2. Set **Hold stock** (minutes) to 60 — this holds an item in a customer's cart for 60 minutes before releasing it back to inventory
+3. For limited items: set **Allow backorders** to **Do not allow** so the product goes out-of-stock exactly at 0 inventory
 
-   > **Alternative without Lua**: Use `redis.set('inventory:lock:' + productId, '1', 'EX', 5, 'NX')` as a distributed lock, then check-and-decrement inside the lock. The Lua approach is simpler and faster for high-throughput scenarios.
+**Load test before the sale:**
+1. Use **Loader.io** (free tier: 1 target, 10K connections) to simulate your expected peak traffic against your staging site
+2. Test the checkout flow specifically — product browse is usually cached; checkout hits the database
+3. Fix any failures or slow responses before the sale date
 
-3. **Queue order intake to protect the database**
+---
 
-   During a spike, accept orders into a queue immediately and process them asynchronously. The customer gets instant confirmation; fulfillment happens in the background:
+#### Custom / Headless
 
-   ```typescript
-   import {SQSClient, SendMessageCommand} from '@aws-sdk/client-sqs';
+**Pre-warm infrastructure (run 30 minutes before sale start):**
+```bash
+# Kubernetes: scale checkout deployment up before sale
+kubectl scale deployment checkout-service --replicas=50
 
-   const sqs = new SQSClient({region: 'us-east-1'});
+# Or schedule automatic scaling with a CronJob
+# See the CronJob example below
+```
 
-   // Checkout API: fast path — just validate and enqueue
-   export async function POST(req: NextRequest) {
-     const order = await req.json();
+**Atomic inventory reservation with Redis (prevents oversells):**
+```javascript
+// lib/inventory.js
+import Redis from 'ioredis';
+const redis = new Redis(process.env.REDIS_URL);
 
-     // 1. Validate input (fast — no DB call)
-     const validation = orderSchema.safeParse(order);
-     if (!validation.success) return NextResponse.json({errors: validation.error.flatten()}, {status: 400});
-
-     // 2. Reserve inventory atomically in Redis
-     const reservation = await reserveInventory(order.productId, order.quantity);
-     if (reservation === 'out_of_stock') {
-       return NextResponse.json({error: 'This item is sold out'}, {status: 409});
-     }
-
-     // 3. Generate a pending order ID
-     const orderId = crypto.randomUUID();
-
-     // 4. Enqueue for async processing — this is fast (<10ms)
-     await sqs.send(new SendMessageCommand({
-       QueueUrl: process.env.ORDER_QUEUE_URL!,
-       MessageBody: JSON.stringify({orderId, ...validation.data}),
-       MessageGroupId: order.customerId,     // FIFO queue — one message group per customer
-       MessageDeduplicationId: orderId,
-     }));
-
-     // 5. Return immediately — customer gets instant response
-     return NextResponse.json({
-       orderId,
-       status: 'queued',
-       message: 'Your order is being processed. You will receive a confirmation email shortly.',
-     });
-   }
-
-   // Order processor (runs as a separate service/Lambda consuming SQS)
-   export async function processOrder(message: {Body: string}) {
-     const order = JSON.parse(message.Body);
-
-     try {
-       // Full order processing: payment capture, DB write, email
-       await capturePayment(order);
-       await db.orders.create(order);
-       await sendOrderConfirmationEmail(order);
-       await syncInventoryToDatabase();
-     } catch (err: any) {
-       // Release inventory reservation on failure
-       await releaseInventory(order.productId, order.quantity);
-       await notifyOrderFailed(order.orderId, err.message);
-       throw err; // Let SQS retry or move to DLQ
-     }
-   }
-   ```
-
-4. **Implement circuit breakers**
-
-   When a downstream service (payment processor, database) is overloaded, fail fast instead of queuing requests that will all time out:
-
-   ```typescript
-   import CircuitBreaker from 'opossum';
-   import {Counter} from 'prom-client';
-
-   const circuitStateCounter = new Counter({
-     name: 'circuit_breaker_state_total',
-     labelNames: ['service', 'state'],
-   });
-
-   function createCircuitBreaker(fn: (...args: any[]) => Promise<any>, name: string) {
-     const breaker = new CircuitBreaker(fn, {
-       timeout: 5000,                    // 5s timeout per call
-       errorThresholdPercentage: 30,     // Open if 30% fail
-       resetTimeout: 30000,              // Try half-open after 30s
-       volumeThreshold: 10,             // Minimum 10 calls before opening
-     });
-
-     breaker.on('open', () => {
-       circuitStateCounter.inc({service: name, state: 'open'});
-       console.warn(`Circuit OPEN for ${name}`);
-     });
-     breaker.on('halfOpen', () => circuitStateCounter.inc({service: name, state: 'half_open'}));
-     breaker.on('close', () => circuitStateCounter.inc({service: name, state: 'close'}));
-
-     return breaker;
-   }
-
-   const paymentCircuit = createCircuitBreaker(captureStripePayment, 'stripe');
-   const dbCircuit = createCircuitBreaker(writeOrderToDatabase, 'database');
-
-   // Fallback: queue for retry instead of failing the customer
-   paymentCircuit.fallback(async (order: Order) => {
-     await sqs.send(new SendMessageCommand({
-       QueueUrl: process.env.PAYMENT_RETRY_QUEUE_URL!,
-       MessageBody: JSON.stringify(order),
-       DelaySeconds: 30,
-     }));
-     return {status: 'payment_queued', message: 'Payment will be retried automatically'};
-   });
-   ```
-
-5. **Protect the database with read replicas and caching**
-
-   During a flash sale, catalog reads can overwhelm the primary database. Route reads to replicas and cache heavily:
-
-   ```typescript
-   // lib/db-router.ts
-   import {Pool} from 'pg';
-
-   const primary = new Pool({connectionString: process.env.DATABASE_URL});
-   const readReplica = new Pool({connectionString: process.env.DATABASE_REPLICA_URL, max: 50});
-
-   export const db = {
-     // Writes go to primary
-     async write(query: string, params: any[]) {
-       return primary.query(query, params);
-     },
-     // Reads go to replica
-     async read(query: string, params: any[]) {
-       return readReplica.query(query, params);
-     },
-   };
-
-   // Cache product catalog in Redis for the duration of the sale
-   export async function getProductCached(productId: string): Promise<Product> {
-     const cacheKey = `product:${productId}`;
-     const cached = await redis.get(cacheKey);
-     if (cached) return JSON.parse(cached) as Product;
-
-     const result = await db.read('SELECT * FROM products WHERE id = $1', [productId]);
-     const product = result.rows[0];
-     await redis.setex(cacheKey, 300, JSON.stringify(product));
-     return product;
-   }
-   ```
-
-6. **Load test before the sale**
-
-   ```bash
-   # Install Artillery for load testing
-   npm install -g artillery
-
-   # Create test scenario file
-   cat > flash-sale.yml << 'EOF'
-   config:
-     target: "https://api.mystore.com"
-     phases:
-       - duration: 60
-         arrivalRate: 10
-         name: "Warm up"
-       - duration: 30
-         arrivalRate: 500
-         name: "Flash sale spike"
-       - duration: 120
-         arrivalRate: 100
-         name: "Sustained load"
-   scenarios:
-     - name: "Flash sale checkout"
-       weight: 70
-       flow:
-         - get:
-             url: "/api/products/limited-item"
-         - post:
-             url: "/api/checkout"
-             json:
-               productId: "limited-item"
-               quantity: 1
-     - name: "Browse catalog"
-       weight: 30
-       flow:
-         - get:
-             url: "/api/products?page=1"
-   EOF
-
-   artillery run flash-sale.yml --output results.json
-   artillery report results.json
-   ```
-
-## Examples
-
-### Redis-based waiting room with fair queuing
-
-```typescript
-// Fair queue: customers get a position when they arrive
-export async function enterWaitingRoom(sessionId: string, productId: string): Promise<{position: number; token: string}> {
-  const queueKey = `sale_queue:${productId}`;
-
-  // Atomic: add to sorted set with timestamp score (FIFO ordering)
-  await redis.zadd(queueKey, Date.now(), sessionId);
-  const position = await redis.zrank(queueKey, sessionId);
-
-  // Generate a signed queue token
-  const token = await signQueueToken(sessionId, productId, position ?? 0);
-
-  return {position: (position ?? 0) + 1, token};
+// Initialize inventory in Redis before the sale
+export async function initializeInventory(productId, quantity) {
+  await redis.set(`inventory:${productId}`, quantity);
 }
 
-// Periodically admit customers from queue to checkout
-export async function admitFromQueue(productId: string, batchSize: number) {
-  const queueKey = `sale_queue:${productId}`;
-  const admitted = await redis.zpopmin(queueKey, batchSize);
+// Atomic check-and-decrement using Lua script (runs on Redis server, no race conditions)
+const LUA_RESERVE = `
+  local current = tonumber(redis.call('GET', KEYS[1]))
+  if current == nil then return -1 end
+  if current < tonumber(ARGV[1]) then return 0 end
+  redis.call('DECRBY', KEYS[1], tonumber(ARGV[1]))
+  return 1
+`;
 
-  // zpopmin returns alternating [member, score] entries
-  for (let i = 0; i < admitted.length; i += 2) {
-    const sessionId = admitted[i];
-    await notifyCustomerAdmitted(sessionId, productId);
+export async function reserveInventory(productId, quantity) {
+  const result = await redis.eval(LUA_RESERVE, 1, `inventory:${productId}`, quantity);
+  if (result === 1) return 'reserved';
+  if (result === 0) return 'out_of_stock';
+  return 'not_found';
+}
+
+export async function releaseInventory(productId, quantity) {
+  await redis.incrby(`inventory:${productId}`, quantity);
+}
+```
+
+**Queue-based order intake (fast response, async processing):**
+```javascript
+// checkout API — responds instantly, processes in background
+export async function POST(req) {
+  const order = await req.json();
+
+  // 1. Reserve inventory atomically
+  const reservation = await reserveInventory(order.productId, order.quantity);
+  if (reservation === 'out_of_stock') {
+    return Response.json({ error: 'Sold out' }, { status: 409 });
+  }
+
+  // 2. Enqueue — responds to user in <100ms
+  const orderId = crypto.randomUUID();
+  await sqs.send(new SendMessageCommand({
+    QueueUrl: process.env.ORDER_QUEUE_URL,
+    MessageBody: JSON.stringify({ orderId, ...order }),
+  }));
+
+  return Response.json({
+    orderId,
+    status: 'queued',
+    message: 'Your order is being processed. You will receive a confirmation email shortly.',
+  });
+}
+
+// Background order processor (separate service consuming SQS)
+export async function processOrder(message) {
+  const order = JSON.parse(message.Body);
+  try {
+    await capturePayment(order);
+    await db.orders.create(order);
+    await sendOrderConfirmationEmail(order);
+  } catch (err) {
+    await releaseInventory(order.productId, order.quantity); // release on failure
+    throw err; // let SQS retry
   }
 }
 ```
 
-### Kubernetes pre-scale CronJob
+**Circuit breaker for payment processor:**
+```javascript
+import CircuitBreaker from 'opossum';
 
+const paymentBreaker = new CircuitBreaker(captureStripePayment, {
+  timeout: 5000,                 // 5s timeout per call
+  errorThresholdPercentage: 30,  // open if 30% fail
+  resetTimeout: 30000,           // try again after 30s
+});
+
+// Fallback: queue for retry instead of failing the customer
+paymentBreaker.fallback(async (order) => {
+  await sqs.send(new SendMessageCommand({
+    QueueUrl: process.env.PAYMENT_RETRY_QUEUE_URL,
+    MessageBody: JSON.stringify(order),
+    DelaySeconds: 30,
+  }));
+  return { status: 'payment_queued' };
+});
+```
+
+**Kubernetes pre-scale CronJob:**
 ```yaml
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: flash-sale-prescale
 spec:
-  schedule: "30 11 * * 5"  # 11:30 AM every Friday (30 min before noon sale)
+  schedule: "30 11 * * 5"  # 30 min before noon Friday sale
   jobTemplate:
     spec:
       template:
         spec:
-          serviceAccountName: scaler-sa
           containers:
             - name: scaler
               image: bitnami/kubectl
-              command:
-                - kubectl
-                - scale
-                - deployment/checkout-service
-                - --replicas=100
+              command: [kubectl, scale, deployment/checkout-service, --replicas=100]
           restartPolicy: OnFailure
+```
+
+**Redis waiting room for extremely high-demand drops:**
+```javascript
+// Fair queue: customers get a position number when they arrive
+export async function enterWaitingRoom(sessionId, productId) {
+  const queueKey = `sale_queue:${productId}`;
+  await redis.zadd(queueKey, Date.now(), sessionId); // sorted set, score = timestamp (FIFO)
+  const position = await redis.zrank(queueKey, sessionId);
+  return { position: (position ?? 0) + 1 };
+}
+
+// Periodically admit batches to checkout
+export async function admitFromQueue(productId, batchSize) {
+  const admitted = await redis.zpopmin(`sale_queue:${productId}`, batchSize);
+  // Notify each admitted customer they can proceed to checkout
+  for (let i = 0; i < admitted.length; i += 2) {
+    await notifyCustomerAdmitted(admitted[i], productId);
+  }
+}
 ```
 
 ## Best Practices
 
 - **Reserve inventory in Redis, not the database** — atomic Redis operations handle thousands of concurrent reservations per second; PostgreSQL row locking under the same load causes timeouts and deadlocks
-- **Accept orders into a queue during spikes** — the user-facing checkout API should respond in under 100ms even during peak load; defer expensive operations (payment capture, DB writes, emails) to background workers
-- **Set aggressive timeouts on every external call** — a 30-second Stripe timeout under load multiplies into thousands of held connections; use 5-second timeouts with immediate circuit-breaker escalation
-- **Test at 2–3× expected peak, not just expected peak** — load tests at exactly expected capacity leave no headroom for measurement error; size for 3× to account for uneven traffic distribution
-- **Use a read replica for all catalog queries during sales** — the primary database should only handle writes (order creation) during peak; all reads route to the replica
-- **Communicate queue status to customers** — show a real-time position counter in the waiting room; customers with visible progress are far more patient than those staring at a spinner
-- **Scale back down after the sale** — over-provisioned infrastructure costs money; configure a post-sale scale-down CronJob to return to normal capacity
+- **Accept orders into a queue during spikes** — the user-facing checkout should respond in under 100ms even at peak; defer payment capture, DB writes, and emails to background workers
+- **Set aggressive timeouts on every external call** — a 30-second Stripe timeout under load multiplies into thousands of held connections; use 5-second timeouts with circuit-breaker escalation
+- **Load test at 2–3× expected peak** — test at exactly expected capacity leaves no headroom; size for 3× to account for uneven traffic distribution
+- **Communicate queue status to customers** — show real-time position in the waiting room; customers with visible progress are far more patient than those staring at a spinner
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Oversells despite inventory check | Use Redis atomic operations (Lua script or distributed lock) for check-and-decrement; never check inventory in the application layer then update separately |
-| Auto-scaling too slow to respond | Pre-warm to minimum capacity; configure scale-out cooldown to 30 seconds (not the default 5 minutes) |
-| SQS queue depth grows faster than consumer processes | Scale consumers based on queue depth metric; use SQS Application Auto Scaling with a target tracking policy |
-| Circuit breaker opens on brief latency spike, not real failure | Tune `volumeThreshold` and `errorThresholdPercentage` conservatively; use `timeout` rather than error rate as the primary trigger for flash sale scenarios |
-| Database connection pool exhausted | Set `max` connections in the pool to a value that leaves headroom for other services; use PgBouncer to multiplex connections |
+| Oversells despite inventory check | Use Redis atomic Lua script for check-and-decrement; never check inventory in the application layer then update separately in two operations |
+| Auto-scaling too slow to respond | Pre-warm to minimum capacity 30 minutes before the event; configure scale-out cooldown to 30 seconds, not the default 5 minutes |
+| Circuit breaker opens on brief latency spike | Tune `volumeThreshold` and `errorThresholdPercentage` conservatively; use `timeout` as the primary trigger rather than error rate for flash sales |
+| WooCommerce oversells during a spike | Enable WooCommerce stock management and set **Hold stock** to 60 minutes; upgrade to a host with Redis Object Cache to reduce database lock contention |
 
 ## Related Skills
 
 - @database-optimization-commerce
+- @ecommerce-caching
 - @monitoring-alerting-commerce
 - @load-testing-commerce
-- @bot-protection
 - @edge-commerce

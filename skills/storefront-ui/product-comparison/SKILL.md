@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [comparison, product-table, attributes, side-by-side, specification, ux]
 triggers: ["compare products", "product comparison table", "side by side comparison", "feature comparison", "spec comparison"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Build a side-by-side product comparison feature where shoppers select 2-4 products and see their attributes displayed in a sticky header table. Attribute rows that are identical across all selected products can be hidden to reduce noise. The comparison state is stored in the URL so it can be shared or bookmarked.
+Build a side-by-side product comparison feature where shoppers select 2–4 products and see their attributes in a sticky-header table. Attribute rows that are identical across all selected products can be hidden to reduce noise. The comparison state is stored in the URL so it can be shared or bookmarked.
 
 ## When to Use This Skill
 
@@ -26,314 +26,189 @@ Build a side-by-side product comparison feature where shoppers select 2-4 produc
 - When building a B2B store where buyers need to justify purchase decisions to stakeholders
 - When implementing a "Compare" checkbox on product listing pages
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
-**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
-
 ## Core Instructions
 
-1. **Add "Compare" checkboxes to product listing cards**
+### Step 1: Determine the merchant's platform and choose the right approach
 
-   ```jsx
-   // ProductCard.jsx
-   export function ProductCard({ product, comparedIds, onToggleCompare }) {
-     const isComparing = comparedIds.includes(product.id);
-     const atLimit = comparedIds.length >= 4;
+| Platform | Recommended Approach | Why |
+|----------|---------------------|-----|
+| **Shopify** | Install **Comparify** or **Product Compare** app (both free tiers available) | Shopify doesn't have built-in comparison; these apps add Compare buttons to product cards, a floating comparison tray, and a full comparison table page; they pull product metafields for spec data |
+| **WooCommerce** | Install **YITH WooCommerce Compare** (free) or **WooCommerce Products Compare** | YITH Compare is the most popular free option — adds Compare checkboxes to product cards, a comparison table page using WooCommerce product attributes, and a "show differences only" toggle |
+| **BigCommerce** | Enable the built-in **Compare** feature in **Storefront → My Themes → Customize** (Cornerstone theme) | BigCommerce and Cornerstone include native product comparison — enable it in the Theme Editor; it uses product custom fields as comparison attributes |
+| **Custom / Headless** | Build a URL-state comparison tray + comparison table page with your product attribute data | Full control over attribute display, difference highlighting, and table layout; see implementation below |
 
-     return (
-       <article className="product-card">
-         {/* Product content */}
-         <div className="product-card__compare">
-           <label htmlFor={`compare-${product.id}`}>
-             <input
-               id={`compare-${product.id}`}
-               type="checkbox"
-               checked={isComparing}
-               disabled={!isComparing && atLimit}
-               onChange={() => onToggleCompare(product.id)}
-             />
-             Compare
-           </label>
-         </div>
-       </article>
-     );
-   }
-   ```
+### Step 2: Enable and configure comparison on your platform
 
-2. **Sync comparison state to the URL**
+---
 
-   ```javascript
-   // hooks/useProductComparison.js
-   import { useCallback } from 'react';
+#### Shopify
 
-   export function useProductComparison() {
-     function getComparedIds() {
-       const params = new URLSearchParams(window.location.search);
-       return params.getAll('compare');
-     }
+**Using Comparify app:**
+1. Install **Comparify – Product Comparison** from the Shopify App Store (free tier available)
+2. In the app settings, select which product metafields to display as comparison rows (e.g., material, weight, dimensions, warranty)
+   - If you haven't set up metafields yet: go to **Settings → Custom data → Products** and create metafields for your specs
+3. The app automatically adds a "Compare" checkbox to product cards in your collection pages
+4. Shoppers select up to 4 products, click "Compare" in the floating tray, and land on a full comparison table
+5. Configure which attributes appear as rows and in what order in the app's **Table Settings**
 
-     function setComparedIds(ids) {
-       const params = new URLSearchParams(window.location.search);
-       params.delete('compare');
-       ids.forEach(id => params.append('compare', id));
-       const newUrl = `${window.location.pathname}?${params.toString()}`;
-       window.history.replaceState({}, '', newUrl);
-     }
+**Preparing your product data:**
+- Add spec data as **product metafields** (recommended) or in the product description with consistent formatting
+- For variant specs, add them as variant metafields (e.g., weight per size)
 
-     const toggle = useCallback((productId) => {
-       const current = getComparedIds();
-       if (current.includes(productId)) {
-         setComparedIds(current.filter(id => id !== productId));
-       } else if (current.length < 4) {
-         setComparedIds([...current, productId]);
-       }
-     }, []);
+---
 
-     const clearAll = useCallback(() => {
-       setComparedIds([]);
-     }, []);
+#### WooCommerce
 
-     return { comparedIds: getComparedIds(), toggle, clearAll };
-   }
-   ```
+**Using YITH WooCommerce Compare (free):**
+1. Install and activate from WordPress.org
+2. Go to **YITH → Compare → Settings**
+3. Under **Fields to compare**, select which WooCommerce product attributes and custom fields to show as rows (e.g., Color, Material, Dimensions, Weight)
+4. Set **Maximum products** to 4
+5. Enable **Highlight differences** to visually call out rows where products differ
+6. The plugin adds a "Compare" button to product cards on your shop page and archives
+7. A floating comparison bar appears at the bottom of the page as shoppers add products
 
-3. **Build the comparison table component**
+**Preparing your product data:**
+- Add comparison attributes via **Products → Attributes** — create attributes like "Material", "Warranty", "Compatible with" and assign values to each product
+- Products must use the same attribute names for comparison rows to align correctly
 
-   ```jsx
-   // ProductComparisonTable.jsx
+---
 
-   export function ProductComparisonTable({ products, attributeGroups, showOnlyDifferences }) {
-     // products: array of product objects with an `attributes` map
-     // attributeGroups: [{ label: 'Display', attributes: ['screen_size', 'resolution', 'refresh_rate'] }]
+#### BigCommerce
 
-     function isRowIdentical(attrKey) {
-       const values = products.map(p => p.attributes[attrKey]);
-       return values.every(v => v === values[0]);
-     }
+**Built-in comparison (Cornerstone theme):**
+1. Go to **Storefront → My Themes → Customize**
+2. Navigate to **Global → Product Compare** (or **Category Page → Product Compare** depending on your theme version)
+3. Toggle **Enable product comparison** to On
+4. Set the **Maximum products** (default is 4)
+5. Configure which **Product Custom Fields** appear as comparison rows in **Products → Product Custom Fields** settings
+6. Shoppers see a "Compare" checkbox on product cards; the floating compare tray appears automatically
 
-     return (
-       <div className="comparison-wrapper" role="region" aria-label="Product comparison">
-         <table className="comparison-table">
-           <caption className="sr-only">
-             Side-by-side comparison of {products.map(p => p.name).join(', ')}
-           </caption>
+**Adding spec data:**
+- Go to **Products → [product] → Custom Fields** and add name/value pairs (e.g., "Screen Size: 15.6 inches", "Battery Life: 10 hours")
+- Use the same field names across comparable products so they align in the comparison table
 
-           {/* Sticky product header row */}
-           <thead>
-             <tr>
-               <th scope="col" className="attr-col">Attribute</th>
-               {products.map(product => (
-                 <th key={product.id} scope="col" className="product-col">
-                   <div className="comparison-product-header">
-                     <img src={product.image} alt={product.name} width="80" height="80" />
-                     <a href={product.url}>{product.name}</a>
-                     <strong>${product.price}</strong>
-                     <button className="btn-primary" onClick={() => addToCart(product)}>
-                       Add to Cart
-                     </button>
-                   </div>
-                 </th>
-               ))}
-             </tr>
-           </thead>
+---
 
-           {/* Attribute rows grouped by category */}
-           <tbody>
-             {attributeGroups.map(group => (
-               <>
-                 <tr key={`group-${group.label}`} className="group-row">
-                   <th scope="rowgroup" colSpan={products.length + 1}>{group.label}</th>
-                 </tr>
-                 {group.attributes.map(attrKey => {
-                   const identical = isRowIdentical(attrKey);
-                   if (showOnlyDifferences && identical) return null;
+#### Custom / Headless
 
-                   return (
-                     <tr key={attrKey} className={identical ? 'identical-row' : 'different-row'}>
-                       <th scope="row" className="attr-label">
-                         {attrKey.replace(/_/g, ' ')}
-                       </th>
-                       {products.map(product => (
-                         <td key={product.id} className="attr-value">
-                           <AttributeValue value={product.attributes[attrKey]} />
-                         </td>
-                       ))}
-                     </tr>
-                   );
-                 })}
-               </>
-             ))}
-           </tbody>
-         </table>
-       </div>
-     );
-   }
+**Comparison tray (floating bar as products are selected):**
+```jsx
+// ComparisonTray.jsx
+export function ComparisonTray({ selectedProducts, onRemove, onClear }) {
+  if (selectedProducts.length === 0) return null;
 
-   function AttributeValue({ value }) {
-     if (value === true || value === 'Yes') return <span className="check" aria-label="Yes">&#x2713;</span>;
-     if (value === false || value === 'No' || value === null) return <span className="cross" aria-label="No">&#x2715;</span>;
-     return <span>{value}</span>;
-   }
-   ```
+  const compareUrl = `/compare?${selectedProducts.map(p => `compare=${p.id}`).join('&')}`;
 
-4. **Add a floating comparison tray**
-
-   Show a fixed bar at the bottom of the screen when 1+ products are selected for comparison.
-
-   ```jsx
-   // ComparisonTray.jsx
-   export function ComparisonTray({ selectedProducts, onRemove, onClear }) {
-     if (selectedProducts.length === 0) return null;
-
-     return (
-       <div className="comparison-tray" aria-live="polite" aria-label="Products selected for comparison">
-         <div className="tray-products">
-           {selectedProducts.map(product => (
-             <div key={product.id} className="tray-product">
-               <img src={product.image} alt={product.name} width="48" height="48" />
-               <button
-                 onClick={() => onRemove(product.id)}
-                 aria-label={`Remove ${product.name} from comparison`}
-               >
-                 &times;
-               </button>
-             </div>
-           ))}
-           {/* Placeholder slots */}
-           {Array.from({ length: Math.max(0, 4 - selectedProducts.length) }).map((_, i) => (
-             <div key={`empty-${i}`} className="tray-placeholder" aria-hidden="true">+</div>
-           ))}
-         </div>
-         <div className="tray-actions">
-           <span>{selectedProducts.length}/4 selected</span>
-           <a
-             href={`/compare?${selectedProducts.map(p => `compare=${p.id}`).join('&')}`}
-             className="btn-primary"
-             aria-disabled={selectedProducts.length < 2}
-           >
-             Compare
-           </a>
-           <button onClick={onClear} className="btn-secondary">Clear all</button>
-         </div>
-       </div>
-     );
-   }
-   ```
-
-5. **Fetch comparison data and define attribute schema**
-
-   ```javascript
-   // api/comparison.js
-   export async function getComparisonData(productIds) {
-     const products = await db.products.findMany({
-       where: { id: { in: productIds } },
-       include: { attributes: true, variants: { orderBy: { price: 'asc' } } },
-     });
-
-     // Normalize attribute keys across all products
-     const allAttributeKeys = new Set(
-       products.flatMap(p => p.attributes.map(a => a.key))
-     );
-
-     return products.map(product => ({
-       id: product.id,
-       name: product.name,
-       price: product.variants[0]?.price ?? product.price,
-       image: product.images[0],
-       url: `/products/${product.slug}`,
-       attributes: Object.fromEntries(
-         [...allAttributeKeys].map(key => [
-           key,
-           product.attributes.find(a => a.key === key)?.value ?? null,
-         ])
-       ),
-     }));
-   }
-   ```
-
-## Examples
-
-### Comparison table CSS with sticky first column
-
-```css
-.comparison-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  return (
+    <div className="comparison-tray" aria-live="polite" aria-label="Products selected for comparison">
+      <div className="tray-products">
+        {selectedProducts.map(product => (
+          <div key={product.id} className="tray-product">
+            <img src={product.image} alt={product.name} width="48" height="48" />
+            <button onClick={() => onRemove(product.id)} aria-label={`Remove ${product.name} from comparison`}>&times;</button>
+          </div>
+        ))}
+        {Array.from({ length: Math.max(0, 4 - selectedProducts.length) }).map((_, i) => (
+          <div key={`empty-${i}`} className="tray-placeholder" aria-hidden="true">+</div>
+        ))}
+      </div>
+      <div className="tray-actions">
+        <a href={compareUrl} className="btn-primary" aria-disabled={selectedProducts.length < 2}>
+          Compare ({selectedProducts.length})
+        </a>
+        <button onClick={onClear}>Clear all</button>
+      </div>
+    </div>
+  );
 }
-
-.comparison-table {
-  min-width: 600px;
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.comparison-table th,
-.comparison-table td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-  min-width: 160px;
-}
-
-/* Sticky attribute label column */
-.attr-col {
-  position: sticky;
-  left: 0;
-  background: #fff;
-  z-index: 2;
-  min-width: 140px;
-  max-width: 200px;
-}
-
-/* Sticky product header row */
-thead tr {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background: #fff;
-}
-
-.identical-row td { color: #94a3b8; }
-.different-row { background: #f8fafc; }
 ```
 
-### Highlighting the winner in each row
+**Comparison table with sticky headers and difference highlighting:**
+```jsx
+export function ProductComparisonTable({ products, attributeGroups, showOnlyDifferences }) {
+  function isRowIdentical(attrKey) {
+    const values = products.map(p => p.attributes[attrKey]);
+    return values.every(v => v === values[0]);
+  }
 
-```javascript
-function getBestValue(attrKey, products, higherIsBetter = true) {
-  const values = products.map(p => parseFloat(p.attributes[attrKey])).filter(v => !isNaN(v));
-  if (values.length === 0) return null;
-  return higherIsBetter ? Math.max(...values) : Math.min(...values);
+  return (
+    <div className="comparison-wrapper" style={{ overflowX: 'auto' }}>
+      <table className="comparison-table">
+        <caption className="sr-only">
+          Side-by-side comparison of {products.map(p => p.name).join(', ')}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" className="attr-col">Attribute</th>
+            {products.map(product => (
+              <th key={product.id} scope="col">
+                <img src={product.image} alt={product.name} width="80" height="80" />
+                <a href={product.url}>{product.name}</a>
+                <strong>${product.price}</strong>
+                <button className="btn-primary">Add to Cart</button>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {attributeGroups.map(group => (
+            <>
+              <tr key={`group-${group.label}`}>
+                <th scope="rowgroup" colSpan={products.length + 1}>{group.label}</th>
+              </tr>
+              {group.attributes.map(attrKey => {
+                if (showOnlyDifferences && isRowIdentical(attrKey)) return null;
+                return (
+                  <tr key={attrKey} className={isRowIdentical(attrKey) ? 'identical-row' : 'different-row'}>
+                    <th scope="row">{attrKey.replace(/_/g, ' ')}</th>
+                    {products.map(p => (
+                      <td key={p.id}>{p.attributes[attrKey] ?? 'N/A'}</td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
+```
 
-// In the table cell
-const numericValue = parseFloat(product.attributes[attrKey]);
-const isWinner = numericValue === getBestValue(attrKey, products, attr.higherIsBetter);
+**URL state for comparison (use `replaceState` to avoid polluting back-button history):**
+```javascript
+function toggleCompare(productId) {
+  const params = new URLSearchParams(window.location.search);
+  const current = params.getAll('compare');
+  if (current.includes(productId)) {
+    params.delete('compare');
+    current.filter(id => id !== productId).forEach(id => params.append('compare', id));
+  } else if (current.length < 4) {
+    params.append('compare', productId);
+  }
+  window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+}
 ```
 
 ## Best Practices
 
-- **Limit comparison to 2-4 products** — more than 4 columns breaks table layout on most screens; enforce this in the UI
-- **Group attributes by category** — flatten specs into categories (Display, Performance, Battery) to prevent a 50-row table
-- **Offer "show differences only" toggle** — rows where all products share the same value add noise; default to showing all, with an easy filter
-- **Make the table horizontally scrollable on mobile** — use `overflow-x: auto` on a wrapper; never sacrifice content to fit small screens
-- **Highlight the best value in each row** — for numeric attributes (screen size, battery life), bold or color the highest (or lowest) value
-- **Persist comparison state in URL** — `/compare?compare=id1&compare=id2` allows sharing and bookmarking
-- **Pre-populate from listing page** — when a shopper clicks "Compare" after selecting items on the PLP, navigate to the comparison page with IDs already in the URL
+- **Limit comparison to 2–4 products** — more than 4 columns breaks table layout on most screens; enforce this in the UI
+- **Group attributes by category** — organize specs into groups (Display, Performance, Battery) to prevent a 50-row flat table
+- **Offer "show differences only" toggle** — rows where all products share the same value add noise; provide an easy toggle
+- **Make the table horizontally scrollable on mobile** — use `overflow-x: auto` on a wrapper; never hide columns to fit small screens
+- **Pre-populate from listing page** — when a shopper clicks "Compare Now" after selecting items on the PLP, navigate with IDs in the URL
+- **Use consistent attribute naming** — specs across products must use identical field names (e.g., "Screen Size" not sometimes "Display Size") for table rows to align
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Table overflows on mobile | Wrap in a scrollable container; use `position: sticky` for the first column (attribute labels) not `position: fixed` |
-| Attributes missing for some products | Use `null` as the value and render "N/A"; do not skip the cell as it breaks column alignment |
+| Table overflows on mobile | Wrap in a scrollable container; use `position: sticky` for the first column (attribute labels) |
+| Attributes missing for some products | Use "N/A" as the value — never skip the cell as it breaks column alignment |
 | Comparison tray covers page content | Add `padding-bottom` to the page body equal to the tray height when the tray is visible |
-| URL state lost when navigating back | Use `history.replaceState` (not pushState) for toggling comparison checkboxes so it does not pollute back-button history |
+| Products have different attribute sets | Normalize attribute keys across all compared products; fill missing values with `null` |
 
 ## Related Skills
 

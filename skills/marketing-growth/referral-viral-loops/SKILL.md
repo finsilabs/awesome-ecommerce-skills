@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [referral, viral, word-of-mouth]
 triggers: ["build referral program", "create viral loop"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,286 +16,195 @@ difficulty: advanced
 
 ## Overview
 
-Word-of-mouth referral programs are the lowest-cost customer acquisition channel when done well — referred customers have 37% higher retention rates and 25% higher LTV than non-referred customers. A viral loop requires a K-factor above 1.0 (each customer refers more than one new customer on average) to achieve exponential growth, though even a K-factor of 0.3–0.5 produces meaningful acquisition lift. This skill covers designing dual-sided rewards, generating unique referral links, tracking conversions, calculating K-factor, and preventing fraud.
+Word-of-mouth referral programs are one of the lowest-cost customer acquisition channels — referred customers have 37% higher retention rates and 25% higher LTV than non-referred customers. A dual-sided referral (reward both the referrer and the new customer) typically outperforms one-sided rewards by 2–3×. Dedicated referral apps (ReferralCandy, Friendbuy, Yotpo Loyalty) handle link generation, reward fulfillment, and fraud controls without custom code.
 
 ## When to Use This Skill
 
 - When CAC is high and word-of-mouth is underutilized
 - When existing customers frequently refer friends informally but there is no structured program to track and reward it
-- When building a referral mechanic from scratch (unique links, reward fulfillment, fraud controls)
-- When needing to calculate K-factor and model the program's viral coefficient
-- When scaling a referral program that has been running on a manual/honor system
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, referral platform (ReferralCandy, Friendbuy, or custom), email service for referral notifications
+- When needing to scale a referral program that has been running manually
+- When wanting to calculate K-factor and optimize the program's viral coefficient
 
 ## Core Instructions
 
-### 1. Referral program data model
+### Step 1: Choose the right referral platform
+
+| Platform | Best For | Shopify | WooCommerce | BigCommerce | Price |
+|----------|---------|---------|-------------|-------------|-------|
+| **ReferralCandy** | Simple setup, all major platforms | App Store | Plugin | App Marketplace | $59+/mo |
+| **Friendbuy** | Mid-market DTC, A/B testing rewards | App Store | Via JS | Via JS | $249+/mo |
+| **Yotpo Loyalty** | Brands already using Yotpo | App Store | Limited | App Marketplace | $199+/mo |
+| **Smile.io Referrals** | Already using Smile.io for loyalty | App Store | Plugin | App Marketplace | Included in $49/mo plan |
+| **Rewardful** | SaaS + ecommerce via Stripe | Via Stripe | Via Stripe | Via Stripe | $49+/mo |
+| **AffiliateWP** | WooCommerce-native | — | Plugin | — | $149/yr |
+
+**Recommendation:** Use **ReferralCandy** for most stores — quick setup, dual-sided rewards built in, fraud detection included, and competitive pricing. If you are already using Smile.io for loyalty, add their referral module instead of a separate app.
+
+### Step 2: Design your referral program structure
+
+Before installing anything, define the reward structure:
+
+**Dual-sided reward (recommended):**
+- Referrer reward: $10 store credit for every successful referral (paid after refund window)
+- Referee reward (new customer): 15% off first order, no minimum
+
+**Single-sided reward (simpler but lower share rate):**
+- Referrer reward only: $15 store credit
+
+**Minimum order for referral to qualify:** $30 (prevents micro-order gaming)
+
+**Refund window:** Wait 7–14 days after the referee's order before granting the referrer reward — this prevents rewards on returned orders.
+
+### Step 3: Set up your referral program
+
+---
+
+#### Shopify with ReferralCandy
+
+1. Install **ReferralCandy** from the Shopify App Store
+2. Go to **ReferralCandy → Program → Rewards** and configure:
+   - Referrer reward: "$10 store credit" (or cash via PayPal)
+   - Referee reward: "15% off first order" (ReferralCandy creates a unique discount code per referral link)
+   - Minimum order: $30
+3. Go to **ReferralCandy → Program → Fraud Settings** and enable:
+   - Block self-referrals
+   - Flag same-IP conversions for review
+   - Set maximum referrals per customer per month (10)
+4. Go to **ReferralCandy → Integrations** and connect Klaviyo — this allows referral events to trigger Klaviyo flows
+5. ReferralCandy automatically:
+   - Generates a unique referral link per customer (e.g., `yourstore.com/?via=sarah123`)
+   - Displays the referral widget on the post-purchase page
+   - Sends referral invitation emails to new customers after purchase
+   - Tracks clicks, signups, and conversions per referrer
+6. Go to **ReferralCandy → Promote** and add the referral widget to your account dashboard and post-purchase confirmation page
+
+---
+
+#### Shopify with Smile.io Referrals
+
+1. Go to **Smile.io → Programs → Referrals**
+2. Enable the referral program and configure:
+   - Referrer reward: points or store credit
+   - Referee reward: discount code sent automatically when they click the referral link
+3. Go to **Smile.io → Rewards Panel** to customize how the referral link appears in the loyalty widget
+
+---
+
+#### WooCommerce with AffiliateWP
+
+1. Install **AffiliateWP** ($149/yr) from the WooCommerce marketplace
+2. Go to **AffiliateWP → Settings → General** and configure:
+   - Commission rate: fixed amount ($10) or percentage
+   - Cookie expiration: 30 days (referral attribution window)
+3. Go to **AffiliateWP → Affiliates → Add Affiliate** to manually add customers, or enable self-registration so customers can join as affiliates
+4. AffiliateWP generates a unique affiliate link per referrer: `yourstore.com/?ref=AFFILIATE_ID`
+5. For referee discount: create a WooCommerce coupon code and link it to the referral program (AffiliateWP has a coupon integration add-on)
+6. For fraud controls: go to **AffiliateWP → Settings → Advanced** and enable IP address duplicate detection
+
+**Alternative:** Install **ReferralCandy** for WooCommerce (plugin) for a simpler dual-sided setup.
+
+---
+
+#### BigCommerce with ReferralCandy
+
+1. Install **ReferralCandy** from the BigCommerce App Marketplace
+2. Configuration is identical to the Shopify setup above
+3. ReferralCandy integrates with BigCommerce's native coupon system to issue referee discount codes
+
+---
+
+#### Custom / Headless
+
+Use a dedicated referral API platform like **Friendbuy** or **Rewardful** rather than building from scratch. These provide:
+- Unique referral link generation
+- Cookie-based and URL-based attribution
+- Webhook events for referral conversions
+- Fraud signal APIs
+
+If you must build custom, the core components are:
 
 ```typescript
-interface ReferralProgram {
-  id:                string;
-  name:              string;
-  referrerReward:    Reward;    // what the referrer receives when their referral converts
-  refereeReward:     Reward;    // what the new customer receives for using a referral link
-  minimumOrderValue: number;    // referee must spend at least this amount for referrer to earn reward
-  cookieWindowDays:  number;    // how long referral attribution cookie persists
-  maxReferralsPerCustomer: number;  // anti-fraud cap
-}
-
-interface Reward {
-  type:       'percent_off' | 'fixed_amount' | 'store_credit' | 'free_product';
-  value:      number;
-  expiryDays: number;
-}
-
-interface ReferralLink {
-  id:         string;
-  customerId: string;
-  code:       string;   // e.g., "SARAH123" — short, shareable
-  shortUrl:   string;   // e.g., "https://go.store.com/r/SARAH123"
-  clicks:     number;
-  conversions: number;
-  revenue:     number;
-  createdAt:  Date;
-}
-```
-
-### 2. Referral link generation
-
-```typescript
-async function generateReferralLink(customerId: string, programId: string): Promise<ReferralLink> {
-  const existing = await db.referralLinks.findOne({ where: { customerId, programId } });
-  if (existing) return existing;
+// Generate a unique referral code per customer
+async function generateReferralCode(customerId: string): Promise<string> {
+  const existing = await db.referralLinks.findOne({ where: { customerId } });
+  if (existing) return existing.code;
 
   const customer = await db.customers.findById(customerId);
-
-  // Generate a memorable code: FirstName + 3-digit number
-  const baseCode = (customer.firstName.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 8));
+  const baseCode = customer.firstName.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 6);
   let code = `${baseCode}${Math.floor(100 + Math.random() * 900)}`;
 
-  // Ensure uniqueness
   while (await db.referralLinks.findOne({ where: { code } })) {
     code = `${baseCode}${Math.floor(100 + Math.random() * 900)}`;
   }
 
-  const longUrl  = `${process.env.STORE_URL}?ref=${code}&utm_source=referral&utm_medium=share&utm_campaign=${programId}`;
-  const shortUrl = await createShortLink(longUrl, `r/${code}`);
-
-  return db.referralLinks.create({
-    customerId,
-    programId,
-    code,
-    shortUrl,
-    clicks:      0,
-    conversions: 0,
-    revenue:     0,
-  });
-}
-```
-
-### 3. Attribution tracking — cookie + database
-
-```typescript
-// Middleware: capture referral code from URL and store in cookie
-export function referralAttributionMiddleware(req: Request, res: Response, next: NextFunction) {
-  const refCode = req.query.ref as string;
-  if (refCode) {
-    // Store referral attribution in a 30-day cookie
-    res.cookie('referral_code', refCode, {
-      maxAge:   30 * 86400 * 1000,
-      httpOnly: true,
-      sameSite: 'lax',
-    });
-
-    // Track click
-    db.referralLinks.incrementClicks(refCode).catch(console.error);
-  }
-  next();
+  await db.referralLinks.create({ customerId, code, clicks: 0, conversions: 0 });
+  return code;
 }
 
-// On order completion — attribute referral
-async function attributeReferral(order: Order, req: Request) {
-  const refCode = req.cookies['referral_code'];
-  if (!refCode) return;
+// Attribute referral on order completion — check cookie for referral code
+async function attributeReferral(order: Order, referralCode: string | null) {
+  if (!referralCode) return;
 
-  const referralLink = await db.referralLinks.findByCode(refCode);
+  const referralLink = await db.referralLinks.findByCode(referralCode);
   if (!referralLink) return;
+  if (referralLink.customerId === order.customerId) return; // no self-referral
 
-  // Prevent self-referral
-  if (referralLink.customerId === order.customerId) return;
+  // Check if this email has already been referred (one referral per email per program)
+  const existing = await db.referralConversions.findOne({ where: { refereeEmail: order.customerEmail } });
+  if (existing) return;
 
-  const program = await db.referralPrograms.findById(referralLink.programId);
-
-  // Check minimum order value
-  if (order.subtotal < program.minimumOrderValue) return;
-
-  // Check if this email already converted via this referral program (one referral per email)
-  const existingConversion = await db.referralConversions.findOne({
-    where: { refereeEmail: order.customerEmail, programId: referralLink.programId },
-  });
-  if (existingConversion) return;
-
-  // Record conversion
-  const conversion = await db.referralConversions.create({
-    referralLinkId:  referralLink.id,
-    referrerId:      referralLink.customerId,
-    refereeEmail:    order.customerEmail,
-    refereeId:       order.customerId,
-    orderId:         order.id,
-    orderValue:      order.subtotal,
-    programId:       referralLink.programId,
-    status:          'pending',   // pending until refund window passes
+  await db.referralConversions.create({
+    referralLinkId: referralLink.id,
+    referrerId: referralLink.customerId,
+    refereeEmail: order.customerEmail,
+    orderId: order.id,
+    orderValue: order.subtotal,
+    status: 'pending', // set to 'approved' after 7-day refund window
   });
 
-  // Grant referee reward immediately
-  await grantReward(order.customerId, program.refereeReward, conversion.id, 'referee');
-
-  // Update link stats
-  await db.referralLinks.update(referralLink.id, {
-    conversions: { increment: 1 },
-    revenue:     { increment: order.subtotal },
-  });
-
-  // Schedule referrer reward after refund window (7 days)
-  await referralQueue.add('grant-referrer-reward', {
-    conversionId: conversion.id,
-    referrerId:   referralLink.customerId,
-    reward:       program.referrerReward,
-  }, {
-    delay:  7 * 86400000,
-    jobId:  `referrer-reward-${conversion.id}`,
-  });
+  // Grant referee discount immediately (e.g., store credit or discount code)
+  // Schedule referrer reward 7 days after order — after refund window
 }
 ```
 
-### 4. Reward fulfillment
+### Step 4: Promote your referral program
 
-```typescript
-async function grantReward(customerId: string, reward: Reward, conversionId: string, role: 'referrer' | 'referee') {
-  let discountCode: string | null = null;
-  let storeCredit: number | null  = null;
+**Highest-traffic placements:**
+1. **Post-purchase confirmation page** — add a referral widget immediately after checkout (highest-intent moment)
+2. **Transactional email** — add "Give $10, Get $10" block to every order confirmation email in Klaviyo
+3. **Account dashboard** — show the customer's referral link and stats (how many friends referred, how much earned)
+4. **Packaging insert** — include a card with the customer's referral URL printed or handwritten
 
-  switch (reward.type) {
-    case 'percent_off':
-    case 'fixed_amount':
-      discountCode = await createUniqueDiscount({
-        type:      reward.type,
-        value:     reward.value,
-        customerId,
-        expiresAt: addDays(new Date(), reward.expiryDays),
-        singleUse: true,
-      });
-      break;
+In ReferralCandy: go to **Promote → Post-Purchase Popup** to enable the automatic widget and **Promote → Emails** to configure referral invitation emails.
 
-    case 'store_credit':
-      await db.customers.update(customerId, {
-        storeCredit: { increment: reward.value },
-      });
-      storeCredit = reward.value;
-      break;
-  }
+### Step 5: Measure program performance
 
-  await db.referralRewards.create({ customerId, conversionId, role, discountCode, storeCredit, grantedAt: new Date() });
-
-  // Send reward notification email
-  await sendEmail(customerId, role === 'referrer' ? 'referral-reward-earned' : 'referral-welcome-discount', {
-    discountCode,
-    storeCredit,
-    rewardValue:   reward.value,
-    expiresInDays: reward.expiryDays,
-  });
-}
-```
-
-### 5. Fraud prevention
-
-```typescript
-async function checkReferralFraud(conversion: ReferralConversion): Promise<boolean> {
-  const flags: string[] = [];
-
-  // Same IP address as referrer
-  const referrer   = await db.customers.findById(conversion.referrerId);
-  const referee    = await db.customers.findById(conversion.refereeId);
-  if (referrer.lastLoginIp === referee.lastLoginIp) flags.push('same-ip');
-
-  // Referee account created same day as referral (suspicious timing)
-  const accountAgeDays = daysBetween(referee.createdAt, conversion.createdAt);
-  if (accountAgeDays < 1) flags.push('instant-account');
-
-  // Referrer has abnormal conversion rate (>20% of clicks)
-  const link = await db.referralLinks.findById(conversion.referralLinkId);
-  if (link.clicks > 10 && link.conversions / link.clicks > 0.20) flags.push('suspicious-conversion-rate');
-
-  // Check for shared device fingerprint
-  const sharedDevice = await db.deviceFingerprints.checkShared(referrer.id, referee.id);
-  if (sharedDevice) flags.push('shared-device');
-
-  // Max referrals per customer per month
-  const program         = await db.referralPrograms.findById(conversion.programId);
-  const monthlyConversions = await db.referralConversions.countByReferrer(conversion.referrerId, { since: subDays(new Date(), 30) });
-  if (monthlyConversions >= program.maxReferralsPerCustomer) flags.push('rate-limit-exceeded');
-
-  if (flags.length > 0) {
-    await db.referralConversions.update(conversion.id, { fraudFlags: flags, status: 'under-review' });
-    await notifyFraudTeam(conversion.id, flags);
-    return true;  // is fraud
-  }
-
-  return false;
-}
-```
-
-### 6. K-factor and viral coefficient calculation
-
-```typescript
-async function calculateViralCoefficient(programId: string, lookbackDays: number = 90) {
-  const [totalReferrers, totalConversions, totalCustomers] = await Promise.all([
-    db.referralLinks.countDistinctReferrers({ programId, since: subDays(new Date(), lookbackDays) }),
-    db.referralConversions.count({ where: { programId, status: { in: ['approved', 'pending'] }, createdAt: { gte: subDays(new Date(), lookbackDays) } } }),
-    db.customers.count({ where: { createdAt: { gte: subDays(new Date(), lookbackDays) } } }),
-  ]);
-
-  const shareRate       = totalReferrers / totalCustomers;   // % of customers who share
-  const conversionRate  = totalConversions / Math.max(1, totalReferrers);   // conversions per sharer
-  const kFactor         = shareRate * conversionRate;
-
-  return {
-    shareRate,
-    conversionRate,
-    kFactor,
-    interpretation: kFactor >= 1.0 ? 'viral (exponential growth)' : kFactor >= 0.5 ? 'strong' : kFactor >= 0.2 ? 'moderate' : 'weak',
-    totalReferrers,
-    totalConversions,
-  };
-}
-```
+| Metric | Target | Where to Find |
+|--------|--------|---------------|
+| Share rate (% of customers who refer) | > 5% | ReferralCandy dashboard |
+| Referral conversion rate | > 15% of clicks convert | App analytics |
+| K-factor (share rate × conversion rate) | 0.3–0.5 = strong; 1.0+ = viral | Calculate from share rate × conversion rate |
+| Revenue from referred customers | 10–20% of total new customer revenue | App analytics |
+| Cost per acquisition via referral | Usually 40–60% below paid CAC | Reward cost ÷ referred orders |
 
 ## Best Practices
 
-- **Dual-sided rewards outperform one-sided** — giving both referrer and referee a reward increases share rates by 2–3x vs. rewarding only the referrer
-- **Delay referrer reward by 7–14 days** — wait until the refund window passes before granting the reward; otherwise fraudsters can get rewards on returned orders
-- **Make the referral link shareable by default** — show the referral link prominently in the account dashboard, post-purchase confirmation page, and packaging inserts
-- **Set a monthly cap on referral conversions per customer** — even legitimate customers should not earn unlimited rewards; cap at 5–10 per month to prevent exploitation
-- **Use store credit over discount codes for referrer rewards** — store credit ties the referrer back to your brand and has a higher perceived value than a percentage discount
-- **Track clicks-to-conversions per referral channel** — Instagram DM shares convert very differently from SMS shares; understanding this helps optimize the program
+- **Dual-sided rewards outperform one-sided** — giving both referrer and referee a reward increases share rates by 2–3× vs. rewarding only the referrer
+- **Show the referral widget on the post-purchase confirmation page** — this is the highest-intent moment; customers who just had a great purchase experience are most likely to share
+- **Delay referrer reward by 7–14 days** — wait until the refund window passes before granting the reward; prevents fraudsters getting rewards on returned orders
+- **Use store credit over discount codes for referrer rewards** — store credit ties the referrer back to your brand; perceived value is higher than a percentage off
+- **Set a monthly cap per customer** — even legitimate customers should not earn unlimited rewards; cap at 5–10 referrals per month
+- **Add a pre-filled WhatsApp or SMS share button** — most customers will not manually copy and paste a link; a one-tap share button doubles share rates
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Self-referral fraud (customer creates new account to get referee discount) | Check IP address + device fingerprint; flag same-device conversions for manual review |
-| Referral cookie being blocked | Implement server-side referral attribution via URL parameter stored in the database at first visit, not just cookie |
-| Referrer reward given before order ships | Always delay referrer reward by 7+ days after confirmed delivery |
-| Referral codes being shared publicly on coupon sites | Make referee codes unique per referrer so bulk sharing is detectable and the code can be deactivated |
-| Low share rate despite great rewards | Reduce friction — add a pre-filled WhatsApp/SMS share button; most customers won't manually copy and paste |
+| Self-referral fraud (customer creates new account to get referee discount) | Enable IP-based duplicate detection; flag same-IP conversions for manual review (ReferralCandy has this built in) |
+| Referral codes shared publicly on coupon sites | Make codes unique per referrer so bulk sharing is detectable; ReferralCandy monitors velocity automatically |
+| Referrer reward given before order ships | Always delay referrer reward by 7+ days; use the app's built-in reward delay setting |
+| Low share rate despite good rewards | Reduce friction — use pre-filled share messages; show the referral widget immediately post-purchase |
+| Referred customers do not convert | Increase the referee incentive — 15% off typically outperforms 10% off for first-order conversion |
 
 ## Related Skills
 

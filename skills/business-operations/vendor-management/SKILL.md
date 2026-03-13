@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [vendor-management, purchase-orders, supplier-portal, performance-scorecard, dropshipping, procurement]
 triggers: ["vendor management", "supplier portal", "purchase orders", "vendor performance", "supplier scorecard", "procurement system"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,285 +16,229 @@ difficulty: intermediate
 
 ## Overview
 
-Build a vendor management system with a self-service supplier portal for order acknowledgment and shipment confirmation, purchase order creation and tracking, dropship order routing, and automated performance scorecards that measure on-time shipment rate, order accuracy, and defect rate. Gives operations teams visibility into supplier performance and enables data-driven vendor negotiations.
+Vendor management covers creating and sending purchase orders to suppliers, tracking goods receipts, running vendor performance scorecards (on-time rate, fill rate, defect rate), and maintaining a supplier portal where vendors can acknowledge POs and provide tracking numbers. For most merchants, QuickBooks/Xero handles POs and vendor tracking, while a supplier portal can be as simple as an email-based workflow for smaller operations.
 
 ## When to Use This Skill
 
-- When managing 5+ suppliers and need a centralized portal instead of email-based coordination
+- When managing 5+ suppliers and need a centralized system instead of email-based coordination
 - When your merchandising team manually creates purchase orders in spreadsheets and needs automation
 - When onboarding new dropship suppliers and need a structured integration flow
 - When preparing quarterly business reviews with suppliers and need performance metrics
 - When building a multi-vendor marketplace where each seller needs their own dashboard
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
-**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
-
 ## Core Instructions
 
-1. **Design the vendor schema**
+### Step 1: Determine your platform and choose the right vendor management tool
 
-   ```sql
-   CREATE TABLE vendors (
-     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name           VARCHAR(128) NOT NULL,
-     contact_name   VARCHAR(128),
-     contact_email  VARCHAR(255) NOT NULL UNIQUE,
-     payment_terms  VARCHAR(32) DEFAULT 'net30',  -- 'net30', 'net60', 'prepay'
-     lead_time_days INTEGER NOT NULL DEFAULT 7,
-     currency       VARCHAR(3) NOT NULL DEFAULT 'USD',
-     status         VARCHAR(16) NOT NULL DEFAULT 'active'
-                      CHECK (status IN ('active', 'inactive', 'probation')),
-     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+| Store Stage | Recommended Tool | Why |
+|-------------|-----------------|-----|
+| **Small (< $1M revenue)** | QuickBooks Online or Xero + email-based POs | QuickBooks handles POs, vendor payments, and basic receipt tracking; most small merchants don't need a dedicated vendor portal |
+| **Mid-market ($1M–$20M)** | DEAR Inventory (now Cin7 Core) or Unleashed | Both handle POs, goods receipts, and vendor scorecards with Shopify/WooCommerce/BigCommerce integrations |
+| **Enterprise** | NetSuite or Coupa | Full procurement suite with approval workflows, supplier portals, and compliance tracking |
+| **Dropshipping focus** | DSers, AutoDS, or Spocket | See @dropshipping-integration skill for supplier-specific dropshipping tools |
+| **Custom** | Build a PO system + supplier portal | For unique workflows that existing tools don't support |
 
-   CREATE TABLE purchase_orders (
-     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     po_number      VARCHAR(32) NOT NULL UNIQUE,
-     vendor_id      UUID NOT NULL REFERENCES vendors(id),
-     status         VARCHAR(24) NOT NULL DEFAULT 'draft'
-                      CHECK (status IN ('draft', 'submitted', 'acknowledged', 'partial', 'received', 'cancelled')),
-     expected_delivery DATE,
-     total_cost     INTEGER NOT NULL DEFAULT 0,  -- cents
-     submitted_at   TIMESTAMPTZ,
-     acknowledged_at TIMESTAMPTZ,
-     created_by     UUID NOT NULL,
-     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+### Step 2: Connect your e-commerce platform to your vendor management system
 
-   CREATE TABLE po_lines (
-     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     po_id          UUID NOT NULL REFERENCES purchase_orders(id),
-     product_id     UUID NOT NULL REFERENCES products(id),
-     vendor_sku     VARCHAR(64),
-     quantity_ordered INTEGER NOT NULL,
-     quantity_received INTEGER NOT NULL DEFAULT 0,
-     unit_cost      INTEGER NOT NULL,  -- cents
-     line_total     INTEGER GENERATED ALWAYS AS (quantity_ordered * unit_cost) STORED
-   );
-   ```
+#### Shopify
 
-2. **Create a purchase order**
+**Using Cin7 Core (formerly DEAR Inventory):**
+1. Install the **Cin7 Core** connector from the Shopify App Store or via the Cin7 Core integration settings
+2. Cin7 Core syncs Shopify products and inventory — your Shopify stock levels reflect what Cin7 shows as "on hand"
+3. Create purchase orders in Cin7 Core → Purchase → Add Purchase
+4. When goods are received in Cin7 (mark as Received), Shopify inventory updates automatically
 
-   ```typescript
-   async function createPurchaseOrder(params: {
-     vendorId: string;
-     lines: { productId: string; quantity: number; unitCostCents: number }[];
-     expectedDelivery: Date;
-     createdBy: string;
-   }): Promise<PurchaseOrder> {
-     const poNumber = await generatePoNumber();
-     const totalCost = params.lines.reduce((s, l) => s + l.quantity * l.unitCostCents, 0);
+**Using QuickBooks Online for POs:**
+1. Connect QuickBooks to Shopify via the **QuickBooks Online** app or **A2X** connector
+2. Create POs in QuickBooks Online → Expenses → Purchase Orders
+3. When goods are received: in QuickBooks, go to the PO and click "Receive" to record the goods receipt
+4. Manually update Shopify inventory after receiving (or use Cin7 Core which does this automatically)
 
-     return db.transaction(async tx => {
-       const po = await tx.purchaseOrders.insert({
-         po_number: poNumber,
-         vendor_id: params.vendorId,
-         status: 'draft',
-         expected_delivery: params.expectedDelivery.toISOString().slice(0, 10),
-         total_cost: totalCost,
-         created_by: params.createdBy,
-       });
+#### WooCommerce
 
-       await tx.poLines.insertMany(
-         params.lines.map(l => ({
-           po_id: po.id,
-           product_id: l.productId,
-           quantity_ordered: l.quantity,
-           unit_cost: l.unitCostCents,
-         }))
-       );
+**Using ATUM Inventory Management (PO module):**
+1. Install **ATUM Inventory Management** from WordPress.org (premium version for PO features)
+2. Go to ATUM → Purchase Orders → Add PO
+3. Select supplier, add products, set expected delivery date
+4. ATUM emails the PO to the supplier automatically
+5. When goods arrive: mark the PO as received in ATUM → WooCommerce inventory updates automatically
 
-       return po;
-     });
-   }
+**Using Cin7 Core:**
+1. Connect Cin7 Core to WooCommerce via their integration (Cin7 Core → Integrations → WooCommerce)
+2. Manage all POs and vendor relationships in Cin7 Core; inventory syncs back to WooCommerce
 
-   async function generatePoNumber(): Promise<string> {
-     const year = new Date().getFullYear();
-     const month = String(new Date().getMonth() + 1).padStart(2, '0');
-     const seq = await db.raw("SELECT nextval('po_sequence') AS n").then(r => r.rows[0].n);
-     return `PO-${year}${month}-${String(seq).padStart(4, '0')}`;
-   }
-   ```
+#### BigCommerce
 
-3. **Vendor portal — acknowledge PO**
+**Using Unleashed:**
+1. Install the **Unleashed** connector from the BigCommerce App Marketplace
+2. Create purchase orders in Unleashed → Purchases → New Purchase Order
+3. Unleashed syncs inventory back to BigCommerce when POs are received
 
-   ```typescript
-   // Vendors authenticate via a token-based portal link sent in the PO email
-   app.post('/vendor-portal/purchase-orders/:poId/acknowledge', requireVendorAuth, async (req, res) => {
-     const { confirmedDeliveryDate, notes } = req.body;
-     const po = await db.purchaseOrders.findById(req.params.poId);
+**Using Cin7 Core:**
+1. Connect via BigCommerce API integration in Cin7 Core settings
+2. Same workflow as Shopify/WooCommerce
 
-     if (po.vendor_id !== req.vendor.id) return res.status(403).json({ error: 'Forbidden' });
-     if (po.status !== 'submitted') return res.status(422).json({ error: 'PO already acknowledged' });
+### Step 3: Create and send purchase orders to suppliers
 
-     await db.purchaseOrders.update(po.id, {
-       status: 'acknowledged',
-       acknowledged_at: new Date(),
-       expected_delivery: confirmedDeliveryDate,
-     });
+A good PO includes: your PO number, item descriptions with your SKU and the supplier's SKU, quantities, unit costs, expected delivery date, and delivery address.
 
-     await db.vendorComments.insert({ po_id: po.id, vendor_id: req.vendor.id, comment: notes });
+#### In QuickBooks Online
 
-     // Notify buyer
-     await emailService.send({
-       to: await getBuyerEmail(po.created_by),
-       template: 'po-acknowledged',
-       data: { poNumber: po.po_number, confirmedDate: confirmedDeliveryDate },
-     });
+1. Go to **Expenses → Vendors → [Vendor]** → click **New Transaction → Purchase Order**
+2. Fill in: vendor, PO date, expected ship date, items with quantities and unit costs
+3. Click **Save and Send** to email the PO directly to the vendor from QuickBooks
+4. Track the PO status in Expenses → Purchase Orders — open POs show as "Open", received as "Closed"
 
-     res.json({ success: true });
-   });
-   ```
+#### In Cin7 Core / ATUM
 
-4. **Record goods received and update inventory**
+1. Navigate to Purchase → New Purchase Order
+2. Select the supplier; the system pre-fills the supplier's products from your supplier catalog
+3. Adjust quantities based on your reorder quantities (see @demand-forecasting)
+4. Set the expected delivery date: your supplier's lead time + today's date
+5. Send the PO via the built-in email workflow — the PO PDF is attached to the email
 
-   ```typescript
-   async function receiveGoodsAgainstPO(
-     poId: string,
-     receipts: { poLineId: string; quantityReceived: number; condition: 'good' | 'damaged' }[]
-   ): Promise<void> {
-     await db.transaction(async tx => {
-       let allReceived = true;
+#### Using a simple email template (for merchants not using a PO system yet)
 
-       for (const receipt of receipts) {
-         const line = await tx.poLines.findById(receipt.poLineId);
-         const newQtyReceived = line.quantity_received + receipt.quantityReceived;
+```
+Subject: Purchase Order PO-202603-001
 
-         await tx.poLines.update(receipt.poLineId, { quantity_received: newQtyReceived });
+Dear [Supplier Contact],
 
-         if (newQtyReceived < line.quantity_ordered) allReceived = false;
+Please find our purchase order details below:
 
-         // Update inventory
-         if (receipt.condition === 'good') {
-           await tx.products.incrementInventory(line.product_id, receipt.quantityReceived);
-         } else {
-           await tx.damagedGoods.insert({
-             po_line_id: receipt.poLineId,
-             quantity: receipt.quantityReceived,
-             received_at: new Date(),
-           });
-         }
-       }
+PO Number: PO-202603-001
+Order Date: March 12, 2026
+Expected Delivery: March 26, 2026
 
-       const newStatus = allReceived ? 'received' : 'partial';
-       await tx.purchaseOrders.update(poId, { status: newStatus });
-     });
-   }
-   ```
+Items:
+| SKU | Description | Qty | Unit Cost | Total |
+|-----|-------------|-----|-----------|-------|
+| YS-1001 | Cotton T-Shirt, White, S | 100 | $8.50 | $850.00 |
+| YS-1002 | Cotton T-Shirt, White, M | 150 | $8.50 | $1,275.00 |
 
-5. **Calculate vendor performance scorecard**
+Total: $2,125.00
+Payment Terms: Net 30
 
-   ```typescript
-   async function generateVendorScorecard(
-     vendorId: string,
-     periodDays = 90
-   ): Promise<{
-     onTimeRate: number;
-     fillRate: number;
-     defectRate: number;
-     overallScore: number;
-   }> {
-     const since = new Date(Date.now() - periodDays * 86400000);
+Please confirm receipt of this order and your expected ship date.
 
-     const pos = await db.purchaseOrders.findAll({
-       vendor_id: vendorId,
-       status: { in: ['received', 'partial'] },
-       created_at: { gte: since },
-     });
-
-     if (pos.length === 0) return { onTimeRate: 0, fillRate: 0, defectRate: 0, overallScore: 0 };
-
-     // On-time rate: % of POs where actual receipt <= expected_delivery
-     const onTimeCount = pos.filter(po => po.received_at && po.received_at <= new Date(po.expected_delivery + 'T23:59:59Z')).length;
-
-     // Fill rate: total units received / total units ordered
-     const allLines = await db.poLines.findByPoIds(pos.map(p => p.id));
-     const totalOrdered = allLines.reduce((s, l) => s + l.quantity_ordered, 0);
-     const totalReceived = allLines.reduce((s, l) => s + l.quantity_received, 0);
-
-     // Defect rate: damaged units / total received
-     const totalDamaged = await db.damagedGoods.sumByVendor(vendorId, since);
-
-     const onTimeRate = onTimeCount / pos.length;
-     const fillRate = totalOrdered > 0 ? totalReceived / totalOrdered : 0;
-     const defectRate = totalReceived > 0 ? totalDamaged / totalReceived : 0;
-
-     // Weighted overall score (0–100)
-     const overallScore = Math.round(
-       (onTimeRate * 40 + fillRate * 40 + (1 - defectRate) * 20) * 100
-     );
-
-     return { onTimeRate, fillRate, defectRate, overallScore };
-   }
-   ```
-
-## Examples
-
-### Auto-submit PO via email to vendor
-
-```typescript
-async function submitPurchaseOrder(poId: string): Promise<void> {
-  const po = await db.purchaseOrders.findById(poId);
-  const vendor = await db.vendors.findById(po.vendor_id);
-  const lines = await db.poLines.findByPoId(poId);
-  const portalToken = await generatePortalToken(vendor.id, poId);
-
-  await emailService.send({
-    to: vendor.contact_email,
-    template: 'purchase-order',
-    data: {
-      poNumber: po.po_number,
-      lines: lines.map(l => ({ sku: l.vendor_sku, qty: l.quantity_ordered, unitCost: l.unit_cost / 100 })),
-      totalCost: (po.total_cost / 100).toFixed(2),
-      expectedDelivery: po.expected_delivery,
-      acknowledgeUrl: `${process.env.VENDOR_PORTAL_URL}/po/${poId}?token=${portalToken}`,
-    },
-  });
-
-  await db.purchaseOrders.update(poId, { status: 'submitted', submitted_at: new Date() });
-}
+Ship to:
+[Your warehouse address]
 ```
 
-### Scorecard dashboard query
+### Step 4: Set up a supplier portal for PO acknowledgment
 
-```sql
-SELECT
-  v.name AS vendor,
-  COUNT(po.id) AS total_pos,
-  ROUND(AVG(CASE WHEN po.received_at <= (po.expected_delivery + INTERVAL '1 day') THEN 1.0 ELSE 0.0 END) * 100, 1) AS on_time_pct,
-  ROUND(SUM(pl.quantity_received)::numeric / NULLIF(SUM(pl.quantity_ordered), 0) * 100, 1) AS fill_rate_pct
-FROM vendors v
-JOIN purchase_orders po ON po.vendor_id = v.id
-JOIN po_lines pl ON pl.po_id = po.id
-WHERE po.created_at >= NOW() - INTERVAL '90 days'
-  AND po.status IN ('received', 'partial')
-GROUP BY v.id, v.name
-ORDER BY on_time_pct DESC;
+For suppliers who work via email, a simple acknowledgment email workflow is sufficient. For higher-volume supplier relationships, a portal improves visibility.
+
+**Simple email-based workflow:**
+1. Send PO via email with a reply-by date (2 business days) asking the supplier to confirm: PO number, items, quantities, and expected ship date
+2. When the supplier replies, update the PO status in your system to "Acknowledged"
+3. If the supplier can't fulfill the full quantity, get a partial commitment in writing
+
+**ATUM Supplier Portal (WooCommerce):**
+1. ATUM Premium includes a supplier-facing portal where suppliers receive POs, acknowledge them, and enter tracking numbers
+2. Go to ATUM → Suppliers → [Supplier] → configure portal access credentials
+
+**Cin7 Core Supplier Portal:**
+1. Cin7 Core includes a supplier portal where vendors can view POs, confirm delivery dates, and upload shipping documents
+2. Invite suppliers in Cin7 Core → Settings → Suppliers → Invite to Portal
+
+### Step 5: Track goods receipt and update inventory
+
+When a shipment arrives from a supplier:
+
+1. Match the packing list to the purchase order — check every line item's quantity
+2. Identify any discrepancies:
+   - **Short shipment:** supplier sent fewer units than ordered → update PO with received qty, leave PO "open" for the balance
+   - **Damaged goods:** record separately; do not put damaged inventory into your sellable stock
+   - **Wrong items:** contact supplier immediately with photos for credit memo
+
+**In QuickBooks:**
+- Open the PO → click "Receive Items" → enter actual received quantities
+- QuickBooks creates a bill for the received quantity automatically
+
+**In Cin7 Core / ATUM:**
+- Navigate to the PO → click "Receive Stock" → enter quantities received per line
+- Inventory updates automatically in Shopify/WooCommerce/BigCommerce
+
+### Step 6: Calculate and review vendor performance scorecards
+
+Run vendor scorecards quarterly to identify underperforming suppliers and support negotiation.
+
+**Key metrics:**
+
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| On-time delivery rate | % of POs where actual receipt date ≤ expected delivery date | > 90% |
+| Fill rate | Total units received / total units ordered across all POs | > 95% |
+| Defect rate | Damaged/incorrect units received / total units received | < 2% |
+| Lead time accuracy | Actual lead time vs. quoted lead time | ± 2 days |
+
+**Calculate from your PO system:**
+
+In QuickBooks, export PO data to a spreadsheet and compute these metrics. In Cin7 Core and ATUM, built-in vendor reports provide these metrics automatically.
+
+#### Custom / Headless — vendor scorecard calculation
+
+```typescript
+async function calculateVendorScorecard(params: {
+  vendorId: string;
+  periodDays: number;
+}): Promise<{
+  onTimeRatePct: number;
+  fillRatePct: number;
+  defectRatePct: number;
+  overallScore: number;   // 0–100
+}> {
+  const since = new Date(Date.now() - params.periodDays * 86400000);
+
+  const pos = await db.purchaseOrders.findAll({
+    vendor_id: params.vendorId,
+    status: { in: ['received', 'partial'] },
+    created_at: { gte: since },
+  });
+
+  if (pos.length === 0) return { onTimeRatePct: 0, fillRatePct: 0, defectRatePct: 0, overallScore: 0 };
+
+  // On-time: PO received on or before expected delivery date
+  const onTimeCount = pos.filter(po => po.received_at && po.received_at <= new Date(`${po.expected_delivery}T23:59:59Z`)).length;
+
+  // Fill rate: total received / total ordered
+  const allLines = await db.poLines.findByPoIds(pos.map(p => p.id));
+  const totalOrdered = allLines.reduce((s, l) => s + l.quantity_ordered, 0);
+  const totalReceived = allLines.reduce((s, l) => s + l.quantity_received, 0);
+
+  // Defect rate: damaged units / total received
+  const totalDamaged = await db.damagedReceipts.sumByVendorAndPeriod(params.vendorId, since);
+
+  const onTimeRatePct = (onTimeCount / pos.length) * 100;
+  const fillRatePct = totalOrdered > 0 ? (totalReceived / totalOrdered) * 100 : 0;
+  const defectRatePct = totalReceived > 0 ? (totalDamaged / totalReceived) * 100 : 0;
+
+  // Weighted score: on-time 40%, fill rate 40%, defect-free 20%
+  const overallScore = Math.round(
+    (onTimeRatePct * 0.4) + (fillRatePct * 0.4) + ((100 - defectRatePct) * 0.2)
+  );
+
+  return { onTimeRatePct, fillRatePct, defectRatePct, overallScore };
+}
 ```
 
 ## Best Practices
 
-- **Send PO acknowledgment requests with a deep link** — vendors should be able to confirm a PO in one click from email; requiring them to log into a portal raises the bar too high for low-tech suppliers
-- **Set expected delivery dates conservatively** — add the vendor's `lead_time_days` plus a 2-day buffer when calculating `expected_delivery`; this improves on-time rates without changing actual lead times
-- **Track partial receipts** — many POs arrive in multiple shipments; `partial` status and per-line `quantity_received` tracking prevents premature inventory reconciliation
-- **Record defects at receiving time** — damaged goods should be logged immediately at the dock with photos; don't rely on retrospective recall for scorecard accuracy
-- **Share scorecards with vendors quarterly** — vendors who see their metrics improve performance; use the data as leverage in pricing negotiations
-- **Rotate portal tokens** — generate short-lived tokens (7-day expiry) for vendor portal access; never use persistent passwords for external access
+- **Use your accounting software (QuickBooks, Xero) for POs if you're under $1M** — it integrates AP and inventory receiving in one tool; you don't need a separate vendor portal at this stage
+- **Set expected delivery dates conservatively** — add the vendor's quoted lead time plus a 2-day buffer; this improves on-time metrics without changing actual performance
+- **Track partial receipts carefully** — many POs arrive in multiple shipments; record the received quantity per line and keep the PO open until fully received
+- **Record defects at the dock, not later** — damaged goods must be logged at receiving time with photos; retrospective claims are harder to substantiate with suppliers
+- **Share scorecards with suppliers quarterly** — suppliers who see their metrics improve; use the data in pricing negotiations ("your fill rate dropped to 88% last quarter")
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| PO total doesn't match invoice amount | Store unit costs at the PO line level and never update them retroactively; any price discrepancy becomes a flag for accounts payable review |
-| Vendor acknowledges a PO but ships to the wrong address | Include the ship-to address in the PO email body AND the portal confirmation screen; require the vendor to confirm the address |
-| Inventory is incremented before damaged goods are segregated | Only call `incrementInventory` for `condition === 'good'` receipts; damaged goods go to a quarantine table |
-| Multiple buyers send duplicate POs to the same vendor | Add a unique constraint on PO number and use a sequence for generation; lock the sequence before inserting |
+| PO total doesn't match the supplier's invoice | Store unit costs at the PO line level and never update them retroactively; price discrepancies become AP exceptions flagged for review |
+| Supplier ships to the wrong address | Include the warehouse address on every PO and in the portal confirmation screen; verify the ship-to address has been acknowledged |
+| Inventory incremented before damaged goods are removed from the count | Only increment inventory for receipts with condition = 'good'; damaged goods go to a quarantine count, not sellable stock |
+| Scorecard shows high on-time rate but stock still runs out | On-time rate measures delivery vs. expected date, not vs. actual demand need date; also track "stockout events attributed to late delivery" as a separate metric |
 
 ## Related Skills
 
@@ -302,4 +246,4 @@ ORDER BY on_time_pct DESC;
 - @order-management-system
 - @multi-channel-selling
 - @demand-forecasting
-- @b2b-commerce
+- @accounts-payable-management

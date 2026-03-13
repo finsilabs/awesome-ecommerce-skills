@@ -1,6 +1,6 @@
 ---
 name: variant-matrix
-description: "Generate and manage all size/color/material combinations for a product with automatic SKU creation and per-variant pricing and inventory"
+description: "Generate and manage all size/color/material combinations for a product using your platform's variant tools with bulk price and inventory management"
 category: catalog-inventory
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [variants, sku, matrix, combinations, options, catalog, product-data]
 triggers: ["product variants", "size color variants", "variant combinations", "SKU generation", "option matrix", "variant matrix"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,227 +16,218 @@ difficulty: intermediate
 
 ## Overview
 
-Generate and manage the Cartesian product of variant options (e.g., size × color × material) to produce a complete set of SKUs. Covers the data model for products with options, an algorithm for generating all combinations, SKU naming conventions, and strategies for handling large matrices (100+ combinations) including selective variant publication and bulk price/inventory overrides.
+Product variants let one product listing cover all size/color/material combinations — each with its own price, SKU, and inventory. Platforms generate the full matrix of combinations from your option values and handle the variant selector UI automatically. The main tasks are: entering options correctly, generating all SKUs, setting per-variant pricing and inventory, and managing large matrices efficiently.
 
 ## When to Use This Skill
 
 - When modeling apparel, footwear, or accessories where products have multiple option axes
 - When importing products from a supplier CSV with flat variant rows that need to be grouped
 - When building an admin interface for merchants to manage variant pricing and inventory
-- When implementing a variant selector on the product detail page (size/color pickers)
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
-**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with product catalog access, API credentials
+- When a variant selector on the product page needs to disable unavailable combinations
 
 ## Core Instructions
 
-1. **Design the product-options-variants data model**
+### Step 1: Determine platform and understand the variant model
 
-   ```javascript
-   // Database schema (normalized)
+| Platform | Options | Max Variants | Variant Fields |
+|----------|---------|-------------|----------------|
+| **Shopify** | Up to 3 options (e.g., Size, Color, Style) | 100 per product | Price, SKU, barcode, inventory, weight, image |
+| **WooCommerce** | Unlimited attributes used as variations | Practically unlimited (performance degrades at ~50+) | Price, sale price, SKU, stock, weight, dimensions, image |
+| **BigCommerce** | Unlimited options per product | 600 SKUs per product | Price adjustment, SKU, stock, weight, image |
+| **Custom / Headless** | Design your own | Unlimited | Design your own variant fields |
 
-   // products table
-   { id, name, base_sku, description, ... }
+---
 
-   // product_options table — defines the option axes
-   { id, product_id, name: 'Size', position: 0 }
-   { id, product_id, name: 'Color', position: 1 }
+### Step 2: Platform-specific variant setup
 
-   // product_option_values table — values for each axis
-   { id, option_id, value: 'S', position: 0 }
-   { id, option_id, value: 'M', position: 1 }
-   { id, option_id, value: 'Red', position: 0 }
-   { id, option_id, value: 'Blue', position: 1 }
+---
 
-   // product_variants table — one row per combination
-   {
-     id,
-     product_id,
-     sku: 'SHIRT-RED-S',
-     price: 29.99,
-     compare_at_price: 39.99,
-     inventory_quantity: 10,
-     option1_value: 'S',   // denormalized for query performance
-     option2_value: 'Red',
-     option3_value: null,
-     weight: 0.3,
-     image_id: null,
-     published: true,
-   }
-   ```
+#### Shopify
 
-2. **Generate all variant combinations (Cartesian product)**
+**Creating variants from options:**
 
-   ```javascript
-   // lib/variantMatrix.js
+1. Go to **Admin → Products → [Product]**
+2. Scroll to the **Options** section
+3. Click **Add option** to add the first axis (e.g., Size)
+4. Enter the option values: XS, S, M, L, XL
+5. Add a second option (e.g., Color): Red, Blue, Black
+6. Shopify generates all combinations automatically (5 × 3 = 15 variants)
+7. Scroll to the **Variants** section to see the generated matrix
 
-   /**
-    * Generate the Cartesian product of multiple option value arrays.
-    * Input:  [['S','M','L'], ['Red','Blue']]
-    * Output: [['S','Red'], ['S','Blue'], ['M','Red'], ['M','Blue'], ['L','Red'], ['L','Blue']]
-    */
-   export function cartesianProduct(arrays) {
-     return arrays.reduce(
-       (acc, values) => acc.flatMap(combo => values.map(v => [...combo, v])),
-       [[]]
-     );
-   }
+**Setting per-variant details:**
+- Click any variant row to edit its price, SKU, inventory, weight, and image
+- Or use **Edit variants** bulk view to update multiple variants at once
 
-   /**
-    * Generate SKUs from option combinations.
-    * baseSku: 'SHIRT'
-    * combinations: [['S','Red'], ['S','Blue']]
-    * Output: [{ sku: 'SHIRT-S-RED', options: { Size: 'S', Color: 'Red' } }, ...]
-    */
-   export function generateVariants(baseSku, optionNames, optionValues) {
-     const combinations = cartesianProduct(optionValues);
-     return combinations.map(combo => ({
-       sku: [baseSku, ...combo].join('-').toUpperCase().replace(/\s+/g, '-'),
-       options: Object.fromEntries(optionNames.map((name, i) => [name, combo[i]])),
-       price: null,       // To be set individually or by bulk rule
-       inventory: 0,
-       published: true,
-     }));
-   }
+**Bulk variant management:**
+- Select multiple variants using checkboxes → **Edit** to update price or inventory for a group
+- For large catalogs: use **Matrixify** (App Store) to import a CSV with one row per variant — the most efficient way to set up a large matrix
 
-   // Example usage
-   const variants = generateVariants('SHIRT', ['Size', 'Color'], [
-     ['XS', 'S', 'M', 'L', 'XL'],
-     ['Red', 'Blue', 'Black'],
-   ]);
-   // Produces 15 variants: SHIRT-XS-RED, SHIRT-XS-BLUE, ..., SHIRT-XL-BLACK
-   ```
+**Disabling unavailable combinations:**
+- Variants that have no inventory automatically show "Sold Out" on the product page
+- Shopify's variant selector does not auto-disable unavailable combinations by default — most themes require adding logic or using a theme app to grey out sold-out options
 
-3. **Diff existing variants against a new option set**
+**Adding/removing option values after launch:**
+- Add a new size (e.g., "XXL"): go to the Options section, add the value
+- Shopify adds new variants for the new value; existing variants are unchanged
+- Archive discontinued variants instead of deleting — deletion removes order history links
 
-   When a merchant adds or removes an option value, compute which variants to create and which to archive rather than deleting (to preserve order history).
+---
 
-   ```javascript
-   export function diffVariants(existingVariants, newCombinations, optionNames) {
-     const existingKeys = new Set(existingVariants.map(v =>
-       optionNames.map(n => v.options[n]).join('|')
-     ));
-     const newKeys = new Set(newCombinations.map(c => c.join('|')));
+#### WooCommerce
 
-     const toCreate = newCombinations.filter(combo => !existingKeys.has(combo.join('|')));
-     const toArchive = existingVariants.filter(v =>
-       !newKeys.has(optionNames.map(n => v.options[n]).join('|'))
-     );
-     const unchanged = existingVariants.filter(v =>
-       newKeys.has(optionNames.map(n => v.options[n]).join('|'))
-     );
+**Creating variations from attributes:**
 
-     return { toCreate, toArchive, unchanged };
-   }
-   ```
+1. Create global attributes: **Products → Attributes → Add Attribute** (e.g., Size with values XS, S, M, L, XL)
+2. On your product, go to the **Attributes tab**
+3. Select your attribute (Size), check **Used for variations**, click **Add**
+4. Add all values this product uses
+5. Go to the **Variations tab**
+6. Click **Generate variations** → WooCommerce creates one variation per combination
+7. Expand each variation to set price, SKU, stock, and image
 
-4. **Bulk price and inventory update**
+**Bulk variation updates:**
+- WooCommerce's variation editor can be slow for products with 20+ variations
+- Use **WP All Import Pro** for importing large variation matrices via CSV
+- Or use the **Variable Product Bulk Edit** plugin for batch price/inventory updates
 
-   ```javascript
-   // api/admin/products/[id]/variants/bulk-update.js
-   export async function bulkUpdateVariants(req, res) {
-     const { productId } = req.params;
-     const { rule, filter } = req.body;
-     // rule: { type: 'set_price'|'adjust_price_pct'|'set_inventory', value }
-     // filter: { option: 'Size', value: 'XL' } — apply only to matching variants
+**SKU generation:**
+WooCommerce doesn't auto-generate SKUs. Enter them manually or use a pattern:
+- Convention: `[PRODUCT-CODE]-[SIZE]-[COLOR]` → e.g., `SHIRT-M-RED`
+- Use WP All Import to set SKUs in bulk from a spreadsheet
 
-     const variants = await db.productVariants.findMany({
-       where: {
-         productId,
-         ...(filter ? { [`option${getOptionPosition(filter.option)}Value`]: filter.value } : {}),
-       },
-     });
+---
 
-     const updates = variants.map(v => {
-       let newPrice = v.price;
-       if (rule.type === 'set_price') newPrice = rule.value;
-       if (rule.type === 'adjust_price_pct') newPrice = +(v.price * (1 + rule.value / 100)).toFixed(2);
+#### BigCommerce
 
-       return db.productVariants.update({
-         where: { id: v.id },
-         data: {
-           price: newPrice,
-           ...(rule.type === 'set_inventory' ? { inventoryQuantity: rule.value } : {}),
-         },
-       });
-     });
+**Creating options and variants:**
 
-     await Promise.all(updates);
-     res.json({ updated: variants.length });
-   }
-   ```
+1. Go to **Products → [Product] → Variations tab**
+2. Click **Create options** and add your option set (Size, Color, etc.)
+3. BigCommerce generates the matrix of SKUs automatically
+4. Click any SKU row to set:
+   - Price adjustment (e.g., +$5 for XL)
+   - SKU code
+   - Stock quantity
+   - Image
 
-5. **Implement the variant selector UI**
+**Option Sets:**
+- Go to **Products → Option Sets** to create reusable option groups
+- Create a "Clothing Sizes" option set with XS–3XL once, then assign it to all apparel products
+- Saves significant time when managing large catalogs
 
-   Build a UI that derives available options dynamically based on current selection, greying out unavailable combinations.
+**Bulk SKU management:**
+- Go to **Products → Import & Export** to export the catalog with all variant SKUs
+- Edit in Excel and re-import for bulk price/inventory/SKU updates
 
-   ```javascript
-   // lib/variantSelector.js
+---
 
-   export function getAvailableOptionValues(variants, currentSelections, targetOptionName) {
-     // Return which values for targetOption are available given current selections for other options
-     return variants
-       .filter(v =>
-         Object.entries(currentSelections)
-           .filter(([optionName]) => optionName !== targetOptionName)
-           .every(([optionName, value]) => v.options[optionName] === value)
-       )
-       .map(v => v.options[targetOptionName])
-       .filter(Boolean);
-   }
+#### Custom / Headless
 
-   export function findVariant(variants, selections) {
-     return variants.find(v =>
-       Object.entries(selections).every(([option, value]) => v.options[option] === value)
-     ) ?? null;
-   }
+Build variant generation from Cartesian product of options, with diff logic to safely update existing catalogs:
 
-   // Usage:
-   // User selects Size=M, now show available colors
-   const availableColors = getAvailableOptionValues(variants, { Size: 'M' }, 'Color');
-   // ['Red', 'Black'] — Blue is out of stock in size M
-   ```
+```typescript
+// lib/variantMatrix.ts
 
-## Examples
+// Generate all variant combinations from option value arrays
+// Input:  [['S','M','L'], ['Red','Blue']]
+// Output: [['S','Red'], ['S','Blue'], ['M','Red'], ['M','Blue'], ['L','Red'], ['L','Blue']]
+export function cartesianProduct(arrays: string[][]): string[][] {
+  return arrays.reduce(
+    (acc, values) => acc.flatMap(combo => values.map(v => [...combo, v])),
+    [[]] as string[][]
+  );
+}
 
-### SKU naming conventions
+// Generate variant records with auto-generated SKUs
+export function generateVariants(baseSku: string, optionNames: string[], optionValues: string[][]) {
+  const combinations = cartesianProduct(optionValues);
+  return combinations.map(combo => ({
+    sku: [baseSku, ...combo].join('-').toUpperCase().replace(/\s+/g, '-'),
+    options: Object.fromEntries(optionNames.map((name, i) => [name, combo[i]])),
+    price: null,       // Set individually or via bulk rule
+    inventoryQuantity: 0,
+    published: true,
+  }));
+}
 
-Establish a consistent SKU formula that encodes variant attributes for easy warehouse identification:
+// Compute what to create vs. archive when option values change
+export function diffVariants(
+  existingVariants: { options: Record<string, string> }[],
+  newCombinations: string[][],
+  optionNames: string[]
+) {
+  const existingKeys = new Set(existingVariants.map(v => optionNames.map(n => v.options[n]).join('|')));
+  const newKeys = new Set(newCombinations.map(c => c.join('|')));
 
+  const toCreate = newCombinations.filter(combo => !existingKeys.has(combo.join('|')));
+  const toArchive = existingVariants.filter(v => !newKeys.has(optionNames.map(n => v.options[n]).join('|')));
+
+  return { toCreate, toArchive };
+}
+
+// Variant selector logic — which values are available given current selections?
+export function getAvailableOptionValues(
+  variants: { options: Record<string, string>; inventoryQuantity: number }[],
+  currentSelections: Record<string, string>,
+  targetOptionName: string
+): string[] {
+  return variants
+    .filter(v =>
+      Object.entries(currentSelections)
+        .filter(([name]) => name !== targetOptionName)
+        .every(([name, value]) => v.options[name] === value)
+      && v.inventoryQuantity > 0
+    )
+    .map(v => v.options[targetOptionName])
+    .filter(Boolean);
+}
 ```
-Format: [PRODUCT-CODE]-[OPTION1]-[OPTION2]-[OPTION3]
+
+---
+
+### Step 3: Define a SKU naming convention
+
+Consistent SKUs are critical for warehouse operations, reporting, and supplier communication. Establish a naming pattern before importing products.
+
+**Recommended format:**
+```
+[PRODUCT-CODE]-[OPTION1]-[OPTION2]
+
 Rules:
-  - Max 20 characters total
-  - Use standard abbreviations: S/M/L/XL for sizes, 3-letter ISO color codes
-  - No spaces — use hyphens
-  - All uppercase
-
-Examples:
-  SHIRT-WHT-M          → White T-Shirt, Medium
-  SHOE-NVY-10          → Navy Shoe, Size 10
-  BAG-BLK-LTR          → Black Bag, Leather material
+- Max 20 characters total
+- All uppercase
+- Hyphens between segments, no spaces
+- Use standard size abbreviations: XS, S, M, L, XL, 2XL
+- Use 3-letter color codes: RED, BLU, BLK, WHT, NVY, GRN
+- Example: SHIRT-M-BLU → Blue shirt, Medium
+           SHOE-10-NVY → Navy shoe, Size 10
 ```
 
-### Handling large matrices (1000+ variants)
+Use Matrixify (Shopify) or WP All Import (WooCommerce) to bulk-assign SKUs following this pattern for an existing catalog.
 
-For products with many options (e.g., paint colors × finish × size = 500+ SKUs), use lazy generation:
+---
 
-```javascript
-// Instead of storing all variants upfront, generate them on demand
-export async function ensureVariantExists(productId, options) {
+### Step 4: Manage large variant matrices
+
+For products with many combinations (50+ variants):
+
+**Shopify:** The 100-variant limit may be an issue for products with 3+ options. Strategies:
+- Combine two options into one (e.g., "Size/Width" instead of separate Size and Width options)
+- Create separate product records for each color and use metafields to link them
+- Use Shopify's native Bundles for configurable products that require more flexibility
+
+**WooCommerce:** Performance degrades with 50+ variations on one product. Use **WooCommerce Performance Optimizations** or **YITH WooCommerce Variations Table** to improve the admin and storefront experience.
+
+**Lazy variant creation:** For extremely large matrices (e.g., custom paint colors × finish × size = 500+ SKUs), generate variants on demand when first ordered rather than pre-creating all combinations:
+
+```typescript
+// For very large matrices: create variants on first request rather than upfront
+export async function ensureVariantExists(productId: string, options: Record<string, string>) {
   const key = Object.values(options).join('|');
-  const existing = await db.productVariants.findFirst({
-    where: { productId, variantKey: key },
-  });
+  const existing = await db.productVariants.findFirst({ where: { productId, variantKey: key } });
   if (existing) return existing;
 
-  // Create on first request
+  const product = await db.products.findUnique({ where: { id: productId } });
   return db.productVariants.create({
     data: {
       productId,
@@ -252,26 +243,24 @@ export async function ensureVariantExists(productId, options) {
 
 ## Best Practices
 
-- **Archive variants, do not delete them** — variants may have order history; mark as `published: false` when discontinued
-- **Denormalize option values on the variant row** — store `option1_value`, `option2_value`, `option3_value` directly on variants for fast queries without joins
-- **Generate SKUs algorithmically and validate uniqueness** — check for SKU collisions in the database before saving
-- **Limit variant option axes to 3** — beyond 3 axes (e.g., size × color × material), the UX becomes complex and matrices grow exponentially
-- **Provide bulk edit tools for price/inventory** — merchants with large catalogs cannot update 200 variants one at a time
-- **Validate option value completeness** — warn merchants when not all combinations are published so they do not accidentally have unpurchasable options in the UI
+- **Archive variants, never delete them** — deleted variants break historical orders that reference them; mark as `published: false` when discontinued
+- **Use the platform's bulk edit tools for price and inventory updates** — editing 100 variants one at a time is impractical; all platforms support bulk edits
+- **Limit options to 2–3 axes** — beyond 3 options (e.g., size × color × material), the variant selector becomes confusing and the matrix grows exponentially
+- **Test the variant selector before launch** — verify that selecting an unavailable combination shows the correct "sold out" state and that the price/image updates correctly
+- **Validate SKU uniqueness** before bulk importing — a SKU collision during import silently skips the conflicting row or throws an error depending on the platform
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| SKU duplicates when option values have spaces or special characters | Normalize SKU segments: `.toUpperCase().trim().replace(/[^A-Z0-9]/g, '-')` before joining |
-| Variant selector allows selecting unavailable combinations | Use `getAvailableOptionValues` to dynamically disable option values that have no in-stock variant with the current selections |
-| Adding a new option value creates duplicate variants | Use the `diffVariants` function to compute new combinations; only insert truly new ones |
-| Large matrix (500+ variants) slows page load | Fetch variant data via a separate API call on option change; do not embed all 500 variants in the HTML |
-| Deleting a variant breaks historical orders | Set `published: false` and `deleted_at: now`; keep the row, never hard-delete a variant that has order line items |
+| Shopify 100-variant limit reached | Combine options or create separate products per color; use metafields to group related products in the storefront |
+| Variant image not switching on option select | Assign variant-specific images explicitly per variant; the platform can only switch images if the variant has its own image set |
+| Adding a new option value creates duplicate variants | Use diff logic to detect which combinations are genuinely new; Shopify handles this correctly in the admin, but custom imports need deduplication |
+| Large matrix slows product page load | For 100+ variants, fetch variant availability via API on option change rather than embedding all variants in the initial page HTML |
+| SKU collisions during bulk import | Normalize SKU segments before generating: `toUpperCase().replace(/[^A-Z0-9]/g, '-')`; check for duplicates before saving |
 
 ## Related Skills
 
 - @product-data-modeling
 - @inventory-tracking
 - @catalog-import-export
-- @product-page-design

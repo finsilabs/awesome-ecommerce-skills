@@ -1,6 +1,6 @@
 ---
 name: customer-segmentation
-description: "Segment customers by purchase recency, frequency, and spend (RFM) or behavioral signals to power targeted marketing and personalization"
+description: "Segment customers by purchase behavior, recency, and spend using Klaviyo, your platform's built-in tools, or a custom RFM analysis to power targeted marketing"
 category: customer-crm
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [segmentation, rfm, cohort, behavioral, targeting, crm, customer-analytics, lifecycle]
 triggers: ["customer segmentation", "RFM analysis", "rfm scoring", "behavioral segments", "cohort analysis", "customer targeting", "segment customers"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,289 +16,241 @@ difficulty: advanced
 
 ## Overview
 
-Customer segmentation divides your customer base into groups with similar behaviors or characteristics so marketing messages, promotions, and product recommendations can be precisely targeted. This skill covers RFM (Recency, Frequency, Monetary) scoring — the industry-standard framework for e-commerce segmentation — behavioral event-based segments, cohort analysis, and exporting segments to ESPs and advertising platforms.
+Customer segmentation divides your customer base into groups with similar purchase behavior so marketing campaigns, promotions, and product recommendations can be precisely targeted. Klaviyo, Omnisend, and Metorik all provide RFM-style segmentation out of the box for Shopify and WooCommerce without custom SQL. Only build a custom segmentation system if your platform's tools don't support the segment logic you need.
 
 ## When to Use This Skill
 
-- When personalizing email campaigns by customer lifecycle stage (new, active, at-risk, lapsed)
+- When personalizing email campaigns by lifecycle stage (new, active, at-risk, lapsed)
 - When building suppression lists to avoid wasting ad spend on already-converted customers
 - When identifying "champion" customers for VIP programs and early access campaigns
 - When analyzing which acquisition cohort has the best 90-day retention
-- When feeding behavioral segments into Klaviyo, Braze, or a custom CDP
-- When RFM scoring is needed as input to a CLV prediction model
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
-**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
+- When syncing behavioral segments to advertising platforms (Meta, Google)
 
 ## Core Instructions
 
-1. **Calculate RFM scores for every customer**
+### Step 1: Determine platform and choose the right segmentation tool
 
-   RFM assigns three scores (each 1–5) representing how recently a customer bought, how often they buy, and how much they spend:
+| Platform | Built-in Segmentation | Recommended Tool |
+|----------|-----------------------|-----------------|
+| **Shopify** | Basic: Admin → Customers → Filters; Advanced: Klaviyo or Omnisend | Klaviyo for email + SMS; Lifetimely for cohort analysis |
+| **WooCommerce** | WooCommerce Analytics → Customers (basic filters) | Klaviyo + WooCommerce plugin; or Metorik for analytics |
+| **BigCommerce** | Customer Groups (tier-based); Analytics → Customers | Klaviyo for behavioral segmentation |
+| **Custom / Headless** | Build RFM scoring in SQL; sync to Klaviyo for activation | Required when platform has no segmentation tools |
 
-   ```sql
-   -- PostgreSQL: calculate raw RFM values
-   WITH customer_rfm AS (
-     SELECT
-       customer_id,
-       EXTRACT(EPOCH FROM (NOW() - MAX(created_at))) / 86400 AS recency_days,
-       COUNT(id) AS frequency,
-       SUM(subtotal_cents) / 100.0 AS monetary
-     FROM orders
-     WHERE status NOT IN ('cancelled', 'refunded')
-     GROUP BY customer_id
-   ),
-   rfm_scored AS (
-     SELECT
-       customer_id,
-       recency_days,
-       frequency,
-       monetary,
-       NTILE(5) OVER (ORDER BY recency_days DESC) AS r_score,   -- Lower recency = higher score
-       NTILE(5) OVER (ORDER BY frequency ASC) AS f_score,
-       NTILE(5) OVER (ORDER BY monetary ASC) AS m_score
-     FROM customer_rfm
-   )
-   SELECT
-     customer_id,
-     r_score,
-     f_score,
-     m_score,
-     r_score + f_score + m_score AS rfm_total,
-     CONCAT(r_score, f_score, m_score) AS rfm_cell
-   FROM rfm_scored;
-   ```
+---
 
-2. **Map RFM cells to named segments**
+### Step 2: Platform-specific setup
 
-   ```typescript
-   type RFMSegment =
-     | 'champions'
-     | 'loyal_customers'
-     | 'potential_loyalists'
-     | 'recent_customers'
-     | 'promising'
-     | 'need_attention'
-     | 'about_to_sleep'
-     | 'at_risk'
-     | 'cannot_lose_them'
-     | 'hibernating'
-     | 'lost';
+---
 
-   function classifyRFMSegment(r: number, f: number, m: number): RFMSegment {
-     const rfm = `${r}${f}${m}`;
+#### Shopify
 
-     if (r >= 4 && f >= 4 && m >= 4) return 'champions';
-     if (r >= 3 && f >= 3 && m >= 3) return 'loyal_customers';
-     if (r >= 4 && f <= 2) return 'recent_customers';
-     if (r >= 3 && f >= 3 && m <= 2) return 'potential_loyalists';
-     if (r >= 3 && f <= 2 && m <= 2) return 'promising';
-     if (r === 3 && f >= 3) return 'need_attention';
-     if (r <= 2 && f >= 4 && m >= 4) return 'cannot_lose_them';
-     if (r <= 2 && f >= 3) return 'at_risk';
-     if (r === 2 && f <= 2) return 'about_to_sleep';
-     if (r === 1 && f <= 2) return 'hibernating';
-     return 'lost';
-   }
+**Option A: Shopify Admin segments (basic, free)**
 
-   // Refresh RFM scores nightly
-   async function refreshRFMScores() {
-     const scores = await db.query(rfmScoringQuery);
-     for (const row of scores) {
-       const segment = classifyRFMSegment(row.r_score, row.f_score, row.m_score);
-       await db.customerSegmentScores.upsert(
-         { customerId: row.customer_id },
-         { customerId: row.customer_id, rScore: row.r_score, fScore: row.f_score, mScore: row.m_score, segment, updatedAt: new Date() }
-       );
-     }
-   }
-   ```
+1. Go to **Admin → Customers**
+2. Use the filter bar to create segments based on:
+   - Order count, total spent, last order date
+   - Email subscription status, tags, location
+   - Product purchased
+3. Save the filter as a customer segment
+4. Export the segment to CSV for use in ads or email campaigns
 
-3. **Build behavioral event-based segments**
+**Option B: Klaviyo (recommended for lifecycle segmentation)**
 
-   Complement RFM with real-time behavioral signals:
+Klaviyo syncs automatically with Shopify and provides RFM-style segmentation built on real purchase data.
 
-   ```typescript
-   interface BehavioralSegment {
-     id: string;
-     name: string;
-     description: string;
-     rules: SegmentRule[];
-     operator: 'AND' | 'OR';
-   }
+**Key segments to create in Klaviyo:**
 
-   type SegmentRule =
-     | { type: 'event'; event: string; count: { op: '>=' | '<='; value: number }; withinDays: number }
-     | { type: 'property'; field: string; op: '==' | '!=' | '>=' | '<='; value: unknown }
-     | { type: 'segment'; segmentId: string; in: boolean };
+1. **Champions** (high-value, frequent, recent):
+   - Rule: `Ordered at least 3 times` AND `Last order within 60 days` AND `Total spent > $200`
+   - Action: Early access to new products, VIP perks, referral program invites
 
-   async function evaluateBehavioralSegment(customerId: string, segment: BehavioralSegment): Promise<boolean> {
-     const results = await Promise.all(
-       segment.rules.map(async (rule) => {
-         if (rule.type === 'event') {
-           const count = await db.customerEvents.count({
-             customerId,
-             event: rule.event,
-             createdAt: { gte: subDays(new Date(), rule.withinDays) },
-           });
-           return rule.count.op === '>=' ? count >= rule.count.value : count <= rule.count.value;
-         }
-         if (rule.type === 'property') {
-           const customer = await db.customers.findById(customerId);
-           return applyOperator(customer[rule.field], rule.op, rule.value);
-         }
-         if (rule.type === 'segment') {
-           const inSegment = await isCustomerInSegment(customerId, rule.segmentId);
-           return rule.in ? inSegment : !inSegment;
-         }
-         return false;
-       })
-     );
+2. **At Risk — High Value**:
+   - Rule: `Total spent > $200` AND `Last order 90–180 days ago`
+   - Action: Win-back flow with personalized offer
 
-     return segment.operator === 'AND' ? results.every(Boolean) : results.some(Boolean);
-   }
-   ```
+3. **Recent First-Time Buyers**:
+   - Rule: `Order count equals 1` AND `First order within 30 days`
+   - Action: Onboarding sequence, encourage second purchase
 
-4. **Build cohort analysis to track retention by signup month**
+4. **Lapsed Customers**:
+   - Rule: `Last order more than 180 days ago` AND `Order count >= 2`
+   - Action: Re-engagement campaign with "We've missed you" messaging
 
-   ```sql
-   -- Cohort retention: % of customers still purchasing N months after first order
-   WITH cohorts AS (
-     SELECT
-       customer_id,
-       DATE_TRUNC('month', MIN(created_at)) AS cohort_month
-     FROM orders
-     WHERE status NOT IN ('cancelled', 'refunded')
-     GROUP BY customer_id
-   ),
-   cohort_orders AS (
-     SELECT
-       c.cohort_month,
-       o.customer_id,
-       DATE_PART('month', AGE(DATE_TRUNC('month', o.created_at), c.cohort_month)) AS period_number
-     FROM cohorts c
-     JOIN orders o ON c.customer_id = o.customer_id
-     WHERE o.status NOT IN ('cancelled', 'refunded')
-   )
-   SELECT
-     cohort_month,
-     COUNT(DISTINCT CASE WHEN period_number = 0 THEN customer_id END) AS cohort_size,
-     COUNT(DISTINCT CASE WHEN period_number = 1 THEN customer_id END) AS month_1_retained,
-     COUNT(DISTINCT CASE WHEN period_number = 3 THEN customer_id END) AS month_3_retained,
-     COUNT(DISTINCT CASE WHEN period_number = 6 THEN customer_id END) AS month_6_retained,
-     COUNT(DISTINCT CASE WHEN period_number = 12 THEN customer_id END) AS month_12_retained
-   FROM cohort_orders
-   GROUP BY cohort_month
-   ORDER BY cohort_month DESC;
-   ```
+5. **Subscribers who never purchased**:
+   - Rule: `Email subscriber` AND `Order count equals 0`
+   - Action: Welcome series with social proof and first-order incentive
 
-5. **Export segments to ESP (Klaviyo) and advertising platforms**
+To create segments in Klaviyo:
+1. Go to **Lists & Segments → Create Segment**
+2. Add conditions using the filter builder — Klaviyo has 150+ pre-built filter types including Shopify-specific events
+3. Name the segment clearly (e.g., "At Risk High Value — 90-180 days")
+4. Use the segment in a Flow trigger or as an audience for a Campaign
 
-   ```typescript
-   async function syncSegmentToKlaviyo(segmentId: string, klaviyoListId: string) {
-     const customerIds = await db.customerSegmentMemberships.findCustomerIds(segmentId);
-     const customers = await db.customers.findByIds(customerIds, { fields: ['email', 'firstName', 'lastName', 'phone'] });
+**Klaviyo Predictive Analytics (paid plans):**
+- Klaviyo automatically calculates **Predicted CLV**, **Expected Date of Next Order**, and **Churn Risk** per customer
+- Find these under **Analytics → Predictive Analytics**
+- Use these predictions as segment filter criteria without any custom code
 
-     // Klaviyo accepts batches of up to 100 profiles per request
-     const chunks = chunk(customers, 100);
+---
 
-     for (const batch of chunks) {
-       await fetch(`https://a.klaviyo.com/api/lists/${klaviyoListId}/relationships/profiles/`, {
-         method: 'POST',
-         headers: {
-           Authorization: `Klaviyo-API-Key ${process.env.KLAVIYO_PRIVATE_KEY}`,
-           'Content-Type': 'application/json',
-           revision: '2024-02-15',
-         },
-         body: JSON.stringify({
-           data: batch.map((c) => ({
-             type: 'profile',
-             attributes: { email: c.email, first_name: c.firstName, last_name: c.lastName, phone_number: c.phone },
-           })),
-         }),
-       });
-     }
-   }
-   ```
+#### WooCommerce
 
-## Examples
+**Option A: Metorik (recommended analytics platform)**
 
-### Segment summary for CRM dashboard
+1. Install **Metorik** (connects via WooCommerce REST API)
+2. Go to **Metorik → Segments → Create Segment**
+3. Build rule-based segments using purchase history, product affinity, geography, and more
+4. Metorik calculates RFM scores automatically
+5. Export segment to CSV or sync directly to Klaviyo/Mailchimp
 
-```typescript
-async function getSegmentSummary() {
-  const segments = await db.customerSegmentScores.groupBy({
-    by: ['segment'],
-    _count: { customerId: true },
-    _avg: { mScore: true },
-  });
+**Option B: Klaviyo for WooCommerce**
 
-  return segments.map((s) => ({
-    segment: s.segment,
-    customerCount: s._count.customerId,
-    avgMonetaryScore: s._avg.mScore?.toFixed(1),
-    recommendedAction: SEGMENT_ACTIONS[s.segment],
-  }));
-}
+1. Install **Klaviyo: Email Marketing for WooCommerce** from WordPress.org
+2. Klaviyo syncs your WooCommerce order history and creates profiles for all customers
+3. Build the same lifecycle segments described in the Shopify section above
 
-const SEGMENT_ACTIONS: Record<string, string> = {
-  champions: 'Reward with VIP perks and early access',
-  at_risk: 'Send win-back email with personalized offer',
-  cannot_lose_them: 'Personal outreach + significant discount',
-  lost: 'Remove from active campaigns; annual re-engagement only',
-  recent_customers: 'Onboarding series; encourage second purchase',
-};
+---
+
+#### BigCommerce
+
+**Customer Groups for tier-based segmentation:**
+
+1. Go to **Customers → Customer Groups → Add Group**
+2. Create groups based on purchase behavior rules:
+   - "VIP" — customers with lifetime spend > $500
+   - "Repeat Buyers" — customers with 3+ orders
+3. Assign group-specific pricing, category access, or shipping rules
+
+**Klaviyo for behavioral segmentation:**
+- Install the **Klaviyo for BigCommerce** app
+- Connect your BigCommerce store
+- Build behavioral segments in Klaviyo using purchase history and event data
+
+---
+
+#### Custom / Headless
+
+Build RFM scoring in SQL and sync to an ESP for activation:
+
+```sql
+-- PostgreSQL: Calculate RFM scores for all customers
+WITH customer_rfm AS (
+  SELECT
+    customer_id,
+    EXTRACT(EPOCH FROM (NOW() - MAX(created_at))) / 86400 AS recency_days,
+    COUNT(id) AS frequency,
+    SUM(subtotal_cents) / 100.0 AS monetary
+  FROM orders
+  WHERE status NOT IN ('cancelled', 'refunded')
+  GROUP BY customer_id
+),
+rfm_scored AS (
+  SELECT
+    customer_id,
+    recency_days, frequency, monetary,
+    NTILE(5) OVER (ORDER BY recency_days DESC) AS r_score,  -- Lower recency = higher score
+    NTILE(5) OVER (ORDER BY frequency ASC) AS f_score,
+    NTILE(5) OVER (ORDER BY monetary ASC) AS m_score
+  FROM customer_rfm
+)
+SELECT
+  customer_id, r_score, f_score, m_score,
+  r_score + f_score + m_score AS rfm_total,
+  CASE
+    WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'champions'
+    WHEN r_score >= 3 AND f_score >= 3 AND m_score >= 3 THEN 'loyal_customers'
+    WHEN r_score >= 4 AND f_score <= 2 THEN 'recent_customers'
+    WHEN r_score <= 2 AND f_score >= 4 AND m_score >= 4 THEN 'cannot_lose_them'
+    WHEN r_score <= 2 AND f_score >= 3 THEN 'at_risk'
+    WHEN r_score = 1 AND f_score <= 2 THEN 'lost'
+    ELSE 'needs_attention'
+  END AS segment
+FROM rfm_scored;
 ```
 
-### Suppression list export for paid ads
-
 ```typescript
-async function exportSuppressionListForMeta() {
-  // Suppress recent purchasers from acquisition campaigns (avoid wasting budget)
-  const recentBuyers = await db.orders.findCustomerEmailsWhere({
-    createdAt: { gte: subDays(new Date(), 30) },
-    status: 'completed',
+// Sync a segment to Klaviyo — batched at 100 profiles per request
+export async function syncSegmentToKlaviyo(segmentCustomers: Customer[], klaviyoListId: string) {
+  const BATCH_SIZE = 100;
+  for (let i = 0; i < segmentCustomers.length; i += BATCH_SIZE) {
+    const batch = segmentCustomers.slice(i, i + BATCH_SIZE);
+    await fetch(`https://a.klaviyo.com/api/lists/${klaviyoListId}/relationships/profiles/`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Klaviyo-API-Key ${process.env.KLAVIYO_PRIVATE_KEY}`,
+        'Content-Type': 'application/json',
+        revision: '2024-10-15',
+      },
+      body: JSON.stringify({
+        data: batch.map(c => ({
+          type: 'profile',
+          attributes: { email: c.email, first_name: c.firstName, last_name: c.lastName },
+        })),
+      }),
+    });
+  }
+}
+
+// Export suppression list for Meta Ads — hash emails before sending
+export async function exportSuppressionListForMeta(lookbackDays = 30): Promise<string[]> {
+  const recentBuyers = await db.orders.findMany({
+    where: { createdAt: { gte: new Date(Date.now() - lookbackDays * 86400000) }, status: 'completed' },
+    select: { customerEmail: true },
+    distinct: ['customerEmail'],
   });
 
-  return recentBuyers.map((email) => ({ email: hashEmail(email) })); // SHA-256 hash for Meta Custom Audiences
-}
-
-function hashEmail(email: string): string {
-  const { createHash } = require('crypto');
-  return createHash('sha256').update(email.toLowerCase().trim()).digest('hex');
+  return recentBuyers.map(({ customerEmail }) => {
+    const { createHash } = require('crypto');
+    return createHash('sha256').update(customerEmail.toLowerCase().trim()).digest('hex');
+  });
 }
 ```
+
+---
+
+### Step 3: Map segments to actions
+
+Every segment should have a clear marketing action:
+
+| Segment | Recommended Action |
+|---------|-------------------|
+| Champions | VIP early access, referral program invite, no win-back discounts needed |
+| Loyal Customers | Loyalty program enrollment, review request, upsell to next tier |
+| Recent First-Time Buyers | Second-purchase email series (send 7 days after first order) |
+| At Risk — High Value | Personalized win-back with acknowledgment: "It's been a while" |
+| Cannot Lose Them | Direct outreach, significant offer (20% off), personal email from founder |
+| Lapsed / Lost | Low-cost re-engagement (newsletter, product announcement); remove from active campaigns |
+
+---
+
+### Step 4: Build suppression lists for paid ads
+
+Upload your most recent buyers as suppression lists on Meta and Google to avoid wasting acquisition budget:
+
+- **Meta Business Manager**: Audiences → Create Audience → Customer List → Upload hashed email CSV
+- **Google Ads**: Audience Manager → Customer Match → Upload email list
+- Refresh these suppression lists monthly
 
 ## Best Practices
 
-- **Refresh RFM scores nightly** — customer behavior changes daily; stale scores lead to wrong segment assignments and mistargeted campaigns
-- **Use NTILE(5) for RFM quantiles**, not fixed thresholds — this ensures each score bucket always contains the same proportion of customers regardless of overall spend distribution
-- **Build segments incrementally** — start with RFM, then layer behavioral signals (category affinity, channel preference) as you collect more data
-- **Version segment definitions** — when you change a segment rule, record the change so you can explain why a customer moved between segments
-- **Always create a suppression list alongside targeting lists** — sending re-engagement campaigns to active customers wastes budget and annoys them
-- **Validate segment sizes before campaign sends** — a segment returning 0 customers means a rule logic error; set a minimum threshold alert
-- **Combine RFM with CLV prediction** — RFM tells you where customers are now; CLV tells you where they are going
+- **Refresh segments nightly** — Klaviyo and Metorik do this automatically; for custom builds, run the RFM SQL nightly
+- **Start with RFM, then layer behavioral signals** — purchase recency/frequency/spend is the most reliable foundation; add category affinity and channel preference as you collect more data
+- **Always build suppression lists alongside targeting lists** — sending re-engagement campaigns to active customers wastes budget and annoys them
+- **Validate segment sizes before campaign sends** — a segment returning 0 customers usually indicates a logic error; set a minimum threshold check
+- **Track which segments respond best to each type of offer** — champions rarely need discounts; at-risk customers may respond to free shipping more than percentage off
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Champions segment shrinks every month | Champions require recent AND high frequency — customers naturally graduate out; track segment size trends and diagnose acquisition vs. retention |
-| RFM scores biased by a single large order | Separate monetary into "average order value" and "total spend" — a one-time large order looks like a champion but may be a one-off |
-| Cohort analysis shows declining retention but reason is unclear | Segment cohort by acquisition channel to identify if specific channels bring lower-quality customers |
-| Segment sync to Klaviyo creates duplicate profiles | Ensure you're matching by email as the primary key; use Klaviyo's profile merge API if duplicates exist |
-| Behavioral segments run slow on large databases | Add composite indexes on `(customer_id, event, created_at)` on the events table; also consider pre-materializing segment membership in a nightly job |
+| Champions segment shrinks every month | Champions require recent + high frequency — customers naturally graduate out; supplement with "Loyal Customers" for long-term relationship management |
+| RFM scores biased by one very large order | Klaviyo's predicted CLV smooths this out; for custom builds, use median order value in the monetary score rather than total spend |
+| Segment sync to Klaviyo creates duplicate profiles | Always match by email as the primary key when syncing; if duplicates exist, use Klaviyo's profile merge |
+| Cohort analysis shows declining retention but reason unclear | Segment cohort by acquisition channel to identify whether specific channels bring lower-quality customers |
 
 ## Related Skills
 
 - @customer-lifetime-value
-- @customer-analytics
 - @personalization-engine
-- @email-marketing-automation
-- @attribution-modeling
+- @referral-program

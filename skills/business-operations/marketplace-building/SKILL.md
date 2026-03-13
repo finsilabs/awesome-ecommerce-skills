@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [marketplace, multi-vendor, seller-onboarding, commissions, payouts, Stripe-Connect, platform]
 triggers: ["marketplace", "multi-vendor marketplace", "seller onboarding", "marketplace commissions", "seller payouts", "platform marketplace"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,327 +16,217 @@ difficulty: advanced
 
 ## Overview
 
-Build a multi-vendor marketplace where independent sellers list products, the platform collects payment on their behalf, deducts a commission, and pays out the remainder. Covers seller onboarding with KYC via Stripe Connect, order routing to the correct seller, commission calculation, automated payout scheduling, and a seller dashboard with earnings visibility.
+A multi-vendor marketplace lets independent sellers list products on your platform, collects payment from buyers, deducts your commission, and pays out the remainder to sellers. The key components are: seller onboarding with KYC verification, product listing management per seller, commission calculation, and automated payouts. For Shopify and WooCommerce merchants, purpose-built marketplace apps handle most of this — custom development is needed primarily for highly specific commission structures or white-label marketplace platforms.
 
 ## When to Use This Skill
 
 - When building a platform where third-party sellers list and sell their own products (not your inventory)
 - When you need the platform to collect payment from buyers and distribute funds to sellers minus a commission
 - When sellers need their own dashboard to manage listings, view orders, and track earnings
-- When complying with KYC (Know Your Customer) requirements by offloading identity verification to Stripe Connect
+- When complying with KYC (Know Your Customer) requirements for seller identity verification
 - When designing the commission structure (percentage, tiered, category-based) and payout schedule
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
-**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
 
 ## Core Instructions
 
-1. **Model sellers and their commission structure**
+### Step 1: Determine your platform and choose the right marketplace tool
 
-   ```sql
-   CREATE TABLE sellers (
-     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name              VARCHAR(128) NOT NULL,
-     user_id           UUID NOT NULL UNIQUE REFERENCES users(id),
-     stripe_account_id VARCHAR(64),       -- Stripe Connect account ID
-     status            VARCHAR(16) NOT NULL DEFAULT 'pending'
-                         CHECK (status IN ('pending', 'active', 'suspended', 'deactivated')),
-     commission_type   VARCHAR(16) NOT NULL DEFAULT 'percentage'
-                         CHECK (commission_type IN ('percentage', 'fixed', 'tiered')),
-     commission_rate   NUMERIC(5,2) NOT NULL DEFAULT 15.00, -- 15%
-     payout_schedule   VARCHAR(16) NOT NULL DEFAULT 'weekly'
-                         CHECK (payout_schedule IN ('daily', 'weekly', 'monthly', 'manual')),
-     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Multi Vendor Marketplace by Webkul or BOLD Multi-Vendor | Webkul's app adds seller accounts, product management, commission rules, and a seller dashboard to Shopify without replacing the storefront |
+| **WooCommerce** | Dokan Multi-Vendor (most popular, 60K+ installs) or WC Vendors | Dokan is purpose-built for WooCommerce marketplaces with seller onboarding, commission management, payout requests, and a seller dashboard |
+| **BigCommerce** | Multi Vendor Marketplace by Webkul (BigCommerce version) | Webkul has a BigCommerce version of their marketplace app |
+| **Custom / Headless** | Build seller accounts + Stripe Connect for KYC and payouts | Stripe Connect handles KYC, bank account collection, and 1099-K tax forms — use it for any custom marketplace |
 
-   CREATE TABLE seller_earnings (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     seller_id       UUID NOT NULL REFERENCES sellers(id),
-     order_id        UUID NOT NULL REFERENCES orders(id),
-     gross_amount    INTEGER NOT NULL,   -- cents: what buyer paid for seller's items
-     commission      INTEGER NOT NULL,   -- cents: platform's cut
-     net_amount      INTEGER NOT NULL,   -- cents: gross - commission
-     status          VARCHAR(16) NOT NULL DEFAULT 'pending'
-                       CHECK (status IN ('pending', 'held', 'available', 'paid_out')),
-     available_at    TIMESTAMPTZ NOT NULL, -- when funds become available for payout (e.g. after return window)
-     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+### Step 2: Set up seller onboarding and KYC
 
-   CREATE TABLE payouts (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     seller_id       UUID NOT NULL REFERENCES sellers(id),
-     amount          INTEGER NOT NULL,   -- cents
-     stripe_payout_id VARCHAR(64),
-     status          VARCHAR(16) NOT NULL DEFAULT 'pending'
-                       CHECK (status IN ('pending', 'processing', 'paid', 'failed')),
-     period_start    DATE NOT NULL,
-     period_end      DATE NOT NULL,
-     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
-   ```
+KYC (Know Your Customer) is required to verify seller identity before you can legally send them payments. Using Stripe Connect for this is strongly recommended — building it yourself is expensive and legally complex.
 
-2. **Onboard a seller with Stripe Connect**
+#### Shopify — Multi Vendor Marketplace by Webkul
 
-   ```typescript
-   import Stripe from 'stripe';
-   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+1. Install **Multi Vendor Marketplace** by Webkul from the Shopify App Store
+2. Sellers register via a seller signup form (customizable URL, e.g., `yourstore.com/seller/register`)
+3. You approve seller applications manually in the Webkul admin — review the seller profile before approval
+4. Connect Webkul to **Stripe Connect** for payouts: go to Webkul → Settings → Payment → Stripe Connect and enter your Stripe credentials
+5. When you approve a seller, Webkul sends them an onboarding email with a link to connect their Stripe account (Stripe Express account — Stripe handles KYC and bank details)
+6. Seller is live once their Stripe Express account is verified (Stripe notifies you via webhook)
 
-   async function createSellerOnboardingLink(sellerId: string): Promise<string> {
-     const seller = await db.sellers.findById(sellerId);
+#### WooCommerce — Dokan Multi-Vendor
 
-     // Create a Stripe Express account if not already linked
-     let stripeAccountId = seller.stripe_account_id;
-     if (!stripeAccountId) {
-       const account = await stripe.accounts.create({
-         type: 'express',
-         capabilities: { transfers: { requested: true } },
-         settings: {
-           payouts: { schedule: { interval: seller.payout_schedule as any } },
-         },
-       });
-       stripeAccountId = account.id;
-       await db.sellers.update(sellerId, { stripe_account_id: stripeAccountId });
-     }
+1. Install **Dokan Multi-Vendor Plugin** from WordPress.org (free) or Dokan.com (pro)
+2. Enable seller registration: go to **Dokan → Settings → General → Allow Registration**
+3. Customize the seller registration form with required fields (business name, tax ID, bank info)
+4. For KYC: Dokan Pro integrates with **Stripe Connect** — go to Dokan → Settings → Withdrawal → Stripe Connect and enter your Stripe platform credentials
+5. Sellers connect their bank accounts via the Stripe Connect onboarding flow built into Dokan
+6. In Dokan → Vendors, approve or reject seller applications manually
 
-     // Generate an onboarding link (valid for 24 hours)
-     const link = await stripe.accountLinks.create({
-       account: stripeAccountId,
-       refresh_url: `${process.env.APP_URL}/seller/onboarding?refresh=true`,
-       return_url: `${process.env.APP_URL}/seller/onboarding/complete`,
-       type: 'account_onboarding',
-     });
-
-     return link.url;
-   }
-
-   // Webhook handler for when a seller completes onboarding
-   async function handleStripeAccountUpdated(account: Stripe.Account): Promise<void> {
-     const seller = await db.sellers.findByStripeAccountId(account.id);
-     if (!seller) return;
-
-     const isActive = account.charges_enabled && account.payouts_enabled;
-     if (isActive && seller.status !== 'active') {
-       await db.sellers.update(seller.id, { status: 'active' });
-       await emailService.send({
-         to: seller.email,
-         template: 'seller-account-approved',
-         data: { sellerName: seller.name },
-       });
-     }
-   }
-   ```
-
-3. **Calculate and record commission on each order**
-
-   ```typescript
-   async function recordSellerEarning(
-     orderId: string,
-     sellerId: string,
-     grossAmountCents: number
-   ): Promise<void> {
-     const seller = await db.sellers.findById(sellerId);
-
-     const commission = calculateCommission(seller, grossAmountCents);
-     const netAmount = grossAmountCents - commission;
-
-     // Funds available after return window (e.g., 30 days)
-     const availableAt = new Date();
-     availableAt.setDate(availableAt.getDate() + 30);
-
-     await db.sellerEarnings.insert({
-       seller_id: sellerId,
-       order_id: orderId,
-       gross_amount: grossAmountCents,
-       commission,
-       net_amount: netAmount,
-       status: 'held',
-       available_at: availableAt,
-     });
-   }
-
-   function calculateCommission(seller: Seller, grossAmountCents: number): number {
-     if (seller.commission_type === 'percentage') {
-       return Math.round(grossAmountCents * (seller.commission_rate / 100));
-     }
-     if (seller.commission_type === 'fixed') {
-       return seller.commission_rate * 100; // fixed fee in cents
-     }
-     if (seller.commission_type === 'tiered') {
-       return calculateTieredCommission(grossAmountCents);
-     }
-     return 0;
-   }
-
-   function calculateTieredCommission(grossCents: number): number {
-     // Example tiered structure
-     const tiers = [
-       { upTo: 1000_00, rate: 0.20 },   // 20% on first $1,000
-       { upTo: 10000_00, rate: 0.15 },  // 15% on $1,000–$10,000
-       { upTo: Infinity, rate: 0.10 },  // 10% above $10,000
-     ];
-     let commission = 0;
-     let remaining = grossCents;
-     for (const tier of tiers) {
-       if (remaining <= 0) break;
-       const inTier = Math.min(remaining, tier.upTo);
-       commission += Math.round(inTier * tier.rate);
-       remaining -= inTier;
-     }
-     return commission;
-   }
-   ```
-
-4. **Process weekly payouts to sellers via Stripe Connect transfers**
-
-   ```typescript
-   async function processWeeklyPayouts(): Promise<void> {
-     const sellers = await db.sellers.findAll({ status: 'active', payout_schedule: 'weekly' });
-
-     for (const seller of sellers) {
-       const periodEnd = new Date();
-       const periodStart = new Date(periodEnd);
-       periodStart.setDate(periodStart.getDate() - 7);
-
-       // Sum all available (not yet paid out) earnings
-       const earnings = await db.sellerEarnings.findAll({
-         seller_id: seller.id,
-         status: 'available',
-         available_at: { lte: periodEnd },
-       });
-
-       if (earnings.length === 0) continue;
-
-       const totalAmount = earnings.reduce((s, e) => s + e.net_amount, 0);
-       if (totalAmount < 100) continue; // minimum payout $1.00
-
-       const payout = await db.payouts.insert({
-         seller_id: seller.id,
-         amount: totalAmount,
-         status: 'pending',
-         period_start: periodStart.toISOString().slice(0, 10),
-         period_end: periodEnd.toISOString().slice(0, 10),
-       });
-
-       try {
-         // Transfer funds from your platform's Stripe balance to the seller's Express account
-         const transfer = await stripe.transfers.create({
-           amount: totalAmount,
-           currency: 'usd',
-           destination: seller.stripe_account_id,
-           metadata: { payout_id: payout.id, seller_id: seller.id },
-         });
-
-         await db.transaction(async tx => {
-           await tx.payouts.update(payout.id, { status: 'paid', stripe_payout_id: transfer.id });
-           await tx.sellerEarnings.updateMany(earnings.map(e => e.id), { status: 'paid_out' });
-         });
-       } catch (err) {
-         await db.payouts.update(payout.id, { status: 'failed' });
-         console.error(`Payout failed for seller ${seller.id}:`, err);
-       }
-     }
-   }
-   ```
-
-5. **Seller dashboard — earnings summary**
-
-   ```typescript
-   // GET /api/seller/earnings
-   app.get('/api/seller/earnings', requireSellerAuth, async (req, res) => {
-     const sellerId = req.seller.id;
-
-     const [summary, recentPayouts] = await Promise.all([
-       db.raw(`
-         SELECT
-           SUM(CASE WHEN status = 'available' THEN net_amount ELSE 0 END) AS available_balance,
-           SUM(CASE WHEN status = 'held' THEN net_amount ELSE 0 END) AS held_balance,
-           SUM(CASE WHEN status = 'paid_out' THEN net_amount ELSE 0 END) AS total_paid_out,
-           SUM(commission) AS total_commission_paid,
-           SUM(gross_amount) AS total_gmv
-         FROM seller_earnings
-         WHERE seller_id = ?
-       `, [sellerId]).then(r => r.rows[0]),
-
-       db.payouts.findAll({ seller_id: sellerId }).orderBy('created_at', 'desc').limit(10),
-     ]);
-
-     res.json({ summary, recentPayouts });
-   });
-   ```
-
-## Examples
-
-### Multi-seller order — split payment using Stripe Connect
+#### Custom / Headless — Stripe Connect for KYC
 
 ```typescript
-// For an order with items from multiple sellers, use Stripe PaymentIntent with transfer_group
-const paymentIntent = await stripe.paymentIntents.create({
-  amount: totalOrderCents,
-  currency: 'usd',
-  transfer_group: orderId, // group all transfers for this order
-  automatic_payment_methods: { enabled: true },
-  metadata: { order_id: orderId },
-});
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-// After payment confirms, create transfers to each seller
-for (const [sellerId, amount] of sellerAmounts) {
-  const seller = await db.sellers.findById(sellerId);
-  const commission = calculateCommission(seller, amount);
-  await stripe.transfers.create({
-    amount: amount - commission,
-    currency: 'usd',
-    destination: seller.stripe_account_id,
-    transfer_group: orderId,
+// Create a Stripe Express account for a new seller and return the onboarding URL
+async function onboardSeller(sellerId: string, sellerEmail: string): Promise<string> {
+  // Create the Stripe Express account
+  const account = await stripe.accounts.create({
+    type: 'express',
+    email: sellerEmail,
+    capabilities: {
+      transfers: { requested: true },
+    },
   });
+
+  // Store the Stripe account ID on the seller record
+  await db.sellers.update(sellerId, { stripe_account_id: account.id });
+
+  // Generate the onboarding link (valid for 24 hours)
+  const accountLink = await stripe.accountLinks.create({
+    account: account.id,
+    refresh_url: `${process.env.APP_URL}/seller/onboarding/refresh`,
+    return_url: `${process.env.APP_URL}/seller/onboarding/complete`,
+    type: 'account_onboarding',
+  });
+
+  return accountLink.url; // send this URL to the seller
+}
+
+// Webhook handler: activate seller when Stripe confirms KYC is complete
+async function handleStripeAccountUpdated(account: Stripe.Account): Promise<void> {
+  const seller = await db.sellers.findByStripeAccountId(account.id);
+  if (!seller) return;
+
+  if (account.charges_enabled && account.payouts_enabled && seller.status !== 'active') {
+    await db.sellers.update(seller.id, { status: 'active' });
+    // Send welcome email to seller
+  }
 }
 ```
 
-### Commission analytics
+### Step 3: Set up product listings per seller
 
-```sql
-SELECT
-  s.name AS seller,
-  COUNT(DISTINCT se.order_id) AS orders,
-  SUM(se.gross_amount) / 100.0 AS gmv,
-  SUM(se.commission) / 100.0 AS commission_earned,
-  SUM(se.net_amount) / 100.0 AS seller_earnings,
-  ROUND(AVG(se.commission::numeric / se.gross_amount * 100), 1) AS avg_commission_pct
-FROM seller_earnings se
-JOIN sellers s ON s.id = se.seller_id
-WHERE se.created_at >= NOW() - INTERVAL '30 days'
-GROUP BY s.id, s.name
-ORDER BY gmv DESC;
+#### Shopify (Webkul)
+
+1. Approved sellers log in to their Seller Dashboard at `yourstore.com/seller/dashboard`
+2. Sellers add products from their dashboard — products are submitted to you for approval before going live (configurable in Webkul settings)
+3. You control whether sellers can set their own prices or if all prices need your approval
+4. Product images, descriptions, and inventory are all managed by the seller from their dashboard
+
+#### WooCommerce (Dokan)
+
+1. Sellers access their store dashboard at `yourstore.com/dashboard`
+2. Sellers add products from Dokan → Products → Add New
+3. Enable "Product Review" in Dokan settings to require your approval before new products go live
+4. Sellers manage their own inventory counts, product variations, and prices
+5. In Dokan Pro, you can set commission rates at the product level, category level, or globally
+
+### Step 4: Configure commission rules and payouts
+
+#### Shopify (Webkul)
+
+1. Go to **Webkul → Commission** to set commission rates:
+   - Global commission: e.g., 15% on all sales
+   - Seller-specific: override for specific sellers (e.g., 10% for VIP sellers)
+   - Category-specific: different rates by product category
+2. Commissions are deducted automatically from each order when paid
+3. Seller earnings are tracked in Webkul → Payments → Seller Transactions
+4. To pay out sellers: go to Webkul → Payments → Process Payout. Select sellers and click Process via Stripe Connect — funds transfer from your Stripe balance to the seller's connected account
+
+#### WooCommerce (Dokan)
+
+1. Go to **Dokan → Settings → Selling → Commission** to set the global commission rate
+2. Override per-seller in Dokan → Vendors → [Seller] → Commission
+3. Sellers request withdrawals from their dashboard (Dokan → Withdraw Requests)
+4. You approve withdrawal requests in Dokan → Withdraw Requests → Pending
+5. For automated payouts via Stripe: Dokan Pro's Stripe Connect module automatically processes approved withdrawal requests
+
+#### Custom / Headless — commission and payout logic
+
+```typescript
+// Calculate commission and record seller earnings when an order is paid
+async function recordSellerEarning(params: {
+  orderId: string;
+  sellerId: string;
+  grossAmountCents: number;  // what buyer paid for this seller's items
+  commissionRate: number;    // e.g., 0.15 for 15%
+}): Promise<void> {
+  const commissionCents = Math.round(params.grossAmountCents * params.commissionRate);
+  const netAmountCents = params.grossAmountCents - commissionCents;
+
+  // Funds held until return window closes (e.g., 30 days)
+  const availableAt = new Date();
+  availableAt.setDate(availableAt.getDate() + 30);
+
+  await db.sellerEarnings.insert({
+    seller_id: params.sellerId,
+    order_id: params.orderId,
+    gross_amount_cents: params.grossAmountCents,
+    commission_cents: commissionCents,
+    net_amount_cents: netAmountCents,
+    status: 'held',             // becomes 'available' after return window
+    available_at: availableAt,
+  });
+}
+
+// Transfer available earnings to seller's Stripe account
+async function payoutSeller(sellerId: string): Promise<void> {
+  const seller = await db.sellers.findById(sellerId);
+  const availableEarnings = await db.sellerEarnings.findAll({
+    seller_id: sellerId,
+    status: 'available',
+    available_at: { lte: new Date() },
+  });
+
+  const totalCents = availableEarnings.reduce((s, e) => s + e.net_amount_cents, 0);
+  if (totalCents < 100) return; // minimum payout $1.00
+
+  // Transfer from your Stripe balance to seller's connected account
+  const transfer = await stripe.transfers.create({
+    amount: totalCents,
+    currency: 'usd',
+    destination: seller.stripe_account_id,
+    metadata: { seller_id: sellerId },
+  });
+
+  // Mark earnings as paid out
+  await db.sellerEarnings.updateMany(
+    availableEarnings.map(e => e.id),
+    { status: 'paid_out' }
+  );
+}
 ```
+
+### Step 5: Set up seller dashboards
+
+#### Shopify (Webkul)
+
+- Sellers access a Webkul-provided dashboard at `yourstore.com/seller/dashboard` showing: orders, products, earnings summary, and payout history
+- Customize the dashboard appearance (colors, logo) in Webkul → Settings → Dashboard
+
+#### WooCommerce (Dokan)
+
+- Dokan provides a full frontend dashboard at `yourstore.com/dashboard` with: sales analytics, product management, withdrawal requests, and order management
+- The dashboard is highly customizable via Dokan's template overrides
 
 ## Best Practices
 
-- **Use Stripe Connect Express accounts** — Express handles KYC, bank account collection, and tax form (1099-K) generation; building this yourself is expensive and legally complex
-- **Hold funds for the return window** — don't release earnings to sellers until the buyer's return window closes; releasing early means the platform absorbs refund losses if a buyer returns
-- **Compute commission in a database transaction with the order** — record the `seller_earnings` row atomically with the order confirmation; never compute it asynchronously from a queue that might fail
-- **Implement seller suspension without breaking existing payouts** — setting `status = 'suspended'` should prevent new listings but not block processing of already-queued payouts for completed orders
-- **Send payout summaries by email** — sellers should receive a weekly email summarizing orders, commissions deducted, and the payout amount; transparency builds trust
-- **Log every commission calculation** — store the inputs (gross amount, commission type, rate) with the result; commission disputes are common and you need the receipt
-- **Cap commission on shipping** — many marketplace models only take commission on product price, not shipping costs; structure your `gross_amount` calculation accordingly
+- **Use Stripe Connect Express for all seller payouts** — Express handles KYC, bank account verification, and IRS 1099-K reporting; building this yourself is expensive and legally risky
+- **Hold funds for the return window** — don't release earnings to sellers until the buyer's return window closes; releasing early means the platform absorbs refund losses
+- **Record commission in the same transaction as order confirmation** — never compute commission asynchronously from a queue that might fail; the earning record must be atomic with the order
+- **Send payout summaries to sellers by email** — weekly earnings summaries with order-level detail build seller trust and reduce support contacts
+- **Block seller publishing until Stripe onboarding is complete** — check `charges_enabled && payouts_enabled` on the Stripe account before allowing a seller to publish listings
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Payout fails but earnings are already marked `paid_out` | Update payout status and earning status in the same transaction; only mark `paid_out` after Stripe confirms the transfer |
-| Platform pays out before the buyer's payment clears | Use `payment_intent.succeeded` webhook as the trigger for `recordSellerEarning`, never the checkout session creation |
-| Seller disputes commission amount after payout | Store commission rate and calculation method at the time of each earning record; the dispute resolution is: show them the `seller_earnings` row |
-| Stripe Connect account not fully onboarded before first sale | Check `charges_enabled && payouts_enabled` before allowing a seller to go live; block listing publication until onboarding is complete |
+| Payout fails but earnings marked as paid | In Stripe Connect, use the `transfer.created` webhook to confirm success before marking earnings as `paid_out`; never mark paid-out in the same call that initiates the transfer |
+| Platform pays out before buyer payment clears | Only trigger payout eligibility from the `payment_intent.succeeded` webhook, not from checkout session creation |
+| Seller lists products before KYC is verified | Check Stripe account status (`charges_enabled && payouts_enabled`) before allowing product publication; Webkul and Dokan do this automatically |
+| Seller disputes commission deduction | Store the commission rate and gross amount on every `seller_earning` record; show sellers their commission calculation history in the seller dashboard |
 
 ## Related Skills
 
 - @multi-channel-selling
 - @vendor-management
-- @stripe-integration
 - @b2b-commerce
 - @order-management-system

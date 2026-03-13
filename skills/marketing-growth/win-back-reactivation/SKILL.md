@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [win-back, reactivation, retention]
 triggers: ["win back inactive customers", "reactivation campaign"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Lapsed customers — those who have not purchased within 2x their typical repurchase cycle — represent a significant revenue recovery opportunity because they already know your brand. Win-back campaigns targeting these customers typically yield 5–15% reactivation rates, compared to 1–3% for cold prospecting. This skill covers identifying lapsed segments with RFM scoring, building escalating win-back sequences, personalizing offers based on previous purchase history, and knowing when to sunset unresponsive customers.
+Lapsed customers — those who have not purchased within 2× their typical repurchase cycle — represent a high-ROI recovery opportunity because they already know your brand. Win-back campaigns targeting these customers typically yield 5–15% reactivation rates, compared to 1–3% for cold prospecting. For Shopify, Klaviyo's predictive churn risk segment automates lapsed customer identification without manual RFM scoring. For WooCommerce, AutomateWoo provides a dedicated "Win Back" automation trigger. The strategic work is structuring a three-step email sequence, personalizing offers by customer LTV, and sunsetting contacts who remain unresponsive.
 
 ## When to Use This Skill
 
@@ -28,264 +28,149 @@ Lapsed customers — those who have not purchased within 2x their typical repurc
 - When lifecycle marketing is in place but there is no specific win-back workflow
 - When wanting to identify which lapsed customers are worth discounting vs. sunsetting
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, email/SMS automation platform (Klaviyo or similar), customer purchase history and inactivity data
-
 ## Core Instructions
 
-### 1. Define lapsed customer segments
+### Step 1: Choose your win-back automation tool
 
-```typescript
-interface LapsedSegment {
-  name:        string;
-  minDaysSince: number;  // days since last order
-  maxDaysSince: number;
-  offerStrength: 'soft' | 'medium' | 'strong';  // determines incentive level
-  channel:     ('email' | 'sms' | 'paid-retargeting')[];
-}
+| Platform | Recommended Tool | Why | Price |
+|----------|-----------------|-----|-------|
+| **Shopify** | Klaviyo | Predictive churn risk segment built-in; syncs Shopify orders natively | Free up to 500 contacts; $20+/mo |
+| **WooCommerce** | AutomateWoo | Native "Win Back" trigger based on days since last order | $99/yr |
+| **BigCommerce** | Klaviyo | Same as Shopify — Klaviyo has a native BigCommerce integration | Free up to 500 contacts; $20+/mo |
+| **Any platform** | Drip | Ecommerce-focused automation with built-in win-back workflow templates | $39+/mo |
 
-const LAPSED_SEGMENTS: LapsedSegment[] = [
-  {
-    name:         'early-lapsed',
-    minDaysSince: 60,
-    maxDaysSince: 120,
-    offerStrength: 'soft',
-    channel:      ['email'],
-  },
-  {
-    name:         'mid-lapsed',
-    minDaysSince: 121,
-    maxDaysSince: 180,
-    offerStrength: 'medium',
-    channel:      ['email', 'sms'],
-  },
-  {
-    name:         'deep-lapsed',
-    minDaysSince: 181,
-    maxDaysSince: 365,
-    offerStrength: 'strong',
-    channel:      ['email', 'sms', 'paid-retargeting'],
-  },
-];
+**Recommendation:** If you already use Klaviyo for cart abandonment or post-purchase flows, add win-back there — no additional tool needed. If you are on WooCommerce without Klaviyo, AutomateWoo is the most cost-effective option.
 
-async function getLapsedCustomers(segment: LapsedSegment): Promise<Customer[]> {
-  const minDate = subDays(new Date(), segment.maxDaysSince);
-  const maxDate = subDays(new Date(), segment.minDaysSince);
+### Step 2: Set up lapsed customer segments
 
-  return db.customers.findAll({
-    where: {
-      lastOrderAt: { gte: minDate, lte: maxDate },
-      emailVerified: true,
-      smsMarketingOptIn: segment.channel.includes('sms') ? true : undefined,
-    },
-    include: ['orders'],
-    orderBy: { totalSpend: 'desc' },
-  });
-}
-```
+---
 
-### 2. Personalized win-back offer selection
+#### Shopify / BigCommerce with Klaviyo
 
-```typescript
-async function selectWinBackOffer(customerId: string, offerStrength: LapsedSegment['offerStrength']) {
-  const customer = await db.customers.findById(customerId);
-  const orders   = await db.orders.findByCustomer(customerId, { orderBy: { createdAt: 'desc' }, limit: 5 });
-  const ltv      = orders.reduce((sum, o) => sum + o.subtotal, 0);
+Klaviyo includes a **Predictive Churn Risk** property on every customer profile, calculated automatically from purchase history. No manual RFM setup required.
 
-  // High LTV customers get better offers
-  const isHighValue = ltv >= 300;
+1. In Klaviyo, go to **Lists & Segments → Create Segment**
+2. Create three segments using **Properties about someone**:
 
-  const offerMap = {
-    soft:   isHighValue ? { type: 'free_shipping', value: 0 }        : null,
-    medium: isHighValue ? { type: 'percent_off', value: 15 }         : { type: 'percent_off', value: 10 },
-    strong: isHighValue ? { type: 'percent_off', value: 20 }         : { type: 'percent_off', value: 15 },
-  };
+   **Early Lapsed (60–120 days):**
+   - Predictive Churn Risk `equals` `High`
+   - AND Date of last order `is between` `120 days ago` and `60 days ago`
+   - AND Email marketing consent `is` `subscribed`
 
-  return offerMap[offerStrength];
-}
+   **Mid-Lapsed (121–180 days):**
+   - Predictive Churn Risk `equals` `High`
+   - AND Date of last order `is between` `180 days ago` and `121 days ago`
 
-// Get personalized product recommendations based on past purchases
-async function getWinBackRecommendations(customerId: string): Promise<Product[]> {
-  const recentPurchases = await db.orderLineItems.findByCustomer(customerId, { limit: 10 });
-  const purchasedIds    = recentPurchases.map(i => i.productId);
-  const categories      = recentPurchases.map(i => i.product.categoryId);
+   **Deep-Lapsed (181–365 days):**
+   - Predictive Churn Risk `equals` `High`
+   - AND Date of last order `is between` `365 days ago` and `181 days ago`
 
-  // Find top-selling products in same categories not previously purchased
-  return db.products.findAll({
-    where: {
-      categoryId:  { in: categories },
-      id:          { notIn: purchasedIds },
-      active:      true,
-      stockQuantity: { gt: 0 },
-    },
-    orderBy: { unitsSold30d: 'desc' },
-    limit: 3,
-  });
-}
-```
+3. Alternatively, use Klaviyo's pre-built **Winback** flow template: go to **Flows → Create Flow → Browse Templates** → search "Win Back" → the template creates segments and email sequence automatically
 
-### 3. Win-back email sequence
+---
 
-```typescript
-async function triggerWinBackSequence(customerId: string, segment: LapsedSegment) {
-  // Check for existing active win-back job
-  const existing = await db.winBackJobs.findOne({
-    where: {
-      customerId,
-      status:    'active',
-      createdAt: { gte: subDays(new Date(), 30) },
-    },
-  });
-  if (existing) return;
+#### WooCommerce with AutomateWoo
 
-  const offer = await selectWinBackOffer(customerId, segment.offerStrength);
-  const recommendations = await getWinBackRecommendations(customerId);
+1. Go to **WordPress Admin → AutomateWoo → Workflows → Add Workflow**
+2. Set the trigger to **Win Back Inactive Customer**
+3. Configure trigger settings:
+   - **Days since last order:** set to `60` for early-lapsed, create a second workflow at `120` for deeper lapsed
+   - **Order status:** `completed`
+4. Add a **Send Email** action for each step in the sequence
+5. AutomateWoo automatically excludes customers who have placed an order since the workflow started — no manual cancellation needed
 
-  let discountCode: string | null = null;
-  if (offer) {
-    discountCode = await createUniqueDiscount({
-      ...offer,
-      customerId,
-      expiresAt: addDays(new Date(), 14),
-      singleUse: true,
-    });
-  }
+---
 
-  const job = await db.winBackJobs.create({ customerId, segment: segment.name, status: 'active' });
+#### Manual segmentation (any platform)
 
-  // Step 1: Reconnect — "We miss you" message, no hard sell
-  await winBackQueue.add('send', {
-    customerId, jobId: job.id, step: 0, segment: segment.name,
-    template: 'winback-reconnect', recommendations,
-    discountCode: null,  // No discount on first touch
-  }, { delay: 0, jobId: `winback-${customerId}-step0` });
+If you do not use an automation tool, export your customer list filtered by last order date:
 
-  // Step 2 (5 days later): Product highlights + offer
-  await winBackQueue.add('send', {
-    customerId, jobId: job.id, step: 1, segment: segment.name,
-    template: 'winback-offer', recommendations, discountCode,
-  }, { delay: 5 * 86400000, jobId: `winback-${customerId}-step1` });
+- **Shopify:** go to **Customers → All customers** → use the date filter "Last order date is before [date]" → export as CSV → import into your email platform
+- **WooCommerce:** go to **WooCommerce → Reports → Customers** → filter by last active date
+- **BigCommerce:** go to **Customers → Export** and filter by last order date in your spreadsheet
 
-  // Step 3 (12 days later): Last chance — offer expires soon
-  if (discountCode) {
-    await winBackQueue.add('send', {
-      customerId, jobId: job.id, step: 2, segment: segment.name,
-      template: 'winback-last-chance', discountCode,
-      expiresInDays: 2,
-    }, { delay: 12 * 86400000, jobId: `winback-${customerId}-step2` });
-  }
-}
-```
+### Step 3: Build the win-back email sequence
 
-### 4. Cancel win-back on purchase
+A three-email sequence performs better than a single message. The sequence escalates from warm reconnection to an explicit offer to a last-chance message:
 
-```typescript
-async function onOrderPaid(order: Order) {
-  const customerId = order.customerId;
+| Step | Timing | Goal | Discount |
+|------|--------|------|----------|
+| Email 1: "We've missed you" | Immediately | Warm reconnect, no hard sell | None — highlight new arrivals |
+| Email 2: "Here's something for you" | Day 5 | Product highlights + offer | 10–15% off or free shipping |
+| Email 3: "Last chance" | Day 12 | Create urgency — offer expires soon | Same code, "expires in 48 hours" |
 
-  // Cancel all pending win-back jobs
-  for (let step = 0; step <= 3; step++) {
-    const job = await winBackQueue.getJob(`winback-${customerId}-step${step}`);
-    await job?.remove();
-  }
+**Subject line examples that work:**
+- Email 1: "It's been a while, [first name]" / "We've been thinking about you"
+- Email 2: "Still thinking about [last purchased category]?" / "A little something for your return"
+- Email 3: "Your offer expires tomorrow" / "This is our last email — we mean it"
 
-  // Mark win-back job as converted
-  await db.winBackJobs.updateWhere(
-    { customerId, status: 'active' },
-    { status: 'converted', convertedAt: new Date(), convertedOrderId: order.id }
-  );
-}
-```
+**Klaviyo sequence setup:**
+1. Go to **Flows → Create Flow → Start from Scratch**
+2. Set the trigger to **Segment → [your lapsed segment]**
+3. Add **Email** → **Time Delay (5 days)** → **Email** → **Time Delay (7 days)** → **Email**
+4. Add a **Conditional Split** after Email 1: if the customer has placed an order since the flow started, exit them from the flow
+5. For the discount: go to **Content → Coupon Codes** → create a unique dynamic coupon for each recipient (Klaviyo generates unique single-use codes automatically)
 
-### 5. Email sunset — removing unresponsive contacts
+### Step 4: Personalize offers by customer LTV
 
-```typescript
-// After the full win-back sequence, sunset contacts who did not engage
-async function runSunsetWorkflow() {
-  const completedJobs = await db.winBackJobs.findAll({
-    where: {
-      status: 'active',
-      createdAt: { lt: subDays(new Date(), 30) },
-    },
-  });
+Not all lapsed customers deserve the same discount. Tailor the offer based on historical spend:
 
-  for (const job of completedJobs) {
-    const engaged = await db.emailEvents.findOne({
-      where: {
-        customerId: job.customerId,
-        type:       { in: ['open', 'click'] },
-        createdAt:  { gte: job.createdAt },
-      },
-    });
+**In Klaviyo:**
+- Use the **Historic Customer Lifetime Value** property in your email template
+- Create two versions of Email 2 using A/B test or conditional content blocks:
+  - **High LTV (over $300 lifetime):** free shipping + 15% off
+  - **Standard LTV (under $300):** 10% off
 
-    if (!engaged) {
-      // No opens or clicks in 30+ days — suppress from future campaigns
-      await db.customers.update(job.customerId, {
-        emailMarketingStatus: 'suppressed',
-        suppressedAt: new Date(),
-        suppressionReason: 'win-back-no-engagement',
-      });
+**In AutomateWoo:**
+- Add a **Check Customer Total Spent** condition to your workflow
+- If total spent `>` `300`: proceed to the high-value email variation
+- Otherwise: proceed to the standard email variation
 
-      // Send final "opt-in reconfirmation" before suppressing (best practice)
-      await sendEmail(job.customerId, 'email-suppression-notice', {
-        message: 'We will stop sending you emails unless you click to stay subscribed.',
-        resubscribeUrl: `${process.env.STORE_URL}/email/resubscribe/${job.customerId}`,
-      });
-    }
+### Step 5: Cancel win-back sequence on purchase
 
-    await db.winBackJobs.update(job.id, { status: 'completed' });
-  }
-}
-```
+This step prevents sending a discount email to a customer who already bought.
 
-### 6. Win-back campaign measurement
+**In Klaviyo:** Klaviyo handles this automatically — any profile that exits the lapsed segment (by making a purchase) immediately exits all active flows for that segment.
 
-```typescript
-async function getWinBackMetrics(segmentName: string, lookbackDays: number = 60) {
-  const jobs = await db.winBackJobs.findAll({
-    where: {
-      segment:   segmentName,
-      createdAt: { gte: subDays(new Date(), lookbackDays) },
-    },
-  });
+**In AutomateWoo:** the "Win Back Inactive Customer" trigger natively cancels pending workflow steps when an order is placed — no additional configuration needed.
 
-  const converted    = jobs.filter(j => j.status === 'converted');
-  const suppressed   = jobs.filter(j => j.status === 'completed');
+**Manual check (custom setups):** Before sending each email in your sequence, verify the customer's last order date is still beyond your lapse threshold. Cancel the remaining sequence if they have purchased.
 
-  return {
-    totalTargeted:     jobs.length,
-    reactivationRate:  converted.length / jobs.length,
-    suppressionRate:   suppressed.length / jobs.length,
-    revenueRecovered:  await db.orders.sumRevenue(converted.map(j => j.convertedOrderId!)),
-    avgDaysToConvert:  converted.reduce((sum, j) => sum + daysBetween(j.createdAt, j.convertedAt!), 0) / converted.length,
-  };
-}
-```
+### Step 6: Sunset unresponsive contacts
+
+Continuing to email completely unresponsive lapsed contacts hurts your sending domain's deliverability.
+
+**In Klaviyo:**
+1. Go to **Lists & Segments → Create Segment**:
+   - Email marketing consent `is` `subscribed`
+   - AND Last opened email `more than` `90 days ago`
+   - AND Last clicked email `more than` `90 days ago`
+   - AND Date of last order `more than` `180 days ago`
+2. Send a single **Re-permission email**: "We'll stop sending you emails unless you click to stay subscribed"
+3. Anyone who does not click within 14 days: go to the segment → **Manage Members → Suppress All** — this removes them from all future sends without deleting them
+4. Suppression is reversible — they can re-subscribe at any time
+
+**In AutomateWoo:**
+- Add a final step to your win-back workflow: after 30 days of no engagement, add the customer to an "unsubscribe" list or use the **Unsubscribe Customer** action
 
 ## Best Practices
 
-- **Lead with connection, not desperation** — the first message should feel warm ("We've missed you") rather than transactional ("Come back and buy"); aggressive discounts on message 1 train customers to wait
-- **Personalize with previous purchase context** — referencing what the customer previously bought increases open rates by 25–35% vs. generic "we miss you" subject lines
-- **Respect the email sunset** — continuing to email completely unresponsive contacts hurts domain reputation and deliverability; suppressing non-engagers is good hygiene
-- **Vary offer levels by LTV** — a $10 discount that wins back a $500 LTV customer is excellent ROI; the same discount on a $40 LTV customer barely covers the cost of acquisition
-- **Set re-entry criteria carefully** — after winning back a customer, move them back to "active" lifecycle stage and stop all win-back flows
-- **Use SMS as a supplement for mid-lapsed, not a primary channel** — SMS has high engagement but also high unsubscribe rates if used aggressively for lapsed contacts
+- **Lead with connection, not desperation** — the first message should feel warm ("We've missed you") rather than transactional; aggressive discounts on message 1 train customers to wait for the win-back offer
+- **Personalize with previous purchase context** — referencing what the customer previously bought increases open rates by 25–35% vs. generic "we miss you" subject lines; Klaviyo's `{{ event.extra.product_name }}` pulls last purchased product name automatically
+- **Respect the email sunset** — suppressing non-engagers after 90 days of inactivity protects your domain reputation and improves deliverability for everyone else
+- **Vary offer levels by LTV** — a 15% discount that wins back a $500 LTV customer is excellent ROI; the same discount on a $40 LTV customer barely covers the cost
+- **Set a 60-day cooldown** — after a completed win-back cycle (converted or suppressed), do not re-enter the customer into another win-back flow for at least 60 days
+- **Use SMS for mid-lapsed only** — SMS has high engagement but also high unsubscribe rates when used for lapsed contacts; reserve SMS for the mid-lapsed tier (121–180 days) where the customer relationship is still warm
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Win-back email sent the day after purchase | Always cancel win-back jobs in `order.paid` handler; also check last purchase date in the worker before sending |
-| Discount codes being passed around | Make all win-back codes single-use; lock to customer email or phone at creation |
-| Win-back sequence triggering on customers who just unsubscribed | Check email marketing status in the worker before every send |
-| Repeat win-back campaigns on the same customer every month | Set a 60-day cooldown after a completed win-back cycle regardless of outcome |
-| Low reactivation rate on deep-lapsed (180+ days) | Consider a "we're sorry, is everything okay?" tone for deep-lapsed; include a preference center link |
+| Win-back email sent the day after a purchase | Ensure exit conditions are set in Klaviyo flows; add a last-order-date check as a conditional split at every step |
+| Discount codes being shared publicly | Create all win-back codes as single-use in Klaviyo (dynamic coupon codes); Klaviyo generates a unique code per recipient automatically |
+| Win-back sequence triggering on customers who just unsubscribed | Klaviyo excludes suppressed profiles from all flows automatically; for manual setups, check consent status before every send |
+| Repeat win-back campaigns on the same customer every 30 days | Set a 60-day cooldown segment condition; exclude customers who have exited any win-back flow in the last 60 days |
+| Low reactivation rate on deep-lapsed (180+ days) | Try a "we're sorry, is everything okay?" empathetic tone for deep-lapsed; include a preference center link so they can choose email frequency rather than unsubscribing entirely |
 
 ## Related Skills
 

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [load-testing, artillery, k6, performance-testing, checkout-testing, stress-testing, capacity-planning]
 triggers: ["load testing ecommerce", "load test checkout", "performance testing commerce", "k6 ecommerce", "artillery load test", "stress test checkout", "capacity planning"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -26,443 +26,318 @@ Load testing e-commerce applications requires more than hammering an endpoint wi
 - When a production incident was caused by load and you need to reproduce it in staging
 - When a new checkout feature is being released and its performance impact is unknown
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify manages infrastructure, CDN, and scaling. Focus on Liquid template performance, image optimization via Shopify's CDN, and app performance.
-**WooCommerce**: You manage hosting and performance. Use caching plugins (WP Rocket, Redis Object Cache), CDN (Cloudflare), and optimize database queries.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your hosting/infrastructure, monitoring tools
-
 ## Core Instructions
 
-1. **Design realistic user scenarios**
+### Step 1: Determine your platform and what you can test
 
-   A realistic load test mirrors how shoppers actually behave. Most traffic is browsing; only a small percentage converts to checkout:
+| Platform | Load Testing Scope | Recommended Approach |
+|----------|-------------------|---------------------|
+| **Shopify** | Shopify's infrastructure scales automatically — you cannot overload it meaningfully | Test your theme's frontend performance with Google PageSpeed Insights and Lighthouse CI; test any custom apps or storefronts you host separately |
+| **WooCommerce** | You own the server — load testing is critical before sales events | Use **Loader.io** (free tier: 1 target, 10K connections/test) against your staging site; or k6/Artillery for detailed scenario testing |
+| **BigCommerce** | BigCommerce scales automatically — platform infrastructure is not a concern | Test your theme's frontend performance with PageSpeed Insights; test any custom middleware or headless layer you host |
+| **Custom / Headless** | Full control — load testing is your responsibility | Use k6 (open-source, scriptable) or Artillery (YAML-based) with realistic shopping scenarios against a staging environment |
 
-   ```javascript
-   // scenarios/shopping-weights.js
-   // Typical e-commerce traffic distribution:
-   // 60% — Browse catalog (homepage, category pages, search)
-   // 25% — View product details
-   // 10% — Add to cart, view cart
-   //  5% — Checkout (most valuable to test throughput)
-   ```
+### Step 2: Platform-specific load testing
 
-   k6 scenario definition:
+---
 
-   ```javascript
-   // k6/scenarios.js
-   export const options = {
-     scenarios: {
-       catalog_browsing: {
-         executor: 'ramping-arrival-rate',
-         startRate: 0,
-         timeUnit: '1s',
-         preAllocatedVUs: 50,
-         maxVUs: 200,
-         stages: [
-           {target: 100, duration: '2m'},  // Ramp up
-           {target: 100, duration: '5m'},  // Steady state
-           {target: 0,   duration: '1m'},  // Ramp down
-         ],
-         weight: 60,
-         exec: 'catalogBrowsing',
-       },
-       product_detail: {
-         executor: 'ramping-arrival-rate',
-         startRate: 0,
-         timeUnit: '1s',
-         preAllocatedVUs: 30,
-         maxVUs: 100,
-         stages: [
-           {target: 40, duration: '2m'},
-           {target: 40, duration: '5m'},
-           {target: 0,  duration: '1m'},
-         ],
-         exec: 'productDetail',
-       },
-       checkout_flow: {
-         executor: 'ramping-arrival-rate',
-         startRate: 0,
-         timeUnit: '1s',
-         preAllocatedVUs: 10,
-         maxVUs: 50,
-         stages: [
-           {target: 10, duration: '2m'},
-           {target: 10, duration: '5m'},
-           {target: 0,  duration: '1m'},
-         ],
-         exec: 'checkoutFlow',
-       },
-     },
-     thresholds: {
-       'http_req_duration{scenario:checkout_flow}': ['p(95)<3000'],
-       'http_req_failed{scenario:checkout_flow}': ['rate<0.01'],
-       'http_req_duration{scenario:catalog_browsing}': ['p(95)<1000'],
-     },
-   };
-   ```
+#### Shopify
 
-2. **Write a realistic k6 checkout scenario**
+Shopify's infrastructure handles virtually any traffic spike. Your load testing focus is the frontend experience:
 
-   ```javascript
-   // k6/checkout-flow.js
-   import http from 'k6/http';
-   import {check, sleep} from 'k6';
-   import {SharedArray} from 'k6/data';
+1. **Run Google PageSpeed Insights** on your most critical pages (product page, collection page, checkout):
+   - Go to [pagespeed.web.dev](https://pagespeed.web.dev) and test your product and collection pages
+   - Target a Performance score of 75+ on mobile; address any red/orange recommendations before your sale
 
-   const BASE_URL = __ENV.BASE_URL || 'https://staging.mystore.com';
+2. **Check Shopify's built-in performance report**:
+   - Go to **Online Store → Themes** and click **View report**
+   - This shows your store's Core Web Vitals (LCP, CLS, FID) based on real user data
+   - A poor LCP score on mobile almost always means the hero image needs `fetchpriority="high"` or compression
 
-   // Load test data (products, customer credentials) from a JSON file
-   const products = new SharedArray('products', function() {
-     return JSON.parse(open('./data/products.json'));
-   });
+3. **Audit your installed apps before a sale**:
+   - Go to **Apps** in your Shopify admin and review every app injecting scripts into your storefront
+   - Each third-party script adds 50–200ms; remove unused apps and disable any that load synchronously
 
-   export function checkoutFlow() {
-     const product = products[Math.floor(Math.random() * products.length)];
+4. **For Shopify Plus — notify Shopify support before major launches**:
+   - Submit a flash sale notification through your Plus support channel at least 48 hours before the event
+   - Shopify can pre-allocate resources and monitor your store during the event
 
-     // Step 1: View product page (simulates organic navigation)
-     const productRes = http.get(`${BASE_URL}/api/products/${product.id}`, {
-       tags: {step: 'view_product'},
-     });
-     check(productRes, {'product page 200': r => r.status === 200});
-     sleep(2 + Math.random() * 3); // Think time: 2-5 seconds
+---
 
-     // Step 2: Create or retrieve cart
-     const cartRes = http.post(`${BASE_URL}/api/cart`, JSON.stringify({
-       items: [{productId: product.id, variantId: product.defaultVariantId, quantity: 1}],
-     }), {
-       headers: {'Content-Type': 'application/json'},
-       tags: {step: 'add_to_cart'},
-     });
-     check(cartRes, {'add to cart 200': r => r.status === 200});
-     const cart = JSON.parse(cartRes.body);
-     sleep(1 + Math.random() * 2);
+#### WooCommerce
 
-     // Step 3: Start checkout
-     const checkoutRes = http.post(`${BASE_URL}/api/checkout/start`, JSON.stringify({
-       cartId: cart.id,
-       customer: {
-         email: `test-${Math.random().toString(36).substring(7)}@test-load.invalid`,
-         name: 'Test User',
-       },
-     }), {
-       headers: {'Content-Type': 'application/json'},
-       tags: {step: 'start_checkout'},
-     });
-     check(checkoutRes, {'checkout start 200': r => r.status === 200});
-     const checkout = JSON.parse(checkoutRes.body);
-     sleep(5 + Math.random() * 10); // Think time: filling form
+WooCommerce runs on your hosting infrastructure. Test against a staging environment that mirrors your production configuration (same PHP version, same MySQL version, same caching stack).
 
-     // Step 4: Submit order (with test payment token)
-     const orderRes = http.post(`${BASE_URL}/api/checkout/complete`, JSON.stringify({
-       checkoutId: checkout.id,
-       paymentToken: 'tok_visa', // Stripe test token
-       shippingMethodId: checkout.shippingMethods[0]?.id,
-     }), {
-       headers: {'Content-Type': 'application/json'},
-       tags: {step: 'place_order'},
-     });
-     check(orderRes, {
-       'order placed 201': r => r.status === 201,
-       'order has id': r => JSON.parse(r.body).orderId !== undefined,
-     });
-   }
+**Quick load test with Loader.io (no code required):**
 
-   export function catalogBrowsing() {
-     // Homepage
-     http.get(`${BASE_URL}/api/collections/featured`, {tags: {step: 'homepage'}});
-     sleep(2 + Math.random() * 3);
+1. Sign up at [loader.io](https://loader.io) (free tier: 1 target, 10K connections per test)
+2. Click **New Test** and enter your staging URL
+3. Configure a ramp test: start at 0 clients, ramp to your expected peak traffic over 60 seconds, hold for 120 seconds
+4. Loader.io provides a verification token — add it to a page on your staging site to confirm ownership
+5. Run the test against your **checkout page** specifically — product browse is usually cached; checkout hits the database
 
-     // Category page
-     const categories = ['t-shirts', 'hoodies', 'accessories'];
-     const category = categories[Math.floor(Math.random() * categories.length)];
-     http.get(`${BASE_URL}/api/collections/${category}?page=1&sort=popular`, {tags: {step: 'category'}});
-     sleep(3 + Math.random() * 5);
+**Interpret results:**
+- Response time under 3 seconds at peak: acceptable
+- Error rate above 1%: investigate server logs for PHP fatal errors, database timeouts, or memory exhaustion
+- If the server struggles at lower than expected traffic: upgrade your hosting tier or add Redis Object Cache before the sale
 
-     // Search
-     const terms = ['blue', 'summer', 'sale'];
-     const term = terms[Math.floor(Math.random() * terms.length)];
-     http.get(`${BASE_URL}/api/search?q=${term}`, {tags: {step: 'search'}});
-     sleep(1 + Math.random() * 2);
-   }
+**Before your test, ensure your staging stack is properly configured:**
+- Redis Object Cache is active (**Settings → Redis** — green status)
+- WP Rocket page cache is enabled and has warmed the most-visited product pages
+- You're testing against the same server size you'll run in production
 
-   export function productDetail() {
-     const product = products[Math.floor(Math.random() * products.length)];
-     http.get(`${BASE_URL}/api/products/${product.id}`, {tags: {step: 'product_detail'}});
-     sleep(4 + Math.random() * 8); // Shoppers spend time on product pages
-   }
-   ```
+---
 
-3. **Write an Artillery scenario for API load testing**
+#### Custom / Headless
 
-   ```yaml
-   # artillery/commerce-load-test.yml
-   config:
-     target: "{{ $processEnvironment.BASE_URL }}"
-     phases:
-       - name: "Warm-up"
-         duration: 60
-         arrivalRate: 5
-       - name: "Ramp up"
-         duration: 120
-         arrivalRate: 5
-         rampTo: 50
-       - name: "Peak load"
-         duration: 300
-         arrivalRate: 50
-       - name: "Spike"
-         duration: 30
-         arrivalRate: 200
-       - name: "Recovery"
-         duration: 60
-         arrivalRate: 20
-     defaults:
-       headers:
-         Content-Type: "application/json"
-     processor: "./processors/commerce-helpers.js"
+For custom storefronts, use k6 or Artillery against a staging environment that mirrors production.
 
-   scenarios:
-     - name: "Browse catalog"
-       weight: 60
-       flow:
-         - get:
-             url: "/api/collections/all?page=1"
-             capture:
-               json: "$.products[0].id"
-               as: "productId"
-         - think: 3
-         - get:
-             url: "/api/products/{{ productId }}"
+**Important before you start:**
+- Always test against **staging**, never production
+- Use test-mode payment tokens (Stripe: `tok_visa`) — never run load tests against real payment processors
+- Tag test orders with a recognizable email domain (e.g., `@test-load.invalid`) so you can bulk-delete them after
+- Reserve test products with unlimited inventory so the checkout scenario doesn't fail due to oversells
 
-     - name: "Search and browse"
-       weight: 20
-       flow:
-         - get:
-             url: "/api/search?q=shirt&page=1"
-             capture:
-               json: "$.results[0].id"
-               as: "productId"
-         - think: 2
-         - get:
-             url: "/api/products/{{ productId }}"
+**k6 realistic shopping scenarios:**
 
-     - name: "Complete checkout"
-       weight: 20
-       flow:
-         - function: "generateCheckoutData"
-         - post:
-             url: "/api/cart"
-             json:
-               productId: "{{ productId }}"
-               quantity: 1
-             capture:
-               json: "$.id"
-               as: "cartId"
-         - think: 8
-         - post:
-             url: "/api/checkout/start"
-             json:
-               cartId: "{{ cartId }}"
-               email: "{{ email }}"
-             capture:
-               json: "$.checkoutId"
-               as: "checkoutId"
-         - think: 10
-         - post:
-             url: "/api/checkout/complete"
-             json:
-               checkoutId: "{{ checkoutId }}"
-               paymentToken: "tok_visa"
-             expect:
-               - statusCode: 201
-   ```
-
-4. **Establish performance baselines**
-
-   ```bash
-   # Run baseline test and capture results
-   k6 run \
-     --env BASE_URL=https://staging.mystore.com \
-     --out json=results/baseline-$(date +%Y%m%d).json \
-     k6/checkout-flow.js
-
-   # Compare with a previous baseline (use k6 compare or custom script)
-   node scripts/compare-results.js \
-     results/baseline-20250301.json \
-     results/baseline-20250312.json
-   ```
-
-   ```typescript
-   // scripts/compare-results.ts
-   interface K6Result {
-     metrics: {
-       http_req_duration: {values: {'p(95)': number; 'p(99)': number; avg: number}};
-       http_req_failed: {values: {rate: number}};
-       iterations: {values: {rate: number}};
-     };
-   }
-
-   function compareBaselines(before: K6Result, after: K6Result) {
-     const p95Before = before.metrics.http_req_duration.values['p(95)'];
-     const p95After = after.metrics.http_req_duration.values['p(95)'];
-     const change = ((p95After - p95Before) / p95Before) * 100;
-
-     console.table({
-       'P95 Latency Before': `${p95Before}ms`,
-       'P95 Latency After': `${p95After}ms`,
-       'Change': `${change > 0 ? '+' : ''}${change.toFixed(1)}%`,
-       'Error Rate Before': `${(before.metrics.http_req_failed.values.rate * 100).toFixed(2)}%`,
-       'Error Rate After': `${(after.metrics.http_req_failed.values.rate * 100).toFixed(2)}%`,
-     });
-
-     if (change > 20) {
-       console.error('REGRESSION: P95 latency increased by more than 20%');
-       process.exit(1);
-     }
-   }
-   ```
-
-5. **Run load tests in CI with GitHub Actions**
-
-   ```yaml
-   # .github/workflows/load-test.yml
-   name: Load Test (Pre-Release)
-   on:
-     workflow_dispatch:
-       inputs:
-         target_url:
-           description: 'Target URL for load test'
-           required: true
-           default: 'https://staging.mystore.com'
-
-   jobs:
-     load-test:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-
-         - name: Install k6
-           run: |
-             curl -s https://dl.k6.io/key.gpg | sudo apt-key add -
-             echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-             sudo apt-get update && sudo apt-get install k6
-
-         - name: Run load test
-           env:
-             BASE_URL: ${{ github.event.inputs.target_url }}
-           run: |
-             k6 run \
-               --env BASE_URL=$BASE_URL \
-               --out json=results.json \
-               k6/checkout-flow.js
-
-         - name: Upload results
-           uses: actions/upload-artifact@v4
-           with:
-             name: load-test-results
-             path: results.json
-   ```
-
-6. **Analyze results and identify bottlenecks**
-
-   ```bash
-   # After running k6, analyze the JSON output
-   cat results.json | jq '
-     .metrics |
-     {
-       p95_ms: .http_req_duration.values["p(95)"],
-       p99_ms: .http_req_duration.values["p(99)"],
-       error_rate: .http_req_failed.values.rate,
-       rps: .http_reqs.values.rate,
-       vus_max: .vus_max.values.max
-     }
-   '
-
-   # Per-step breakdown using tags
-   cat results.json | jq '
-     [.data_points[] | select(.type=="Point" and .metric=="http_req_duration")]
-     | group_by(.tags.step)
-     | map({step: .[0].tags.step, p95: (map(.value) | sort | .[length * 0.95 | floor])})
-   '
-   ```
-
-## Examples
-
-### k6 script for search performance testing
+k6 uses a `ramping-arrival-rate` executor to control requests per second (more realistic than VU-based approaches). Typical e-commerce traffic distribution: 60% browse, 25% product detail, 10% cart, 5% checkout.
 
 ```javascript
-// k6/search-performance.js
+// k6/commerce-load-test.js
 import http from 'k6/http';
-import {check, sleep} from 'k6';
-import {Trend} from 'k6/metrics';
+import { check, sleep } from 'k6';
+import { SharedArray } from 'k6/data';
 
-const searchLatency = new Trend('search_latency');
+const BASE_URL = __ENV.BASE_URL || 'https://staging.mystore.com';
+
+const products = new SharedArray('products', function() {
+  return JSON.parse(open('./data/products.json')); // array of {id, defaultVariantId}
+});
 
 export const options = {
-  vus: 50,
-  duration: '2m',
+  scenarios: {
+    catalog_browsing: {
+      executor: 'ramping-arrival-rate',
+      startRate: 0, timeUnit: '1s',
+      preAllocatedVUs: 50, maxVUs: 200,
+      stages: [
+        { target: 60, duration: '2m' },  // Ramp up
+        { target: 60, duration: '5m' },  // Steady state
+        { target: 0,  duration: '1m' },  // Ramp down
+      ],
+      exec: 'catalogBrowsing',
+    },
+    checkout_flow: {
+      executor: 'ramping-arrival-rate',
+      startRate: 0, timeUnit: '1s',
+      preAllocatedVUs: 10, maxVUs: 50,
+      stages: [
+        { target: 5, duration: '2m' },
+        { target: 5, duration: '5m' },
+        { target: 0, duration: '1m' },
+      ],
+      exec: 'checkoutFlow',
+    },
+  },
   thresholds: {
-    search_latency: ['p(95)<500'],  // Search must complete in under 500ms
-    http_req_failed: ['rate<0.001'],
+    'http_req_duration{scenario:checkout_flow}': ['p(95)<3000'],
+    'http_req_failed{scenario:checkout_flow}': ['rate<0.01'],
+    'http_req_duration{scenario:catalog_browsing}': ['p(95)<1000'],
   },
 };
 
-const searchTerms = ['shirt', 'blue hoodie', 'summer dress', 'running shoes', 'gift'];
+export function catalogBrowsing() {
+  http.get(`${BASE_URL}/api/collections/featured`, { tags: { step: 'homepage' } });
+  sleep(2 + Math.random() * 3); // Think time: 2–5s
 
-export default function() {
-  const term = searchTerms[Math.floor(Math.random() * searchTerms.length)];
-  const start = Date.now();
+  const categories = ['t-shirts', 'hoodies', 'accessories'];
+  const category = categories[Math.floor(Math.random() * categories.length)];
+  http.get(`${BASE_URL}/api/collections/${category}?page=1&sort=popular`, { tags: { step: 'category' } });
+  sleep(3 + Math.random() * 5);
+}
 
-  const res = http.get(`${__ENV.BASE_URL}/api/search?q=${encodeURIComponent(term)}&limit=20`);
-  searchLatency.add(Date.now() - start);
+export function checkoutFlow() {
+  const product = products[Math.floor(Math.random() * products.length)];
 
-  check(res, {
-    'status 200': r => r.status === 200,
-    'has results': r => JSON.parse(r.body).results?.length > 0,
-    'response under 500ms': r => r.timings.duration < 500,
-  });
+  // View product
+  const productRes = http.get(`${BASE_URL}/api/products/${product.id}`, { tags: { step: 'view_product' } });
+  check(productRes, { 'product page 200': r => r.status === 200 });
+  sleep(2 + Math.random() * 3);
 
+  // Add to cart
+  const cartRes = http.post(`${BASE_URL}/api/cart`, JSON.stringify({
+    items: [{ productId: product.id, variantId: product.defaultVariantId, quantity: 1 }],
+  }), { headers: { 'Content-Type': 'application/json' }, tags: { step: 'add_to_cart' } });
+  check(cartRes, { 'add to cart 200': r => r.status === 200 });
+  const cart = JSON.parse(cartRes.body);
   sleep(1 + Math.random() * 2);
+
+  // Start checkout
+  const checkoutRes = http.post(`${BASE_URL}/api/checkout/start`, JSON.stringify({
+    cartId: cart.id,
+    customer: { email: `test-${Math.random().toString(36).slice(7)}@test-load.invalid` },
+  }), { headers: { 'Content-Type': 'application/json' }, tags: { step: 'start_checkout' } });
+  check(checkoutRes, { 'checkout start 200': r => r.status === 200 });
+  const checkout = JSON.parse(checkoutRes.body);
+  sleep(5 + Math.random() * 10); // Think time: filling form
+
+  // Place order
+  const orderRes = http.post(`${BASE_URL}/api/checkout/complete`, JSON.stringify({
+    checkoutId: checkout.id,
+    paymentToken: 'tok_visa', // Stripe test token
+    shippingMethodId: checkout.shippingMethods[0]?.id,
+  }), { headers: { 'Content-Type': 'application/json' }, tags: { step: 'place_order' } });
+  check(orderRes, { 'order placed 201': r => r.status === 201 });
 }
 ```
 
-### Artillery processor for generating realistic test data
+**Artillery YAML config (alternative to k6 — good for API-focused testing):**
 
-```javascript
-// artillery/processors/commerce-helpers.js
-module.exports = {
-  generateCheckoutData(context, events, done) {
-    const id = Math.random().toString(36).substring(2, 8);
-    context.vars.email = `load-test-${id}@test.invalid`;
-    context.vars.productId = `prod_${Math.floor(Math.random() * 100) + 1}`;
-    context.vars.sessionId = `sess_${id}`;
-    return done();
-  },
-};
+```yaml
+# artillery/commerce-load-test.yml
+config:
+  target: "{{ $processEnvironment.BASE_URL }}"
+  phases:
+    - name: "Warm-up"
+      duration: 60
+      arrivalRate: 5
+    - name: "Ramp up"
+      duration: 120
+      arrivalRate: 5
+      rampTo: 50
+    - name: "Peak load"
+      duration: 300
+      arrivalRate: 50
+    - name: "Spike"
+      duration: 30
+      arrivalRate: 200
+    - name: "Recovery"
+      duration: 60
+      arrivalRate: 20
+  processor: "./processors/commerce-helpers.js"
+
+scenarios:
+  - name: "Browse catalog"
+    weight: 60
+    flow:
+      - get:
+          url: "/api/collections/all?page=1"
+          capture:
+            json: "$.products[0].id"
+            as: "productId"
+      - think: 3
+      - get:
+          url: "/api/products/{{ productId }}"
+
+  - name: "Complete checkout"
+    weight: 10
+    flow:
+      - function: "generateCheckoutData"
+      - post:
+          url: "/api/cart"
+          json:
+            productId: "{{ productId }}"
+            quantity: 1
+          capture:
+            json: "$.id"
+            as: "cartId"
+      - think: 8
+      - post:
+          url: "/api/checkout/start"
+          json:
+            cartId: "{{ cartId }}"
+            email: "{{ email }}"
+          capture:
+            json: "$.checkoutId"
+            as: "checkoutId"
+      - think: 10
+      - post:
+          url: "/api/checkout/complete"
+          json:
+            checkoutId: "{{ checkoutId }}"
+            paymentToken: "tok_visa"
+          expect:
+            - statusCode: 201
+```
+
+**Run the test and capture a baseline:**
+
+```bash
+k6 run \
+  --env BASE_URL=https://staging.mystore.com \
+  --out json=results/baseline-$(date +%Y%m%d).json \
+  k6/commerce-load-test.js
+```
+
+**Analyze results per step using tags:**
+
+```bash
+# Overall summary (k6 outputs this automatically at end of run)
+# Per-step breakdown from the JSON output
+cat results/baseline-*.json | jq '
+  [.data_points[] | select(.type=="Point" and .metric=="http_req_duration")]
+  | group_by(.tags.step)
+  | map({step: .[0].tags.step, p95_ms: (map(.value) | sort | .[length * 0.95 | floor])})
+'
+```
+
+**Scale targets for e-commerce:**
+- Catalog pages p95 < 1000ms
+- Product detail p95 < 1500ms
+- Checkout flow p95 < 3000ms
+- Error rate < 1% at peak
+
+**Run load tests in CI before major releases (GitHub Actions):**
+
+```yaml
+# .github/workflows/load-test.yml
+name: Load Test (Pre-Release)
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Staging URL to test'
+        required: true
+        default: 'https://staging.mystore.com'
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install k6
+        run: |
+          curl -s https://dl.k6.io/key.gpg | sudo apt-key add -
+          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install k6
+      - name: Run load test
+        env:
+          BASE_URL: ${{ github.event.inputs.target_url }}
+        run: k6 run --env BASE_URL=$BASE_URL --out json=results.json k6/commerce-load-test.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: load-test-results
+          path: results.json
 ```
 
 ## Best Practices
 
-- **Simulate think time between steps** — real users pause between actions; removing think time creates an unrealistically high request rate that doesn't match production traffic patterns
-- **Use test-mode payment tokens** — always use Stripe's `tok_visa` or equivalent test tokens in load tests; never run load tests against production payment processors
-- **Run load tests in staging, not production** — load tests consume resources and can degrade service; always run against a staging environment that mirrors production configuration
-- **Profile at 1.5×, 2×, and 3× expected peak** — run multiple tests at different load levels to find your system's inflection point and maximum capacity
-- **Monitor the database during load tests** — high application-tier throughput can hide database bottlenecks; watch `pg_stat_activity`, lock wait times, and connection pool exhaustion during tests
-- **Clean up test data after each run** — insert a test order marker (e.g., test email domain `@test.invalid`) so you can bulk-delete test data without affecting real orders
-- **Compare latency histograms, not just averages** — a p99 regression hidden by an unchanged average can still impact 1% of users; always evaluate P95, P99, and P99.9
+- **Simulate think time between steps** — real users pause between actions; removing think time creates an unrealistically high request rate that doesn't reflect production patterns
+- **Use test-mode payment tokens** — always use Stripe's `tok_visa` or equivalent test tokens; never run load tests against real payment processors
+- **Run against staging, not production** — load tests consume resources and can degrade service for real customers
+- **Profile at 1.5×, 2×, and 3× expected peak** — run multiple tests at different load levels to find your system's inflection point before the actual sale
+- **Monitor the database and cache during tests** — watch for connection pool exhaustion, Redis evictions, and lock wait times in your DB; application-tier throughput can look fine while the database is saturated
+- **Tag test orders for easy cleanup** — use a consistent test email domain (`@test-load.invalid`) so you can bulk-delete test data after runs: `DELETE FROM orders WHERE email LIKE '%@test-load.invalid'`
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Load test results not reproducible | Fix the random seed in your test data generation; use a `SharedArray` with a fixed dataset rather than Math.random() product selection |
-| Test traffic not representative of production | Analyze production access logs to determine the real ratio of browse:search:checkout traffic; match this ratio in your scenario weights |
-| k6 VUs exhausted before target RPS reached | Increase `preAllocatedVUs` and `maxVUs`; use `ramping-arrival-rate` executor (controls RPS) rather than `ramping-vus` (controls concurrent users) |
-| Checkout scenario fails because test products are sold out | Reserve a set of test products with unlimited inventory; use a separate product flag (`is_load_test_product: true`) |
-| Alert noise during load tests | Add a load test flag to your monitoring system; mute or suppress non-critical alerts while a scheduled load test is running |
+| Checkout scenario fails because products are sold out | Reserve test products with unlimited inventory; use a separate `is_load_test_product` flag and filter them from real catalog pages |
+| Loader.io test passes but production still slows down | Staging may not mirror production load — confirm Redis Object Cache is active, MySQL version matches, and the server size is the same |
+| k6 VUs exhausted before reaching target RPS | Use `ramping-arrival-rate` executor (controls RPS) instead of `ramping-vus` (controls concurrent users); increase `preAllocatedVUs` and `maxVUs` |
+| Alert noise during planned load tests | Add a load test flag to your monitoring system (Datadog tag, Grafana annotation) to suppress non-critical alerts during the scheduled test window |
+| Results not reproducible between runs | Use a `SharedArray` with a fixed dataset file instead of Math.random() product generation; fix the test data set before the run |
 
 ## Related Skills
 

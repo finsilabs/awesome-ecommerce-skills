@@ -165,13 +165,13 @@ New to this? Start here. These are the most commonly needed skills for any e-com
 | Skill | What It Does | Eval Score |
 |-------|-------------|------------|
 | **Checkout Flow Optimization** | Design a high-converting checkout with address autocomplete, smart field ordering, progress indicators, and minimal friction to reduce abandonment | 94% |
-| **Product Data Modeling** | Design a flexible product database schema that supports variants, custom attributes, product relationships, and category hierarchies | 95% |
+| **Product Data Modeling** | Structure your product catalog using your platform's native data model for variants, attributes, metafields, and product relationships | 95% |
 | **Stripe Integration** | Build secure payment flows with Stripe — Payment Intents, subscription billing, webhook handling, and European SCA compliance for card payments | 100% |
 | **Ecommerce Seo** | Maximize organic search traffic with optimized product page meta tags, JSON-LD structured data for Google Shopping, and automated XML sitemaps | 97% |
 | **Cart Logic** | Build a robust shopping cart with add/remove/update operations, session persistence across devices, and cart merge for returning logged-in users | 91% |
-| **Inventory Tracking** | Track stock levels in real time across all your warehouses with inventory reservation to prevent overselling and support for backorders | 100% |
+| **Inventory Tracking** | Track stock levels in real time across your platform with inventory reservation to prevent overselling and support for backorders | 100% |
 | **Shipping Rate Calculator** | Show real-time shipping rates from UPS, FedEx, USPS, and DHL at checkout by integrating directly with each carrier's rate API | 98% |
-| **Customer Accounts** | Let shoppers register, manage their profile, save multiple addresses, and view their full order history in a personal account portal | 100% |
+| **Customer Accounts** | Let shoppers register, manage their profile, save multiple addresses, and view their full order history using your platform's built-in customer account system | 100% |
 | **Discount Engine** | Create a flexible discount system supporting percentage off, fixed amounts, buy-one-get-one, tiered thresholds, and complex conditional rules | 91% |
 | **Product Page Design** | Design high-converting product detail pages with image galleries, variant selectors, social proof, and clear calls-to-action that drive add-to-cart | 88% |
 

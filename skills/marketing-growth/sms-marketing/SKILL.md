@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [sms, twilio, tcpa, gdpr, compliance, opt-in, segmentation, mobile-marketing, text-marketing]
 triggers: ["sms marketing", "text message marketing", "sms campaigns", "TCPA compliance", "sms opt-in", "twilio sms", "SMS segmentation"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,288 +16,191 @@ difficulty: intermediate
 
 ## Overview
 
-SMS marketing achieves 98% open rates and click-through rates 5–10x higher than email, making it one of the highest-performing direct marketing channels for e-commerce. However, SMS is heavily regulated by TCPA in the US and GDPR in Europe — sending to non-opted-in subscribers carries fines up to $1,500 per message. This skill covers compliant opt-in collection, double opt-in flows, message segmentation, campaign sending via Twilio, and opt-out handling.
+SMS marketing achieves 98% open rates and click-through rates 5–10× higher than email, making it one of the highest-performing direct channels for ecommerce. However, SMS is heavily regulated — TCPA in the US requires explicit written consent, and violations carry fines up to $1,500 per message. Dedicated SMS apps (Postscript, Attentive, Klaviyo SMS) handle compliance, opt-in flows, and 10DLC registration automatically. Custom Twilio implementation is only needed for headless stores.
 
 ## When to Use This Skill
 
 - When launching an SMS marketing channel alongside existing email automation
-- When building a TCPA-compliant opt-in flow for checkout and marketing SMS
-- When needing to segment SMS campaigns by purchase history or location
-- When implementing transactional SMS (shipping updates, OTP) versus marketing SMS
+- When needing TCPA-compliant opt-in flows at checkout and via pop-ups
+- When wanting to segment SMS campaigns by purchase history, lifecycle stage, or location
+- When sending transactional SMS (shipping updates) vs. marketing SMS to different opt-in lists
 - When auditing an existing SMS program for compliance issues
-- When handling STOP/HELP/UNSUBSCRIBE keywords as required by carriers
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, SMS provider account (Postscript, Attentive, Klaviyo SMS, or Twilio), TCPA/GDPR compliant opt-in flow
 
 ## Core Instructions
 
-1. **Collect compliant opt-in consent at checkout**
+### Step 1: Choose the right SMS platform
 
-   TCPA requires explicit written consent for marketing SMS that is separate from transactional consent. Never pre-check the opt-in box:
+| Platform | Best For | Shopify | WooCommerce | BigCommerce | Price |
+|----------|---------|---------|-------------|-------------|-------|
+| **Postscript** | Shopify-native, segmentation + flows | App Store | — | — | Free tier; $100+/mo |
+| **Attentive** | Mid-market, advanced A/B testing | App Store | Via integration | Via integration | $400+/mo |
+| **Klaviyo SMS** | Already using Klaviyo for email | App Store | Plugin | App Marketplace | Adds to Klaviyo plan |
+| **SMSBump (Yotpo SMS)** | WooCommerce + Shopify | App Store | Plugin | — | Free tier; $19+/mo |
+| **Twilio** | Custom/headless, developer-controlled | Via API | Via API | Via API | Pay-per-message |
 
-   ```tsx
-   // Checkout SMS opt-in component
-   export function SmsOptIn({ phone, onChange }: { phone: string; onChange: (v: boolean) => void }) {
-     return (
-       <div className="sms-opt-in">
-         <label>
-           <input
-             type="checkbox"
-             defaultChecked={false}  // NEVER pre-checked
-             onChange={(e) => onChange(e.target.checked)}
-           />
-           <span>
-             Text me order updates and exclusive offers. Message and data rates may apply.
-             Reply STOP to unsubscribe at any time.{' '}
-             <a href="/privacy">Privacy Policy</a>
-           </span>
-         </label>
-       </div>
-     );
-   }
-   ```
+**Recommendation:** Use **Postscript** for Shopify and **SMSBump** for WooCommerce. If already using Klaviyo, add Klaviyo SMS to keep campaigns and flows in one platform. Use Twilio only for headless stores where you need full programmatic control.
 
-   Persist consent with a full audit trail:
+### Step 2: Set up SMS opt-in
 
-   ```typescript
-   async function recordSmsConsent(params: {
-     customerId: string;
-     phone: string;
-     consentType: 'marketing' | 'transactional';
-     consentSource: 'checkout' | 'popup' | 'keyword';
-     ipAddress: string;
-     userAgent: string;
-   }) {
-     await db.smsConsent.create({
-       ...params,
-       phone: normalizePhone(params.phone), // E.164 format: +12125551234
-       consentGivenAt: new Date(),
-       active: true,
-     });
-   }
+---
 
-   function normalizePhone(phone: string): string {
-     const digits = phone.replace(/\D/g, '');
-     if (digits.length === 10) return `+1${digits}`;
-     if (digits.length === 11 && digits[0] === '1') return `+${digits}`;
-     return `+${digits}`;
-   }
-   ```
+#### Shopify with Postscript
 
-2. **Send via Twilio with opt-out enforcement**
+1. Install **Postscript** from the Shopify App Store
+2. Go to **Postscript → Keywords** and set up your opt-in keyword (e.g., "JOIN") — customers text this to your Postscript number to subscribe
+3. Go to **Postscript → Sign-up Units** to add opt-in forms:
+   - **Checkout opt-in**: Postscript adds a checkbox at checkout automatically — configure the consent language under **Settings → Checkout**
+   - **Pop-up**: create a timed pop-up offering a discount (e.g., "Get 10% off — text JOIN to [number]")
+4. Important compliance settings under **Postscript → Settings → Compliance**:
+   - Confirm the consent language is displayed: "By subscribing, you agree to receive marketing texts. Reply STOP to unsubscribe."
+   - Never pre-check the SMS opt-in box at checkout — TCPA requires un-checked by default
+5. Go to **Postscript → Flows** to build automated sequences:
+   - **Welcome series**: triggered on opt-in — immediate welcome message + discount code
+   - **Cart abandonment**: triggered when Shopify detects an abandoned checkout (different from email; can send even without email)
+   - **Browse abandonment**: triggered by high-intent browsing + no purchase within 4 hours
 
-   ```bash
-   npm install twilio
-   ```
+---
 
-   ```typescript
-   import twilio from 'twilio';
+#### WooCommerce with SMSBump
 
-   const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+1. Install **SMSBump** (now Yotpo SMS) from the WordPress plugin directory
+2. Go to **SMSBump → Settings → Compliance** and configure the checkout opt-in field
+3. Go to **SMSBump → Automations** to enable:
+   - Cart abandonment SMS
+   - Order confirmation and shipping update SMS (transactional)
+   - Win-back SMS (customers who haven't purchased in 60+ days)
+4. For GDPR compliance: SMSBump includes a double opt-in flow for EU subscribers — enable this under **Settings → Compliance → Double Opt-in**
 
-   async function sendMarketingSMS(phone: string, body: string, customerId: string): Promise<boolean> {
-     // Always check opt-in status before sending
-     const consent = await db.smsConsent.findActive(phone, 'marketing');
-     if (!consent) {
-       console.warn(`SMS suppressed for ${phone} — no active marketing consent`);
-       return false;
-     }
+---
 
-     // Check quiet hours: no marketing SMS between 9pm–9am local time
-     if (isQuietHours(phone)) {
-       // Queue for next morning instead
-       await smsQueue.add('send', { phone, body, customerId }, { delay: msUntilMorning(phone) });
-       return false;
-     }
+#### BigCommerce with Klaviyo SMS
 
-     const message = await client.messages.create({
-       from: process.env.TWILIO_PHONE_NUMBER,
-       to: phone,
-       body: `${body}\n\nReply STOP to unsubscribe`,
-     });
+1. Install **Klaviyo** from the BigCommerce App Marketplace
+2. Go to **Klaviyo → SMS → Getting Started** and complete the 10DLC registration (Klaviyo walks you through this)
+3. Add an SMS opt-in field to your checkout via **BigCommerce Admin → Store Setup → Checkout**
+4. Build SMS flows in **Klaviyo → Flows** — SMS can be added to any existing email flow as an additional channel
 
-     await db.smsLog.create({ customerId, phone, body, twilioSid: message.sid, sentAt: new Date() });
-     return true;
-   }
-   ```
+---
 
-3. **Handle STOP, HELP, and UNSTOP keywords automatically**
+#### Custom / Headless
 
-   Carriers require you to honor STOP/HELP/UNSTOP. Twilio can forward inbound messages to your webhook:
-
-   ```typescript
-   // POST /api/sms/inbound — Twilio webhook
-   import { twiml } from 'twilio';
-
-   export async function handleInboundSMS(req: Request, res: Response) {
-     const { From: from, Body: body } = req.body;
-     const keyword = body.trim().toUpperCase();
-
-     if (['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT'].includes(keyword)) {
-       await db.smsConsent.deactivateAll(from);
-       const response = new twiml.MessagingResponse();
-       response.message('You have been unsubscribed from marketing messages. Reply START to resubscribe.');
-       res.type('text/xml').send(response.toString());
-
-     } else if (keyword === 'HELP') {
-       const response = new twiml.MessagingResponse();
-       response.message(`${process.env.STORE_NAME} marketing alerts. Msg&Data rates may apply. Reply STOP to unsubscribe or visit ${process.env.STORE_URL}/sms-help`);
-       res.type('text/xml').send(response.toString());
-
-     } else if (['START', 'UNSTOP', 'YES'].includes(keyword)) {
-       await db.smsConsent.reactivate(from, 'marketing');
-       const response = new twiml.MessagingResponse();
-       response.message('You have been re-subscribed to marketing messages. Reply STOP at any time to unsubscribe.');
-       res.type('text/xml').send(response.toString());
-
-     } else {
-       // Customer-initiated conversation — route to support
-       await supportQueue.add('sms', { from, body });
-       res.sendStatus(200);
-     }
-   }
-   ```
-
-4. **Segment subscribers for targeted campaigns**
-
-   ```typescript
-   interface SMSSegment {
-     name: string;
-     query: (db: DB) => Promise<string[]>; // Returns array of phone numbers
-   }
-
-   const SEGMENTS: SMSSegment[] = [
-     {
-       name: 'high_value_customers',
-       query: (db) => db.customers.findPhonesWhere({
-         lifetimeSpend: { gte: 500 },
-         smsMarketingOptIn: true,
-       }),
-     },
-     {
-       name: 'lapsed_30_60_days',
-       query: (db) => db.customers.findPhonesWhere({
-         lastOrderAt: { lt: subDays(new Date(), 30), gte: subDays(new Date(), 60) },
-         smsMarketingOptIn: true,
-       }),
-     },
-     {
-       name: 'browse_abandoners_no_cart',
-       query: (db) => db.sessions.findPhonesForBrowseAbandon({ withinHours: 4 }),
-     },
-   ];
-
-   async function sendCampaignToSegment(segmentName: string, message: string) {
-     const segment = SEGMENTS.find((s) => s.name === segmentName);
-     if (!segment) throw new Error(`Unknown segment: ${segmentName}`);
-
-     const phones = await segment.query(db);
-     console.log(`Sending to ${phones.length} subscribers in segment "${segmentName}"`);
-
-     // Rate limit: Twilio allows ~1 msg/sec on standard numbers; use short codes for bulk
-     for (const phone of phones) {
-       await sendMarketingSMS(phone, message, await getCustomerIdByPhone(phone));
-       await delay(100); // 10 msgs/sec to stay within Twilio limits
-     }
-   }
-   ```
-
-5. **Implement quiet hours based on recipient timezone**
-
-   ```typescript
-   import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
-   import { lookup as lookupTimezone } from 'zipcode-to-timezone';
-
-   function isQuietHours(phone: string): boolean {
-     // TCPA quiet hours: before 8am and after 9pm in recipient's local time
-     const customer = customerCache.get(phone);
-     if (!customer?.zipCode) return false;
-
-     const tz = lookupTimezone(customer.zipCode) ?? 'America/New_York';
-     const localHour = utcToZonedTime(new Date(), tz).getHours();
-     return localHour < 8 || localHour >= 21;
-   }
-
-   function msUntilMorning(phone: string): number {
-     const customer = customerCache.get(phone);
-     const tz = customer?.zipCode ? (lookupTimezone(customer.zipCode) ?? 'America/New_York') : 'America/New_York';
-     const localNow = utcToZonedTime(new Date(), tz);
-     const morning = new Date(localNow);
-     morning.setHours(9, 0, 0, 0);
-     if (localNow.getHours() >= 21) morning.setDate(morning.getDate() + 1);
-     return zonedTimeToUtc(morning, tz).getTime() - Date.now();
-   }
-   ```
-
-## Examples
-
-### Transactional SMS for order shipped
-
-Transactional SMS (not marketing) does not require opt-in but should still allow opt-out:
+For headless stores, use Twilio. Compliance must be built into your application logic:
 
 ```typescript
-async function sendShippingNotificationSMS(order: Order) {
-  // Transactional — only check transactional opt-out (different from marketing)
-  const optedOut = await db.smsConsent.isOptedOut(order.customerPhone, 'transactional');
-  if (optedOut) return;
+import twilio from 'twilio';
+
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+async function sendMarketingSMS(phone: string, body: string, customerId: string): Promise<boolean> {
+  // ALWAYS check consent before sending — never skip this check
+  const consent = await db.smsConsent.findActive(phone, 'marketing');
+  if (!consent) {
+    console.warn(`SMS suppressed for ${phone} — no active marketing consent`);
+    return false;
+  }
+
+  // TCPA: no marketing SMS before 8am or after 9pm in recipient's local time
+  if (isQuietHours(phone, consent.zipCode)) {
+    await smsQueue.add('send', { phone, body, customerId }, { delay: msUntilMorning(phone, consent.zipCode) });
+    return false;
+  }
 
   await client.messages.create({
     from: process.env.TWILIO_PHONE_NUMBER,
-    to: normalizePhone(order.customerPhone),
-    body: `Your ${process.env.STORE_NAME} order #${order.number} shipped! Track it: ${order.trackingUrl}\n\nReply STOP to opt out of order texts.`,
+    to: phone,
+    body: `${body}\n\nReply STOP to unsubscribe`,
   });
+
+  return true;
+}
+
+// Handle STOP/HELP/UNSTOP via Twilio webhook — required by carriers
+export async function handleInboundSMS(req: Request, res: Response) {
+  const { From: from, Body: body } = req.body;
+  const keyword = body.trim().toUpperCase();
+
+  if (['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT'].includes(keyword)) {
+    await db.smsConsent.deactivateAll(from);
+    // Twilio also auto-handles STOP at the carrier level for registered numbers
+  } else if (keyword === 'HELP') {
+    // Required: explain how to opt out
+    await client.messages.create({
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: from,
+      body: `${process.env.STORE_NAME} alerts. Msg&Data rates apply. Reply STOP to unsubscribe.`,
+    });
+  } else if (['START', 'UNSTOP', 'YES'].includes(keyword)) {
+    await db.smsConsent.reactivate(from, 'marketing');
+  }
+
+  res.sendStatus(200);
 }
 ```
 
-### GDPR-compliant data export for SMS consent
+**Important for custom Twilio implementations:** Register your brand and campaign through the **Campaign Registry (TCR)** before sending. US carriers block unregistered 10DLC traffic. Twilio's console guides you through this under **Messaging → Regulatory Compliance → 10DLC**.
 
-For EU customers, provide a consent audit trail on request:
+### Step 3: Consent compliance requirements
 
-```typescript
-async function exportSMSConsentForCustomer(customerId: string) {
-  const records = await db.smsConsent.findByCustomer(customerId);
-  return records.map((r) => ({
-    phone: r.phone,
-    consentType: r.consentType,
-    consentSource: r.consentSource,
-    consentGivenAt: r.consentGivenAt.toISOString(),
-    revokedAt: r.revokedAt?.toISOString() ?? null,
-    ipAddress: r.ipAddress,
-  }));
-}
-```
+**TCPA (US) requirements — non-negotiable:**
+1. Opt-in checkbox must be **unchecked by default** at checkout
+2. Consent language must appear **adjacent to the checkbox** (not in fine print)
+3. Required consent language: "By checking this box, you agree to receive marketing texts from [Store Name] at the number provided. Message frequency varies. Message and data rates may apply. Reply STOP to unsubscribe."
+4. You must honor STOP within 10 business days (dedicated SMS apps do this automatically)
+5. No marketing SMS before 8am or after 9pm in the recipient's local timezone
+
+**GDPR (EU) requirements:**
+- Same opt-in standards as TCPA plus explicit consent documentation
+- Provide a data export mechanism (consent record with timestamp, IP, exact consent language)
+- Double opt-in is required for EU subscribers in many countries
+
+All major SMS apps (Postscript, SMSBump, Klaviyo SMS) handle these compliance requirements automatically. If using Twilio directly, you must build this yourself.
+
+### Step 4: Campaign segmentation
+
+The highest-ROI SMS segments:
+
+| Segment | Message | Expected CTR |
+|---------|---------|-------------|
+| Cart abandoners (1–4 hours) | "You left something behind: [cart link]" | 15–25% |
+| VIP customers (top 20% LTV) | Early access to sales and new arrivals | 20–30% |
+| Lapsed customers (60–90 days) | Win-back offer with discount | 8–15% |
+| Post-purchase cross-sell (7 days after delivery) | "Other customers who bought X also love Y" | 10–20% |
+
+In Postscript: build segments under **Postscript → Segments** using order history, purchase frequency, and LTV filters.
+In Klaviyo SMS: add an SMS step to your existing email segments — the audience targeting is identical.
+
+### Step 5: Measure SMS performance
+
+| Metric | Healthy Target | Where to Find |
+|--------|----------------|---------------|
+| Opt-in rate at checkout | 5–15% of customers | App analytics |
+| Click-through rate (campaigns) | 8–20% | App analytics |
+| Opt-out rate per campaign | < 2% | App analytics — pause if above 3% |
+| Revenue per subscriber per month | $3–$10 | Calculate: SMS-attributed revenue ÷ subscribers |
+| Unsubscribe rate (total) | < 5% per month | App analytics |
 
 ## Best Practices
 
-- **Store consent with full audit trail** — TCPA requires you to prove consent if challenged; store timestamp, IP, source, and the exact consent language shown
-- **Never send marketing SMS before 8am or after 9pm** in the recipient's local timezone — this is a TCPA requirement, not just a best practice
-- **Keep messages under 160 characters** to avoid carrier segmentation into multi-part messages that cost more and may arrive out of order
-- **Always include STOP instructions** in every marketing message — many carriers require it, and it's best practice regardless
-- **Use a dedicated short code** for volume over 1,000 messages/day — 10DLC registration is required in the US for all application-to-person messaging on long codes
-- **Register 10DLC before sending** — US carriers block unregistered traffic; register your brand and campaign at the Campaign Registry before going live
-- **Separate marketing and transactional consent** — customers who opt out of marketing SMS should still receive order confirmation and shipping texts
+- **Separate marketing and transactional consent** — customers who opt out of marketing SMS should still receive order confirmation and shipping texts; these are different consent types
+- **Never send more than 2–3 marketing SMS per week** — SMS is the most intrusive channel; high frequency causes unsubscribes faster than any other channel
+- **Keep messages under 160 characters** to avoid multi-part messages — emoji count as 2 characters and trigger UCS-2 encoding, halving the 160-character limit
+- **Always include STOP instructions** in every marketing message — most apps do this automatically; verify it is there
+- **Register 10DLC before going live** — US carriers block unregistered traffic; registration takes 1–2 weeks through your SMS platform
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Messages blocked by carriers | Complete 10DLC brand and campaign registration; ensure message content matches the registered use case |
-| STOP messages not being honored | Configure a Twilio inbound webhook and process STOP keywords; Twilio also auto-handles STOP at the carrier level for registered numbers |
-| Quiet hours violation — messages sent at 6am local time | Store recipient timezone at opt-in time and check it before every send; use a job queue with scheduled send times |
-| Consent record lost after customer data migration | Export and import the `smsConsent` table as part of any migration; never regenerate consent records |
-| Multi-part SMS sent for 161-character message | Preview and count characters server-side before sending; emoji count as 2 characters and trigger UCS-2 encoding which halves the 160-char limit |
+| Messages blocked by carriers | Complete 10DLC brand and campaign registration through your SMS platform before sending |
+| STOP not being honored | Dedicated SMS apps handle this automatically; for custom Twilio, configure the inbound webhook |
+| Quiet hours violation | Use your SMS platform's built-in quiet hours setting; for Twilio, implement timezone-based scheduling |
+| Checkbox pre-checked at checkout | This violates TCPA — change to unchecked by default immediately; it is a legal requirement, not a preference |
+| Multi-part SMS for 161-character message | Count characters server-side before sending; use a URL shortener for cart links |
 
 ## Related Skills
 
 - @email-marketing-automation
 - @cart-abandonment-recovery
+- @cart-recovery-sms
 - @push-notifications
 - @customer-segmentation
-- @affiliate-program

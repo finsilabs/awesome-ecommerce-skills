@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [attribution, analytics, marketing-roi]
 triggers: ["build attribution dashboard", "track marketing ROI"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,7 @@ difficulty: advanced
 
 ## Overview
 
-Every ecommerce business faces attribution chaos: Meta says it drove 300 purchases, Google says 280, and your order management system shows 400 total. The overlap is real, the methodologies differ, and single-touch last-click models misrepresent the true value of upper-funnel channels. A proper multi-touch attribution dashboard aggregates touchpoints across all channels, applies a consistent attribution model, computes true ROI per channel, and gives you a unified view of the customer journey that self-reported platform data cannot provide. This skill builds the event collection pipeline, attribution model engine, and a React dashboard with drill-down reporting.
+Every ecommerce business faces attribution chaos: Meta says it drove 300 purchases, Google says 280, and your order management system shows 400 total. The overlap is real, the methodologies differ, and single-touch last-click models misrepresent the true value of upper-funnel channels. A proper attribution dashboard aggregates all marketing data in one place and applies a consistent model so you can make defensible budget decisions. For most merchants, a third-party attribution tool — not custom code — is the fastest path to accurate channel ROI.
 
 ## When to Use This Skill
 
@@ -24,78 +24,87 @@ Every ecommerce business faces attribution chaos: Meta says it drove 300 purchas
 - When you suspect paid social is stealing attribution from organic search or email
 - When preparing a quarterly marketing budget review and need a defensible data source
 - When launching a new channel and need to measure its true incremental contribution
-- When customer LTV analysis reveals that certain channels bring lower-value customers
 - When reporting marketing performance to investors or a board
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, ad platform API credentials (Meta, Google Ads), analytics platform, UTM tracking in place
 
 ## Core Instructions
 
-### 1. Touchpoint event collection
+### Step 1: Choose the right attribution tool
 
-Track every marketing touchpoint in a unified event table. Collect on the server side to avoid adblocker impact:
+| Platform | Best For | Shopify | WooCommerce | BigCommerce | Price |
+|----------|---------|---------|-------------|-------------|-------|
+| **Triple Whale** | Shopify-native, real-time pixel + CAPI | App Store | Limited | Limited | $129+/mo |
+| **Northbeam** | Advanced multi-touch, TV/podcast spend | App Store | Via pixel | Via pixel | $500+/mo |
+| **Rockerbox** | Mid-market, all channels including offline | App Store | Via pixel | Via pixel | $500+/mo |
+| **GA4** (free) | All platforms, good enough for most | Via tag | Via tag | Via tag | Free |
+| **Wicked Reports** | WooCommerce-native, integrates with Klaviyo | Limited | Plugin | Limited | $299+/mo |
+
+**Start with GA4** for most stores — it is free, handles multi-channel attribution with configurable models, and integrates natively with Google Ads. Upgrade to Triple Whale or Northbeam when you need real-time pixel data that survives iOS 14 restrictions.
+
+### Step 2: Set up attribution reporting
+
+---
+
+#### Shopify
+
+**With GA4 (recommended starting point):**
+1. Go to **Shopify Admin → Online Store → Preferences → Google Analytics**
+2. Enter your GA4 Measurement ID (`G-XXXXXXXXXX`)
+3. Enable **Enhanced Ecommerce** under GA4 property settings
+4. In **GA4 → Reports → Acquisition → Traffic Acquisition**: set secondary dimension to `Session campaign` to break down by campaign
+5. In **GA4 → Reports → Acquisition → Traffic Acquisition**: set the comparison period to 30 days and filter by `Session medium` to isolate paid, organic, email, and social
+
+**With Triple Whale (Shopify-native, recommended for paid social):**
+1. Install **Triple Whale** from the Shopify App Store
+2. Go to **Triple Whale → Pixel Setup** and add the Triple Whale pixel to your theme — this is a first-party pixel not blocked by iOS 14
+3. Connect your ad accounts: **Triple Whale → Integrations** → connect Meta, Google Ads, and TikTok
+4. Triple Whale's **Summary Page** shows a unified ROAS view across all ad platforms using your actual Shopify order data as the source of truth
+5. Use **Triple Whale → Attribution → Model Comparison** to compare last-click, first-click, and linear attribution in a single view
+
+---
+
+#### WooCommerce
+
+**With GA4:**
+1. Install **MonsterInsights** (free tier) or **Google Site Kit** from the WordPress plugin directory
+2. Go to **MonsterInsights → Settings → Analytics** and connect your GA4 property
+3. Enable enhanced ecommerce tracking — MonsterInsights handles the data layer events automatically
+4. For UTM attribution reports: go to **GA4 → Reports → Acquisition → Traffic Acquisition** and filter by source/medium
+
+**With Wicked Reports (WooCommerce-specific):**
+1. Install **Wicked Reports** from the WordPress plugin directory
+2. Connect your WooCommerce store and email platform (Klaviyo, Mailchimp)
+3. Wicked Reports assigns multi-touch attribution to each order by tracking the full customer journey from first ad click to purchase
+4. Go to **Wicked Reports → ROI** to see revenue per ad campaign using your actual order data
+
+---
+
+#### BigCommerce
+
+1. Go to **BigCommerce Admin → Settings → Analytics → Google Analytics**
+2. Enter your GA4 Measurement ID and enable Enhanced Ecommerce
+3. For advanced attribution: install **Triple Whale** or **Northbeam** from the BigCommerce App Marketplace — both support BigCommerce via tracking pixel
+4. In BigCommerce Analytics, go to **Analytics → Marketing** to see channel-level attribution based on BigCommerce's built-in last-click model
+
+---
+
+#### Custom / Headless
+
+For headless stores, capture first-touch attribution server-side before building any reporting layer. Third-party tools like Triple Whale, Northbeam, or Rockerbox all provide a JavaScript pixel + server-side API for custom stacks.
+
+If you need to build custom multi-touch attribution:
 
 ```typescript
 interface TouchpointEvent {
-  id: string;
   sessionId: string;
   customerId?: string;
-  anonymousId: string;   // persistent cross-session cookie
-  channel: string;       // 'paid-social' | 'paid-search' | 'organic' | 'email' | 'sms' | 'direct' | 'referral'
-  source: string;        // 'meta' | 'google' | 'tiktok' | 'klaviyo' | 'google-organic'
-  medium: string;        // utm_medium value
-  campaign?: string;     // utm_campaign
-  content?: string;      // utm_content (ad variation)
-  term?: string;         // utm_term (keyword)
-  landingPage: string;
-  referrerUrl?: string;
-  eventType: 'session_start' | 'add_to_cart' | 'initiate_checkout' | 'purchase';
+  anonymousId: string;
+  channel: string;       // 'paid-social' | 'paid-search' | 'organic' | 'email' | 'sms' | 'direct'
+  source: string;        // 'meta' | 'google' | 'tiktok' | 'klaviyo'
+  medium: string;
+  campaign?: string;
   orderId?: string;
   orderValue?: number;
   timestamp: Date;
-  deviceType: 'mobile' | 'desktop' | 'tablet';
-  isNewVisitor: boolean;
-}
-
-// Middleware: fire on every page request
-async function trackTouchpoint(req: Request, res: Response, next: NextFunction) {
-  const utm = extractUtmParams(req.query);
-  const anonymousId = req.cookies['_aid'] ?? generateAnonymousId(res);
-
-  // Only create touchpoint if there is a UTM source (paid/email) or it is a new session
-  if (utm.source || !req.cookies['_session_tracked']) {
-    const channel = classifyChannel(utm, req.headers.referer);
-
-    await db.touchpoints.create({
-      id: nanoid(),
-      sessionId: req.sessionID,
-      customerId: req.user?.id,
-      anonymousId,
-      channel,
-      source: utm.source ?? inferSource(req.headers.referer),
-      medium: utm.medium ?? 'organic',
-      campaign: utm.campaign,
-      content: utm.content,
-      term: utm.term,
-      landingPage: req.path,
-      referrerUrl: req.headers.referer,
-      eventType: 'session_start',
-      timestamp: new Date(),
-      deviceType: detectDevice(req.headers['user-agent']),
-      isNewVisitor: !req.cookies['_returning'],
-    });
-
-    res.cookie('_session_tracked', '1', { maxAge: 1800 }); // 30-min session
-  }
-
-  next();
 }
 
 function classifyChannel(utm: UtmParams, referrer?: string): string {
@@ -103,331 +112,86 @@ function classifyChannel(utm: UtmParams, referrer?: string): string {
   if (utm.medium === 'paid-social' || utm.source?.match(/meta|facebook|instagram|tiktok/i)) return 'paid-social';
   if (utm.medium === 'email')                               return 'email';
   if (utm.medium === 'sms')                                 return 'sms';
-  if (utm.medium === 'affiliate')                           return 'affiliate';
   if (referrer?.match(/google|bing|yahoo/i))                return 'organic-search';
   if (referrer && !referrer.includes(process.env.STORE_DOMAIN!)) return 'referral';
-  if (!referrer || referrer.includes(process.env.STORE_DOMAIN!))  return 'direct';
-  return 'other';
-}
-```
-
-### 2. Attribution model engine
-
-Support multiple models and let the dashboard switch between them:
-
-```typescript
-type AttributionModel = 'last-touch' | 'first-touch' | 'linear' | 'time-decay' | 'position-based';
-
-interface AttributedConversion {
-  orderId: string;
-  orderValue: number;
-  touchpoints: TouchpointEvent[];
-  credits: Array<{
-    touchpointId: string;
-    channel: string;
-    source: string;
-    campaign?: string;
-    creditAmount: number;
-    creditFraction: number;
-  }>;
+  return 'direct';
 }
 
-function attributeConversion(
-  order: Order,
-  touchpoints: TouchpointEvent[],
-  model: AttributionModel
-): AttributedConversion {
-  if (touchpoints.length === 0) {
-    return { orderId: order.id, orderValue: order.total, touchpoints: [], credits: [] };
-  }
-
-  const weights = computeWeights(touchpoints, model);
-  const credits = touchpoints.map((tp, i) => ({
-    touchpointId: tp.id,
-    channel: tp.channel,
-    source: tp.source,
-    campaign: tp.campaign,
-    creditFraction: weights[i],
-    creditAmount: order.total * weights[i],
-  }));
-
-  return { orderId: order.id, orderValue: order.total, touchpoints, credits };
-}
-
-function computeWeights(touchpoints: TouchpointEvent[], model: AttributionModel): number[] {
+// Attribution model: 40% first touch, 40% last touch, 20% distributed across middle
+function positionBasedWeights(touchpoints: TouchpointEvent[]): number[] {
   const n = touchpoints.length;
-
-  switch (model) {
-    case 'last-touch':
-      return touchpoints.map((_, i) => i === n - 1 ? 1 : 0);
-
-    case 'first-touch':
-      return touchpoints.map((_, i) => i === 0 ? 1 : 0);
-
-    case 'linear':
-      return touchpoints.map(() => 1 / n);
-
-    case 'time-decay': {
-      // More recent touchpoints get higher weight; half-life = 7 days
-      const purchaseTime = touchpoints[n - 1].timestamp.getTime();
-      const halfLifeMs = 7 * 24 * 60 * 60 * 1000;
-      const rawWeights = touchpoints.map(tp => {
-        const ageMs = purchaseTime - tp.timestamp.getTime();
-        return Math.pow(0.5, ageMs / halfLifeMs);
-      });
-      const sum = rawWeights.reduce((a, b) => a + b, 0);
-      return rawWeights.map(w => w / sum);
-    }
-
-    case 'position-based': {
-      // 40% first, 40% last, 20% split across middle
-      if (n === 1) return [1];
-      if (n === 2) return [0.5, 0.5];
-      const middleShare = 0.2 / (n - 2);
-      return touchpoints.map((_, i) => {
-        if (i === 0) return 0.4;
-        if (i === n - 1) return 0.4;
-        return middleShare;
-      });
-    }
-
-    default:
-      return touchpoints.map(() => 1 / n);
-  }
-}
-```
-
-### 3. Channel ROI aggregation
-
-```typescript
-interface ChannelMetrics {
-  channel: string;
-  source: string;
-  impressions?: number;    // from ad platform APIs
-  clicks?: number;
-  spend: number;
-  attributedRevenue: number;
-  attributedOrders: number;
-  roas: number;            // attributedRevenue / spend
-  cac: number;             // spend / new customers
-  newCustomerRevenue: number;
-  returningCustomerRevenue: number;
-  avgOrderValue: number;
-  touchpointCount: number;
-}
-
-async function computeChannelMetrics(
-  period: { start: Date; end: Date },
-  model: AttributionModel
-): Promise<ChannelMetrics[]> {
-  // Fetch all orders in period
-  const orders = await db.orders.findAll({
-    where: { status: 'completed', createdAt: { gte: period.start, lte: period.end } },
-  });
-
-  // Build attribution for each order
-  const allCredits: AttributedConversion['credits'][number][] = [];
-
-  for (const order of orders) {
-    const touchpoints = await getOrderTouchpoints(order);
-    const attribution  = attributeConversion(order, touchpoints, model);
-    allCredits.push(...attribution.credits);
-  }
-
-  // Aggregate by channel + source
-  const grouped = groupBy(allCredits, c => `${c.channel}::${c.source}`);
-
-  // Fetch ad spend from platform APIs
-  const adSpend = await fetchAdSpend(period);
-
-  return Object.entries(grouped).map(([key, credits]) => {
-    const [channel, source] = key.split('::');
-    const revenue = credits.reduce((s, c) => s + c.creditAmount, 0);
-    const orders  = new Set(credits.map(c => c.touchpointId)).size; // proxy
-    const spend   = adSpend[source] ?? 0;
-
-    return {
-      channel, source,
-      spend,
-      attributedRevenue: revenue,
-      attributedOrders: orders,
-      roas: spend > 0 ? revenue / spend : 0,
-      cac: spend > 0 ? spend / orders : 0,
-      avgOrderValue: orders > 0 ? revenue / orders : 0,
-      touchpointCount: credits.length,
-      newCustomerRevenue: credits.filter(c => c.isNewCustomer).reduce((s, c) => s + c.creditAmount, 0),
-      returningCustomerRevenue: credits.filter(c => !c.isNewCustomer).reduce((s, c) => s + c.creditAmount, 0),
-    };
+  if (n === 1) return [1];
+  if (n === 2) return [0.5, 0.5];
+  const middleShare = 0.2 / (n - 2);
+  return touchpoints.map((_, i) => {
+    if (i === 0) return 0.4;
+    if (i === n - 1) return 0.4;
+    return middleShare;
   });
 }
 ```
 
-### 4. Ad spend ingestion from platform APIs
+Use a dedicated attribution API service like **Rockerbox** or **Northbeam** rather than building the full attribution engine from scratch — the complexity of cross-device stitching and model computation is not worth custom-building for most stores.
 
-```typescript
-async function fetchAdSpend(period: { start: Date; end: Date }): Promise<Record<string, number>> {
-  const [metaSpend, googleSpend, tiktokSpend] = await Promise.all([
-    fetchMetaSpend(period),
-    fetchGoogleSpend(period),
-    fetchTikTokSpend(period),
-  ]);
+### Step 3: Configure UTM tracking consistently
 
-  return { meta: metaSpend, google: googleSpend, tiktok: tiktokSpend };
-}
+UTM parameters are the foundation of any attribution system. Without consistent UTMs, even GA4 cannot attribute sessions correctly.
 
-async function fetchMetaSpend(period: { start: Date; end: Date }): Promise<number> {
-  const response = await fetch(
-    `https://graph.facebook.com/v18.0/act_${process.env.META_AD_ACCOUNT_ID}/insights?` +
-    new URLSearchParams({
-      fields: 'spend',
-      time_range: JSON.stringify({ since: formatDate(period.start), until: formatDate(period.end) }),
-      access_token: process.env.META_ACCESS_TOKEN!,
-    })
-  );
-  const data = await response.json();
-  return parseFloat(data.data?.[0]?.spend ?? '0');
-}
+**Standard UTM structure:**
 
-async function fetchGoogleSpend(period: { start: Date; end: Date }): Promise<number> {
-  // Using Google Ads API v17
-  const customer = googleAdsClient.Customer({
-    customer_id: process.env.GOOGLE_ADS_CUSTOMER_ID!,
-    refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN!,
-  });
+| Channel | `utm_source` | `utm_medium` | `utm_campaign` |
+|---------|-------------|-------------|----------------|
+| Meta Ads | `facebook` or `instagram` | `paid-social` | `spring-2026-prospecting` |
+| Google Ads | `google` | `cpc` | `brand-search` |
+| TikTok Ads | `tiktok` | `paid-social` | `ugc-spring-2026` |
+| Klaviyo email | `klaviyo` | `email` | `welcome-series` |
+| SMS | `postscript` | `sms` | `abandoned-cart` |
 
-  const [response] = await customer.report({
-    entity: 'campaign',
-    attributes: ['campaign.id'],
-    metrics: ['metrics.cost_micros'],
-    constraints: {
-      'segments.date': { GTE: formatDate(period.start), LTE: formatDate(period.end) },
-    },
-  });
+Use Google's Campaign URL Builder at `ga-dev-tools.google.com/campaign-url-builder` to generate UTM links consistently.
 
-  return response.reduce((sum: number, row: any) => sum + row.metrics.cost_micros / 1e6, 0);
-}
-```
+**In Klaviyo:** Go to **Klaviyo → Account → Settings → UTM Tracking** and enable auto-UTM tagging — Klaviyo appends UTM parameters to all email links automatically.
 
-### 5. React dashboard
+**In Meta Ads:** Go to **Ads Manager → Campaign → URL Parameters** and add `utm_source={{site_source_name}}&utm_medium=paid-social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}` to your ad URL parameters at the campaign level.
 
-```tsx
-function AttributionDashboard() {
-  const [model, setModel] = useState<AttributionModel>('position-based');
-  const [period, setPeriod] = useState<'7d' | '30d' | 'custom'>('30d');
+### Step 4: Build a blended ROAS dashboard in GA4
 
-  const { data: metrics } = useSWR(
-    `/api/attribution/metrics?model=${model}&period=${period}`,
-    fetcher,
-    { refreshInterval: 3600000 } // refresh hourly
-  );
+1. Go to **GA4 → Explore → Free Form** and create a new exploration
+2. Set **Dimensions**: Session source/medium, Session campaign
+3. Set **Metrics**: Sessions, Ecommerce purchases, Purchase revenue, Transactions
+4. Add a filter: `Session medium` contains `paid` to isolate paid channels
+5. Use **GA4 → Advertising → Attribution** to compare last-click vs. data-driven attribution models side by side
+6. For manual ROAS: export GA4 revenue by channel → enter ad spend from each platform → calculate `Revenue / Spend` in a spreadsheet
 
-  return (
-    <div className="attribution-dashboard">
-      <header>
-        <h1>Marketing Attribution</h1>
-        <div className="controls">
-          <ModelSelector value={model} onChange={setModel} />
-          <PeriodSelector value={period} onChange={setPeriod} />
-        </div>
-      </header>
+**Automate with Google Looker Studio (free):**
+1. Connect Looker Studio to GA4, Google Ads, and your Shopify/WooCommerce data source
+2. Build a blended channel dashboard using Looker Studio's **Blend Data** feature
+3. Join GA4 session data with Google Ads spend by campaign name
 
-      <section className="summary-cards">
-        <KpiCard label="Total Attributed Revenue" value={formatCurrency(metrics?.totalRevenue)} />
-        <KpiCard label="Total Ad Spend" value={formatCurrency(metrics?.totalSpend)} />
-        <KpiCard label="Blended ROAS" value={metrics?.blendedRoas.toFixed(2) + 'x'} />
-        <KpiCard label="New Customer CAC" value={formatCurrency(metrics?.avgCac)} />
-      </section>
+### Step 5: Measure attribution health
 
-      <section className="channel-table">
-        <h2>Channel Performance</h2>
-        <ChannelTable channels={metrics?.channels ?? []} sortKey="attributedRevenue" />
-      </section>
-
-      <section className="journey-sankey">
-        <h2>Common Customer Journeys</h2>
-        <SankeyChart data={metrics?.journeyPaths ?? []} />
-      </section>
-
-      <section className="model-comparison">
-        <h2>Attribution Model Comparison</h2>
-        <ModelComparisonChart orderId={metrics?.sampleOrderId} />
-      </section>
-    </div>
-  );
-}
-```
-
-### 6. Customer journey path analysis
-
-```typescript
-async function getTopJourneyPaths(limit = 20): Promise<JourneyPath[]> {
-  const conversions = await db.orders.findAll({
-    where: { status: 'completed' },
-    include: ['touchpoints'],
-    limit: 5000,
-    order: [['createdAt', 'DESC']],
-  });
-
-  const pathCounts: Record<string, { count: number; revenue: number }> = {};
-
-  for (const order of conversions) {
-    const path = order.touchpoints
-      .sort((a: any, b: any) => a.timestamp - b.timestamp)
-      .map((tp: any) => tp.channel)
-      .join(' → ');
-
-    pathCounts[path] = pathCounts[path] ?? { count: 0, revenue: 0 };
-    pathCounts[path].count += 1;
-    pathCounts[path].revenue += order.total;
-  }
-
-  return Object.entries(pathCounts)
-    .map(([path, { count, revenue }]) => ({ path, count, revenue, avgOrderValue: revenue / count }))
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, limit);
-}
-```
+| Metric | Target | Where to Find |
+|--------|--------|---------------|
+| Channel coverage (% of orders with UTM attribution) | > 70% | GA4 Acquisition report |
+| Email channel share of attributed revenue | Varies by business | GA4 filter by utm_medium=email |
+| Paid social EMQ score (for Meta CAPI) | 7+ / 10 | Meta Events Manager |
+| Cross-channel ROAS discrepancy | < 30% variance vs. platform-reported | Compare GA4 vs. Ads Manager |
 
 ## Best Practices
 
-- **Use position-based as your default model**: it correctly rewards both discovery (first-touch) and closing (last-touch) channels, which is more defensible than linear for budget decisions
-- **Never trust a single platform's self-reported numbers**: every ad platform over-attributes to itself; your order database is ground truth
-- **Minimum lookback window of 30 days**: customers frequently research for weeks before buying; 7-day windows miss upper-funnel contributions
-- **Stitch anonymous sessions to customer IDs post-login**: link pre-login touchpoints to the customer record after checkout identifies them
-- **Benchmark against incrementality tests**: at least quarterly, run a holdout test (geo or audience split) to validate your attribution model against true incrementality
-- **Segment new vs. returning customer attribution**: returning customer revenue should be weighted differently from new customer acquisition cost
-- **Log all model assumptions**: document your channel classification rules and cookie window so anyone can reproduce the numbers
+- **GA4 is ground truth, not platform dashboards** — every ad platform over-attributes to itself; your order database and GA4 are the closest thing to ground truth
+- **Use position-based attribution for budget decisions** — it rewards both discovery (first-touch) and closing (last-touch) channels; linear attribution underweights email and organic
+- **Set a 30-day lookback minimum** — customers research for weeks before buying; 7-day windows miss upper-funnel contributions from paid social
+- **Consistent UTMs are more important than the tool** — even the best attribution tool fails with inconsistent or missing UTM parameters; audit UTM coverage before buying a tool
+- **Compare models, not just the default** — looking at the same period under last-click vs. linear vs. position-based reveals which channels are being systematically over- or under-credited
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Direct traffic massively over-attributed | Set a 30-min session timeout; re-attribute direct sessions that immediately followed an ad click |
-| Email channel under-attributed | Ensure email UTM parameters survive redirects; test all ESP link tracking |
-| Total attributed revenue > actual revenue | With multi-touch, individual channel sums will exceed total — this is expected; show both |
-| Cookie deletion breaks journey stitching | Use server-side session stitching via email or login events as fallback |
-| Ad spend import fails silently | Add alerting when spend ingestion returns zero for a channel that spent yesterday |
-| Dashboard loads slowly | Precompute aggregated metrics nightly into a summary table; query summary, not raw events |
-| Model comparison confuses stakeholders | Include a "what this means" explainer for each model in the UI |
-
-## Testing and Validation
-
-### Integration checklist
-
-- [ ] UTM parameters captured correctly for all ad channels (verify in raw touchpoints table)
-- [ ] Anonymous ID persists across sessions via 1-year cookie
-- [ ] Customer ID stitched to anonymous ID after purchase
-- [ ] Attribution model produces weights that sum to 1.0 for every order
-- [ ] Ad spend import runs nightly and shows non-zero for all active channels
-- [ ] Dashboard API responds in under 3 seconds for 30-day period
-
-### KPIs this dashboard should expose
-
-- ROAS per channel (attributed revenue / spend)
-- CAC by channel and new vs. returning
-- Average touchpoints per conversion path
-- Most common multi-channel journey sequences
-- Revenue by attribution model (last-touch vs. position-based variance)
+| Direct traffic massively over-attributed | Set a 30-min session timeout in GA4; check for missing UTM parameters on all ad campaigns |
+| Email channel under-attributed | Enable auto-UTM in Klaviyo; test all links to verify UTMs survive ESP link tracking |
+| Platform ROAS looks great but profitability is flat | Platforms count view-through attribution; compare attribution windows — use 7-day click only |
+| Dashboard loads slowly | Use pre-aggregated GA4 summary tables; avoid building attribution from raw event exports |
 
 ## Related Skills
 

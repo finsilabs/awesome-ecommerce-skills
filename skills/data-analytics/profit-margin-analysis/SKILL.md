@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [profit-margin, profitability, cost-analysis]
 triggers: ["analyze profit margins", "gross margin by product", "profitability by channel", "margin analysis", "cost attribution", "margin benchmarking", "contribution margin"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,331 +16,192 @@ difficulty: intermediate
 
 ## Overview
 
-Profit margin analysis is the practice of understanding exactly where your business makes and loses money — broken down by the dimensions that matter most to ecommerce operators: individual products, product categories, sales channels, customer segments, and time periods.
+Profit margin analysis identifies exactly where your business makes and loses money — broken down by products, categories, channels, and customer segments. A product that accounts for 40% of revenue might contribute only 10% of gross profit — or actually lose money once fulfillment, marketing, and overhead are factored in.
 
-Most ecommerce businesses can easily report top-line revenue, but far fewer have a clear picture of which SKUs, channels, or customer segments actually drive profitability. A product that accounts for 40% of revenue might contribute only 10% of gross profit — or actually lose money once all costs are attributed.
+This skill guides you through building a clear margin hierarchy using your existing platform tools and profit analytics apps, without requiring a data warehouse.
 
-This skill covers the full spectrum from gross margin (revenue minus direct product costs) through contribution margin (after variable marketing and fulfillment costs) to net margin (after all allocated overhead). It includes cost attribution methodologies, benchmarking against industry standards, and visualization patterns that make margin findings actionable.
+## When to Use This Skill
 
----
-
-## When to Use
-
-- You need to identify which products, categories, or SKUs are most and least profitable
-- You want to compare margin performance across sales channels (website vs. Amazon vs. wholesale)
-- You are making pricing decisions and need to understand the impact on margin
-- You are rationalizing your product catalog and need to eliminate low-margin SKUs
-- You want to understand how marketing spend affects channel-level profitability
-- You are benchmarking your margins against industry peers or investor expectations
-- You are building a product mix strategy to improve overall company profitability
-
----
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When needing to identify which products, categories, or SKUs are most and least profitable
+- When comparing margin performance across sales channels (website vs. Amazon vs. wholesale)
+- When making pricing decisions and needing to understand the impact on margin
+- When rationalizing the product catalog to eliminate low-margin SKUs
+- When understanding how marketing spend affects channel-level profitability
+- When benchmarking margins against industry peers or investor expectations
 
 ## Core Instructions
 
-### Step 1 — Define Your Margin Hierarchy
+### Step 1: Establish your margin hierarchy
 
-Establish a consistent margin waterfall before building any queries:
+Before pulling any data, define the margin levels you will track. Use this waterfall consistently across all analyses:
 
 ```
-Gross Revenue (Selling Price × Units Sold)
-  - Discounts & Coupons Applied
-  - Returns & Refunds
+Gross Revenue (selling price × units sold)
+  - Discounts & coupons applied
+  - Returns & refunds
 = Net Revenue
 
-  - Product Cost (COGS — purchase price or manufacturing cost)
-  - Inbound Freight & Duties
+  - Product COGS (landed cost: purchase price + freight + duties)
 = Gross Profit
   Gross Margin % = Gross Profit / Net Revenue × 100
 
-  - Outbound Shipping (if not passed to customer)
-  - Payment Processing Fees (~2-3% of revenue)
-  - Platform/Marketplace Fees
-  - Packaging Materials
+  - Outbound shipping (actual label cost or estimate)
+  - Payment processing fees (~2.9% + $0.30 for Stripe/Shopify Payments)
+  - Marketplace fees (Amazon referral + FBA fees; eBay final value fees)
+  - Packaging materials
 = Fulfillment-Adjusted Gross Profit
-  Fulfillment-Adjusted Margin % = Fulfillment-Adjusted Gross Profit / Net Revenue × 100
+  Fulfillment-Adjusted Margin %
 
-  - Direct Marketing Spend (attributable to this channel/SKU)
+  - Direct marketing spend (attributed to this channel/product)
 = Contribution Margin
   Contribution Margin % = Contribution Margin / Net Revenue × 100
 
-  - Allocated Overhead (warehouse fixed costs, G&A allocation)
+  - Allocated overhead (warehouse, software, headcount allocation)
 = Net Operating Profit
-  Net Margin % = Net Operating Profit / Net Revenue × 100
+  Net Margin %
 ```
 
-### Step 2 — Build the Margin Data Model
+**Why contribution margin matters most for ecommerce decisions:** Gross margin ignores fulfillment and marketing costs that are often the biggest swing factors. Contribution margin per unit is the number that actually governs whether it makes sense to sell more of a product or scale a channel.
 
-```sql
--- SKU-level profitability fact table
-CREATE TABLE sku_profitability (
-    period_id           VARCHAR(7) NOT NULL,  -- '2026-03'
-    sku                 VARCHAR(50) NOT NULL,
-    product_name        VARCHAR(200),
-    category            VARCHAR(50),
-    channel             VARCHAR(50),
-    units_sold          INTEGER NOT NULL DEFAULT 0,
-    gross_revenue       NUMERIC(14,2) NOT NULL DEFAULT 0,
-    discounts           NUMERIC(14,2) NOT NULL DEFAULT 0,
-    returns             NUMERIC(14,2) NOT NULL DEFAULT 0,
-    net_revenue         NUMERIC(14,2) GENERATED ALWAYS AS (gross_revenue - discounts - returns) STORED,
-    product_cost        NUMERIC(14,2) NOT NULL DEFAULT 0,
-    inbound_freight     NUMERIC(14,2) NOT NULL DEFAULT 0,
-    cogs_total          NUMERIC(14,2) GENERATED ALWAYS AS (product_cost + inbound_freight) STORED,
-    gross_profit        NUMERIC(14,2) GENERATED ALWAYS AS (gross_revenue - discounts - returns - product_cost - inbound_freight) STORED,
-    outbound_shipping   NUMERIC(14,2) NOT NULL DEFAULT 0,
-    payment_fees        NUMERIC(14,2) NOT NULL DEFAULT 0,
-    marketplace_fees    NUMERIC(14,2) NOT NULL DEFAULT 0,
-    packaging_cost      NUMERIC(14,2) NOT NULL DEFAULT 0,
-    direct_marketing    NUMERIC(14,2) NOT NULL DEFAULT 0,
-    overhead_allocation NUMERIC(14,2) NOT NULL DEFAULT 0,
-    PRIMARY KEY (period_id, sku, channel)
-);
+### Step 2: Enter cost data into your platform
 
--- Add computed margin percentages as a view
-CREATE VIEW sku_margin_analysis AS
-SELECT
-    period_id,
-    sku,
-    product_name,
-    category,
-    channel,
-    units_sold,
-    net_revenue,
-    cogs_total,
-    gross_profit,
-    ROUND(gross_profit / NULLIF(net_revenue, 0) * 100, 2) AS gross_margin_pct,
-    gross_profit - outbound_shipping - payment_fees - marketplace_fees - packaging_cost AS fulfillment_adj_profit,
-    ROUND((gross_profit - outbound_shipping - payment_fees - marketplace_fees - packaging_cost) / NULLIF(net_revenue, 0) * 100, 2) AS fulfillment_adj_margin_pct,
-    gross_profit - outbound_shipping - payment_fees - marketplace_fees - packaging_cost - direct_marketing AS contribution_margin,
-    ROUND((gross_profit - outbound_shipping - payment_fees - marketplace_fees - packaging_cost - direct_marketing) / NULLIF(net_revenue, 0) * 100, 2) AS contribution_margin_pct,
-    gross_profit - outbound_shipping - payment_fees - marketplace_fees - packaging_cost - direct_marketing - overhead_allocation AS net_operating_profit,
-    ROUND((gross_profit - outbound_shipping - payment_fees - marketplace_fees - packaging_cost - direct_marketing - overhead_allocation) / NULLIF(net_revenue, 0) * 100, 2) AS net_margin_pct
-FROM sku_profitability;
-```
-
-### Step 3 — Attribute Costs to Products Accurately
-
-The hardest part of margin analysis is accurate cost attribution, especially for shared costs.
-
-**Product cost (COGS):**
-- Use weighted average cost or FIFO — document and apply consistently
-- Include all costs to get the product to your warehouse: purchase price, freight, duties, inspection fees, prep costs
-
-```sql
--- Weighted average cost calculation
-WITH cost_layers AS (
-    SELECT
-        sku,
-        SUM(quantity_received * unit_cost) AS total_cost,
-        SUM(quantity_received) AS total_units
-    FROM purchase_order_receipts
-    WHERE receipt_date <= :as_of_date
-    GROUP BY sku
-)
-SELECT
-    sku,
-    total_cost / NULLIF(total_units, 0) AS weighted_avg_cost
-FROM cost_layers;
-```
-
-**Shipping cost attribution:**
-For outbound shipping, use the actual carrier cost per shipment. If not tracked at SKU level, use dimensional weight and zone-based estimates.
-
-```python
-def estimate_shipping_cost(
-    weight_oz: float,
-    length_in: float,
-    width_in: float,
-    height_in: float,
-    destination_zone: int,
-    carrier_rate_table: dict,
-) -> float:
-    """Estimate shipping cost using dimensional weight."""
-    actual_weight_lbs = weight_oz / 16
-    dim_weight_lbs = (length_in * width_in * height_in) / 139  # UPS/FedEx divisor
-    billable_weight = max(actual_weight_lbs, dim_weight_lbs)
-    rate_key = (round(billable_weight + 0.5), destination_zone)
-    return carrier_rate_table.get(rate_key, 0.0)
-```
-
-**Payment processing fees:**
-Apply a blended rate (e.g., 2.9% + $0.30 for Stripe) or, if you have transaction-level data, use actual fees.
-
-**Marketplace fees:**
-Amazon referral fees vary by category (6-45%). Pull fee data from the Settlement Report.
-
-```sql
--- Compute marketplace fees from Amazon settlement data
-SELECT
-    sku,
-    SUM(ABS(amount)) AS total_fees,
-    SUM(ABS(CASE WHEN fee_type = 'FBAPerUnitFulfillmentFee' THEN amount ELSE 0 END)) AS fba_fees,
-    SUM(ABS(CASE WHEN fee_type = 'Commission' THEN amount ELSE 0 END)) AS referral_fees,
-    SUM(ABS(CASE WHEN fee_type = 'VariableClosingFee' THEN amount ELSE 0 END)) AS variable_closing_fees
-FROM amazon_settlement_items
-WHERE settlement_period = :period
-  AND amount < 0  -- fees are negative in Amazon settlements
-GROUP BY sku;
-```
-
-### Step 4 — Margin Analysis by Dimension
-
-**By product and SKU:**
-```sql
-SELECT
-    sku,
-    product_name,
-    SUM(units_sold) AS total_units,
-    SUM(net_revenue) AS total_revenue,
-    SUM(gross_profit) AS total_gross_profit,
-    ROUND(SUM(gross_profit) / NULLIF(SUM(net_revenue), 0) * 100, 1) AS gross_margin_pct,
-    ROUND(SUM(contribution_margin) / NULLIF(SUM(net_revenue), 0) * 100, 1) AS contribution_margin_pct
-FROM sku_margin_analysis
-WHERE period_id = :period
-GROUP BY sku, product_name
-ORDER BY SUM(gross_profit) DESC;
-```
-
-**By channel:**
-```sql
-SELECT
-    channel,
-    SUM(net_revenue) AS revenue,
-    SUM(gross_profit) AS gross_profit,
-    ROUND(SUM(gross_profit) / NULLIF(SUM(net_revenue), 0) * 100, 1) AS gross_margin_pct,
-    SUM(direct_marketing) AS marketing_spend,
-    SUM(contribution_margin) AS contribution_profit,
-    ROUND(SUM(contribution_margin) / NULLIF(SUM(net_revenue), 0) * 100, 1) AS contribution_margin_pct
-FROM sku_margin_analysis
-WHERE period_id = :period
-GROUP BY channel
-ORDER BY SUM(contribution_margin) DESC;
-```
-
-**Trend analysis (12-month rolling):**
-```sql
-SELECT
-    period_id,
-    category,
-    SUM(net_revenue) AS revenue,
-    ROUND(SUM(gross_profit) / NULLIF(SUM(net_revenue), 0) * 100, 1) AS gross_margin_pct,
-    ROUND(SUM(contribution_margin) / NULLIF(SUM(net_revenue), 0) * 100, 1) AS contribution_margin_pct,
-    LAG(ROUND(SUM(gross_profit) / NULLIF(SUM(net_revenue), 0) * 100, 1), 1)
-        OVER (PARTITION BY category ORDER BY period_id) AS prior_month_gm_pct,
-    LAG(ROUND(SUM(gross_profit) / NULLIF(SUM(net_revenue), 0) * 100, 1), 12)
-        OVER (PARTITION BY category ORDER BY period_id) AS prior_year_gm_pct
-FROM sku_margin_analysis
-WHERE period_id >= TO_CHAR(NOW() - INTERVAL '12 months', 'YYYY-MM')
-GROUP BY period_id, category
-ORDER BY category, period_id;
-```
-
-### Step 5 — Margin Benchmarks for Ecommerce
-
-Use these benchmarks to contextualize your analysis:
-
-| Business Type | Gross Margin | Contribution Margin | Net Margin |
-|---|---|---|---|
-| Branded DTC (consumables) | 55-75% | 30-50% | 5-20% |
-| Branded DTC (apparel) | 55-70% | 25-45% | 3-15% |
-| Electronics reseller | 10-25% | 5-15% | 1-5% |
-| Amazon FBA reseller | 15-35% | 5-20% | 2-8% |
-| Subscription box | 40-60% | 20-40% | 5-15% |
-| Wholesale / B2B | 20-40% | 15-30% | 3-12% |
-
-### Step 6 — Margin Improvement Analysis
-
-Once you have margin data, prioritize improvement opportunities:
-
-```python
-def rank_margin_improvement_opportunities(
-    sku_margins: list[dict],
-    min_revenue_threshold: float = 10000.0,
-) -> list[dict]:
-    """
-    Identify SKUs with below-average margins and significant revenue impact.
-    Returns ranked list of improvement opportunities.
-    """
-    avg_contribution_margin = sum(s['contribution_margin_pct'] for s in sku_margins) / len(sku_margins)
-
-    opportunities = []
-    for sku in sku_margins:
-        if sku['net_revenue'] < min_revenue_threshold:
-            continue
-
-        margin_gap = avg_contribution_margin - sku['contribution_margin_pct']
-        if margin_gap <= 0:
-            continue
-
-        # Revenue impact if this SKU reached average margin
-        potential_gain = sku['net_revenue'] * (margin_gap / 100)
-
-        opportunities.append({
-            'sku': sku['sku'],
-            'product_name': sku['product_name'],
-            'current_margin_pct': sku['contribution_margin_pct'],
-            'target_margin_pct': avg_contribution_margin,
-            'margin_gap_pct': round(margin_gap, 1),
-            'annual_revenue': sku['net_revenue'],
-            'potential_profit_gain': round(potential_gain, 2),
-            'priority': 'high' if potential_gain > 50000 else 'medium' if potential_gain > 10000 else 'low',
-        })
-
-    return sorted(opportunities, key=lambda x: x['potential_profit_gain'], reverse=True)
-```
+Accurate margin analysis starts with accurate cost data. Enter landed cost (not just purchase price) for every product.
 
 ---
+
+#### Shopify
+
+1. Go to **Products → [Product] → Variants**
+2. For each variant, enter the **Cost per item** — this should be your fully landed cost:
+   - Supplier invoice price per unit
+   - + Inbound freight per unit (divide total freight by total units in the shipment)
+   - + Customs duties per unit
+   - + Inspection/prep fees per unit (if applicable)
+3. Once costs are entered, go to **Analytics → Reports → Profit by product** — Shopify calculates gross profit per product automatically
+4. Go to **Analytics → Reports → Profit by channel** — see gross margin by sales channel
+
+**Limitations of Shopify's built-in profit reports:**
+- Shows gross profit only (revenue minus COGS)
+- Does not include fulfillment costs, payment fees, or marketing spend
+- For full contribution margin analysis, use a profit analytics app
+
+**Recommended Shopify apps for complete margin analysis:**
+- **BeProfit:** Adds shipping cost tracking (connects to ShipStation, EasyPost), ad spend integration (Meta, Google, TikTok), and per-order contribution margin
+- **Lifetimely:** Focuses on CLV and cohort profitability alongside contribution margin by channel
+- **TrueProfit:** Real-time profit dashboard with all cost layers; connects to 20+ ad platforms and shipping carriers
+
+**BeProfit setup for contribution margin:**
+1. Install BeProfit from the Shopify App Store
+2. Go to **BeProfit → Settings → Costs** — verify product costs are imported from Shopify
+3. Go to **BeProfit → Integrations → Shipping** — connect ShipStation or Shippo to pull actual label costs per order
+4. Go to **BeProfit → Integrations → Marketing** — connect Meta, Google, TikTok for ad spend allocation
+5. Go to **BeProfit → Reports → Products** — view gross margin, fulfillment-adjusted margin, and contribution margin per product
+
+---
+
+#### WooCommerce
+
+1. Install the **Cost of Goods** plugin (WooCommerce extension, $79/yr) to add a cost field to each product
+2. Enter landed cost per product/variant (same methodology as Shopify above)
+3. **Metorik** pulls this cost data and shows gross profit per product at **Metorik → Products → Profitability**
+4. For fulfillment cost tracking: export ShipStation or Shippo costs monthly as CSV; match to WooCommerce orders by order ID in Google Sheets or with Metorik's CSV import
+
+---
+
+#### BigCommerce
+
+1. Go to **Products → [Product] → Pricing → Cost price** — enter landed cost per product
+2. Go to **Analytics → Merchandising → Products** — view gross margin % per product with cost entered
+3. Install **Glew.io** (App Marketplace) for contribution margin analysis that includes ad spend and fulfillment costs
+
+---
+
+### Step 3: Run margin analysis by dimension
+
+**By product and SKU:**
+
+In your platform analytics or profit app, sort products by contribution margin % ascending to find your least profitable SKUs:
+
+- **Shopify:** BeProfit → Reports → Products → sort by Net Profit % ascending
+- **WooCommerce:** Metorik → Products → sort by Gross Profit ascending
+- **BigCommerce:** Glew.io → Products → sort by Margin % ascending
+
+**By channel:**
+
+Compare the same product sold on different channels:
+
+| Metric | Your Website | Amazon FBA | Wholesale |
+|--------|-------------|-----------|---------|
+| Gross Revenue per unit | $39.99 | $39.99 | $20.00 (your price to retailer) |
+| Payment/marketplace fees | 3.2% | 15% referral + $4.50 FBA | 0% (invoice-based) |
+| Outbound shipping | $5.00 | Included in FBA fee | Bulk freight (lower per unit) |
+| Gross Margin % | 62% | 38% | 35% |
+| Contribution Margin % | 48% | 25% | 28% |
+
+This shows that despite Amazon's lower margin %, the channel may still be valuable for volume and brand visibility — but you need the numbers to decide.
+
+**By category:**
+
+Group your products into categories and compare average contribution margin % across them:
+- Which categories contribute the most gross profit in absolute dollars?
+- Which categories have the highest margin % (most efficient products)?
+- Which categories have high revenue but low margin (volume products that may be diluting overall profitability)?
+
+### Step 4: Use industry benchmarks to contextualize your analysis
+
+| Business Type | Gross Margin | Contribution Margin | Net Margin |
+|---------------|-------------|--------------------|-----------|
+| Branded DTC (consumables) | 55–75% | 30–50% | 5–20% |
+| Branded DTC (apparel) | 55–70% | 25–45% | 3–15% |
+| Electronics reseller | 10–25% | 5–15% | 1–5% |
+| Amazon FBA reseller | 15–35% | 5–20% | 2–8% |
+| Subscription box | 40–60% | 20–40% | 5–15% |
+| Wholesale / B2B | 20–40% | 15–30% | 3–12% |
+
+If your gross margin is significantly below these ranges, investigate:
+1. Are COGS entered correctly (including all landed cost components)?
+2. Are you selling with excessive discounts?
+3. Is your product pricing too low for your cost structure?
+
+### Step 5: Identify and act on margin improvement opportunities
+
+Once you have margin data by SKU, prioritize improvements:
+
+**SKU profitability tiering:**
+- **Stars:** High margin + high volume → protect and grow; prioritize in ad spend and inventory
+- **Workhorses:** Lower margin + high volume → margin improvement projects (negotiate supplier cost, reduce returns, optimize shipping)
+- **Niche:** High margin + low volume → grow with targeted marketing; can sustain higher CAC
+- **Dogs:** Low margin + low volume → candidates for discontinuation or price increase
+
+**Quick wins for margin improvement:**
+1. **Raise prices on low-margin, low-elasticity SKUs** — test a 10–15% price increase on products where demand is not highly price-sensitive
+2. **Reduce free shipping threshold** — move from free shipping on all orders to free shipping above $75 or $100; saves 3–6% of revenue on small orders
+3. **Negotiate COGS with suppliers** — a 5% COGS reduction improves gross margin by 5 percentage points on any product with 50%+ margins
+4. **Address high-return SKUs** — a product with 20% return rate has ~20% of its revenue consumed by reverse logistics; improve descriptions, sizing guides, or photos
 
 ## Best Practices
 
-1. **Start with contribution margin, not gross margin** — Gross margin ignores fulfillment and marketing costs that are often the biggest swing factors in ecommerce profitability. Contribution margin per unit is the number that actually matters for unit economics decisions.
-
-2. **Reconcile your cost data monthly** — Product costs change due to supplier price increases, currency fluctuations, and freight market changes. Update your cost layer at least monthly to avoid stale margin calculations.
-
-3. **Use a 13-month rolling trend view** — Looking at margin over 13 months (current month plus 12 prior months) lets you see seasonality and year-over-year changes simultaneously on a single chart.
-
-4. **Segment products into profitability tiers** — Classify your catalog into tiers (stars: high margin + high volume; workhorses: low margin + high volume; niche: high margin + low volume; dogs: low margin + low volume) and apply different strategies to each tier.
-
-5. **Include a "blended" channel view** — Many customers touch multiple channels before buying. Avoid making channel decisions purely on single-touch margin; complement with multi-touch attribution data.
-
-6. **Track margin per order, not just per unit** — A product with high unit margin may have low order-level margin if it is frequently ordered alone with flat-rate free shipping. Analyze margin per order as well as per unit.
-
-7. **Build margin sensitivity models** — Show how margin changes with a 10% price increase, a 5% COGS reduction, or a $2 shipping cost change. This makes the analysis directly actionable for pricing and procurement decisions.
-
-8. **Flag negative-margin SKUs immediately** — Set automated alerts for any SKU with a negative contribution margin over a rolling 30-day window. These SKUs are destroying value every time they sell.
-
-9. **Normalize for seasonality** — High-margin Q4 holiday products will look artificially bad in Q2 when demand is low and advertising CPCs are amortized over fewer sales. Use trailing-12-month averages for catalog rationalization decisions.
-
-10. **Document cost attribution assumptions** — Every cost allocation involves judgment calls. Document your assumptions (e.g., "outbound shipping allocated based on dimensional weight") so the analysis is reproducible and auditable.
-
----
+- **Start with contribution margin, not gross margin** — gross margin ignores fulfillment and marketing costs that are often the biggest swing factors in ecommerce profitability
+- **Reconcile cost data monthly** — COGS changes due to supplier price changes, freight market fluctuations, and currency movements; update costs at least monthly
+- **Use a 13-month rolling trend view** — looking at margin over 13 months shows seasonality and year-over-year changes simultaneously
+- **Track margin per order, not just per unit** — a product with high unit margin may have low order-level margin if it is frequently ordered alone with flat-rate free shipping
+- **Build margin sensitivity models** — show how margin changes with a 10% price increase, a 5% COGS reduction, or a $2 shipping cost change to make analysis directly actionable
+- **Flag negative-margin SKUs immediately** — any product with negative contribution margin should be investigated within the week it is identified; every sale destroys value
 
 ## Common Pitfalls
 
-### Pitfall 1: Using Selling Price Instead of Net Revenue
-Applying discounts and return rates only in the P&L but leaving them out of the unit-level margin calculation makes individual products look more profitable than they are. Always compute net revenue (after discounts and return reserves) at the product level.
+| Problem | Solution |
+|---------|----------|
+| Using purchase price instead of landed cost as COGS | Purchase price alone understates COGS by 15–40% for imported goods; always include freight, duties, and prep costs in the cost per item field |
+| Not attributing variable marketing to products | If you run SKU-level ad campaigns, that marketing spend is a direct cost of those sales; exclude it from overhead and attribute it to the relevant SKUs |
+| Comparing Amazon vs. website margins without normalizing fulfillment | Amazon FBA gross margins look lower than DTC margins because FBA fees are large; normalize to contribution margin (net of fulfillment) for fair comparisons |
+| Analyzing margin without volume context | A 60% gross margin product doing $500/month is less important than a 35% margin product doing $500,000/month; always show margin % alongside absolute profit contribution |
+| Historical margin changes when COGS is updated | Use point-in-time cost records in your profit analytics app; BeProfit and Lifetimely track cost history so historical margins are not retroactively recalculated |
 
-### Pitfall 2: Ignoring Return Rates by Product
-A product with a 30% gross margin but a 25% return rate effectively has a much lower realized margin. Build return rate directly into your margin model so high-return SKUs surface in your analysis.
+## Related Skills
 
-### Pitfall 3: Not Attributing Variable Marketing to Products
-If you run SKU-level or category-level ad campaigns, that marketing spend is a direct cost of generating those sales — not an overhead. Exclude it from overhead and attribute it to the relevant SKUs to get accurate contribution margins.
-
-### Pitfall 4: Using Purchase Price as COGS Without Including Landed Cost
-Purchase price from the invoice does not capture duties, freight, drayage, or prep costs. Landed cost can be 15-40% higher than purchase price for imported goods. Use landed cost as your COGS basis.
-
-### Pitfall 5: Comparing Margins Across Channels Without Adjusting for Channel Costs
-Amazon FBA gross margins look lower than DTC margins, but this comparison is misleading unless you subtract fulfillment costs from DTC as well. Normalize to contribution margin for fair channel comparisons.
-
-### Pitfall 6: Analyzing Margin Without Volume Context
-A 60% gross margin product generating $500 per month is less important to optimize than a 35% gross margin product generating $500,000 per month. Always show margin percentage alongside absolute profit contribution to prioritize correctly.
+- @cost-allocation-analysis
+- @unit-economics-tracking
+- @financial-analytics-dashboard
+- @marketing-spend-analysis
+- @sales-reporting-dashboard

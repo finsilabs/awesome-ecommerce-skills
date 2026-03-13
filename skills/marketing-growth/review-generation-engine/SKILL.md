@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [reviews, ratings, social-proof]
 triggers: ["generate more reviews", "automate review requests"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,241 +16,155 @@ difficulty: intermediate
 
 ## Overview
 
-Product reviews are the most trusted form of social proof — 88% of shoppers consult reviews before purchasing, and products with 50+ reviews convert 4.6% better than those with none. The fastest path to high review volume is a systematic post-purchase request sequence: a well-timed email at delivery plus one SMS follow-up doubles review rates vs. a single request. This skill covers building the request sequence, designing frictionless review submission forms, incentivizing photo reviews, and detecting fake or incentivized review fraud patterns.
+Product reviews are the most trusted form of social proof — 88% of shoppers consult reviews before purchasing, and products with 50+ reviews convert 4.6% better than those with none. The fastest path to high review volume is a systematic post-purchase request sequence triggered by delivery confirmation, not order placement. Dedicated review apps (Judge.me, Yotpo, Stamped) handle the entire request flow, photo upload UI, and verified buyer badges without custom code.
 
 ## When to Use This Skill
 
 - When a new product has fewer than 10 reviews and needs social proof to convert
 - When overall review volume is low despite healthy order volume
-- When wanting to add photo/video review incentives to an existing text-only system
-- When migrating from a third-party review app to a custom solution
-- When needing to detect and filter fake or incentivized reviews before publication
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, review platform (Yotpo, Judge.me, or Stamped), email service for review request sequences
+- When wanting to add photo or video review incentives to an existing text-only system
+- When migrating to a new review platform and needing to rebuild the request sequence
 
 ## Core Instructions
 
-### 1. Post-purchase review request sequence
+### Step 1: Choose the right review platform
+
+| Platform | Best For | Shopify | WooCommerce | BigCommerce | Price |
+|----------|---------|---------|-------------|-------------|-------|
+| **Judge.me** | Best value, full features | App Store | Plugin | App Marketplace | Free tier; $15/mo for photos |
+| **Yotpo** | Enterprise, social sharing, UGC | App Store | Plugin | App Marketplace | Free tier; $119+/mo |
+| **Stamped.io** | Loyalty + review combination | App Store | Plugin | App Marketplace | $23+/mo |
+| **Okendo** | DTC brands, media reviews, attributes | App Store | — | — | $19+/mo |
+| **WooCommerce Reviews** | Basic, built-in | — | Built-in | — | Free |
+
+**Recommendation:** Use **Judge.me** for most stores — the best feature-to-price ratio, free plan allows unlimited reviews, and $15/month unlocks photo reviews (the single highest-converting feature).
+
+### Step 2: Configure your review request sequence
+
+---
+
+#### Shopify with Judge.me
+
+1. Install **Judge.me** from the Shopify App Store
+2. Go to **Judge.me → Settings → Review Requests**
+3. Configure the request timing:
+   - First request: **7 days after order fulfillment** (not order placement — wait until the product is received and used)
+   - Second request (if no review): **14 days after first request**
+4. Go to **Judge.me → Settings → Emails** and customize:
+   - Email 1 (day 7): Simple request with star rating widget — clicking a star pre-fills the rating in the form
+   - Email 2 (day 21): Add a photo review incentive — "Add a photo and get 15% off your next order"
+5. Enable **Verified Buyer badge** — displayed automatically on reviews from confirmed purchasers
+6. Go to **Judge.me → Settings → Moderation** and set auto-publish rules:
+   - Auto-publish: ratings 3–5 stars
+   - Hold for manual review: ratings 1–2 stars
+
+---
+
+#### WooCommerce with Judge.me
+
+1. Install the **Judge.me for WooCommerce** plugin
+2. Configuration mirrors the Shopify setup
+3. Alternatively, use **Yotpo for WooCommerce** if you want UGC and social sharing built in
+
+**For WooCommerce's built-in reviews + AutomateWoo:**
+1. Enable **WooCommerce → Settings → Products → Reviews**
+2. Create an AutomateWoo workflow:
+   - Trigger: **Order Delivered** (or Order Status = Completed + 7 day delay)
+   - Action: **Send Email** with a link to the product review page
+3. This is free but lacks photo review support and star rating widgets — use Judge.me for higher conversion rates
+
+---
+
+#### BigCommerce with Yotpo
+
+1. Install **Yotpo** from the BigCommerce App Marketplace
+2. Go to **Yotpo → Reviews → Mail After Purchase** and configure:
+   - Send timing: 7 days after order fulfilled
+   - Enable follow-up email: 14 days if no review submitted
+3. Configure the smart prompts — Yotpo's review form is embedded in the email itself, allowing customers to submit a rating without leaving the email
+
+---
+
+### Step 3: Set up photo review incentives
+
+Photo reviews increase conversion rate 4× more than text reviews. The incentive should reward the photo specifically, not the review itself (incentivizing reviews violates FTC guidelines; incentivizing photo submission is permitted with proper disclosure).
+
+**In Judge.me:**
+1. Go to **Judge.me → Settings → Coupons**
+2. Enable **Photo review coupon**: "Add a photo to your review and receive 15% off your next order"
+3. Judge.me issues the coupon automatically after a photo review is approved
+
+**In Yotpo:**
+1. Go to **Yotpo → Reviews → Incentives**
+2. Enable **Media Reviews incentive** with a discount code
+
+### Step 4: Display reviews on product pages
+
+All review apps provide a widget snippet or theme block. For Shopify:
+
+1. Go to **Judge.me → Widgets → Review Widget**
+2. Install the widget in your theme via **Shopify → Online Store → Themes → Customize → Add Section → Judge.me Review Widget**
+3. Place the review widget below the product description on product pages
+4. Enable **Review Carousel** for the homepage to display your best reviews site-wide
+
+### Step 5: Measure review program health
+
+| Metric | Healthy Target | Where to Find |
+|--------|----------------|---------------|
+| Review request open rate | > 35% | App analytics |
+| Review submission rate | 5–15% of requests | App analytics |
+| Photo review rate | > 20% of all reviews | App analytics |
+| Average product rating | > 4.2 stars | Product pages / app dashboard |
+| Review count per product (top products) | > 50 | App analytics |
+
+If submission rate is below 5%, the request is being sent too early (before delivery) or the form has too many required fields. Set the request to fire 7 days after fulfillment and reduce the form to star rating + 1 text field.
+
+### Step 6: Custom / Headless
+
+For headless stores, use a review platform API (Judge.me, Yotpo, or Stamped all have REST APIs) rather than building a custom review system. The review collection, moderation, and display widgets are all available as embeddable components.
+
+If you must collect reviews via a custom form, generate a tokenized review link that pre-identifies the customer and product so they do not need to log in:
 
 ```typescript
-interface ReviewRequestJob {
-  customerId: string;
-  orderId:    string;
-  productIds: string[];
-  step:       0 | 1 | 2;  // 0=email day14, 1=SMS day21, 2=final-email day28
-}
-
-async function scheduleReviewRequests(order: Order) {
-  // Only request reviews for delivered orders
-  // Listen to shipment delivery event to start the timer
-
-  const steps: Array<{ channel: 'email' | 'sms'; delayDays: number }> = [
-    { channel: 'email', delayDays: 7  },  // 7 days after delivery
-    { channel: 'sms',   delayDays: 14 },  // 14 days if no review yet
-    { channel: 'email', delayDays: 21 },  // 21 days — final ask with photo incentive
-  ];
-
-  for (const [i, step] of steps.entries()) {
-    await reviewRequestQueue.add(
-      'send-review-request',
-      { customerId: order.customerId, orderId: order.id, productIds: order.lineItems.map(l => l.productId), step: i },
-      {
-        delay:  step.delayDays * 86400000,
-        jobId:  `review-request-${order.id}-step${i}`,
-        removeOnComplete: true,
-      }
-    );
-  }
-}
-
-// When a review is submitted, cancel remaining steps
-async function onReviewSubmitted(orderId: string) {
-  for (let step = 0; step < 3; step++) {
-    const job = await reviewRequestQueue.getJob(`review-request-${orderId}-step${step}`);
-    await job?.remove();
-  }
-}
-```
-
-### 2. Review request email content strategy
-
-```
-Step 0 (Day 7 post-delivery) — Simple, no incentive:
-  Subject: "How did you like your [product name]?"
-  Body: Star rating widget → clicking a star opens the review form pre-filled with that rating
-  CTA: "Leave a review" (single, prominent button)
-
-Step 1 (Day 14, SMS only if email not opened):
-  "Hi [name], loving your [product]? Tap here to leave a quick review: [shortlink]"
-  Keep under 160 chars
-
-Step 2 (Day 21 — photo incentive):
-  Subject: "Add a photo review — get 15% off your next order"
-  Body: Explain that photo reviews help other shoppers; 15% discount code sent on approval
-  CTA: "Upload your photo review"
-```
-
-### 3. Frictionless review submission form
-
-Minimize friction with a single-page form accessible without login:
-
-```typescript
-// Generate a signed, tokenized review link so customers don't need to log in
+// Generate a signed review link — valid for 30 days
 function generateReviewToken(orderId: string, productId: string, customerId: string): string {
   const payload = { orderId, productId, customerId, exp: Math.floor(Date.now() / 1000) + 30 * 86400 };
   return jwt.sign(payload, process.env.REVIEW_JWT_SECRET!);
 }
 
-// GET /review/:token
-export async function renderReviewForm(req: Request, res: Response) {
-  try {
-    const payload = jwt.verify(req.params.token, process.env.REVIEW_JWT_SECRET!) as any;
-    const product = await db.products.findById(payload.productId);
+// Include ?rating=4 in the link when the customer clicks a star in the email
+// This pre-fills the rating on the form — single most important UX optimization for review volume
 
-    // Pre-fill star rating from email click (rating=4 query param)
-    const prefilledRating = parseInt(req.query.rating as string) || 0;
-
-    return res.render('review-form', { product, token: req.params.token, prefilledRating });
-  } catch {
-    return res.status(400).render('review-expired');
-  }
-}
-
-// POST /review/:token
-export async function submitReview(req: Request, res: Response) {
-  const payload = jwt.verify(req.params.token, process.env.REVIEW_JWT_SECRET!) as any;
-
-  const { rating, title, body, photos } = req.body;
-
-  // Validate
-  if (rating < 1 || rating > 5) return res.status(400).json({ error: 'Invalid rating' });
-  if (!body || body.length < 10)  return res.status(400).json({ error: 'Review too short' });
-
-  const review = await db.productReviews.create({
-    productId:   payload.productId,
-    customerId:  payload.customerId,
-    orderId:     payload.orderId,
-    rating,
-    title:       title.substring(0, 100),
-    body:        body.substring(0, 2000),
-    isVerifiedBuyer: true,  // confirmed via token from order
-    status:      'pending',  // goes through moderation
-  });
-
-  // Handle photo uploads
-  if (photos?.length > 0) {
-    await processReviewPhotos(review.id, photos);
-    // Award photo review incentive after moderation approval
-    await db.pendingIncentives.create({ reviewId: review.id, type: 'percent_off', value: 15 });
-  }
-
-  await onReviewSubmitted(payload.orderId);
-  return res.json({ success: true, reviewId: review.id });
-}
-```
-
-### 4. Review moderation pipeline
-
-```typescript
-type ModerationStatus = 'approved' | 'rejected' | 'needs-human-review';
-
-async function moderateReview(reviewId: string): Promise<ModerationStatus> {
-  const review = await db.productReviews.findById(reviewId);
-  const flags: string[] = [];
-
-  // Spam/authenticity checks
-  const hourlyReviewCount = await db.productReviews.countByCustomer(review.customerId, { since: subHours(new Date(), 1) });
-  if (hourlyReviewCount > 3) flags.push('high-frequency');
-
-  const sameIpReviews = await db.productReviews.countByIp(review.submitterIp, { since: subDays(new Date(), 7) });
-  if (sameIpReviews > 5) flags.push('suspicious-ip');
-
-  // Content quality checks
-  if (review.body.length < 20) flags.push('too-short');
-  if (/(.)\1{4,}/.test(review.body)) flags.push('repetitive-characters');  // "aaaaaaa"
-  if (review.rating === 5 && review.body.toLowerCase().includes('discount')) flags.push('incentive-disclosure-risk');
-
-  // Profanity / brand safety (use a word list or moderation API)
-  const hasProfanity = await checkProfanity(review.body);
-  if (hasProfanity) flags.push('profanity');
-
-  if (flags.includes('profanity') || flags.includes('high-frequency')) return 'rejected';
-  if (flags.length > 0) return 'needs-human-review';
-  return 'approved';
-}
-
-async function processReviewModeration() {
-  const pending = await db.productReviews.findAll({ where: { status: 'pending' } });
-
-  for (const review of pending) {
-    const decision = await moderateReview(review.id);
-
-    await db.productReviews.update(review.id, { status: decision === 'approved' ? 'published' : decision });
-
-    if (decision === 'approved') {
-      // Send photo incentive if applicable
-      const incentive = await db.pendingIncentives.findByReview(review.id);
-      if (incentive) {
-        const code = await createUniqueDiscount({ type: 'percent_off', value: incentive.value, customerId: review.customerId });
-        await sendReviewThankYouEmail(review.customerId, { discountCode: code });
-      }
-
-      // Update product aggregate rating
-      await refreshProductRatingAggregate(review.productId);
-    }
-  }
-}
-```
-
-### 5. Aggregate rating refresh
-
-```typescript
-async function refreshProductRatingAggregate(productId: string) {
-  const stats = await db.productReviews.aggregate({
-    where:  { productId, status: 'published' },
-    select: { _avg: { rating: true }, _count: { id: true } },
-  });
-
-  await db.products.update(productId, {
-    avgRating:   parseFloat(stats._avg.rating?.toFixed(1) ?? '0'),
-    reviewCount: stats._count.id,
-  });
-
-  // Invalidate CDN cache for the product page
-  await invalidateProductCache(productId);
-}
+// Schedule review requests via your order webhook (Shopify/WooCommerce/BigCommerce)
+// Trigger: order status transitions to "delivered" (use carrier tracking webhook)
+// Step 1: 7 days after delivery
+// Step 2: 14 days after delivery (if no review submitted yet) — add photo incentive
+// Cancel remaining steps when a review is submitted
 ```
 
 ## Best Practices
 
-- **Time the first request to after confirmed delivery** — asking for a review before the product arrives damages trust; use carrier tracking webhooks to detect delivery
-- **Make the star rating widget clickable in the email** — each star links to the review form with `?rating=N` pre-filled; this single change typically doubles response rates
-- **Never pay cash for reviews** — financial incentives for reviews violate FTC guidelines and marketplace terms of service; only incentivize photo reviews, not the review itself
-- **Verified buyer badge drives conversion** — mark reviews from confirmed purchasers (token-based submission) and display the badge; shoppers trust verified reviews 2x more
-- **Respond to negative reviews publicly** — brands that respond to 1-2 star reviews with empathy and resolution offers convert skeptical shoppers better than brands with only 5-star reviews
-- **Syndicate reviews to marketplace listings** — push review data to Amazon, Google Shopping, and retailer PDPs where your products are listed
+- **Time the request to after confirmed delivery** — asking for a review before the product arrives damages trust; use your platform's order fulfillment status, not order placed
+- **Make the star rating widget clickable in the email** — each star links to the review form with `?rating=N` pre-filled; this single feature typically doubles review submission rates
+- **Never pay cash for positive reviews** — financial incentives for reviews violate FTC guidelines; only offer incentives for adding media (photos/video) to an existing review
+- **Verified buyer badge drives conversion** — mark reviews from confirmed purchasers and display it prominently; shoppers trust verified reviews significantly more than anonymous ones
+- **Respond to negative reviews publicly** — brands that respond to 1–2 star reviews with empathy and resolution offers build more trust than brands with only 5-star reviews
+- **Cap at 2 review requests per order** — a third request causes unsubscribes; two requests (day 7 + day 21) is the maximum
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Review requests sent to customers who returned the order | Check order status before sending; skip review requests for orders with active return requests |
-| Photo reviews sitting in pending without moderation | Build an automated moderation queue that runs every 15 minutes; alert the team for human review items |
-| Customers leaving reviews on the wrong product | Pre-fill product from the token; do not let customers change the product in the form |
-| Review volume spikes followed by sudden drops | Analyze if you inadvertently trained customers to wait for an incentive; adjust incentive timing |
-| Fake competitor reviews (5-star with suspicious patterns) | Flag reviews from accounts with no order history; require token from verified purchase |
+| Review requests sent to customers who returned the order | Configure the app to skip review requests when an order has a return or refund; most review apps support this under refund settings |
+| Low review rate despite high open rate | The form has too much friction — reduce required fields to star rating + one text field |
+| Photo reviews not triggering the coupon | Check the app's approval settings — the coupon fires only after the photo review is approved, not submitted |
+| Review volume spikes followed by sudden drops | You may have trained customers to wait for the incentive; make the incentive visible in email 2 only, not email 1 |
+| Products with no reviews showing a blank section | Configure a fallback in the review widget — show "Be the first to review this product" with a CTA |
 
 ## Related Skills
 
 - @social-proof-widgets
 - @ugc-campaign-management
-- @product-reviews-ratings
 - @email-marketing-automation
+- @loyalty-program-optimization
 - @customer-retention-engine

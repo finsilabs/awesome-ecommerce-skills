@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [tiktok, tiktok-ads, spark-ads, social-advertising]
 triggers: ["set up TikTok ads", "implement TikTok pixel", "create TikTok shopping ads"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,7 @@ difficulty: advanced
 
 ## Overview
 
-TikTok has become a primary discovery channel for ecommerce, particularly for fashion, beauty, home, and consumer goods. Like Meta, reliable attribution requires pairing the browser-based TikTok Pixel with the server-side Events API (EAPI). This skill covers Pixel installation, Events API server-side tracking with deduplication, TikTok Catalog Manager feed sync, Spark Ads (boosted organic content), Shopping Ads formats, campaign structure for ecommerce, and iOS attribution with SKAdNetwork.
+TikTok is a primary discovery channel for ecommerce, particularly for fashion, beauty, home, and consumer goods. Reliable attribution requires pairing the browser-based TikTok Pixel with the server-side Events API (EAPI) — similar to Meta's CAPI approach. For Shopify, WooCommerce, and BigCommerce, the official TikTok integrations install both Pixel and EAPI automatically. Custom implementation only belongs in the Custom/Headless section.
 
 ## When to Use This Skill
 
@@ -25,307 +25,188 @@ TikTok has become a primary discovery channel for ecommerce, particularly for fa
 - When setting up Product Shopping Ads or Video Shopping Ads
 - When boosting organic creator content as Spark Ads
 - When syncing your product catalog for Dynamic Showcase Ads
-- When wanting to leverage LIVE Shopping events for real-time commerce
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, TikTok Business account, TikTok Events API credentials, product catalog feed
 
 ## Core Instructions
 
-### 1. Install TikTok Pixel (browser-side)
+### Step 1: Connect your platform to TikTok
 
-Add the TikTok Pixel base code in the `<head>` of every page:
+| Platform | Integration Method | Pixel + EAPI | Catalog Sync |
+|----------|--------------------|-------------|-------------|
+| **Shopify** | TikTok for Shopify (official app) | Yes (built-in) | Yes (automatic) |
+| **WooCommerce** | TikTok for WooCommerce plugin | Yes (built-in) | Yes (automatic) |
+| **BigCommerce** | TikTok channel in Channel Manager | Yes (built-in) | Yes (automatic) |
+| **Custom / Headless** | TikTok Pixel JS + Events API REST | Manual implementation | Manual feed generation |
 
-```html
-<script>
-  !function (w, d, t) {
-    w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
-    ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"];
-    ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};
-    for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);
-    ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};
-    ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;
-    ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=r;ttq._t=ttq._t||{};ttq._t[e]=+new Date;
-    ttq._o=ttq._o||{};ttq._o[e]=n||{};
-    n=document.createElement("script");n.type="text/javascript";n.async=!0;n.src=r+"?sdkid="+e+"&lib="+t;
-    e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
-    ttq.load('YOUR_PIXEL_ID');
-    ttq.page();
-  }(window, document, 'ttq');
-</script>
-```
+### Step 2: Set up TikTok Ads
 
-Fire standard ecommerce events:
+---
 
+#### Shopify
+
+1. Go to **Shopify Admin → Sales Channels → + → TikTok**
+2. Install TikTok for Shopify and connect your TikTok Business account and Ad account
+3. Under **Pixel & Events**, select **Maximum Data Sharing** — this enables server-side Events API alongside the browser Pixel
+4. Shopify automatically:
+   - Installs the TikTok Pixel on all pages
+   - Fires ViewContent, AddToCart, InitiateCheckout, and CompletePayment events
+   - Sends the same events via EAPI from Shopify's servers
+   - Syncs your product catalog to TikTok Catalog Manager for Shopping Ads
+5. Go to **TikTok Ads Manager → Assets → Events** and check your Pixel's event quality score — aim for 7+/10
+6. Check catalog sync status in **TikTok Business Center → Catalogs**
+
+---
+
+#### WooCommerce
+
+1. Install **TikTok for WooCommerce** from the WordPress plugin directory (official TikTok plugin)
+2. Go to **WooCommerce → TikTok → Connect** and sign in with your TikTok Business account
+3. Enable **Enhanced Matching** (EAPI) under the data sharing settings
+4. The plugin syncs your WooCommerce product catalog to TikTok Catalog Manager automatically
+5. Verify events in **TikTok Events Manager → Data Sources → [Your Pixel]**
+
+---
+
+#### BigCommerce
+
+1. Go to **BigCommerce Admin → Channel Manager → Add a Channel → TikTok**
+2. Connect your TikTok Business account and Ad account
+3. Enable server-side event tracking during setup
+4. BigCommerce syncs your product catalog to TikTok automatically
+5. Check product sync status in **Channel Manager → TikTok → Products**
+
+---
+
+#### Custom / Headless
+
+For headless stores, install both the browser Pixel and server-side Events API:
+
+**Browser Pixel (add to `<head>` on every page):**
 ```javascript
-// Product detail page
+ttq.load('YOUR_PIXEL_ID');
+ttq.page();
+
+// Product page
 ttq.track('ViewContent', {
-  content_id:   product.sku,
+  content_id: product.sku,
   content_type: 'product',
   content_name: product.name,
-  value:        product.price,
-  currency:     'USD',
+  value: product.price,
+  currency: 'USD',
 });
 
-// Add to cart
-ttq.track('AddToCart', {
-  content_id:   cart.items[0].sku,    // use primary item or array
-  content_type: 'product',
-  value:        cart.totalValue,
-  currency:     'USD',
-});
-
-// Initiate checkout
-ttq.track('InitiateCheckout', {
-  content_type: 'product',
-  value:        cart.totalValue,
-  currency:     'USD',
-});
-
-// Purchase — fire with event_id for deduplication
-const purchaseEventId = `purchase-${order.id}-${Date.now()}`;
+// Purchase — pass event_id for deduplication with Events API
+const purchaseEventId = `purchase-${order.id}`;
 ttq.track('CompletePayment', {
-  content_id:   order.lineItems.map(i => i.sku).join(','),
-  content_type: 'product',
-  value:        order.subtotal,
-  currency:     order.currencyCode,
-  order_id:     order.id,
+  content_id: order.lineItems.map(i => i.sku).join(','),
+  value: order.subtotal,
+  currency: order.currencyCode,
+  order_id: order.id,
 }, { event_id: purchaseEventId });
 ```
 
-### 2. Events API (server-side) implementation
-
-Install the TikTok Business API SDK or call the REST endpoint directly:
-
-```bash
-npm install tiktok-business-api
-```
-
+**Server-side Events API (send from your order webhook):**
 ```typescript
-// tiktok-events.ts
-interface TikTokEventUser {
-  email?:      string;  // SHA-256 hashed
-  phone?:      string;  // SHA-256 hashed
-  ip?:         string;
-  userAgent?:  string;
-  ttclid?:     string;  // TikTok click ID from URL param
-  externalId?: string;  // your internal user ID, hashed
-}
-
-async function sendTikTokEvent(params: {
-  pixelCode:    string;
-  accessToken:  string;
-  eventName:    'ViewContent' | 'AddToCart' | 'InitiateCheckout' | 'CompletePayment' | 'PlaceAnOrder';
-  eventId:      string;     // must match Pixel event_id for deduplication
-  eventTime:    number;     // Unix timestamp in seconds
-  pageUrl:      string;
-  user:         TikTokEventUser;
-  properties?: {
-    value?:       number;
-    currency?:    string;
-    contentIds?:  string[];
-    contentType?: string;
-    orderId?:     string;
-  };
-}) {
+async function trackTikTokPurchase(order: Order, req: Request) {
+  const eventId = `purchase-${order.id}`; // MUST match Pixel event_id for deduplication
   const { createHash } = await import('crypto');
   const sha256 = (val: string) => createHash('sha256').update(val.toLowerCase().trim()).digest('hex');
 
-  const payload = {
-    pixel_code:  params.pixelCode,
-    event_time:  params.eventTime,
-    event:       params.eventName,
-    event_id:    params.eventId,
-    page: {
-      url: params.pageUrl,
-    },
-    user: {
-      email:       params.user.email    ? sha256(params.user.email)    : undefined,
-      phone_number:params.user.phone    ? sha256(params.user.phone)    : undefined,
-      ip:          params.user.ip,
-      user_agent:  params.user.userAgent,
-      ttclid:      params.user.ttclid,
-      external_id: params.user.externalId ? sha256(params.user.externalId) : undefined,
-    },
-    properties: {
-      value:        params.properties?.value,
-      currency:     params.properties?.currency,
-      contents:     params.properties?.contentIds?.map(id => ({ content_id: id, content_type: 'product' })),
-      order_id:     params.properties?.orderId,
-    },
-  };
-
-  const response = await fetch(
+  await fetch(
     `https://business-api.tiktok.com/open_api/v1.3/pixel/track/?business_id=${process.env.TIKTOK_BUSINESS_ID}`,
     {
-      method:  'POST',
+      method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
-        'Access-Token':  params.accessToken,
-      },
-      body: JSON.stringify({ data: [payload] }),
-    }
-  );
-
-  const result = await response.json();
-  if (result.code !== 0) {
-    throw new Error(`TikTok Events API error: ${result.message}`);
-  }
-  return result;
-}
-```
-
-Fire server-side on the purchase webhook:
-
-```typescript
-// In order.paid webhook handler
-async function trackTikTokPurchase(order: Order, req: Request) {
-  const eventId = `purchase-${order.id}`; // must match Pixel event_id
-
-  await sendTikTokEvent({
-    pixelCode:   process.env.TIKTOK_PIXEL_ID!,
-    accessToken: process.env.TIKTOK_ACCESS_TOKEN!,
-    eventName:   'CompletePayment',
-    eventId,
-    eventTime:   Math.floor(Date.now() / 1000),
-    pageUrl:     `${process.env.STORE_URL}/checkout/thank-you`,
-    user: {
-      email:      order.customerEmail,
-      phone:      order.customerPhone,
-      ip:         req.ip,
-      userAgent:  req.headers['user-agent'],
-      ttclid:     req.cookies['ttclid'],
-      externalId: order.customerId,
-    },
-    properties: {
-      value:      order.subtotal,
-      currency:   order.currencyCode,
-      contentIds: order.lineItems.map(i => i.sku),
-      orderId:    order.id,
-    },
-  });
-}
-```
-
-### 3. TikTok Catalog Manager feed sync
-
-Generate a product catalog feed compatible with TikTok's spec:
-
-```typescript
-async function generateTikTokCatalogFeed(): Promise<string> {
-  const products = await db.products.findAll({ where: { active: true }, include: ['images', 'variants'] });
-
-  const items = products.flatMap(p =>
-    p.variants.map(v => ({
-      sku_id:      v.sku,
-      title:       `${p.name}${v.title !== 'Default' ? ` - ${v.title}` : ''}`,
-      description: p.description.replace(/<[^>]*>/g, '').substring(0, 1000),
-      availability: v.stockQuantity > 0 ? 'in stock' : 'out of stock',
-      condition:   'new',
-      price:       `${v.price.toFixed(2)} USD`,
-      link:        `${process.env.STORE_URL}/products/${p.slug}?variant=${v.id}`,
-      image_link:  v.images?.[0]?.url ?? p.images[0]?.url,
-      brand:       p.brandName ?? process.env.STORE_NAME,
-      google_product_category: p.gpcCategory,
-    }))
-  );
-
-  // Return as JSON Lines (JSONL format preferred by TikTok)
-  return items.map(i => JSON.stringify(i)).join('\n');
-}
-```
-
-Register the feed URL in TikTok Business Center > Catalogs > Add Catalog. Set auto-sync every 24 hours.
-
-### 4. Campaign structure for TikTok ecommerce
-
-```
-Campaign 1: Video Shopping Ads — Catalog
-  Objective: Product Sales
-  Ad Group 1: Prospecting — Broad (US, 18-44)
-    Bidding: Lowest Cost (spend to learn) or Cost Cap $30 CPA
-    Ads: Dynamic Product videos from catalog (auto-generated)
-  Ad Group 2: Interest Targeting — Fashion/Beauty/Home
-    Bidding: Cost Cap
-    Ads: UGC-style 9:16 video ads
-
-Campaign 2: Spark Ads — Boosted Organic
-  Objective: Conversions
-  Ad Group: Retargeting — Video Viewers (30 days) + Website Visitors
-    Ads: Spark authorization of top-performing organic posts
-
-Campaign 3: LIVE Shopping Ads (during live events)
-  Objective: LIVE Shopping
-  Ad Group: Broad + lookalike purchasers
-    Ads: Dynamic LIVE ad showing current featured product
-```
-
-### 5. Spark Ads setup (boosting organic content)
-
-To run a creator's organic post as a Spark Ad, obtain authorization:
-
-```typescript
-// Request Spark Ad authorization from creator
-async function requestSparkAdAuth(params: {
-  creatorTikTokId: string;
-  videoId:         string;
-  accessToken:     string;
-}) {
-  const response = await fetch(
-    'https://business-api.tiktok.com/open_api/v1.3/tt_video/authorize/',
-    {
-      method:  'POST',
-      headers: {
-        'Access-Token':  params.accessToken,
-        'Content-Type':  'application/json',
+        'Content-Type': 'application/json',
+        'Access-Token': process.env.TIKTOK_ACCESS_TOKEN!,
       },
       body: JSON.stringify({
-        advertiser_id:  process.env.TIKTOK_ADVERTISER_ID,
-        tiktok_item_id: params.videoId,
+        data: [{
+          pixel_code: process.env.TIKTOK_PIXEL_ID,
+          event: 'CompletePayment',
+          event_id: eventId,
+          event_time: Math.floor(Date.now() / 1000),
+          user: {
+            email: sha256(order.customerEmail),
+            phone_number: sha256(order.customerPhone?.replace(/\D/g, '') ?? ''),
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+            ttclid: req.cookies['ttclid'], // TikTok click ID — strongest attribution signal
+          },
+          properties: {
+            value: order.subtotal,
+            currency: order.currencyCode,
+            contents: order.lineItems.map(i => ({ content_id: i.sku, content_type: 'product' })),
+            order_id: order.id,
+          },
+          page: { url: `${process.env.STORE_URL}/checkout/thank-you` },
+        }],
       }),
     }
   );
-
-  return response.json();  // Returns auth_code — valid for 30 days
 }
 ```
 
-### 6. Attribution windows and SKAdNetwork
+### Step 3: Build your TikTok campaign structure
 
-For iOS campaigns, TikTok supports SKAdNetwork attribution. Configure in Ads Manager:
+In **TikTok Ads Manager**, build a three-tier campaign structure:
 
-- **Click-through window**: 7 days (recommended for ecommerce)
-- **View-through window**: 1 day
-- **Enable SKAN**: toggle on in campaign settings; TikTok will decode conversion values automatically if you configure the schema in the pixel settings
+**Campaign 1: Prospecting — Video Shopping Ads**
+- Objective: Product Sales
+- Ad Group audience: Broad (target country, age 18–45, no interest targeting)
+- Bidding: Lowest Cost (let the algorithm learn for the first 2 weeks)
+- Ads: Video Shopping Ads — TikTok auto-generates product videos from your catalog, or upload your own UGC-style vertical videos
+- Budget: 60% of total TikTok budget
+
+**Campaign 2: Retargeting — Engaged Users**
+- Objective: Conversions
+- Ad Group 1: Viewed product in last 7 days but did not add to cart
+  - Custom Audience: Website Event → ViewContent, last 7 days
+- Ad Group 2: Added to cart but did not purchase (last 3 days)
+  - Custom Audience: AddToCart, last 3 days; exclude CompletePayment
+- Ads: Dynamic product ads showing the specific product the viewer engaged with
+- Budget: 30% of total TikTok budget
+
+**Campaign 3: Spark Ads — Boost Organic Content**
+- Objective: Conversions
+- Use Spark Ads to boost your top-performing organic TikTok posts or authorized creator posts
+- Spark Ads outperform most polished brand content because the social proof (likes, comments) carries over
+- Budget: 10% of total TikTok budget
+
+### Step 4: Set up Spark Ads (boosting organic content)
+
+1. In TikTok Ads Manager, go to **Assets → Creative → Spark Ads**
+2. To boost your own organic posts: search for the post URL and request authorization
+3. To boost creator posts: the creator must grant Spark Ad authorization via TikTok's authorization process — they go to **Creator Tools → TikTok for Business** and generate an authorization code
+4. Authorization codes are valid for 30 days — plan renewal into your workflow
+
+### Step 5: Measure TikTok Ads performance
+
+| Metric | Target | Where to Find |
+|--------|--------|---------------|
+| Pixel Event Quality Score | 7+/10 | TikTok Events Manager → Pixel |
+| Video play rate (2s) | > 25% | Ads Manager → Campaign Analytics |
+| Click-through rate | > 1% | Ads Manager |
+| Cost per Purchase | Your target CPA | Ads Manager → Conversions |
+| ROAS | > 2× for broad / > 4× for retargeting | Ads Manager → Revenue |
 
 ## Best Practices
 
-- **Mirror Meta's CAPI approach** — TikTok Events API works identically; sending both Pixel + EAPI doubles match quality
-- **Pass `ttclid` parameter** — capture the TikTok click ID from landing page URLs and store in a cookie; it is the strongest attribution signal
-- **Use 9:16 vertical video for all ads** — horizontal or square ads significantly underperform on TikTok's full-screen feed
-- **Refresh creatives every 2–4 weeks** — TikTok audiences fatigue faster than Meta; plan a continuous creative production pipeline
-- **Start with Lowest Cost bidding** — before you have enough conversion data for Cost Cap, Lowest Cost spends budget and generates the conversion history the algorithm needs
-- **Exclude recent purchasers from prospecting** — add a 30-day purchaser custom audience as an exclusion
-- **Use Spark Ads for UGC at scale** — authentic creator content consistently outperforms polished brand ads on TikTok
-- **Test catalog-driven video ads** — TikTok can auto-generate product videos from your catalog; these often match hand-crafted video performance at a fraction of the production cost
+- **Use Maximum Data Sharing** in Shopify/WooCommerce TikTok integration settings — this enables EAPI and is the most important single setting for attribution quality
+- **Pass `ttclid` in all EAPI events** — capture the TikTok click ID from landing page URLs (`?ttclid=xxx`) and store in a cookie; it is the strongest attribution signal after iOS 14
+- **Use 9:16 vertical video exclusively** — horizontal or square ads significantly underperform in TikTok's full-screen feed
+- **Refresh creatives every 3–4 weeks** — TikTok audiences fatigue faster than Meta; plan a continuous creative pipeline
+- **Start with Lowest Cost bidding** — before you have enough conversion data for Cost Cap bidding, Lowest Cost generates the purchase history the algorithm needs
+- **Exclude recent purchasers (30 days) from prospecting** — upload a customer list as a custom audience exclusion in all prospecting ad sets
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Double-counting purchases | Ensure `event_id` in Pixel and Events API match exactly for the same event |
-| Events API returning 40100 (invalid token) | Access tokens expire; implement OAuth refresh flow or use long-lived tokens from Business Center |
-| Catalog feed rejections | Check that `price` format is `"XX.XX USD"` with space between amount and currency code |
-| Spark Ad authorization expired | Request new auth code every 30 days; set a calendar reminder or automate via the API |
-| Low match rate in Events Manager | Send `ttclid` (click ID), `ip`, and `user_agent` in addition to hashed email for maximum match |
-| LIVE Shopping ads not delivering | Ensure the TikTok account linked to the LIVE is authorized in Business Center and has Shopping features enabled |
-| High CPMs but low CTR | TikTok audiences require hook-first creatives; first 2 seconds must be visually arresting — no logo cards or slow intros |
+| Double-counting purchases in Events Manager | Ensure `event_id` in Pixel and Events API match exactly for the same event |
+| Catalog feed rejections | Check that `price` format is `"XX.XX USD"` (space between amount and currency code is required) |
+| Low match rate in Events Manager | Send `ttclid`, `ip`, and `user_agent` in addition to hashed email for maximum attribution |
+| High CPMs but low click-through rate | First 2 seconds of video must be visually arresting — no logo cards or slow product reveal intros |
+| Spark Ad authorization expired | Request new auth codes every 30 days; set calendar reminders for creator-authorized content |
 
 ## Related Skills
 

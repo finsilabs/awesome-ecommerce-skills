@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [images, zoom, 360-view, video, product-gallery, media, performance]
 triggers: ["product image zoom", "360 degree product view", "product gallery", "image magnifier", "product video", "spin view"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Implement a rich product media experience that includes CSS-powered lens zoom on hover, touch-native pinch-to-zoom on mobile, 360-degree spin views from a sequence of images, and inline video playback. All media is lazy-loaded and served via a CDN image optimization pipeline to maintain Core Web Vitals scores.
+Implement a rich product media experience that includes high-resolution zoom on hover, touch-native pinch-to-zoom on mobile, 360-degree spin views from a sequence of images, and inline video playback. Richer media is associated with lower return rates and higher conversion for fashion, jewelry, electronics, and other detail-sensitive categories.
 
 ## When to Use This Skill
 
@@ -26,338 +26,206 @@ Implement a rich product media experience that includes CSS-powered lens zoom on
 - When integrating with a product photography workflow that includes 360-degree spin assets
 - When product videos exist and need to be surfaced inline on the PDP
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
-**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
-
 ## Core Instructions
 
-1. **Build a media gallery with thumbnail strip**
+### Step 1: Determine the merchant's platform and choose the right approach
 
-   ```jsx
-   // ProductGallery.jsx
-   import { useState } from 'react';
+| Platform | Recommended Approach | Why |
+|----------|---------------------|-----|
+| **Shopify** | Use built-in media support in OS2.0 themes (Dawn, Sense) + **Magic Zoom Plus** app or **Swiper Gallery** for 360 | Dawn natively supports product images, video, and 3D models in the media gallery; Magic Zoom Plus ($69 one-time) adds hover zoom and 360 spin without theme edits |
+| **WooCommerce** | Install **WooCommerce Product Gallery Slider** or **YITH WooCommerce Zoom Magnifier** (free/premium) | WooCommerce includes a basic gallery; YITH Zoom Magnifier adds hover zoom and lightbox; Product Gallery Slider adds swipe, thumbnails, and video support |
+| **BigCommerce** | Use the Cornerstone theme's built-in zoom (hover zoom is enabled by default) + install **Magic 360** or **Sirv** app for spin views | Cornerstone has native zoom; Sirv ($20+/mo) provides hosted 360 spin and zoom CDN with a Stencil widget |
+| **Custom / Headless** | Build a custom gallery component with CSS transform zoom, Pointer Events API for pinch-to-zoom, and frame-based spin viewer | Full control over performance and UX; see implementation below |
 
-   export function ProductGallery({ media }) {
-     // media: Array<{ type: 'image'|'video'|'360', src, thumbnail, alt }>
-     const [activeIndex, setActiveIndex] = useState(0);
-     const activeMedia = media[activeIndex];
+### Step 2: Set up the product gallery
 
-     return (
-       <div className="product-gallery">
-         {/* Main display */}
-         <div className="gallery-main">
-           {activeMedia.type === 'image' && (
-             <ZoomImage src={activeMedia.src} alt={activeMedia.alt} />
-           )}
-           {activeMedia.type === 'video' && (
-             <ProductVideo src={activeMedia.src} poster={activeMedia.thumbnail} />
-           )}
-           {activeMedia.type === '360' && (
-             <SpinViewer frames={activeMedia.frames} />
-           )}
-         </div>
+---
 
-         {/* Thumbnail strip */}
-         <div className="gallery-thumbnails" role="list" aria-label="Product images">
-           {media.map((item, i) => (
-             <button
-               key={i}
-               role="listitem"
-               className={`thumbnail-btn ${activeIndex === i ? 'active' : ''}`}
-               onClick={() => setActiveIndex(i)}
-               aria-label={`View ${item.alt ?? `image ${i + 1}`}`}
-               aria-pressed={activeIndex === i}
-             >
-               <img src={item.thumbnail} alt="" loading="lazy" width="60" height="60" />
-               {item.type === 'video' && <span className="play-icon" aria-hidden="true" />}
-               {item.type === '360' && <span className="spin-icon" aria-hidden="true">360</span>}
-             </button>
-           ))}
-         </div>
-       </div>
-     );
-   }
-   ```
+#### Shopify
 
-2. **CSS lens zoom on hover (desktop)**
+**Built-in media gallery (no app required):**
 
-   Implement a magnifier lens effect that shows a zoomed section of the image following the cursor. No JavaScript image loading — uses CSS `transform: scale` on the full-resolution image.
+1. In your product admin (**Products → [product] → Media**), upload images, add YouTube/Vimeo video URLs, and upload `.glb` files for 3D models
+2. Shopify OS2.0 themes (Dawn, Sense, Craft) display all media types in the gallery automatically — images, video, and 3D
+3. In **Online Store → Themes → Customize**, navigate to your product page template and find the **Product media** section:
+   - Enable **Image zoom** (magnifier on hover)
+   - Set **Media size** to Large or Extra Large for better zoom quality
+   - Enable **Video looping** for product videos
+4. For variant-specific images: assign images to variants in **Products → [product] → Variants → [variant] → Image** — the gallery automatically switches to the variant image when a shopper selects that variant
 
-   ```jsx
-   // ZoomImage.jsx
-   import { useState, useRef } from 'react';
+**For 360-degree spin views — Magic Zoom Plus ($69 one-time):**
+1. Install from the Shopify App Store
+2. Upload your spin sequence images as numbered files (e.g., `product-001.jpg` through `product-036.jpg`)
+3. The app creates a spin viewer widget that embeds in your product page without theme code changes
 
-   export function ZoomImage({ src, alt, zoomSrc }) {
-     const [zoom, setZoom] = useState(null); // { x, y } percentages
-     const containerRef = useRef(null);
+---
 
-     function handleMouseMove(e) {
-       const rect = containerRef.current.getBoundingClientRect();
-       const x = ((e.clientX - rect.left) / rect.width) * 100;
-       const y = ((e.clientY - rect.top) / rect.height) * 100;
-       setZoom({ x, y });
-     }
+#### WooCommerce
 
-     return (
-       <div
-         ref={containerRef}
-         className="zoom-container"
-         onMouseMove={handleMouseMove}
-         onMouseLeave={() => setZoom(null)}
-         aria-label={`${alt} — hover to zoom`}
-       >
-         <img
-           src={src}
-           alt={alt}
-           className={`zoom-image ${zoom ? 'zooming' : ''}`}
-           style={zoom ? {
-             transformOrigin: `${zoom.x}% ${zoom.y}%`,
-             transform: 'scale(2.5)',
-           } : {}}
-           draggable={false}
-         />
-       </div>
-     );
-   }
-   ```
+**Built-in zoom (no plugin required):**
 
-   ```css
-   .zoom-container {
-     overflow: hidden;
-     cursor: crosshair;
-     aspect-ratio: 1/1;
-     border-radius: 4px;
-   }
+WooCommerce includes basic image zoom (powered by Zoom.js) by default on product pages. To configure it:
+1. Go to **WooCommerce → Settings → Products → Display**
+2. Under **Product Images**, set **Zoom** behavior: Enabled, Disabled, or Inner
+3. Upload high-resolution images (at least 1000×1000px) — the zoom uses the full uploaded image
 
-   .zoom-image {
-     width: 100%;
-     height: 100%;
-     object-fit: cover;
-     transition: transform 0.05s linear;
-     will-change: transform;
-   }
-   ```
+**YITH WooCommerce Zoom Magnifier (free + premium):**
+1. Install from WordPress.org
+2. Go to **YITH → Zoom Magnifier → Settings**
+3. Configure zoom type: **Inner** (magnifies within the image container), **Outer** (shows magnified panel beside the image), or **Lens** (circular magnifier follows cursor)
+4. Enable lightbox for full-screen zoom on click
 
-3. **Touch pinch-to-zoom on mobile**
+**Product Gallery Slider (free — WooCommerce.com):**
+1. Install and activate
+2. Adds swipe support, thumbnail strip, and fullscreen lightbox to the built-in WooCommerce gallery
+3. Supports video thumbnails (YouTube/Vimeo) in the gallery
 
-   Use the Pointer Events API to track multi-touch pinch gestures.
+**For 360 views:** Use **WooCommerce 360° Image** plugin (free, wordpress.org) — upload numbered spin frames as product images prefixed with `360_` and the plugin creates a drag-to-spin viewer.
 
-   ```javascript
-   // usePinchZoom.js
-   import { useState, useRef, useCallback } from 'react';
+---
 
-   export function usePinchZoom({ minScale = 1, maxScale = 4 } = {}) {
-     const [scale, setScale] = useState(1);
-     const [origin, setOrigin] = useState({ x: 50, y: 50 }); // percent
-     const pointers = useRef(new Map());
+#### BigCommerce
 
-     function getDistance(p1, p2) {
-       return Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
-     }
+**Built-in zoom (Cornerstone theme):**
+1. Go to **Storefront → My Themes → Customize**
+2. Under **Product Page → Image**, enable **Image zoom** (hover zoom is on by default)
+3. Set **Image size** to Large for better zoom quality — BigCommerce serves images at multiple sizes automatically
 
-     const onPointerDown = useCallback((e) => {
-       pointers.current.set(e.pointerId, e);
-     }, []);
+**Sirv (hosted 360 spin + zoom CDN):**
+1. Install **Sirv** from the BigCommerce App Marketplace
+2. Upload your spin sequence images to Sirv's CDN — it auto-detects numbered sequences
+3. Paste the Sirv embed code into your product description or use the Sirv BigCommerce widget
+4. Sirv also serves all your product images via its CDN with automatic WebP conversion
 
-     const onPointerMove = useCallback((e) => {
-       pointers.current.set(e.pointerId, e);
-       const pts = [...pointers.current.values()];
-       if (pts.length === 2) {
-         const dist = getDistance(pts[0], pts[1]);
-         if (!pointers.current.prevDist) {
-           pointers.current.prevDist = dist;
-           return;
-         }
-         const delta = dist / pointers.current.prevDist;
-         pointers.current.prevDist = dist;
-         setScale(s => Math.min(maxScale, Math.max(minScale, s * delta)));
+**Product videos:**
+1. In your BigCommerce product admin, click **Add Video** in the media section and paste a YouTube or Vimeo URL
+2. Videos appear as thumbnail items in the product gallery automatically
 
-         // Compute midpoint as origin
-         const midX = (pts[0].clientX + pts[1].clientX) / 2;
-         const midY = (pts[0].clientY + pts[1].clientY) / 2;
-         const rect = e.currentTarget.getBoundingClientRect();
-         setOrigin({
-           x: ((midX - rect.left) / rect.width) * 100,
-           y: ((midY - rect.top) / rect.height) * 100,
-         });
-       }
-     }, [minScale, maxScale]);
+---
 
-     const onPointerUp = useCallback((e) => {
-       pointers.current.delete(e.pointerId);
-       if (pointers.current.size < 2) delete pointers.current.prevDist;
-       if (pointers.current.size === 0) {
-         // Reset to normal scale on double-tap (implement separately)
-       }
-     }, []);
+#### Custom / Headless
 
-     return { scale, origin, handlers: { onPointerDown, onPointerMove, onPointerUp } };
-   }
-   ```
+**CSS hover zoom (no JavaScript image loading):**
+```jsx
+// ZoomImage.jsx
+import { useState, useRef } from 'react';
 
-4. **Implement 360-degree spin viewer**
+export function ZoomImage({ src, alt }) {
+  const [zoom, setZoom] = useState(null);
+  const containerRef = useRef(null);
 
-   Load a sequence of images (e.g., 36 frames = 10 degrees each) and switch frames as the user drags.
+  function handleMouseMove(e) {
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoom({ x, y });
+  }
 
-   ```jsx
-   // SpinViewer.jsx
-   import { useState, useRef, useEffect } from 'react';
-
-   export function SpinViewer({ frames, autoSpin = true, productName = 'Product' }) {
-     const [frameIndex, setFrameIndex] = useState(0);
-     const [imagesLoaded, setImagesLoaded] = useState(false);
-     const dragStart = useRef(null);
-     const preloadedImages = useRef([]);
-
-     // Preload all frames
-     useEffect(() => {
-       let loaded = 0;
-       preloadedImages.current = frames.map(src => {
-         const img = new Image();
-         img.src = src;
-         img.onload = () => {
-           loaded++;
-           if (loaded === frames.length) setImagesLoaded(true);
-         };
-         return img;
-       });
-     }, [frames]);
-
-     function handleDragStart(e) {
-       dragStart.current = e.clientX ?? e.touches?.[0]?.clientX;
-     }
-
-     function handleDragMove(e) {
-       if (dragStart.current === null) return;
-       const clientX = e.clientX ?? e.touches?.[0]?.clientX;
-       const delta = clientX - dragStart.current;
-       // Move one frame per ~8px of drag
-       const frameDelta = Math.round(delta / 8);
-       if (frameDelta !== 0) {
-         setFrameIndex(i => ((i + frameDelta) % frames.length + frames.length) % frames.length);
-         dragStart.current = clientX;
-       }
-     }
-
-     function handleDragEnd() {
-       dragStart.current = null;
-     }
-
-     if (!imagesLoaded) {
-       return <div className="spin-loading" aria-label="Loading 360 view">Loading...</div>;
-     }
-
-     return (
-       <div
-         className="spin-viewer"
-         onMouseDown={handleDragStart}
-         onMouseMove={handleDragMove}
-         onMouseUp={handleDragEnd}
-         onMouseLeave={handleDragEnd}
-         onTouchStart={handleDragStart}
-         onTouchMove={handleDragMove}
-         onTouchEnd={handleDragEnd}
-         aria-label="360 degree product view — drag to rotate"
-         role="img"
-         style={{ cursor: 'ew-resize' }}
-       >
-         <img
-           src={frames[frameIndex]}
-           alt={`${productName} - 360 view, frame ${frameIndex + 1}`}
-           draggable={false}
-           className="spin-frame"
-         />
-         <span className="spin-hint" aria-hidden="true">Drag to rotate</span>
-       </div>
-     );
-   }
-   ```
-
-5. **Inline video with autoplay and fallback**
-
-   ```jsx
-   // ProductVideo.jsx
-   export function ProductVideo({ src, poster }) {
-     return (
-       <video
-         className="product-video"
-         poster={poster}
-         controls
-         playsInline        /* Required for iOS autoplay in page */
-         muted              /* Required for autoplay without user interaction */
-         loop
-         preload="metadata" /* Load poster + duration, not full video */
-       >
-         <source src={src.replace('.mp4', '.webm')} type="video/webm" />
-         <source src={src} type="video/mp4" />
-         <p>Your browser does not support video. <a href={src}>Download the video</a>.</p>
-       </video>
-     );
-   }
-   ```
-
-## Examples
-
-### Serving optimized images via CDN
-
-Use Cloudinary or imgix URL parameters to serve the correct resolution for each use case:
-
-```javascript
-// lib/imageUrl.js
-export function buildImageUrl(publicId, { width, height, quality = 'auto', format = 'auto' }) {
-  // Cloudinary example
-  return `https://res.cloudinary.com/your-cloud/image/upload/w_${width},h_${height},c_fill,q_${quality},f_${format}/${publicId}`;
+  return (
+    <div
+      ref={containerRef}
+      className="zoom-container"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setZoom(null)}
+    >
+      <img
+        src={src}
+        alt={alt}
+        className="zoom-image"
+        style={zoom ? {
+          transformOrigin: `${zoom.x}% ${zoom.y}%`,
+          transform: 'scale(2.5)',
+        } : {}}
+        draggable={false}
+      />
+    </div>
+  );
 }
-
-// Usage:
-const thumbnailUrl = buildImageUrl('products/shirt-blue', { width: 120, height: 120 });
-const zoomUrl      = buildImageUrl('products/shirt-blue', { width: 2000, height: 2000 });
 ```
 
-### Lazy-loading 360 frames
+```css
+.zoom-container { overflow: hidden; cursor: crosshair; aspect-ratio: 1/1; }
+.zoom-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.05s linear; will-change: transform; }
+```
 
-Only load the first frame initially; preload remaining frames in the background using `requestIdleCallback`:
+**360-degree spin viewer:**
+```jsx
+// SpinViewer.jsx — preloads all frames, switches on drag
+export function SpinViewer({ frames, productName = 'Product' }) {
+  const [frameIndex, setFrameIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const dragStart = useRef(null);
 
-```javascript
-function preloadFramesIdle(frames) {
-  frames.slice(1).forEach((src, i) => {
-    requestIdleCallback(() => {
+  useEffect(() => {
+    let count = 0;
+    frames.forEach(src => {
       const img = new Image();
       img.src = src;
-    }, { timeout: 5000 });
-  });
+      img.onload = () => { if (++count === frames.length) setLoaded(true); };
+    });
+  }, [frames]);
+
+  function handleDragStart(e) { dragStart.current = e.clientX ?? e.touches?.[0]?.clientX; }
+  function handleDragMove(e) {
+    if (dragStart.current === null) return;
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const delta = Math.round((clientX - dragStart.current) / 8);
+    if (delta !== 0) {
+      setFrameIndex(i => ((i + delta) % frames.length + frames.length) % frames.length);
+      dragStart.current = clientX;
+    }
+  }
+  function handleDragEnd() { dragStart.current = null; }
+
+  if (!loaded) return <div aria-label="Loading 360 view">Loading...</div>;
+  return (
+    <div
+      onMouseDown={handleDragStart} onMouseMove={handleDragMove}
+      onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}
+      onTouchStart={handleDragStart} onTouchMove={handleDragMove} onTouchEnd={handleDragEnd}
+      aria-label="360 degree product view — drag to rotate"
+      role="img" style={{ cursor: 'ew-resize' }}
+    >
+      <img src={frames[frameIndex]} alt={`${productName}, frame ${frameIndex + 1} of ${frames.length}`} draggable={false} />
+      <span aria-hidden="true" style={{ fontSize: '0.75rem', color: '#666' }}>Drag to rotate</span>
+    </div>
+  );
 }
 ```
+
+### Step 3: Optimize media for performance
+
+Regardless of platform, follow these media guidelines:
+
+1. **Hero image**: Upload at minimum 2000px on the longest side for zoom quality; platforms resize down automatically for thumbnails
+2. **Format**: Upload WebP images where your platform supports it — Shopify, BigCommerce, and Sirv convert automatically; for WooCommerce use the **Imagify** or **ShortPixel** plugin
+3. **360 spin frames**: 24-36 frames is the sweet spot; at 30 KB per frame (optimized JPEG) that is under 1 MB total for the full sequence
+4. **Video**: Upload MP4 directly to Shopify/BigCommerce, or embed YouTube/Vimeo to offload hosting costs; always include a poster image
+5. **LCP (Largest Contentful Paint)**: The main product image is almost always the LCP element — ensure it loads with high priority
 
 ## Best Practices
 
 - **Serve images at 2x the rendered size** for retina screens but no larger — a 400px container needs an 800px image, not 2000px
-- **Use WebP or AVIF format** — 30-50% smaller than JPEG at equivalent quality; provide JPEG fallback via `<picture>` or CDN content negotiation
-- **Pre-load the hero image** — add `fetchpriority="high"` and `loading="eager"` to the first product image; it is almost always the LCP element
-- **Lazy-load non-hero media** — thumbnails, 360 frames 2-N, and video should all use `loading="lazy"` or be fetched after first interaction
-- **Show a loading state for 360 views** — preloading 36 frames can take several seconds on mobile; show a spinner and first frame while loading
+- **Use WebP or AVIF format** — 30-50% smaller than JPEG at equivalent quality
+- **Pre-load the hero image** — add `fetchpriority="high"` and `loading="eager"` to the first product image
+- **Lazy-load non-hero media** — thumbnails, 360 frames 2–N, and video should load after first interaction
+- **Show a loading state for 360 views** — preloading 36 frames can take several seconds on mobile; show a progress indicator
 - **Provide keyboard alternatives for drag interactions** — 360 spin should support left/right arrow keys in addition to mouse drag
-- **Avoid autoplay with sound** — muted autoplay is acceptable; audio autoplay is blocked by browsers and is a poor UX
+- **Avoid autoplay with sound** — muted autoplay is acceptable; audio autoplay is blocked by most browsers
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
 | Zoom CSS transform causes layout shift | Use `will-change: transform` and `overflow: hidden` on the container so the scaled image does not reflow siblings |
-| 360 spin is jittery on mobile | Use `requestAnimationFrame` to throttle frame updates; do not update `frameIndex` on every `touchmove` event |
+| 360 spin is jittery on mobile | Throttle frame updates to one per `requestAnimationFrame`; do not call setState on every `touchmove` event |
 | Video does not autoplay on iOS | Add `playsInline` and `muted` attributes; iOS requires both for autoplay without user gesture |
-| LCP score poor due to large hero image | Add `fetchpriority="high"` and `loading="eager"` to the main product image; verify with Lighthouse that it is recognized as the LCP element |
-| 360 assets too large to load (36 x 500 KB) | Target 20-40 KB per frame at 800px wide using optimized JPEG quality 75 through CDN; that is 720 KB total — acceptable |
+| LCP score poor due to large hero image | Add `fetchpriority="high"` and `loading="eager"` to the main product image; verify with Lighthouse |
+| 360 assets too large (36 × 500 KB) | Target 20–40 KB per frame at 800px wide using JPEG quality 75 through your CDN |
 
 ## Related Skills
 
 - @product-page-design
 - @responsive-storefront
 - @accessibility-commerce
-- @storefront-theming
+- @image-optimization-cdn

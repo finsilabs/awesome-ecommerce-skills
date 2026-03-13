@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [payment-terms, b2b, credit-management]
 triggers: ["payment terms", "net-30 billing", "net-60", "credit terms", "B2B credit", "early payment discount", "credit limit", "trade credit", "payment terms management"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,11 +16,9 @@ difficulty: intermediate
 
 ## Overview
 
-Payment terms define when a B2B customer must pay for goods or services delivered on credit. Standard options include net-30 (payment due 30 days after invoice date), net-60, net-90, and variants like "2/10 net-30" (2% discount if paid within 10 days, otherwise due in 30). Offering flexible payment terms is a competitive advantage in B2B commerce — it reduces friction in the purchase decision and builds customer loyalty — but it also introduces credit risk and cash flow exposure that must be carefully managed.
+Payment terms define when a B2B customer must pay for goods delivered on credit: net-30 (due 30 days after invoice), net-60, net-90, or early-payment variants like "2/10 net-30" (2% discount if paid within 10 days). Offering flexible payment terms is a competitive advantage in B2B commerce — it reduces friction in the purchase decision — but introduces credit risk that must be carefully managed.
 
-This skill covers the full payment terms lifecycle: configuring terms per customer segment, enforcing credit limits, offering early payment discount (EPD) incentives, automating collections escalation for overdue accounts, and building the analytics to measure the cost of extended terms against the revenue they generate.
-
-The goal is not just flexibility but optimization: offering the right terms to the right customers while minimizing bad debt, DSO (days sales outstanding), and the hidden cost of financing your customers' working capital.
+The right tools depend on your platform. Shopify Plus, BigCommerce B2B Edition, and several WooCommerce plugins provide native net-terms support. For smaller setups, a combination of your ecommerce platform and an invoicing tool (Invoiced, Stripe Invoicing) is the most practical approach.
 
 ## When to Use This Skill
 
@@ -29,363 +27,153 @@ The goal is not just flexibility but optimization: offering the right terms to t
 - When you want to incentivize early payment with discounts to improve cash flow
 - When setting up a new wholesale or distribution channel with trade accounts
 - When credit losses are rising and you need better credit limit enforcement
-- When building a self-serve payment terms application workflow for new accounts
-- When you need to model the cash flow impact of extending or tightening terms
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
 
 ## Core Instructions
 
-### 1. Design the credit and payment terms data model
+### Step 1: Determine your platform and choose the right payment terms tool
 
-```sql
-CREATE TABLE payment_terms_config (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code            VARCHAR(30) UNIQUE NOT NULL,  -- 'net_30', 'net_60', '2_10_net_30'
-  display_name    VARCHAR(100) NOT NULL,         -- 'Net 30 Days'
-  net_days        INT NOT NULL,                  -- Days until payment is due
-  discount_pct    NUMERIC(4, 2) DEFAULT 0,       -- Early payment discount percentage
-  discount_days   INT DEFAULT 0,                 -- Days within which discount applies
-  description     TEXT,
-  is_active       BOOLEAN DEFAULT TRUE,
-  created_at      TIMESTAMPTZ DEFAULT NOW()
-);
+| Platform | Recommended Tool | Native Support |
+|----------|-----------------|---------------|
+| **Shopify (Standard)** | **Invoiced** app or **Balance** app | No native net-terms; use an app |
+| **Shopify Plus** | **Shopify B2B** (native) + **Invoiced** for advanced dunning | Net-30/60/90 built into Shopify B2B; credit limits and company accounts native |
+| **WooCommerce** | **WooCommerce B2B** plugin + **WooCommerce PDF Invoices** | WooCommerce B2B adds payment terms per customer group |
+| **BigCommerce** | **BigCommerce B2B Edition** (native) | Net-terms, credit limits, and company accounts built in |
+| **Custom / Headless** | **Stripe Invoicing** + **Stripe Billing** for terms enforcement | Stripe Invoicing supports net-30/60/90 natively |
 
--- Insert standard terms
-INSERT INTO payment_terms_config (code, display_name, net_days, discount_pct, discount_days) VALUES
-  ('due_on_receipt', 'Due on Receipt', 0, 0, 0),
-  ('net_10', 'Net 10', 10, 0, 0),
-  ('net_15', 'Net 15', 15, 0, 0),
-  ('net_30', 'Net 30', 30, 0, 0),
-  ('net_45', 'Net 45', 45, 0, 0),
-  ('net_60', 'Net 60', 60, 0, 0),
-  ('net_90', 'Net 90', 90, 0, 0),
-  ('2_10_net_30', '2/10 Net 30', 30, 2.00, 10),
-  ('1_10_net_30', '1/10 Net 30', 30, 1.00, 10),
-  ('2_10_net_60', '2/10 Net 60', 60, 2.00, 10);
+### Step 2: Configure payment terms per customer
 
-CREATE TABLE customer_credit_profiles (
-  id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id            UUID UNIQUE NOT NULL REFERENCES customers(id),
-  credit_status          VARCHAR(30) DEFAULT 'pending',
-  -- 'pending', 'approved', 'probationary', 'suspended', 'declined'
-  credit_limit           NUMERIC(12, 2) DEFAULT 0,
-  available_credit       NUMERIC(12, 2) DEFAULT 0,  -- Credit limit minus open AR
-  current_ar_balance     NUMERIC(12, 2) DEFAULT 0,  -- Total outstanding invoices
-  payment_terms_code     VARCHAR(30) REFERENCES payment_terms_config(code),
-  approved_by            VARCHAR(255),
-  approved_at            TIMESTAMPTZ,
-  last_reviewed_at       DATE,
-  next_review_date       DATE,
-  credit_application_id  UUID,
-  risk_score             INT,                        -- Internal score 0-100
-  risk_tier              VARCHAR(20),                -- 'low', 'medium', 'high'
-  avg_days_to_pay        NUMERIC(5, 1),              -- Computed from payment history
-  on_time_payment_rate   NUMERIC(5, 2),              -- Percentage paid on time
-  late_payment_count     INT DEFAULT 0,
-  notes                  TEXT,
-  credit_hold            BOOLEAN DEFAULT FALSE,
-  credit_hold_reason     TEXT,
-  credit_hold_date       TIMESTAMPTZ,
-  created_at             TIMESTAMPTZ DEFAULT NOW(),
-  updated_at             TIMESTAMPTZ DEFAULT NOW()
-);
+---
 
-CREATE TABLE credit_applications (
-  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id        UUID NOT NULL REFERENCES customers(id),
-  requested_limit    NUMERIC(12, 2) NOT NULL,
-  requested_terms    VARCHAR(30),
-  -- Business info
-  company_name       VARCHAR(255),
-  years_in_business  INT,
-  annual_revenue     NUMERIC(15, 2),
-  tax_id             VARCHAR(50),
-  bank_name          VARCHAR(255),
-  bank_account_ref   VARCHAR(100),
-  -- Trade references
-  trade_references   JSONB,  -- Array of {company, contact, phone, email}
-  -- Decision
-  status             VARCHAR(30) DEFAULT 'submitted',
-  -- 'submitted', 'under_review', 'approved', 'declined', 'more_info_needed'
-  approved_limit     NUMERIC(12, 2),
-  approved_terms     VARCHAR(30),
-  decision_reason    TEXT,
-  decided_by         VARCHAR(255),
-  decided_at         TIMESTAMPTZ,
-  submitted_at       TIMESTAMPTZ DEFAULT NOW()
-);
+#### Shopify Plus (B2B native)
 
-CREATE TABLE payment_history (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id     UUID NOT NULL REFERENCES customers(id),
-  invoice_id      UUID REFERENCES invoices(id),
-  invoice_amount  NUMERIC(12, 2),
-  due_date        DATE,
-  paid_date       DATE,
-  days_to_pay     INT,       -- positive = late, negative = early
-  payment_method  VARCHAR(50),
-  early_discount_taken BOOLEAN DEFAULT FALSE,
-  discount_amount NUMERIC(8, 2) DEFAULT 0,
-  created_at      TIMESTAMPTZ DEFAULT NOW()
-);
+1. Go to **Shopify Admin → Customers → Companies** and create a company profile for each B2B account
+2. Click a company and go to **Payment methods** — set their payment terms:
+   - Net 7, Net 15, Net 30, Net 60, Net 90
+   - or a custom number of days
+3. Set a **Credit limit** on the company — orders that would exceed the limit are blocked or sent for approval
+4. When a company buyer places an order, Shopify automatically creates an invoice with the correct due date and sends it to the buyer's email
+5. The buyer can pay via a link in the invoice email; Shopify marks the order as paid automatically
 
-CREATE INDEX idx_credit_customer ON customer_credit_profiles (customer_id);
-CREATE INDEX idx_credit_status ON customer_credit_profiles (credit_status, credit_hold);
-CREATE INDEX idx_payment_history_customer ON payment_history (customer_id, due_date);
-```
+**Early payment discounts on Shopify Plus:**
+Shopify B2B does not natively support "2/10 net-30" early payment discounts. Use **Invoiced** app for early payment discount terms — configure in **Invoiced → Settings → Payment Terms → Early Payment Discount**.
 
-### 2. Credit limit enforcement at order checkout
+#### Shopify (Standard, via Invoiced app)
+
+1. Install **Invoiced** from the Shopify App Store
+2. Go to **Invoiced → Settings → Payment Terms** and create your term configurations: Net 30, Net 60, Net 90, 2/10 Net 30
+3. In **Invoiced → Customers**, assign payment terms per customer
+4. When a Shopify order is placed by a net-terms customer, Invoiced automatically generates an invoice with the correct due date
+5. Configure dunning: go to **Invoiced → Settings → Chasing** and set up a reminder schedule (1 day before due, 1 day overdue, 7 days overdue, 14 days overdue)
+
+#### WooCommerce
+
+1. Install **WooCommerce B2B** plugin (by WooCommerce or a third-party B2B plugin)
+2. Go to **WooCommerce → B2B Settings → Payment Terms** and configure terms per customer role or per customer
+3. Install **WooCommerce PDF Invoices & Packing Slips** to automatically generate invoices with due dates
+4. For early payment discounts, you can use a custom pricing rule (WooCommerce Dynamic Pricing plugin) that applies a percentage discount when a coupon code representing the early payment option is used
+
+**Credit limit enforcement in WooCommerce:**
+1. In the B2B plugin settings, set credit limits per customer or customer group
+2. Configure the behavior when the limit is exceeded: block the order or notify an admin for approval
+3. Credit is automatically released when an invoice is paid
+
+#### BigCommerce B2B Edition
+
+1. In **B2B Edition → Company Management → Payment Methods**, enable net-terms
+2. In **B2B Edition → Companies → [Company] → Credit**, set:
+   - Credit limit
+   - Payment terms (Net 30, Net 60, etc.)
+   - Credit status (Approved, Pending, Suspended)
+3. When a company buyer places an order, BigCommerce B2B Edition generates an invoice with the configured terms
+4. The buyer can view and pay outstanding invoices from their account portal
+
+---
+
+#### Custom / Headless
+
+Use **Stripe Invoicing** for net-terms enforcement without building a credit system from scratch:
 
 ```javascript
-// services/payment-terms/credit-check.js
-export async function checkCreditAvailability(customerId, orderAmount) {
-  const profile = await db.customerCreditProfiles.findUnique({
-    where: { customer_id: customerId },
-  });
+// Create a customer with payment terms in Stripe
+const customer = await stripe.customers.create({
+  email: customerEmail,
+  name: companyName,
+  metadata: { payment_terms: 'net_30', credit_limit: '50000' },
+});
 
-  if (!profile) {
-    return { approved: false, reason: 'no_credit_profile', requiresApplication: true };
-  }
+// Create an invoice with net-30 terms
+const invoice = await stripe.invoices.create({
+  customer: customer.id,
+  collection_method: 'send_invoice',
+  days_until_due: 30,            // Net-30
+  auto_advance: true,            // Automatically finalize and send
+  description: `Invoice for Order ${orderNumber}`,
+  metadata: { order_id: orderId, po_number: poNumber },
+});
 
-  if (profile.credit_hold) {
-    return {
-      approved: false,
-      reason: 'credit_hold',
-      message: `Account is on credit hold: ${profile.credit_hold_reason}`,
-    };
-  }
-
-  if (profile.credit_status !== 'approved') {
-    return { approved: false, reason: `credit_status_${profile.credit_status}` };
-  }
-
-  if (orderAmount > profile.available_credit) {
-    return {
-      approved: false,
-      reason: 'insufficient_credit',
-      available_credit: profile.available_credit,
-      requested: orderAmount,
-      shortfall: orderAmount - profile.available_credit,
-    };
-  }
-
-  // Temporarily reserve the credit (will be confirmed when order is placed)
-  await db.customerCreditProfiles.update({
-    where: { customer_id: customerId },
-    data: {
-      available_credit: { decrement: orderAmount },
-      current_ar_balance: { increment: orderAmount },
-    },
-  });
-
-  return {
-    approved: true,
-    payment_terms: profile.payment_terms_code,
-    available_credit_after: profile.available_credit - orderAmount,
-  };
-}
-
-export async function releaseReservedCredit(customerId, amount) {
-  // Called if order is cancelled before confirmation
-  await db.customerCreditProfiles.update({
-    where: { customer_id: customerId },
-    data: {
-      available_credit: { increment: amount },
-      current_ar_balance: { decrement: amount },
-    },
-  });
-}
+// Add line items, then finalize and send
+await stripe.invoiceItems.create({ customer: customer.id, invoice: invoice.id, amount: orderTotal, currency: 'usd', description: orderDescription });
+await stripe.invoices.finalizeInvoice(invoice.id);
+// Stripe auto-sends the invoice and handles dunning reminders via Billing settings
 ```
 
-### 3. Early payment discount calculation
+**Configure dunning in Stripe Billing settings:**
+Go to **Stripe Dashboard → Billing → Settings → Invoice reminders** and configure automatic reminders: 3 days before due, on due date, 3 days after, 7 days after, 14 days after.
+
+**Credit limit enforcement (custom):**
 
 ```javascript
-// services/payment-terms/early-payment.js
-export function calculateEarlyPaymentDiscount(invoice, paymentDate) {
-  const terms = PAYMENT_TERMS[invoice.payment_terms];
-  if (!terms || terms.discount_pct === 0) return null;
-
-  const discountCutoffDate = new Date(invoice.issue_date);
-  discountCutoffDate.setDate(discountCutoffDate.getDate() + terms.discount_days);
-
-  const isWithinDiscountPeriod = new Date(paymentDate) <= discountCutoffDate;
-
-  if (!isWithinDiscountPeriod) return null;
-
-  const discountAmount = invoice.total_amount * (terms.discount_pct / 100);
-  const amountDue = invoice.total_amount - discountAmount;
-
-  return {
-    eligible: true,
-    discount_pct: terms.discount_pct,
-    discount_amount: discountAmount,
-    amount_due_with_discount: amountDue,
-    discount_expires: discountCutoffDate,
-  };
-}
-
-// Compute the annualized cost of NOT taking an early payment discount
-// For "2/10 net-30": customer gives up 2% to defer payment 20 days
-// Annualized rate = (discount% / (1 - discount%)) * (365 / (net_days - discount_days))
-export function computeImpliedCostOfCredit(termsCode) {
-  const terms = PAYMENT_TERMS[termsCode];
-  if (!terms || terms.discount_pct === 0) return null;
-
-  const deferralDays = terms.net_days - terms.discount_days;
-  const discountRate = terms.discount_pct / 100;
-  const annualizedRate = (discountRate / (1 - discountRate)) * (365 / deferralDays);
-
-  return {
-    terms_code: termsCode,
-    discount_pct: terms.discount_pct,
-    deferral_days: deferralDays,
-    annualized_cost_pct: (annualizedRate * 100).toFixed(2),
-    equivalent_apr: `${(annualizedRate * 100).toFixed(2)}%`,
-  };
-}
-// "2/10 net-30" = annualized cost of ~36.7% — most customers should take the discount
-```
-
-### 4. Automated risk scoring and terms recommendation
-
-```javascript
-// services/payment-terms/risk-scorer.js
-export async function scoreCustomerCredit(customerId) {
-  const history = await db.paymentHistory.findMany({
-    where: { customer_id: customerId, created_at: { gte: new Date(Date.now() - 365 * 86400000) } },
+async function checkCreditAvailability(customerId, orderAmount) {
+  const customer = await db.customers.findUnique({ where: { id: customerId } });
+  const openInvoicesTotal = await db.invoices.aggregate({
+    where: { customerId, status: { in: ['sent', 'overdue', 'partially_paid'] } },
+    _sum: { amountDue: true },
   });
 
-  const totalPayments = history.length;
-  if (totalPayments === 0) return { score: 50, tier: 'medium', terms_recommendation: 'net_30' };
+  const currentBalance = openInvoicesTotal._sum.amountDue ?? 0;
+  const availableCredit = customer.creditLimit - currentBalance;
 
-  const lateDays = history.map((h) => Math.max(0, h.days_to_pay - 0));
-  const avgDaysLate = lateDays.reduce((a, b) => a + b, 0) / totalPayments;
-  const onTimePct = history.filter((h) => h.days_to_pay <= 0).length / totalPayments;
-
-  // Score 0-100 (higher = lower risk)
-  let score = 50;
-  score += onTimePct >= 0.95 ? 25 : onTimePct >= 0.80 ? 10 : -10;
-  score += avgDaysLate <= 3 ? 15 : avgDaysLate <= 10 ? 5 : -15;
-  score += totalPayments >= 12 ? 10 : totalPayments >= 6 ? 5 : 0;
-
-  score = Math.max(0, Math.min(100, score));
-
-  const tier = score >= 75 ? 'low' : score >= 50 ? 'medium' : 'high';
-  const recommendations = {
-    low: { terms: 'net_60', limit_multiplier: 3.0 },
-    medium: { terms: 'net_30', limit_multiplier: 1.5 },
-    high: { terms: 'net_15', limit_multiplier: 0.75 },
-  };
-
-  await db.customerCreditProfiles.update({
-    where: { customer_id: customerId },
-    data: {
-      risk_score: score,
-      risk_tier: tier,
-      avg_days_to_pay: avgDaysLate,
-      on_time_payment_rate: onTimePct * 100,
-      last_reviewed_at: new Date(),
-    },
-  });
-
-  return { score, tier, ...recommendations[tier] };
-}
-```
-
-### 5. Collections escalation policy
-
-```javascript
-// services/payment-terms/collections.js
-export const COLLECTIONS_POLICY = {
-  low_risk:    [{ days: 5,  action: 'reminder_email' }, { days: 15, action: 'second_notice' }, { days: 30, action: 'account_manager_call' }, { days: 45, action: 'credit_hold' }],
-  medium_risk: [{ days: 3,  action: 'reminder_email' }, { days: 10, action: 'second_notice' }, { days: 20, action: 'credit_hold' },           { days: 45, action: 'collections_referral' }],
-  high_risk:   [{ days: 1,  action: 'reminder_email' }, { days: 7,  action: 'credit_hold' },   { days: 21, action: 'collections_referral' }],
-};
-
-export async function enforceCollectionsPolicy() {
-  const overdueInvoices = await db.invoices.findMany({
-    where: { status: 'overdue', void_at: null },
-    include: { customer: { include: ['credit_profile'] } },
-  });
-
-  for (const invoice of overdueInvoices) {
-    const tier = invoice.customer.credit_profile?.risk_tier ?? 'medium_risk';
-    const policy = COLLECTIONS_POLICY[tier];
-    const daysOverdue = Math.floor((new Date() - invoice.due_date) / 86400000);
-
-    const nextAction = policy.find(
-      (step) => step.days <= daysOverdue && !hasActionBeenTaken(invoice.id, step.action)
-    );
-
-    if (nextAction) await executeCollectionsAction(invoice, nextAction);
+  if (orderAmount > availableCredit) {
+    return { approved: false, availableCredit, shortfall: orderAmount - availableCredit };
   }
+  return { approved: true, availableCredit: availableCredit - orderAmount };
 }
 ```
 
-## Examples
+### Step 3: Optimize terms for cash flow and credit risk
 
-### Credit terms performance dashboard query
+**The right terms for each customer tier:**
 
-```sql
-SELECT
-  ptc.display_name AS payment_terms,
-  COUNT(DISTINCT ccp.customer_id) AS customer_count,
-  AVG(ccp.avg_days_to_pay) AS avg_dso,
-  AVG(ccp.on_time_payment_rate) AS on_time_pct,
-  SUM(ccp.current_ar_balance) AS total_ar,
-  SUM(ccp.credit_limit) AS total_credit_extended,
-  ROUND(SUM(ccp.current_ar_balance) / NULLIF(SUM(ccp.credit_limit), 0) * 100, 1) AS utilization_pct
-FROM customer_credit_profiles ccp
-JOIN payment_terms_config ptc ON ptc.code = ccp.payment_terms_code
-WHERE ccp.credit_status = 'approved'
-GROUP BY ptc.display_name, ptc.net_days
-ORDER BY ptc.net_days;
-```
+| Customer Tier | Recommended Terms | Rationale |
+|--------------|-------------------|-----------|
+| New account (< 3 orders) | Net 15 or prepay | Insufficient payment history to extend credit |
+| Established (3–12 months on-time) | Net 30 | Standard B2B terms |
+| Strategic (12+ months, large volume) | Net 60 or "2/10 Net 30" | Reward loyalty; early discount improves your cash flow |
+| High-risk (2+ late payments) | Prepay or Net 15 only | Protect against bad debt |
 
-### Early payment discount uptake analysis
+**Early payment discount economics:**
+"2/10 net-30" means the customer gets a 2% discount if they pay within 10 days instead of 30. For the customer, this is equivalent to borrowing at ~36.7% APR — most customers with any cost of capital should take the discount. For you, paying 2% to receive payment 20 days earlier is typically better than your borrowing cost.
 
-```sql
-SELECT
-  i.payment_terms,
-  COUNT(*) AS total_invoices,
-  COUNT(*) FILTER (WHERE ph.early_discount_taken) AS discounts_taken,
-  ROUND(COUNT(*) FILTER (WHERE ph.early_discount_taken)::NUMERIC / COUNT(*) * 100, 1) AS uptake_pct,
-  SUM(ph.discount_amount) AS total_discounts_given,
-  AVG(ph.days_to_pay) AS avg_days_to_pay
-FROM invoices i
-LEFT JOIN payment_history ph ON ph.invoice_id = i.id
-WHERE i.payment_terms IN ('2_10_net_30', '1_10_net_30', '2_10_net_60')
-  AND i.issue_date >= NOW() - INTERVAL '6 months'
-GROUP BY i.payment_terms;
-```
+**Annual credit review:**
+Review every credit account annually — set a calendar reminder. A customer who qualified for $50,000 credit 2 years ago may look very different today. Reduce limits for customers who have developed slow-pay patterns.
 
 ## Best Practices
 
-- **Start new customers on stricter terms** — onboard new B2B accounts at net-30 or even net-15 and upgrade terms after 6 months of on-time payment. Never start with net-60 or net-90 without a credit check.
-- **Review credit limits annually at minimum** — a customer who qualified for $50,000 credit three years ago may look very different today. Set calendar reminders for annual reviews.
-- **Price early payment discounts correctly** — "2/10 net-30" implies an annualized cost of ~36.7% to the customer; it should be taken by any customer with a cost of capital above ~10%.
-- **Segment collections intensity by risk tier** — high-risk customers need follow-up on day 3; low-risk, long-term accounts with a perfect history deserve more grace.
-- **Never ship to accounts on credit hold** — enforce credit holds at the order level, not just the invoicing level. Once goods leave the warehouse you have lost leverage.
-- **Document credit decisions** — store the reason for every credit limit change and terms upgrade; you will need this if you ever have to defend a write-off to auditors.
+- **Start new B2B customers on stricter terms** — onboard new accounts at net-30 or net-15 and upgrade after 6 months of on-time payment; never start with net-60 or net-90 without a credit check
+- **Never ship to accounts on credit hold** — enforce credit holds at the order level, not just the invoicing level; once goods leave the warehouse you have lost leverage
+- **Price early payment discounts correctly** — "2/10 net-30" implies an annualized cost of ~36.7% to the customer; communicate this value clearly
+- **Segment collections intensity by risk tier** — high-risk customers need follow-up on day 3 overdue; long-term accounts with a perfect history deserve more grace
+- **Document every credit decision** — store the reason for every credit limit change; you will need this if you ever need to defend a write-off to auditors
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Customer places an order that exceeds credit limit | Check available credit before order confirmation, not just at invoicing; reserve the credit at order creation |
-| Early payment discounts taken after the discount period | Record the payment date and check against the discount cutoff strictly; partial payments during the discount period only earn a pro-rated discount |
-| Credit limits not refreshed as AR balance changes | Update `available_credit` in real-time whenever an invoice is issued (decrement) or payment is received (increment) |
-| Different departments grant different terms informally | Centralize terms configuration; sales reps should request terms changes through the credit system, not set them directly |
-| High bad debt write-off rate | Implement a credit score before any terms approval; require a credit application and trade references for limits above $10K |
-| Terms change does not apply to in-flight orders | Clearly define whether terms changes apply to future orders only or also to existing unpaid invoices; document the policy |
+| Customer places an order exceeding their credit limit | Check available credit before order confirmation, not just at invoicing; Shopify Plus B2B and BigCommerce B2B Edition enforce this natively |
+| Early payment discounts taken after the discount period | Record the payment date strictly; Invoiced and Stripe Invoicing track this automatically |
+| Credit limits not updated as AR balance changes | Use a tool that deducts from available credit when an invoice is created and restores it when paid; Invoiced and Stripe handle this automatically |
+| Different departments granting different terms informally | Centralize terms configuration in your platform or AR tool; sales reps should request terms changes through the credit system |
+| High bad-debt write-off rate | Implement a credit application process before approving any account for net terms above $5,000 |
 
 ## Related Skills
 

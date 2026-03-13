@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [wishlist, save-for-later, back-in-stock, sharing, favorites, alerts, cart]
 triggers: ["wishlist", "save for later", "add to wishlist", "back in stock alert", "favorite products", "share wishlist"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Implement persistent wishlists that survive browser sessions for both authenticated and guest users. Includes shareable wishlist links, back-in-stock email alerts for out-of-stock wishlist items, and move-to-cart flows. Guest wishlists are stored in `localStorage` and merged with the server-side list on login.
+Implement persistent wishlists that survive browser sessions for both authenticated and guest users. Includes shareable wishlist links, back-in-stock email alerts for out-of-stock wishlist items, and move-to-cart flows. Guest wishlists stored in `localStorage` are merged with the server-side list on login.
 
 ## When to Use This Skill
 
@@ -24,267 +24,130 @@ Implement persistent wishlists that survive browser sessions for both authentica
 - When building a feature to reduce cart abandonment by offering "save for later" on cart items
 - When implementing back-in-stock notifications for high-demand products
 - When the brand's social/sharing strategy should include wishlist sharing
-- When migrating a Shopify store's wishlist app to a custom headless implementation
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
-**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
 
 ## Core Instructions
 
-1. **Design the wishlist data model**
+### Step 1: Determine the merchant's platform and choose the right approach
 
-   ```javascript
-   // Wishlist schema (database)
-   // wishlists table
-   {
-     id: 'wl_abc123',
-     user_id: 'usr_xyz',         // null for guest (token-based)
-     guest_token: 'gt_randomid', // used when user_id is null
-     name: 'Summer Wish List',
-     is_public: true,
-     share_slug: 'summer-2026-abc', // for public sharing URL
-     created_at: Date,
-     updated_at: Date,
-   }
+| Platform | Recommended Approach | Why |
+|----------|---------------------|-----|
+| **Shopify** | Install **Wishlist Plus** (free tier) or **Growave** (from $9/mo, includes wishlist + loyalty + reviews) | Wishlist Plus is the most installed wishlist app on Shopify — adds heart buttons to product and collection pages, persistent wishlists for logged-in users, guest wishlist via browser storage, and a shareable wishlist page |
+| **WooCommerce** | Install **YITH WooCommerce Wishlist** (free) — the most widely used WooCommerce wishlist plugin | YITH Wishlist adds an "Add to Wishlist" button to product pages, creates a shareable wishlist page for each customer, handles guest wishlists via session, and includes "move to cart" functionality |
+| **BigCommerce** | Enable the built-in **Wishlists** feature in **Account → Wishlists** — it's native to the platform; extend with **Wishlist Plus** app if needed | BigCommerce includes server-side wishlists for registered customers built in; guests need a third-party app or custom solution |
+| **Custom / Headless** | Build with localStorage for guest users + server-side storage for authenticated users; merge on login | Full control over data model, sharing, and back-in-stock notifications; see implementation below |
 
-   // wishlist_items table
-   {
-     id: 'wli_123',
-     wishlist_id: 'wl_abc123',
-     product_id: 'prod_001',
-     variant_id: 'var_blue_M',
-     quantity: 1,
-     added_at: Date,
-     notify_back_in_stock: true,
-   }
-   ```
+### Step 2: Set up wishlists on your platform
 
-2. **Implement client-side wishlist state with localStorage guest fallback**
+---
 
-   ```javascript
-   // lib/wishlistStore.js
-   const GUEST_WISHLIST_KEY = 'guest_wishlist';
+#### Shopify
 
-   export function getGuestWishlist() {
-     try {
-       return JSON.parse(localStorage.getItem(GUEST_WISHLIST_KEY) ?? '[]');
-     } catch {
-       return [];
-     }
-   }
+**Wishlist Plus (recommended — free tier available):**
+1. Install **Wishlist Plus** from the Shopify App Store
+2. In the app dashboard:
+   - Set **Guest wishlist**: Enabled (uses browser storage for logged-out users)
+   - Set **Auto-merge**: Enabled (merges guest wishlist into account wishlist on login)
+   - Configure the heart button position: **Above add to cart**, **Below add to cart**, or **On product image**
+3. The app automatically adds a heart/wishlist button to all product pages and collection cards
+4. Configure **Wishlist page** URL (default: `/pages/wishlist`) in the app settings
+5. Enable **Email reminders**: sends a reminder email when wishlist items go on sale or come back in stock
+6. Add the wishlist link to your navigation:
+   - Go to **Online Store → Navigation → Main menu**
+   - Add a link pointing to `/pages/wishlist`
 
-   export function saveGuestWishlist(items) {
-     localStorage.setItem(GUEST_WISHLIST_KEY, JSON.stringify(items));
-   }
+**Back-in-stock alerts:**
+- Wishlist Plus sends automatic back-in-stock emails when inventory is restored
+- Configure the email template and timing in **Wishlist Plus → Email Settings**
 
-   export function addToGuestWishlist(item) {
-     const items = getGuestWishlist();
-     const exists = items.some(i => i.variantId === item.variantId);
-     if (!exists) {
-       saveGuestWishlist([...items, { ...item, addedAt: Date.now() }]);
-     }
-   }
+---
 
-   export function removeFromGuestWishlist(variantId) {
-     const items = getGuestWishlist().filter(i => i.variantId !== variantId);
-     saveGuestWishlist(items);
-   }
-   ```
+#### WooCommerce
 
-3. **Build the useWishlist React hook**
+**YITH WooCommerce Wishlist (free):**
+1. Install and activate from WordPress.org
+2. Go to **YITH → Wishlist → Settings → General**:
+   - Set **Wishlist page**: create a new page with the `[yith_wcwl_wishlist]` shortcode, then select it
+   - Enable **Share wishlist**: lets customers share a public URL to their wishlist
+   - Enable **Move to cart**: shows a "Move to Cart" button on the wishlist page
+   - Configure **Add to Wishlist button** position: under Add to Cart, or via shortcode/widget
+3. Under **YITH → Wishlist → Settings → Guest Users**:
+   - Enable **Allow guests to use wishlist**: stores in session/cookie
+   - Set **Redirect after login**: redirect to wishlist page so guest list merges automatically
+4. The plugin creates a customer-specific wishlist page at `/wishlist/?token=[user-token]` for sharing
 
-   ```javascript
-   // hooks/useWishlist.js
-   import { useState, useEffect, useCallback } from 'react';
-   import { getGuestWishlist, addToGuestWishlist, removeFromGuestWishlist } from '../lib/wishlistStore';
+**Back-in-stock with YITH:**
+- Install the companion plugin **YITH WooCommerce Back In Stock Notifications** (free)
+- When a wishlist item goes out of stock, customers see an "Email me when available" option
+- Configure the notification email template in the plugin settings
 
-   export function useWishlist({ userId } = {}) {
-     const [items, setItems] = useState([]);
-     const [loading, setLoading] = useState(false);
+---
 
-     useEffect(() => {
-       if (userId) {
-         fetchServerWishlist();
-       } else {
-         setItems(getGuestWishlist());
-       }
-     }, [userId]);
+#### BigCommerce
 
-     async function fetchServerWishlist() {
-       const res = await fetch('/api/wishlist');
-       const data = await res.json();
-       setItems(data.items);
-     }
+**Built-in Wishlists:**
+1. Wishlists are available to logged-in customers in their **Account → Wishlists** section
+2. Customers can create multiple named wishlists (Birthday, Home, etc.)
+3. To add "Add to Wishlist" buttons to product pages in Cornerstone:
+   - Go to **Storefront → My Themes → Customize**
+   - In **Product Page**, enable the **Add to Wishlist** button if not already visible
+4. Shared wishlists: customers can set individual wishlists to Public in their account and share the URL
 
-     const toggle = useCallback(async (item) => {
-       const isInWishlist = items.some(i => i.variantId === item.variantId);
+**For guest wishlists:** BigCommerce's built-in wishlist requires login. Install **Wishlist Plus** from the BigCommerce App Marketplace for guest wishlist support.
 
-       if (userId) {
-         // Server-side for authenticated users
-         if (isInWishlist) {
-           await fetch(`/api/wishlist/items/${item.variantId}`, { method: 'DELETE' });
-           setItems(prev => prev.filter(i => i.variantId !== item.variantId));
-         } else {
-           const res = await fetch('/api/wishlist/items', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify(item),
-           });
-           const saved = await res.json();
-           setItems(prev => [...prev, saved]);
-         }
-       } else {
-         // Guest — localStorage
-         if (isInWishlist) {
-           removeFromGuestWishlist(item.variantId);
-           setItems(prev => prev.filter(i => i.variantId !== item.variantId));
-         } else {
-           addToGuestWishlist(item);
-           setItems(prev => [...prev, item]);
-         }
-       }
-     }, [items, userId]);
+---
 
-     const isWishlisted = useCallback((variantId) =>
-       items.some(i => i.variantId === variantId), [items]);
+#### Custom / Headless
 
-     return { items, loading, toggle, isWishlisted };
-   }
-   ```
-
-4. **Merge guest wishlist on login**
-
-   After authentication, merge the guest localStorage wishlist into the user's server-side list.
-
-   ```javascript
-   // lib/mergeWishlist.js
-   import { getGuestWishlist, saveGuestWishlist } from './wishlistStore';
-
-   export async function mergeGuestWishlistOnLogin() {
-     const guestItems = getGuestWishlist();
-     if (guestItems.length === 0) return;
-
-     await fetch('/api/wishlist/merge', {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ items: guestItems }),
-     });
-
-     // Clear guest wishlist after successful merge
-     saveGuestWishlist([]);
-   }
-
-   // Server endpoint: POST /api/wishlist/merge
-   export async function mergeWishlistHandler(req, res) {
-     const { items } = req.body;
-     const userId = req.session.userId;
-
-     // Get existing server wishlist
-     const existing = await db.wishlistItems.findMany({ where: { wishlist: { userId } } });
-     const existingVariantIds = new Set(existing.map(i => i.variantId));
-
-     // Add only items not already in the wishlist
-     const newItems = items.filter(i => !existingVariantIds.has(i.variantId));
-     if (newItems.length > 0) {
-       await db.wishlistItems.createMany({
-         data: newItems.map(item => ({ ...item, wishlistId: req.session.wishlistId })),
-       });
-     }
-
-     res.json({ merged: newItems.length });
-   }
-   ```
-
-5. **Implement back-in-stock alerts**
-
-   When a user wishlists an out-of-stock variant, allow them to opt in to email notification.
-
-   ```javascript
-   // api/wishlist/items/[variantId]/notify.js
-   export async function subscribeBackInStock(req, res) {
-     const { variantId } = req.params;
-     const { email } = req.body; // required for guests
-
-     await db.backInStockSubscriptions.upsert({
-       where: { variantId_email: { variantId, email: email ?? req.session.userEmail } },
-       create: {
-         variantId,
-         email: email ?? req.session.userEmail,
-         subscribedAt: new Date(),
-       },
-       update: { subscribedAt: new Date() },
-     });
-
-     res.json({ subscribed: true });
-   }
-
-   // Triggered by inventory webhook or cron job
-   export async function notifyBackInStock(variantId) {
-     const subscribers = await db.backInStockSubscriptions.findMany({
-       where: { variantId, notifiedAt: null },
-       include: { variant: { include: { product: true } } },
-     });
-
-     for (const sub of subscribers) {
-       await emailService.send({
-         to: sub.email,
-         template: 'back-in-stock',
-         data: {
-           productName: sub.variant.product.name,
-           variantName: sub.variant.name,
-           productUrl: sub.variant.product.url,
-         },
-       });
-       await db.backInStockSubscriptions.update({
-         where: { id: sub.id },
-         data: { notifiedAt: new Date() },
-       });
-     }
-   }
-   ```
-
-## Examples
-
-### Shareable wishlist URL
-
-Generate a public share link and render a read-only wishlist page:
-
+**localStorage guest wishlist:**
 ```javascript
-// Generate a share slug on wishlist creation or when sharing is enabled
-import { nanoid } from 'nanoid';
+// lib/wishlistStore.js
+const KEY = 'guest_wishlist';
 
-async function enableSharing(wishlistId) {
-  const slug = nanoid(10); // e.g., 'K8-aBcDeFg'
-  await db.wishlists.update({
-    where: { id: wishlistId },
-    data: { isPublic: true, shareSlug: slug },
-  });
-  return `https://yourstore.com/wishlist/shared/${slug}`;
+export function getGuestWishlist() {
+  try { return JSON.parse(localStorage.getItem(KEY) ?? '[]'); } catch { return []; }
+}
+
+export function toggleGuestWishlist(item) {
+  const items = getGuestWishlist();
+  const exists = items.some(i => i.variantId === item.variantId);
+  const updated = exists
+    ? items.filter(i => i.variantId !== item.variantId)
+    : [...items, { ...item, addedAt: Date.now() }];
+  try { localStorage.setItem(KEY, JSON.stringify(updated)); } catch {}
+  return updated;
 }
 ```
 
-### Heart button component
+**Merge guest wishlist on login:**
+```javascript
+export async function mergeGuestWishlistOnLogin() {
+  const guestItems = getGuestWishlist();
+  if (guestItems.length === 0) return;
+  await fetch('/api/wishlist/merge', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items: guestItems }),
+  });
+  localStorage.removeItem('guest_wishlist');
+}
 
+// Server: POST /api/wishlist/merge
+// Insert only items not already in the user's server wishlist
+```
+
+**Heart button component:**
 ```jsx
 function WishlistButton({ product, variant }) {
-  const { userId } = useAuth();
-  const { toggle, isWishlisted } = useWishlist({ userId });
+  const { toggle, isWishlisted } = useWishlist();
   const wishlisted = isWishlisted(variant.id);
-
   return (
     <button
       onClick={() => toggle({ productId: product.id, variantId: variant.id })}
       aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
       aria-pressed={wishlisted}
-      className={`wishlist-btn ${wishlisted ? 'active' : ''}`}
-    >
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill={wishlisted ? 'currentColor' : 'none'} stroke="currentColor">
+      className={`wishlist-btn ${wishlisted ? 'active' : ''}`}>
+      <svg aria-hidden="true" viewBox="0 0 24 24"
+        fill={wishlisted ? 'currentColor' : 'none'} stroke="currentColor">
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
       </svg>
     </button>
@@ -292,29 +155,47 @@ function WishlistButton({ product, variant }) {
 }
 ```
 
+**Back-in-stock notification trigger (run on inventory webhook or cron):**
+```javascript
+async function notifyBackInStock(variantId) {
+  const subscribers = await db.backInStockSubscriptions.findMany({
+    where: { variantId, notifiedAt: null },
+  });
+  for (const sub of subscribers) {
+    await emailService.send({
+      to: sub.email,
+      template: 'back-in-stock',
+      data: { productName: sub.productName, productUrl: sub.productUrl },
+    });
+    await db.backInStockSubscriptions.update({
+      where: { id: sub.id }, data: { notifiedAt: new Date() },
+    });
+  }
+}
+```
+
 ## Best Practices
 
 - **Optimistic UI for toggle** — update the heart icon immediately on click; revert on API error to avoid perceived sluggishness
 - **Merge guest wishlists on login** — nothing frustrates shoppers more than losing saved items after signing in
-- **Rate-limit back-in-stock emails** — send at most one notification per subscriber per variant per 24 hours to avoid spam
-- **Support multiple named wishlists** — power users create wishlists for different occasions (Birthday, Home, Travel); the data model should support it
-- **Show wishlist count in header** — a small badge count on the wishlist nav icon reinforces engagement
-- **Allow move-to-cart from wishlist** — a "Move to Cart" button should call `addToCart` then `removeFromWishlist` atomically
-- **Expire guest wishlists** — clear `localStorage` entries older than 90 days to avoid stale product data
+- **Rate-limit back-in-stock emails** — send at most one notification per subscriber per variant per restock event
+- **Show wishlist count in the header** — a small badge count reinforces engagement
+- **Allow move-to-cart from wishlist** — provide a "Move to Cart" button that adds the item and removes it from the wishlist atomically
+- **Expire guest wishlists** — clear `localStorage` entries older than 90 days to avoid showing discontinued products
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Guest wishlist lost on login | Implement the merge flow immediately after authentication; do not rely on session cookies alone |
-| Back-in-stock email sends for every restock, not just first | Mark `notifiedAt` on the subscription record after sending; only notify subscribers where `notifiedAt IS NULL` |
-| Wishlist heart button causes full-page re-render | Manage wishlist state at a context level with a reducer; use React Context or Zustand so only the heart button re-renders |
-| Share link exposes private data | Render only product name, image, and price on shared wishlists — never addresses, notes, or user info |
-| localStorage blocked in private browsing | Wrap `localStorage` access in try/catch; fall back to in-memory storage for the session |
+| Guest wishlist lost on login | Implement the merge flow immediately after authentication; trigger it in the post-login redirect |
+| Back-in-stock email sends multiple times | Mark `notifiedAt` on the subscription record after sending; only notify subscribers where `notifiedAt IS NULL` |
+| Wishlist heart causes full-page re-render | Manage wishlist state at a context level (React Context or Zustand) so only the heart button re-renders |
+| Share link exposes private data | Render only product name, image, and price on shared wishlists — never addresses, notes, or account info |
+| localStorage blocked in private browsing | Wrap all reads/writes in try/catch; fall back to in-memory storage for the current session |
 
 ## Related Skills
 
-- @cart-logic
 - @recently-viewed-products
 - @product-page-design
+- @cart-abandonment-recovery
 - @accessibility-commerce

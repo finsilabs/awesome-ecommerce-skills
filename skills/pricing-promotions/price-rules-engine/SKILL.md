@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [price-rules, promotions, stacking, priority, exclusions, customer-segments, rule-engine]
 triggers: ["price rules", "promotion rules", "stackable discounts", "pricing rule engine", "promotional pricing logic", "customer segment pricing"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,7 @@ difficulty: advanced
 
 ## Overview
 
-Build a flexible pricing rule engine that evaluates multiple promotions against a cart, applies them in priority order, enforces stacking constraints, and respects product/category exclusions and customer segment targeting. The engine cleanly separates rule definition from evaluation, making it easy to add new rule types without changing the core logic.
+A price rules engine lets you define multiple concurrent promotions — site-wide sales, coupon codes, loyalty discounts — and apply them to a cart in a predictable, controlled order. The key concerns are: which rules apply to which products, which rules can stack with others, and what happens when multiple rules target the same item. Every major platform has some form of this built in; the gap is usually in advanced stacking control and customer-segment targeting.
 
 ## When to Use This Skill
 
@@ -26,289 +26,204 @@ Build a flexible pricing rule engine that evaluates multiple promotions against 
 - When building a promotion scheduler that activates and deactivates rules at configured times
 - When you need an audit log that shows exactly which rules were applied and why for customer service queries
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
-**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
-
 ## Core Instructions
 
-1. **Define the rule schema**
+### Step 1: Determine the merchant's platform and choose the right tool
 
-   ```sql
-   CREATE TABLE price_rules (
-     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name           VARCHAR(128) NOT NULL,
-     description    TEXT,
-     type           VARCHAR(32) NOT NULL
-                      CHECK (type IN ('percentage_off', 'fixed_off', 'free_shipping', 'buy_x_get_y', 'fixed_price')),
-     value          NUMERIC(10,2),             -- discount value (percentage or cents)
-     priority       INTEGER NOT NULL DEFAULT 0, -- higher = applied first
-     is_stackable   BOOLEAN NOT NULL DEFAULT true,
-     -- Conditions
-     min_cart_value INTEGER,                   -- cents; NULL = no minimum
-     customer_segments VARCHAR(255)[],          -- NULL = all segments
-     applicable_products UUID[],               -- NULL = all products
-     applicable_categories UUID[],             -- NULL = all categories
-     excluded_products UUID[],
-     excluded_categories UUID[],
-     -- Schedule
-     starts_at      TIMESTAMPTZ,
-     ends_at        TIMESTAMPTZ,
-     usage_limit    INTEGER,
-     usage_count    INTEGER NOT NULL DEFAULT 0,
-     is_active      BOOLEAN NOT NULL DEFAULT true,
-     -- Coupon linkage (optional)
-     coupon_code    VARCHAR(64),               -- NULL = automatic (no code required)
-     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+| Platform | Built-in Capability | When to Extend |
+|----------|-------------------|----------------|
+| **Shopify** | Discounts admin handles basic stacking via "Combinations" settings | Use Bold Discounts or Shopify Scripts (Plus) for advanced rule stacking, customer-segment targeting, and conditional logic |
+| **WooCommerce** | Coupons core + Dynamic Pricing plugin for conditional rules | For complex priority ordering and segment targeting: YITH WooCommerce Dynamic Pricing & Discounts provides the most control |
+| **BigCommerce** | Promotions engine supports multiple concurrent promotions with priority ordering and stacking rules | BigCommerce's built-in system handles most scenarios natively |
+| **Custom / Headless** | Must build | Required when none of the above fits your use case |
 
-   CREATE TABLE price_rule_applications (
-     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     order_id     UUID NOT NULL,
-     rule_id      UUID NOT NULL REFERENCES price_rules(id),
-     discount_amount INTEGER NOT NULL,         -- cents
-     applied_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
-   ```
+### Step 2: Configure price rules with stacking on your platform
 
-2. **Implement the rule evaluator**
+---
 
-   ```typescript
-   interface CartContext {
-     customerId: string;
-     customerSegments: string[];
-     cartSubtotal: number;         // cents
-     lines: CartLine[];
-     appliedCouponCode?: string;
-   }
+#### Shopify
 
-   interface CartLine {
-     lineId: string;
-     productId: string;
-     categoryIds: string[];
-     quantity: number;
-     basePrice: number;            // cents, original price
-     currentPrice: number;         // cents, already-modified price
-   }
+Shopify manages discount stacking through the **Combinations** setting on each discount.
 
-   interface RuleApplication {
-     ruleId: string;
-     ruleName: string;
-     discountAmount: number;       // cents
-     affectedLineIds: string[];
-   }
+**Setting up stacking rules:**
+1. Go to **Discounts** → create or edit a discount
+2. Scroll to the **Combinations** section
+3. Toggle which types this discount can combine with:
+   - **Product discounts** — can this stack with other product-level discounts?
+   - **Order discounts** — can this stack with order-level discounts?
+   - **Shipping discounts** — can this stack with free-shipping discounts?
+4. For automatic discounts, the highest-value automatic discount takes precedence by default; use Combinations to allow stacking
 
-   async function evaluateRules(cart: CartContext): Promise<RuleApplication[]> {
-     const now = new Date();
-     const rules = await db.priceRules.findAll({
-       is_active: true,
-       starts_at: { lte: now },
-       ends_at: { or: [null, { gt: now }] },
-     }).orderBy('priority', 'desc');
+**Customer-segment targeting:**
+1. Under **Customer eligibility**, choose **Specific customer segments**
+2. Select segments created in **Customers → Segments** (e.g., "VIP customers", "First-time buyers")
 
-     const applications: RuleApplication[] = [];
-     let nonStackableApplied = false;
+**Priority and exclusions:**
+- Set **Start and end dates** to control which rules are active
+- Under **Products**, set which products or collections the discount applies to
+- Add exclusions: "Exclude sale items" or specify products that are excluded
 
-     for (const rule of rules) {
-       // Skip non-stackable rules if another non-stackable has already been applied
-       if (!rule.is_stackable && nonStackableApplied) continue;
+**Shopify Plus — Shopify Scripts:**
+For rules that cannot be expressed through the Discounts UI (e.g., tiered stacking where the second discount only applies if the cart is above a threshold):
+1. Go to **Apps → Script Editor** (Scripts is a separate Shopify Plus feature)
+2. Create a **Line Item Script** or **Shipping Script**
+3. Scripts run at checkout and can apply complex conditional discounts; they take precedence over other discounts
 
-       // Coupon-linked rules require the coupon code
-       if (rule.coupon_code && rule.coupon_code !== cart.appliedCouponCode) continue;
+**Bold Discounts (App Store, ~$20/month):**
+A visual rule builder for Shopify that supports:
+- Stack / don't stack per promotion
+- Priority ordering between promotions
+- Complex conditions (customer tags, collection membership, quantity thresholds)
 
-       if (!meetsConditions(rule, cart)) continue;
+---
 
-       const application = applyRule(rule, cart);
-       if (!application || application.discountAmount <= 0) continue;
+#### WooCommerce
 
-       applications.push(application);
+WooCommerce coupons support basic single-rule discounts. For a full price rules engine with priority ordering and stacking control, use the **Dynamic Pricing** plugin.
 
-       if (!rule.is_stackable) nonStackableApplied = true;
+**Installing and configuring YITH WooCommerce Dynamic Pricing & Discounts:**
+1. Install the plugin from YITH.com (~$70/year)
+2. Go to **YITH → Dynamic Pricing → Pricing Rules**
+3. Create a rule and configure:
+   - **Type**: cart, product, or category pricing
+   - **Discount**: percentage or fixed amount
+   - **Conditions**: cart subtotal, quantity, customer role, date range
+   - **Products/categories**: which items the rule applies to; set exclusions
+   - **Priority**: lower number = higher priority (applied first)
+   - **Stacking**: "Stop other rules" to prevent lower-priority rules from stacking
 
-       // Mutate cart for subsequent (lower-priority) rules to see updated prices
-       for (const affected of application.affectedLineIds) {
-         const line = cart.lines.find(l => l.lineId === affected);
-         if (line) {
-           // Each rule discounts from the running (already-discounted) price
-           // This implements "rules apply sequentially" semantics
-           line.currentPrice = line.currentPrice - (application.discountAmount / line.quantity);
-         }
-       }
-     }
+**Customer segment targeting in WooCommerce:**
+1. Use WooCommerce **Customer Roles** (available via plugins like User Role Editor or WooCommerce B2B):
+   - Assign customers to roles like "wholesale", "vip", "trade"
+2. In Dynamic Pricing rules, restrict each rule to specific customer roles
+3. Customers in that role see the discounted price; others see the regular price
 
-     return applications;
-   }
-   ```
+**Example: VIP-only 20% off apparel, excludes clearance:**
+1. Create a rule: Type = Category pricing, Category = Apparel
+2. Discount = 20% off
+3. Customer Role = VIP
+4. Excluded products: [list of clearance product IDs]
+5. Priority = 10
 
-3. **Implement condition checking**
+---
 
-   ```typescript
-   function meetsConditions(rule: PriceRule, cart: CartContext): boolean {
-     // Cart minimum
-     if (rule.min_cart_value !== null && cart.cartSubtotal < rule.min_cart_value) {
-       return false;
-     }
+#### BigCommerce
 
-     // Customer segment
-     if (rule.customer_segments?.length > 0) {
-       const hasSegment = rule.customer_segments.some(s => cart.customerSegments.includes(s));
-       if (!hasSegment) return false;
-     }
+BigCommerce's **Promotions** engine natively supports priority ordering and stacking control.
 
-     // Usage limit
-     if (rule.usage_limit !== null && rule.usage_count >= rule.usage_limit) {
-       return false;
-     }
+1. Go to **Marketing → Promotions → Create Promotion**
+2. Under **Conditions**:
+   - Set cart value, quantity, or product conditions
+   - Under **Customer groups**: restrict to specific groups (wholesale, VIP, etc.)
+3. Under **Actions**: set the discount type and amount
+4. Set **Shipping** conditions if applicable
+5. Under **Rules**:
+   - **Can be combined with other promotions**: yes/no
+   - **Priority**: lower number runs first
+6. Set **Active date range**
 
-     // Check that at least one non-excluded line is applicable
-     const eligibleLines = getEligibleLines(rule, cart.lines);
-     return eligibleLines.length > 0;
-   }
+BigCommerce evaluates promotions in priority order and respects the "can be combined" setting. Multiple non-combinable promotions will apply only the best-value one for the customer.
 
-   function getEligibleLines(rule: PriceRule, lines: CartLine[]): CartLine[] {
-     return lines.filter(line => {
-       // Exclusions take precedence
-       if (rule.excluded_products?.includes(line.productId)) return false;
-       if (rule.excluded_categories?.some(c => line.categoryIds.includes(c))) return false;
+---
 
-       // Inclusion scope
-       if (rule.applicable_products?.length > 0) {
-         return rule.applicable_products.includes(line.productId);
-       }
-       if (rule.applicable_categories?.length > 0) {
-         return rule.applicable_categories.some(c => line.categoryIds.includes(c));
-       }
+#### Custom / Headless
 
-       return true; // no scope restriction = all products
-     });
-   }
-   ```
-
-4. **Implement rule application logic**
-
-   ```typescript
-   function applyRule(rule: PriceRule, cart: CartContext): RuleApplication | null {
-     const eligibleLines = getEligibleLines(rule, cart.lines);
-     let discountAmount = 0;
-
-     if (rule.type === 'percentage_off') {
-       discountAmount = eligibleLines.reduce((sum, line) =>
-         sum + Math.round(line.currentPrice * line.quantity * (rule.value / 100)), 0);
-     } else if (rule.type === 'fixed_off') {
-       // Fixed off applies to the cart once, not per line
-       discountAmount = Math.min(rule.value, cart.cartSubtotal);
-     } else if (rule.type === 'fixed_price') {
-       // Each eligible line is set to the fixed price
-       discountAmount = eligibleLines.reduce((sum, line) =>
-         sum + Math.max(0, (line.currentPrice - rule.value) * line.quantity), 0);
-     } else if (rule.type === 'buy_x_get_y') {
-       discountAmount = applyBxGy(rule, eligibleLines);
-     }
-
-     if (discountAmount <= 0) return null;
-
-     return {
-       ruleId: rule.id,
-       ruleName: rule.name,
-       discountAmount,
-       affectedLineIds: eligibleLines.map(l => l.lineId),
-     };
-   }
-
-   function applyBxGy(rule: PriceRule, lines: CartLine[]): number {
-     // Simplest form: buy 2 get 1 free — every 3rd unit is free
-     const BUY_X = 2; const GET_Y = 1;
-     const totalUnits = lines.reduce((s, l) => s + l.quantity, 0);
-     const freeUnits = Math.floor(totalUnits / (BUY_X + GET_Y)) * GET_Y;
-     // Apply to cheapest eligible items first
-     const sortedPrices = lines
-       .flatMap(l => Array(l.quantity).fill(l.currentPrice))
-       .sort((a, b) => a - b);
-     return sortedPrices.slice(0, freeUnits).reduce((s, p) => s + p, 0);
-   }
-   ```
-
-5. **Persist applications and update usage counters on order placement**
-
-   ```typescript
-   async function persistRuleApplications(
-     tx: DatabaseTransaction,
-     orderId: string,
-     applications: RuleApplication[]
-   ): Promise<void> {
-     for (const app of applications) {
-       await tx.priceRuleApplications.insert({
-         order_id: orderId,
-         rule_id: app.ruleId,
-         discount_amount: app.discountAmount,
-       });
-
-       await tx.raw(
-         'UPDATE price_rules SET usage_count = usage_count + 1 WHERE id = ?',
-         [app.ruleId]
-       );
-     }
-   }
-   ```
-
-## Examples
-
-### Define a "Summer Sale" — 15% off all apparel, excluding sale items already below $20
+For custom storefronts, implement a rule evaluator that processes rules in priority order, enforces stacking constraints, and applies rules to eligible cart lines:
 
 ```typescript
-await db.priceRules.insert({
-  name: 'Summer Sale 2026',
-  type: 'percentage_off',
-  value: 15,
-  priority: 10,
-  is_stackable: false,
-  applicable_categories: ['cat_apparel'],
-  excluded_products: ['prod_clearance_1', 'prod_clearance_2'],
-  starts_at: new Date('2026-06-01'),
-  ends_at: new Date('2026-08-31'),
-  is_active: true,
-});
+interface PriceRule {
+  id: string;
+  name: string;
+  type: 'percentage_off' | 'fixed_off' | 'free_shipping' | 'buy_x_get_y';
+  value: number;            // percentage or cents
+  priority: number;         // higher = applied first
+  isStackable: boolean;
+  couponCode?: string;      // null = automatic (no code required)
+  minCartCents?: number;
+  customerSegments?: string[];
+  applicableProducts?: string[];
+  applicableCategories?: string[];
+  excludedProducts?: string[];
+  startsAt: Date;
+  endsAt?: Date;
+}
+
+interface CartContext {
+  lines: { lineId: string; productId: string; categoryIds: string[]; quantity: number; currentPriceCents: number }[];
+  subtotalCents: number;
+  customerSegments: string[];
+  appliedCouponCode?: string;
+}
+
+function evaluateRules(cart: CartContext, rules: PriceRule[]): { ruleId: string; discountCents: number }[] {
+  const now = new Date();
+  const active = rules.filter(r =>
+    r.startsAt <= now && (!r.endsAt || r.endsAt > now)
+  ).sort((a, b) => b.priority - a.priority); // highest priority first
+
+  const applications: { ruleId: string; discountCents: number }[] = [];
+  let nonStackableApplied = false;
+
+  for (const rule of active) {
+    if (!rule.isStackable && nonStackableApplied) continue;
+
+    // Coupon-linked rules require the code to be applied
+    if (rule.couponCode && rule.couponCode !== cart.appliedCouponCode) continue;
+
+    // Cart minimum check
+    if (rule.minCartCents && cart.subtotalCents < rule.minCartCents) continue;
+
+    // Customer segment check
+    if (rule.customerSegments?.length && !rule.customerSegments.some(s => cart.customerSegments.includes(s))) continue;
+
+    // Find eligible lines
+    const eligibleLines = cart.lines.filter(line => {
+      if (rule.excludedProducts?.includes(line.productId)) return false;
+      if (rule.applicableProducts?.length) return rule.applicableProducts.includes(line.productId);
+      if (rule.applicableCategories?.length) return rule.applicableCategories.some(c => line.categoryIds.includes(c));
+      return true; // no scope restriction = all products
+    });
+    if (eligibleLines.length === 0) continue;
+
+    let discountCents = 0;
+    if (rule.type === 'percentage_off') {
+      discountCents = Math.round(
+        eligibleLines.reduce((s, l) => s + l.currentPriceCents * l.quantity, 0) * rule.value / 100
+      );
+    } else if (rule.type === 'fixed_off') {
+      discountCents = Math.min(rule.value, cart.subtotalCents);
+    }
+
+    if (discountCents > 0) {
+      applications.push({ ruleId: rule.id, discountCents });
+      if (!rule.isStackable) nonStackableApplied = true;
+    }
+  }
+
+  return applications;
+}
 ```
 
-### "Buy 2 get 1 free" on all accessories, stackable with loyalty discounts
-
-```typescript
-await db.priceRules.insert({
-  name: 'Accessories B2G1',
-  type: 'buy_x_get_y',
-  value: null,
-  priority: 20,
-  is_stackable: true,
-  applicable_categories: ['cat_accessories'],
-  starts_at: null,
-  ends_at: null,
-  is_active: true,
-});
-```
+Persist rule applications with every order so you can answer customer service questions ("which discount applied?") and track promotion ROI.
 
 ## Best Practices
 
 - **Higher priority = evaluated first** — use an explicit `priority` integer so marketing can control evaluation order without code changes
 - **Separate stackable from exclusive rules** — once a non-stackable rule applies, skip all subsequent non-stackable rules; stackable rules always apply on top
-- **Apply discounts to `currentPrice`, not `basePrice`** — this ensures sequential rules compound correctly (rule 2 discounts the already-reduced price from rule 1)
-- **Store rule applications with the order** — attach the rule IDs and discount amounts to each order for customer service queries and promotion ROI reporting
-- **Test rules in dry-run mode before activation** — add an `evaluate_only` flag that runs the full engine and returns the result without persisting any applications
-- **Use exclusion lists generously** — always let marketing specify excluded products/categories; unexpected rule application to premium or sale products creates margin problems
-- **Version rules rather than editing them** — deactivate old rules and create new versions; this preserves the historical calculation for past orders
+- **Test rules in "dry run" mode before activating** — review the discount calculation on a sample cart before the promotion goes live
+- **Use exclusion lists generously** — always allow marketing to specify excluded products/categories; unexpected application to premium or already-reduced items creates margin problems
+- **Version rules rather than editing live rules** — deactivate old rules and create new versions; this preserves historical calculation for past orders
+- **Log which rules were applied to each order** — store rule IDs and discount amounts on the order for customer service and ROI analysis
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Two non-stackable rules both apply | Sort rules by priority descending and set `nonStackableApplied = true` after the first non-stackable rule matches; skip others |
-| A rule applies to an excluded product | Evaluate exclusions before inclusions in `getEligibleLines`; exclusion always wins |
-| Discount causes order total to go negative | Cap total discount at cart subtotal; `discountAmount = Math.min(totalDiscount, cartSubtotal)` |
-| Marketing edits a live rule mid-campaign, affecting in-flight orders | Treat rules as immutable once active — create a new rule version and deactivate the old one |
+| Two non-stackable rules both apply | Sort by priority, apply the highest-priority non-stackable first, then skip all other non-stackable rules |
+| A rule applies to an excluded product | Always check exclusions before inclusions; exclusion takes precedence in all cases |
+| Total discount causes order to go negative | Cap total discount at cart subtotal; no order total should go below zero |
+| Marketing edits a live rule mid-campaign | Treat active rules as immutable — create a new rule and deactivate the old one; never edit live rules |
+| Rule activates/deactivates a few seconds off schedule | Set start/end times conservatively (a few minutes before/after intended time) and verify in staging; for critical timing, use Launchpad (Shopify Plus) or a scheduled job |
 
 ## Related Skills
 

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [payouts, marketplace, disbursements, commissions]
 triggers: ["payout splits", "seller payouts", "marketplace disbursements", "commission calculation", "1099 reporting", "tax withholding", "stripe connect payouts", "seller earnings"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,502 +16,190 @@ difficulty: advanced
 
 ## Overview
 
-A marketplace or multi-seller platform must split every payment between the platform (commission) and one or more sellers (net payout), withhold taxes where required, manage rolling reserves for refund protection, and disburse funds on a schedule that balances seller satisfaction with business risk. This is fundamentally different from single-merchant payment processing — every transaction generates a financial obligation to a third party.
+A marketplace or multi-seller platform must split every payment between the platform (commission) and one or more sellers (net payout), withhold taxes where required, manage rolling reserves for refund protection, and disburse funds on a schedule. Stripe Connect is the industry standard for handling this — it legally routes funds to connected seller accounts, handles tax withholding and 1099 reporting, and eliminates the compliance risk of holding seller funds in a pooled bank account.
 
-This skill covers the full payout management lifecycle: calculating commission and seller earnings per order, integrating with Stripe Connect for automated fund routing, managing rolling reserves, implementing tax withholding (backup withholding for uncollected W-9s), generating 1099-K/1099-NEC forms for US sellers, and providing sellers with a real-time earnings dashboard.
-
-The design must be highly accurate (penny-perfect accounting), auditable (every calculation traceable to source transactions), and compliant with US 1099 reporting thresholds that changed in 2024 (reduced to $600 for 1099-K).
+For Shopify, WooCommerce, and BigCommerce stores that operate as multi-vendor marketplaces, dedicated marketplace apps (like Dokan for WooCommerce) handle the payout split logic on top of Stripe Connect.
 
 ## When to Use This Skill
 
 - When building a marketplace with independent sellers who need earnings disbursements
 - When your platform charges a percentage or flat commission on transactions
 - When you need to comply with IRS 1099-K reporting requirements for sellers
-- When implementing tax withholding (backup withholding at 24% for sellers without W-9)
-- When sellers are requesting faster payouts (daily/weekly vs. monthly)
 - When managing rolling reserves for high-risk or new sellers
-- When you need a split payout system for affiliate commissions or referral rewards
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+- When sellers are requesting faster payouts (daily/weekly vs. monthly)
 
 ## Core Instructions
 
-### 1. Design the payout split data model
+### Step 1: Choose the right marketplace and payout architecture
 
-```sql
--- Seller accounts with Stripe Connect metadata
-CREATE TABLE seller_accounts (
-  id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id                  UUID REFERENCES users(id),
-  business_name            VARCHAR(255),
-  stripe_account_id        VARCHAR(100) UNIQUE,   -- Stripe Connect account ID
-  stripe_account_status    VARCHAR(50) DEFAULT 'pending',
-  -- 'pending', 'restricted', 'restricted_soon', 'enabled', 'rejected'
-  payout_schedule          VARCHAR(30) DEFAULT 'weekly',  -- 'daily', 'weekly', 'monthly', 'manual'
-  payout_day_of_week       INT,         -- 0=Sun, 1=Mon, etc. for weekly
-  payout_day_of_month      INT,         -- 1-28 for monthly
-  commission_rate          NUMERIC(5, 4) NOT NULL DEFAULT 0.15,  -- 15% platform commission
-  commission_type          VARCHAR(20) DEFAULT 'percentage',     -- 'percentage', 'flat', 'tiered'
-  rolling_reserve_pct      NUMERIC(4, 3) DEFAULT 0.05,          -- 5% reserve
-  rolling_reserve_days     INT DEFAULT 90,                      -- Release after 90 days
-  tax_id_collected         BOOLEAN DEFAULT FALSE,
-  w9_collected             BOOLEAN DEFAULT FALSE,
-  w9_collected_at          TIMESTAMPTZ,
-  backup_withholding       BOOLEAN DEFAULT FALSE,               -- Apply 24% backup withholding
-  ytd_earnings             NUMERIC(15, 2) DEFAULT 0,            -- For 1099 threshold tracking
-  ytd_transactions         INT DEFAULT 0,
-  status                   VARCHAR(30) DEFAULT 'active',
-  created_at               TIMESTAMPTZ DEFAULT NOW()
-);
+| Platform | Recommended Approach | Notes |
+|----------|---------------------|-------|
+| **Shopify** | **Shopify Marketplace Kit** + Stripe Connect, or **Multi-Vendor Marketplace** app | Shopify does not natively support multi-seller payouts; marketplace apps handle seller accounts and split payouts |
+| **WooCommerce** | **Dokan Multivendor Marketplace** or **WCFM Marketplace** + Stripe Connect | Dokan is the most widely used WooCommerce marketplace plugin; has native Stripe Connect integration for split payouts |
+| **BigCommerce** | **Multi-Seller Marketplace** app + Stripe Connect | Third-party marketplace apps on BigCommerce App Marketplace |
+| **Custom / Headless** | **Stripe Connect** (Express or Custom accounts) | Build the full split logic; Stripe handles compliance, tax forms, and fund routing |
 
--- Per-order earnings calculation
-CREATE TABLE order_earnings (
-  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  order_id             UUID NOT NULL REFERENCES orders(id),
-  seller_id            UUID NOT NULL REFERENCES seller_accounts(id),
-  gross_order_amount   NUMERIC(12, 2) NOT NULL,
-  platform_commission  NUMERIC(12, 2) NOT NULL,
-  payment_processing_fee NUMERIC(12, 2) DEFAULT 0,
-  tax_withheld         NUMERIC(12, 2) DEFAULT 0,
-  rolling_reserve      NUMERIC(12, 2) DEFAULT 0,
-  net_seller_earnings  NUMERIC(12, 2) NOT NULL,
-  commission_rate      NUMERIC(5, 4) NOT NULL,   -- Rate at time of sale
-  currency             CHAR(3) DEFAULT 'USD',
-  status               VARCHAR(30) DEFAULT 'pending',
-  -- 'pending', 'available', 'disbursed', 'reversed', 'on_hold'
-  available_date       DATE,    -- When funds become available for payout
-  reserve_release_date DATE,    -- When rolling reserve is released
-  disbursement_id      UUID,
-  created_at           TIMESTAMPTZ DEFAULT NOW()
-);
+### Step 2: Set up Stripe Connect for seller payouts
 
--- Disbursement batches
-CREATE TABLE disbursements (
-  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  seller_id           UUID NOT NULL REFERENCES seller_accounts(id),
-  batch_date          DATE NOT NULL,
-  gross_amount        NUMERIC(12, 2) NOT NULL,
-  tax_withheld        NUMERIC(12, 2) DEFAULT 0,
-  net_amount          NUMERIC(12, 2) NOT NULL,
-  currency            CHAR(3) DEFAULT 'USD',
-  stripe_transfer_id  VARCHAR(100),
-  status              VARCHAR(30) DEFAULT 'pending',
-  -- 'pending', 'processing', 'paid', 'failed', 'reversed'
-  processed_at        TIMESTAMPTZ,
-  failure_reason      TEXT,
-  earnings_count      INT DEFAULT 0,
-  period_start        DATE,
-  period_end          DATE,
-  created_at          TIMESTAMPTZ DEFAULT NOW()
-);
+Stripe Connect is required for any architecture where you want to route funds to sellers automatically (rather than collecting everything in your account and manually wiring sellers).
 
--- Rolling reserve ledger
-CREATE TABLE rolling_reserve_ledger (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  seller_id       UUID NOT NULL REFERENCES seller_accounts(id),
-  order_earning_id UUID REFERENCES order_earnings(id),
-  amount          NUMERIC(12, 2) NOT NULL,
-  entry_type      VARCHAR(30) NOT NULL,  -- 'reserve', 'release', 'forfeiture'
-  release_date    DATE NOT NULL,
-  status          VARCHAR(30) DEFAULT 'held',
-  released_at     TIMESTAMPTZ,
-  created_at      TIMESTAMPTZ DEFAULT NOW()
-);
+**Choose the right Connect account type:**
+- **Express accounts**: Sellers onboard via a Stripe-hosted form; Stripe handles identity verification (KYC); best for most marketplaces
+- **Custom accounts**: You control the onboarding UX entirely; more complex; for platforms with specific UX requirements
+- **Standard accounts**: Sellers connect an existing Stripe account; they see your platform in their Stripe dashboard
 
--- 1099 records
-CREATE TABLE tax_forms_1099 (
-  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  seller_id        UUID NOT NULL REFERENCES seller_accounts(id),
-  tax_year         INT NOT NULL,
-  form_type        VARCHAR(20) NOT NULL,  -- '1099-K', '1099-NEC'
-  gross_amount     NUMERIC(12, 2) NOT NULL,
-  federal_withheld NUMERIC(12, 2) DEFAULT 0,
-  transaction_count INT,
-  recipient_name   VARCHAR(255),
-  recipient_tin    VARCHAR(20),           -- Last 4 digits only in app; full TIN in secure vault
-  recipient_address JSONB,
-  status           VARCHAR(30) DEFAULT 'draft',  -- 'draft', 'filed', 'corrected', 'void'
-  filed_at         DATE,
-  form_url         VARCHAR(1000),
-  irs_submission_id VARCHAR(100),
-  UNIQUE (seller_id, tax_year, form_type)
-);
+For most marketplaces, **Express accounts** are the right choice.
 
-CREATE INDEX idx_earnings_seller ON order_earnings (seller_id, status, available_date);
-CREATE INDEX idx_earnings_order ON order_earnings (order_id);
-CREATE INDEX idx_disbursements_seller ON disbursements (seller_id, status);
-CREATE INDEX idx_reserve_release ON rolling_reserve_ledger (status, release_date);
-```
+**Set up Stripe Connect in the Stripe Dashboard:**
+1. Go to **Stripe Dashboard → Connect → Overview** and configure your platform
+2. Enable Express accounts under **Connect → Settings → Account types**
+3. Configure your platform's branding (name, logo, colors) for the hosted onboarding flow
+4. Set the commission structure in your platform settings (not Stripe — Stripe routes funds based on the amounts you specify per transaction)
 
-### 2. Calculate earnings per order
+---
+
+#### WooCommerce (Dokan)
+
+1. Install **Dokan Multivendor Marketplace** (free base + paid extensions from dokan.wedevs.com)
+2. Go to **Dokan → Settings → Selling Options** and configure:
+   - Commission type: percentage (e.g., 15% of each sale goes to the platform), flat fee, or combined
+   - Commission rate: the percentage or flat amount you keep as the marketplace
+3. Go to **Dokan → Settings → Withdrawal** and configure payout schedules (weekly, bi-weekly, monthly) and minimum withdrawal amount
+4. Enable Stripe Connect: go to **Dokan → Settings → Payment → Stripe Connect** and enter your Stripe Connect platform keys
+5. Sellers connect their Stripe accounts by going to their vendor dashboard and clicking **Payment Settings → Connect with Stripe**
+6. When an order is placed, Dokan automatically splits the payment: the seller's share is transferred to their connected Stripe account, the commission stays in your platform's Stripe balance
+
+**1099 reporting with Dokan:**
+Dokan tracks cumulative payouts per seller. Export vendor earnings reports from **Dokan → Reports → Vendor Wise Sales** for 1099 preparation. For automatic 1099 generation, use **TaxBandits** or **Track1099** — import the Dokan export and generate IRS-compliant 1099-K forms.
+
+#### Shopify (Multi-Vendor Marketplace app)
+
+1. Install **Multi-Vendor Marketplace** or **Marketplace Kit** from the Shopify App Store (various providers)
+2. Configure vendor commission rates in the app's vendor settings
+3. Connect Stripe Connect for payouts in the app's payment settings
+4. Vendors are onboarded via a hosted form and can view their earnings and request payouts from a vendor portal
+
+#### BigCommerce
+
+1. Install a multi-seller marketplace app from the BigCommerce App Marketplace
+2. Configure commission rates and payout schedules in the app settings
+3. Connect Stripe Connect for automatic fund routing
+
+---
+
+#### Custom / Headless
+
+For custom marketplace builds, implement the full split payout architecture using Stripe Connect:
+
+**Seller onboarding (Express accounts):**
 
 ```javascript
-// services/payouts/earnings-calculator.js
-export async function calculateOrderEarnings(order) {
-  const seller = await db.sellerAccounts.findUnique({
-    where: { id: order.seller_id },
-  });
+// Create an Express Connect account for a new seller
+const account = await stripe.accounts.create({
+  type: 'express',
+  country: 'US',
+  email: sellerEmail,
+  capabilities: { transfers: { requested: true } },
+  metadata: { seller_id: sellerId },
+});
 
-  if (!seller) throw new Error(`Seller not found for order ${order.id}`);
+// Generate onboarding link — redirect seller to complete Stripe's KYC form
+const accountLink = await stripe.accountLinks.create({
+  account: account.id,
+  refresh_url: `${process.env.PLATFORM_URL}/sellers/onboarding/retry`,
+  return_url: `${process.env.PLATFORM_URL}/sellers/onboarding/complete`,
+  type: 'account_onboarding',
+});
 
-  // Step 1: Commission calculation
-  let commission;
-  if (seller.commission_type === 'percentage') {
-    commission = order.subtotal * seller.commission_rate;
-  } else if (seller.commission_type === 'flat') {
-    commission = seller.flat_commission_amount;
-  } else if (seller.commission_type === 'tiered') {
-    commission = await computeTieredCommission(seller, order);
-  }
+// Save account.id to your database and redirect seller to accountLink.url
+await db.sellers.update({ where: { id: sellerId }, data: { stripeAccountId: account.id } });
+```
 
-  // Step 2: Payment processing fee pass-through
-  // NOTE: Do NOT rely on the hardcoded 2.9% + $0.30 estimate — actual Stripe fees vary
-  // by card type (e.g., Amex, international cards) and country. Instead, retrieve the
-  // exact fee from `balance_transaction.fee` on the Stripe BalanceTransaction object:
-  //   const balanceTxn = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
-  //   const processingFee = balanceTxn.fee / 100;  // fee is in cents
-  // Using the estimated rate will cause penny discrepancies that compound over time.
-  const processingFee = order.stripe_processing_fee ?? (order.total_amount * 0.029 + 0.30);
+**Splitting payment at checkout (Destination charge pattern):**
 
-  // Step 3: Rolling reserve
-  const reserve = order.subtotal * seller.rolling_reserve_pct;
-  const reserveReleaseDate = new Date();
-  reserveReleaseDate.setDate(reserveReleaseDate.getDate() + seller.rolling_reserve_days);
+```javascript
+// Create a payment intent that automatically routes commission to your platform
+// and the seller's share to their connected account
+const paymentIntent = await stripe.paymentIntents.create({
+  amount: orderTotalCents,
+  currency: 'usd',
+  payment_method_types: ['card'],
+  application_fee_amount: Math.round(orderTotalCents * commissionRate), // Platform commission
+  transfer_data: {
+    destination: seller.stripeAccountId, // Seller's Connect account
+  },
+  metadata: { order_id: orderId, seller_id: sellerId },
+});
+```
 
-  // Step 4: Tax withholding
-  let taxWithheld = 0;
-  if (seller.backup_withholding) {
-    // IRS backup withholding rate is 24%
-    taxWithheld = (order.subtotal - commission) * 0.24;
-  }
+**Rolling reserve (withhold a % for refund protection):**
 
-  // Step 5: Net seller earnings
-  const netEarnings = order.subtotal - commission - processingFee - reserve - taxWithheld;
+```javascript
+// Instead of immediate transfer, create a manual transfer on a delay
+const transfer = await stripe.transfers.create({
+  amount: Math.round(sellerNetEarningsCents * (1 - ROLLING_RESERVE_RATE)), // 95% transferred now
+  currency: 'usd',
+  destination: seller.stripeAccountId,
+  transfer_group: `order_${orderId}`,
+  metadata: { order_id: orderId, reserve_amount: Math.round(sellerNetEarningsCents * ROLLING_RESERVE_RATE) },
+});
 
-  // Funds available after T+2 (standard ACH settlement)
-  const availableDate = new Date();
-  availableDate.setDate(availableDate.getDate() + 2);
+// Schedule the reserve release 90 days later via a cron job or job queue
+await reserveQueue.add('release-reserve', {
+  sellerId: seller.id,
+  orderId,
+  reserveAmount: Math.round(sellerNetEarningsCents * ROLLING_RESERVE_RATE),
+}, { delay: 90 * 24 * 60 * 60 * 1000 });
+```
 
-  const earning = await db.orderEarnings.create({
-    data: {
-      order_id: order.id,
-      seller_id: seller.id,
-      gross_order_amount: order.subtotal,
-      platform_commission: commission,
-      payment_processing_fee: processingFee,
-      tax_withheld: taxWithheld,
-      rolling_reserve: reserve,
-      net_seller_earnings: Math.max(0, netEarnings),
-      commission_rate: seller.commission_rate,
-      currency: order.currency,
-      status: 'pending',
-      available_date: availableDate,
-      reserve_release_date: reserveReleaseDate,
-    },
-  });
+**1099-K tracking:**
 
-  // Record reserve in ledger
-  if (reserve > 0) {
-    await db.rollingReserveLedger.create({
-      data: {
-        seller_id: seller.id,
-        order_earning_id: earning.id,
-        amount: reserve,
-        entry_type: 'reserve',
-        release_date: reserveReleaseDate,
-        status: 'held',
-      },
-    });
-  }
+Track each seller's gross transaction volume in real-time. For 2024+, the IRS 1099-K threshold is $600.
 
-  // Update seller YTD totals for 1099 tracking
-  await db.sellerAccounts.update({
-    where: { id: seller.id },
-    data: {
-      ytd_earnings: { increment: order.subtotal },
-      ytd_transactions: { increment: 1 },
-    },
-  });
+```javascript
+// Update seller YTD earnings after each order
+await db.sellers.update({
+  where: { id: sellerId },
+  data: { ytdGrossVolume: { increment: orderSubtotal }, ytdTransactions: { increment: 1 } },
+});
 
-  return earning;
+// Alert when approaching $600 threshold — request W-9 before first payout
+const seller = await db.sellers.findUnique({ where: { id: sellerId } });
+if (seller.ytdGrossVolume >= 400 && !seller.w9Collected) {
+  await sendW9RequestEmail(seller);
 }
 ```
 
-### 3. Stripe Connect payout disbursement
+For 1099 form generation, use **TaxBandits API** or **Track1099 API** rather than building IRS form generation from scratch.
 
-```javascript
-// services/payouts/disbursement-processor.js
-import Stripe from 'stripe';
+### Step 3: Configure payout schedules and seller portal
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+**Stripe Connect payout schedule:**
+In the Stripe Dashboard under **Connect → Settings → Payouts**, configure the default payout schedule for connected accounts (daily, weekly, or monthly). Individual seller accounts can request changes to their schedule within your platform's settings.
 
-export async function processDisbursementBatch(sellerId, periodStart, periodEnd) {
-  const seller = await db.sellerAccounts.findById(sellerId);
-
-  if (!seller.stripe_account_id) {
-    throw new Error(`Seller ${sellerId} does not have a connected Stripe account`);
-  }
-
-  if (seller.stripe_account_status !== 'enabled') {
-    throw new Error(`Seller ${sellerId} Stripe account is not enabled for payouts`);
-  }
-
-  // Find all available, undisbursed earnings in the period
-  const earnings = await db.orderEarnings.findMany({
-    where: {
-      seller_id: sellerId,
-      status: 'available',
-      disbursement_id: null,
-      available_date: { gte: new Date(periodStart), lte: new Date(periodEnd) },
-    },
-  });
-
-  if (earnings.length === 0) return { disbursed: 0, amount: 0 };
-
-  const grossAmount = earnings.reduce((sum, e) => sum + parseFloat(e.net_seller_earnings), 0);
-  const taxWithheld = earnings.reduce((sum, e) => sum + parseFloat(e.tax_withheld), 0);
-  const netAmount = grossAmount - taxWithheld;
-
-  if (netAmount <= 0) {
-    console.log(`Skipping disbursement for seller ${sellerId}: net amount is ${netAmount}`);
-    return { disbursed: 0, amount: 0 };
-  }
-
-  // Create the disbursement record first (for idempotency)
-  const disbursement = await db.disbursements.create({
-    data: {
-      seller_id: sellerId,
-      batch_date: new Date(),
-      gross_amount: grossAmount,
-      tax_withheld: taxWithheld,
-      net_amount: netAmount,
-      currency: 'usd',
-      status: 'processing',
-      earnings_count: earnings.length,
-      period_start: new Date(periodStart),
-      period_end: new Date(periodEnd),
-    },
-  });
-
-  try {
-    // Transfer funds to seller's connected account
-    const transfer = await stripe.transfers.create({
-      amount: Math.round(netAmount * 100),  // Stripe uses cents
-      currency: 'usd',
-      destination: seller.stripe_account_id,
-      description: `Marketplace payout ${periodStart} to ${periodEnd}`,
-      metadata: {
-        disbursement_id: disbursement.id,
-        seller_id: sellerId,
-        earnings_count: String(earnings.length),
-      },
-      transfer_group: `payout_${disbursement.id}`,
-    });
-
-    // Mark earnings as disbursed
-    await db.$transaction([
-      db.orderEarnings.updateMany({
-        where: { id: { in: earnings.map((e) => e.id) } },
-        data: { status: 'disbursed', disbursement_id: disbursement.id },
-      }),
-      db.disbursements.update({
-        where: { id: disbursement.id },
-        data: {
-          stripe_transfer_id: transfer.id,
-          status: 'paid',
-          processed_at: new Date(),
-        },
-      }),
-    ]);
-
-    return { disbursed: earnings.length, amount: netAmount, transfer_id: transfer.id };
-  } catch (err) {
-    await db.disbursements.update({
-      where: { id: disbursement.id },
-      data: { status: 'failed', failure_reason: err.message },
-    });
-    throw err;
-  }
-}
-```
-
-### 4. Rolling reserve release job
-
-```javascript
-// jobs/reserve-release.js — runs daily
-export async function releaseMaturedReserves() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const maturedReserves = await db.rollingReserveLedger.findMany({
-    where: {
-      status: 'held',
-      release_date: { lte: today },
-      entry_type: 'reserve',
-    },
-    include: { seller: true },
-  });
-
-  let totalReleased = 0;
-
-  for (const reserve of maturedReserves) {
-    await db.$transaction([
-      db.rollingReserveLedger.update({
-        where: { id: reserve.id },
-        data: { status: 'released', released_at: new Date() },
-      }),
-      db.rollingReserveLedger.create({
-        data: {
-          seller_id: reserve.seller_id,
-          amount: reserve.amount,
-          entry_type: 'release',
-          release_date: today,
-          status: 'released',
-          released_at: new Date(),
-        },
-      }),
-      // Make the reserve amount available for the next disbursement
-      db.orderEarnings.update({
-        where: { id: reserve.order_earning_id },
-        data: { rolling_reserve: 0 },
-      }),
-    ]);
-
-    totalReleased += parseFloat(reserve.amount);
-  }
-
-  console.log(`Released ${maturedReserves.length} reserves totaling $${totalReleased.toFixed(2)}`);
-  return { released: maturedReserves.length, amount: totalReleased };
-}
-```
-
-### 5. 1099-K generation and tracking
-
-```javascript
-// services/payouts/tax-reporting.js
-const FORM_1099K_THRESHOLD_2024 = 600;  // IRS lowered threshold to $600 for 2024+
-
-export async function generate1099KForms(taxYear) {
-  const eligibleSellers = await db.sellerAccounts.findMany({
-    where: {
-      ytd_earnings: { gte: FORM_1099K_THRESHOLD_2024 },
-      status: 'active',
-    },
-  });
-
-  const forms = [];
-
-  for (const seller of eligibleSellers) {
-    const yearEarnings = await db.orderEarnings.aggregate({
-      where: {
-        seller_id: seller.id,
-        status: { in: ['disbursed', 'available'] },
-        created_at: {
-          gte: new Date(`${taxYear}-01-01`),
-          lte: new Date(`${taxYear}-12-31`),
-        },
-      },
-      _sum: { gross_order_amount: true, tax_withheld: true },
-      _count: { id: true },
-    });
-
-    const grossAmount = yearEarnings._sum.gross_order_amount ?? 0;
-    if (grossAmount < FORM_1099K_THRESHOLD_2024) continue;
-
-    const form = await db.taxForms1099.upsert({
-      where: { seller_id_tax_year_form_type: { seller_id: seller.id, tax_year: taxYear, form_type: '1099-K' } },
-      create: {
-        seller_id: seller.id,
-        tax_year: taxYear,
-        form_type: '1099-K',
-        gross_amount: grossAmount,
-        federal_withheld: yearEarnings._sum.tax_withheld ?? 0,
-        transaction_count: yearEarnings._count.id,
-        recipient_name: seller.business_name,
-        status: 'draft',
-      },
-      update: {
-        gross_amount: grossAmount,
-        federal_withheld: yearEarnings._sum.tax_withheld ?? 0,
-        transaction_count: yearEarnings._count.id,
-      },
-    });
-
-    forms.push(form);
-  }
-
-  return { generated: forms.length, forms };
-}
-```
-
-## Examples
-
-### Seller earnings dashboard query
-
-```sql
-SELECT
-  oe.seller_id,
-  sa.business_name,
-  DATE_TRUNC('month', oe.created_at) AS month,
-  COUNT(*) AS order_count,
-  SUM(oe.gross_order_amount) AS gross_sales,
-  SUM(oe.platform_commission) AS commission_paid,
-  SUM(oe.payment_processing_fee) AS processing_fees,
-  SUM(oe.rolling_reserve) AS amount_in_reserve,
-  SUM(oe.tax_withheld) AS tax_withheld,
-  SUM(oe.net_seller_earnings) AS net_earnings,
-  SUM(oe.net_seller_earnings) FILTER (WHERE oe.status = 'disbursed') AS disbursed
-FROM order_earnings oe
-JOIN seller_accounts sa ON sa.id = oe.seller_id
-WHERE oe.created_at >= NOW() - INTERVAL '12 months'
-GROUP BY 1, 2, 3
-ORDER BY 3 DESC, gross_sales DESC;
-```
-
-### 1099 threshold monitoring
-
-```sql
-SELECT
-  sa.id AS seller_id,
-  sa.business_name,
-  sa.w9_collected,
-  sa.backup_withholding,
-  sa.ytd_earnings,
-  CASE WHEN sa.ytd_earnings >= 600 AND NOT sa.w9_collected THEN 'REQUIRES_W9'
-       WHEN sa.ytd_earnings >= 600 AND sa.w9_collected THEN '1099_REQUIRED'
-       ELSE 'BELOW_THRESHOLD' END AS status_1099
-FROM seller_accounts sa
-WHERE sa.status = 'active'
-ORDER BY sa.ytd_earnings DESC;
-```
+**Seller earnings dashboard:**
+Sellers need visibility into their earnings, pending payouts, and reserves. Build or use a pre-built portal:
+- **Dokan/WCFM**: includes a vendor dashboard with earnings, payout requests, and payment history
+- **Custom**: use the Stripe Connect [Account Balance API](https://stripe.com/docs/api/balance) to show sellers their available balance in real-time
 
 ## Best Practices
 
-- **Use Stripe Connect Express or Custom accounts** — never hold seller funds in a pooled bank account manually; use Stripe Connect to ensure funds are legally owned by the platform until transferred to sellers.
-- **Calculate earnings at order capture, not payout time** — earnings should be immutable records linked to specific orders. The payout is a separate aggregation step.
-- **Implement rolling reserves for new sellers** — withhold 5–10% for 90 days to protect against refunds and chargebacks. Release reserves automatically on schedule.
-- **Collect W-9 before first payout** — without a W-9, you must apply 24% IRS backup withholding. Make W-9 collection part of the seller onboarding flow.
-- **Track 1099 thresholds in real time** — monitor ytd_earnings and send W-9 collection requests when a seller crosses $400 so you have the form by the time they hit $600.
-- **Store commission rates as snapshots on each earnings record** — commission rates change over time; never recompute historical earnings with the current rate.
-- **Reconcile Stripe Connect ledger weekly** — your internal earnings records must match the Stripe Connect account balance; reconcile against Stripe's balance transaction API.
+- **Use Stripe Connect Express or Custom accounts** — never hold seller funds in a pooled bank account; use Stripe Connect to ensure funds are legally owned by the platform until transferred
+- **Collect W-9 before first payout** — without a W-9, you must apply 24% IRS backup withholding; make W-9 collection part of seller onboarding
+- **Calculate earnings at order capture, not payout time** — earnings records should be immutable and linked to specific orders; the payout is a separate aggregation step
+- **Implement rolling reserves for new sellers** — withhold 5–10% for 90 days to protect against refunds and chargebacks; release automatically on schedule
+- **Store commission rates as snapshots** — commission rates change over time; never recompute historical earnings with the current rate; record the rate at the time of each sale
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Stripe Connect payout fails silently | Always handle the `transfer.failed` webhook; notify sellers and your ops team immediately |
-| Rolling reserve not released after maturity | Build a daily job that checks `release_date <= today`; test with a short reserve period in staging |
-| 1099 gross amount does not match seller's records | 1099-K must report gross payment volume before platform fees; make sure you are using `gross_order_amount`, not `net_seller_earnings` |
-| Backup withholding not applied to sellers without W-9 | Set `backup_withholding = true` during onboarding if W-9 is not collected; check this flag in the earnings calculator |
-| Negative payout when refunds exceed sales | Implement a minimum payout balance check; carry negative balances forward to the next payout period rather than requesting clawbacks |
-| Commission rate disagreement with seller | Log `commission_rate` on every `order_earnings` record at creation time; never rely on the current rate for historical disputes |
+| Stripe Connect transfer fails silently | Listen for the `transfer.failed` webhook and notify sellers and your ops team immediately |
+| Rolling reserve not released after maturity | Build a daily cron job that checks release dates; test with a short reserve period in staging |
+| 1099-K gross amount does not match seller records | 1099-K must report gross payment volume before platform fees; use gross order amount, not net seller earnings |
+| Backup withholding not applied to sellers without W-9 | Set a flag in your database when onboarding if W-9 is not collected; apply 24% withholding to all payouts for that seller until it is received |
+| Negative payout when refunds exceed sales in a period | Carry negative balances forward to the next payout period; never request clawbacks from seller bank accounts |
+| Dokan commission not splitting correctly | Verify the commission rate is set at the vendor level (not just global default); check Dokan's logs under **Dokan → Logs** for transfer errors |
 
 ## Related Skills
 

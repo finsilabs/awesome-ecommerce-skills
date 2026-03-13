@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [cash-flow, forecasting, financial-planning]
 triggers: ["forecast cash flow", "cash runway", "cash flow model", "payment terms modeling", "seasonal cash planning", "receivables forecast", "working capital forecast"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,352 +16,177 @@ difficulty: advanced
 
 ## Overview
 
-Cash flow forecasting predicts the timing of cash inflows and outflows across a future time horizon — typically 13 weeks (short-term operational) or 12–18 months (strategic financial planning). Unlike profitability metrics, cash flow forecasting focuses on when money actually moves into and out of your bank accounts, making it essential for managing working capital, planning inventory purchases, timing marketing campaigns, and understanding how long your business can operate before needing additional capital (runway).
+Cash flow forecasting predicts when money actually enters and leaves your bank account — not when revenue is recognized. For ecommerce businesses, cash and revenue timing diverge significantly: payment processors hold funds for days or weeks, inventory must be purchased and paid for weeks before it sells, and marketplace disbursements are bi-weekly or delayed by account reviews.
 
-For ecommerce businesses, cash flow dynamics are distinctive: revenue can spike dramatically during peak seasons (Q4, Prime Day, Black Friday), inventory must be purchased and paid for weeks or months before sales are made, payment processors hold funds for days or weeks, and marketplaces like Amazon can withhold disbursements during account reviews. All of these create timing mismatches between when revenue is recognized and when cash is received.
+This skill guides you through building a 13-week rolling cash flow forecast using your platform's data, covering the key cash timing differences by sales channel, and setting up a simple model in a spreadsheet or BI tool that you update weekly.
 
-This skill covers the full forecasting workflow: building a cash flow model structure, forecasting inflows from sales and receivables, modeling outflows by category, applying payment terms, building seasonality adjustments, running scenario analysis, and tracking forecast accuracy.
+## When to Use This Skill
 
----
-
-## When to Use
-
-- You are a founder or CFO managing cash position and need to know your runway
-- You are planning inventory buys and need to know if you have cash to fund them
-- You are preparing for a fundraise and need to show investors a 12-18 month cash model
-- You need to stress-test the business against a revenue shortfall (bear case scenario)
-- You want to automate a weekly cash position update fed by bank and platform data
-- You are a marketplace seller experiencing payment hold risk (Amazon, PayPal)
-- You need to plan for seasonal cash flow gaps (Q1 trough after Q4 peak)
-
----
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When managing cash position and needing to know your runway
+- When planning inventory buys and needing to confirm you have the cash to fund them
+- When preparing for a fundraise and needing to show investors a 12–18 month cash model
+- When stress-testing the business against a revenue shortfall scenario
+- When selling on Amazon and managing bi-weekly disbursement timing
+- When planning for seasonal cash flow gaps (Q1 trough after Q4 peak)
 
 ## Core Instructions
 
-### Step 1 — Structure the Cash Flow Model
+### Step 1: Pull your historical revenue and expense data from your platform
 
-A cash flow forecast has three components: operating cash flows, investing cash flows, and financing cash flows. For most ecommerce operators the operating component dominates.
-
-```
-CASH FLOW FORECAST STRUCTURE
-─────────────────────────────────────────────────────
-Opening Cash Balance
-
-OPERATING INFLOWS
-  + Direct website collections
-  + Marketplace disbursements (Amazon, eBay, Walmart)
-  + Retail/wholesale payments from trade customers
-  + Subscription renewals
-  + Gift card redemptions
-  + Tax refunds / VAT reclaims
-
-OPERATING OUTFLOWS
-  - Inventory purchases (COGS payments to suppliers)
-  - Inbound freight & duties
-  - Fulfillment / 3PL costs
-  - Outbound shipping (if not passed through)
-  - Payment processing fees
-  - Marketplace fees (if billed separately)
-  - Marketing & advertising spend
-  - Payroll & contractor payments
-  - Rent & facilities
-  - Technology & software subscriptions
-  - Customer refunds & chargebacks
-  - Sales tax remittances
-
-= Net Operating Cash Flow
-
-INVESTING OUTFLOWS
-  - Capital expenditures (equipment, leasehold improvements)
-  - Software development capitalized costs
-
-FINANCING ACTIVITIES
-  + Loan drawdowns / credit line advances
-  - Loan repayments
-  + Investor capital received
-  - Dividends or owner distributions
-
-= Net Change in Cash
-
-Closing Cash Balance
-─────────────────────────────────────────────────────
-```
-
-### Step 2 — Build the Revenue-to-Cash Conversion Model
-
-The most critical step is modeling the lag between when a sale occurs and when cash lands in your bank account. This varies significantly by channel.
-
-```python
-from datetime import date, timedelta
-from decimal import Decimal
-
-CHANNEL_CASH_TIMING = {
-    'shopify_stripe': {'payout_lag_days': 2, 'hold_rate': 0.0},
-    'shopify_shopify_payments': {'payout_lag_days': 3, 'hold_rate': 0.0},
-    'amazon_fba': {'payout_lag_days': 14, 'hold_rate': 0.0, 'bi_weekly': True},
-    'amazon_fbm': {'payout_lag_days': 14, 'hold_rate': 0.0, 'bi_weekly': True},
-    'ebay': {'payout_lag_days': 2, 'hold_rate': 0.05},  # 5% reserve
-    'walmart': {'payout_lag_days': 14, 'hold_rate': 0.0},
-    'b2b_net30': {'payout_lag_days': 30, 'hold_rate': 0.0, 'bad_debt_rate': 0.02},
-    'b2b_net60': {'payout_lag_days': 60, 'hold_rate': 0.0, 'bad_debt_rate': 0.03},
-    'wholesale': {'payout_lag_days': 45, 'hold_rate': 0.0, 'bad_debt_rate': 0.02},
-}
-
-def project_cash_inflows(
-    revenue_forecast: list[dict],  # [{'date': date, 'channel': str, 'amount': Decimal}]
-    as_of_date: date,
-) -> list[dict]:
-    """
-    Convert revenue forecast to cash inflow schedule based on channel payment timing.
-    """
-    cash_schedule = []
-    for rev in revenue_forecast:
-        channel = rev['channel']
-        config = CHANNEL_CASH_TIMING.get(channel, {'payout_lag_days': 3, 'hold_rate': 0.0})
-        payout_date = rev['date'] + timedelta(days=config['payout_lag_days'])
-        collectable_amount = rev['amount'] * Decimal(str(1 - config.get('bad_debt_rate', 0.0)))
-        cash_amount = collectable_amount * Decimal(str(1 - config.get('hold_rate', 0.0)))
-
-        cash_schedule.append({
-            'revenue_date': rev['date'],
-            'cash_date': payout_date,
-            'channel': channel,
-            'gross_revenue': rev['amount'],
-            'expected_cash': cash_amount,
-            'week': payout_date.isocalendar()[:2],
-        })
-
-    return cash_schedule
-```
-
-### Step 3 — Forecast Revenue Using Historical Patterns
-
-Use seasonal decomposition to produce the revenue baseline:
-
-```python
-import pandas as pd
-import numpy as np
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
-
-def forecast_revenue_with_seasonality(
-    historical_weekly_revenue: pd.Series,
-    forecast_weeks: int = 52,
-    seasonality_periods: int = 52,
-) -> pd.DataFrame:
-    """
-    Forecast weekly revenue using Holt-Winters triple exponential smoothing.
-    Captures trend and 52-week seasonality for ecommerce.
-    """
-    model = ExponentialSmoothing(
-        historical_weekly_revenue,
-        trend='add',
-        seasonal='add',
-        seasonal_periods=seasonality_periods,
-        damped_trend=True,
-    )
-    fitted = model.fit(optimized=True)
-    forecast = fitted.forecast(forecast_weeks)
-
-    # Build result with confidence intervals
-    simulation = fitted.simulate(nsimulations=forecast_weeks, repetitions=1000, random_errors='bootstrap')
-    lower = simulation.quantile(0.10, axis=1)
-    upper = simulation.quantile(0.90, axis=1)
-
-    return pd.DataFrame({
-        'forecast_date': forecast.index,
-        'base_case': forecast.values,
-        'bear_case': lower.values,
-        'bull_case': upper.values,
-    })
-```
-
-### Step 4 — Model Inventory Cash Outflows
-
-Inventory is typically the largest cash outflow for ecommerce businesses. The key challenge is the timing gap between placing a purchase order and making the payment.
-
-```python
-def compute_inventory_outflow_schedule(
-    sales_forecast: pd.DataFrame,
-    cogs_rate: float,          # e.g., 0.45 for 45% COGS
-    lead_time_days: int,       # days from PO to warehouse receipt
-    payment_terms_days: int,   # days after receipt until payment due
-    target_weeks_of_stock: int = 8,
-    current_inventory_value: float = 0.0,
-) -> pd.DataFrame:
-    """
-    Compute when inventory payments will be made based on sales forecast,
-    reorder logic, and supplier payment terms.
-    """
-    forecast_cogs = sales_forecast['base_case'] * cogs_rate
-    target_inventory = forecast_cogs.rolling(target_weeks_of_stock).sum().shift(-target_weeks_of_stock)
-
-    purchase_orders = []
-    current_inv = current_inventory_value
-
-    for i, (week_date, weekly_cogs) in enumerate(forecast_cogs.items()):
-        target_inv = target_inventory.iloc[i] if i < len(target_inventory) else weekly_cogs * target_weeks_of_stock
-        if pd.isna(target_inv):
-            target_inv = weekly_cogs * target_weeks_of_stock
-
-        current_inv -= weekly_cogs  # Consume inventory
-        po_amount = max(0, target_inv - current_inv)
-
-        if po_amount > 0:
-            receipt_date = week_date + pd.Timedelta(days=lead_time_days)
-            payment_date = receipt_date + pd.Timedelta(days=payment_terms_days)
-            current_inv += po_amount
-
-            purchase_orders.append({
-                'po_date': week_date,
-                'receipt_date': receipt_date,
-                'payment_date': payment_date,
-                'po_amount': po_amount,
-            })
-
-    return pd.DataFrame(purchase_orders)
-```
-
-### Step 5 — Build a Weekly 13-Week Cash Flow
-
-```sql
--- 13-week rolling cash flow view
-WITH weekly_inflows AS (
-    SELECT
-        DATE_TRUNC('week', cash_date) AS week_start,
-        channel,
-        SUM(expected_cash) AS total_inflow
-    FROM projected_cash_inflows
-    WHERE cash_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '91 days'
-    GROUP BY 1, 2
-),
-weekly_outflows AS (
-    SELECT
-        DATE_TRUNC('week', payment_date) AS week_start,
-        expense_category,
-        SUM(amount) AS total_outflow
-    FROM projected_cash_outflows
-    WHERE payment_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '91 days'
-    GROUP BY 1, 2
-),
-weekly_net AS (
-    SELECT
-        COALESCE(i.week_start, o.week_start) AS week_start,
-        COALESCE(SUM(i.total_inflow), 0) AS total_inflow,
-        COALESCE(SUM(o.total_outflow), 0) AS total_outflow,
-        COALESCE(SUM(i.total_inflow), 0) - COALESCE(SUM(o.total_outflow), 0) AS net_cash_flow
-    FROM weekly_inflows i
-    FULL OUTER JOIN weekly_outflows o USING (week_start)
-    GROUP BY 1
-)
-SELECT
-    week_start,
-    total_inflow,
-    total_outflow,
-    net_cash_flow,
-    SUM(net_cash_flow) OVER (ORDER BY week_start ROWS UNBOUNDED PRECEDING) + :opening_cash AS running_cash_balance
-FROM weekly_net
-ORDER BY week_start;
-```
-
-### Step 6 — Scenario Analysis and Runway Calculation
-
-```python
-def compute_runway_scenarios(
-    opening_cash: float,
-    weekly_net_cash_flow: pd.Series,  # base case
-    bear_multiplier: float = 0.70,   # 30% revenue shortfall
-    bull_multiplier: float = 1.20,   # 20% revenue upside
-) -> dict:
-    """
-    Compute cash runway under base, bear, and bull scenarios.
-    Returns the week number at which cash would reach zero (or None if not depleted).
-
-    LIMITATION: The multiplier is currently applied to the entire weekly_net_cash_flow
-    (inflows minus outflows). This is a simplification — in reality only inflows scale
-    with revenue; outflows (fixed costs such as payroll, rent, software) remain constant
-    regardless of revenue. For more accurate scenario modeling, pass inflows and outflows
-    as separate Series and apply the multiplier only to inflows:
-        adjusted_flow = (weekly_inflows * multiplier) - weekly_outflows
-    """
-    results = {}
-
-    for scenario_name, multiplier in [('base', 1.0), ('bear', bear_multiplier), ('bull', bull_multiplier)]:
-        adjusted_flow = weekly_net_cash_flow * multiplier
-        # NOTE: Outflows should not be multiplied — they are fixed costs.
-        # Only inflows scale with revenue. See function docstring for the correct approach.
-        running_balance = opening_cash + adjusted_flow.cumsum()
-        zero_crossing = running_balance[running_balance <= 0]
-
-        if len(zero_crossing) > 0:
-            weeks_to_zero = zero_crossing.index[0]
-            results[scenario_name] = {
-                'runway_weeks': (weeks_to_zero - running_balance.index[0]).days // 7,
-                'minimum_balance': running_balance.min(),
-                'minimum_balance_week': running_balance.idxmin(),
-            }
-        else:
-            results[scenario_name] = {
-                'runway_weeks': '>52 weeks',
-                'ending_balance': running_balance.iloc[-1],
-            }
-
-    return results
-```
+Before building a forecast, gather 12 months of actuals. Here is where to find the data by platform:
 
 ---
+
+#### Shopify
+
+1. **Revenue data:** Go to **Analytics → Reports → Sales over time** — export to CSV; this gives you daily/weekly/monthly gross sales, discounts, returns, and net sales
+2. **Order-level data:** Go to **Analytics → Reports → Orders over time** — shows order count and AOV trends useful for projecting future orders
+3. **Finance summary:** Go to **Analytics → Finances summary** — shows gross sales, discounts, returns, shipping charged, and net sales for any date range
+4. **Payouts:** Go to **Finances → Payouts** — shows exactly when Shopify Payments transferred funds to your bank and the amount; this is your actual cash inflow history, not just revenue recognition
+5. **Export orders:** Go to **Orders → Export** — download all orders with financial data; use this to build a detailed spreadsheet model
+
+**Shopify Payments cash timing:**
+- Standard payout: 2–3 business days after the transaction
+- After confirming your payout schedule in **Finances → Payout schedule**, build this lag into your inflow model
+
+---
+
+#### WooCommerce
+
+1. **Revenue data:** Go to **WooCommerce → Analytics → Revenue** — shows gross revenue, refunds, coupons, net revenue, and taxes by day/week/month; export to CSV
+2. **Orders export:** Go to **WooCommerce → Orders → Export** — download order history with payment method, dates, and amounts
+3. **Payment gateway timing:** Check your gateway dashboard (Stripe, PayPal, Square) for payout history and typical lag:
+   - Stripe: typically 2 business days
+   - PayPal: 1–3 business days (can vary for new accounts)
+4. **Expenses:** WooCommerce does not track expenses natively; pull these from your accounting system (QuickBooks, Xero) or bank statements
+
+---
+
+#### BigCommerce
+
+1. Go to **Analytics → Store Overview** — shows revenue, orders, and conversion trends; export to CSV
+2. Go to **Analytics → Purchase Funnel** and **Analytics → Marketing** for additional revenue breakdowns
+3. Use **BigCommerce's data export API** or connect via **Stitch** or **Fivetran** to pull order data into a spreadsheet or warehouse for multi-month analysis
+
+---
+
+### Step 2: Map cash timing by channel
+
+The most important step is understanding the lag between when revenue is earned and when cash arrives. Build a channel-by-channel timing table:
+
+| Channel | Typical Cash Lag | Notes |
+|---------|-----------------|-------|
+| Shopify Payments (credit card) | 2–3 business days | Set in Shopify under Finances → Payout schedule |
+| Stripe (direct) | 2 business days | Configurable; can be daily |
+| PayPal | 1–3 business days | New accounts may have longer holds |
+| Amazon FBA | 14 days | Bi-weekly disbursements; check Seller Central → Payments |
+| Amazon FBM | 14 days | Same bi-weekly schedule |
+| eBay Managed Payments | 2 business days | Check eBay Payments dashboard |
+| Walmart Marketplace | 14 days | Monthly disbursement cycle |
+| Wholesale / Net-30 | 30 days | Invoice date to expected payment |
+| Wholesale / Net-60 | 60 days | Factor in 2–5% bad debt rate |
+| Buy Now Pay Later (Afterpay, Klarna) | 2–3 business days | BNPL providers pay merchant immediately; no customer lag |
+
+**Build this timing into your cash inflow schedule:** For each week's projected revenue, create a separate row showing when that cash actually arrives. Revenue earned this week from Amazon arrives in the week two weeks from now.
+
+### Step 3: Build a 13-week rolling cash flow model
+
+Use a spreadsheet (Google Sheets or Excel) with this structure. Update it every Monday morning.
+
+**Model structure (one column per week, 13 weeks forward):**
+
+```
+                          WK1    WK2    WK3    WK4    ...  WK13
+OPENING CASH BALANCE
+
+OPERATING INFLOWS
+  + Shopify Payments (2-day lag from prior week sales)
+  + Amazon disbursement (bi-weekly; map exact dates)
+  + PayPal settlements
+  + B2B/wholesale payments (net-30 invoices due this week)
+
+OPERATING OUTFLOWS
+  - Inventory purchases (PO payments due this week)
+  - Inbound freight & duties
+  - 3PL / fulfillment fees (typically billed weekly)
+  - Outbound shipping not passed to customer
+  - Marketing & ad spend (credit card charge date, not spend date)
+  - Payroll (exact pay dates)
+  - Platform/software subscriptions
+  - Rent & facilities
+  - Customer refunds (process in same week issued)
+  - Sales tax remittances (quarterly — schedule known dates)
+
+NET WEEKLY CASH FLOW
+CLOSING CASH BALANCE
+```
+
+**Getting outflow data:**
+- **Inventory payments:** Pull open purchase orders from your supplier portal or inventory system; note the due date for each PO
+- **Marketing spend:** Check your credit card statement for when ad platform charges clear (usually monthly billing cycle); Meta and Google bill in arrears or when threshold is reached
+- **Payroll:** Use exact pay dates from your payroll system (Gusto, ADP, Rippling)
+
+### Step 4: Build base / bear / bull scenarios
+
+Run three scenarios:
+
+| Scenario | Revenue Assumption | Purpose |
+|----------|-------------------|---------|
+| **Base case** | Current trajectory (prior 4-week average) | Day-to-day planning |
+| **Bear case** | 70–75% of base case revenue | Stress test; answers "how long can we survive?" |
+| **Bull case** | 120–125% of base case revenue | Upside planning; "can we fund the growth?" |
+
+**Critical rule:** In the bear case, reduce inflows by the revenue shortfall percentage but do NOT reduce fixed outflows (payroll, rent, software). Only variable costs (COGS, marketing, variable fulfillment) should scale with revenue. This is the most common forecasting mistake — in a revenue downturn, fixed costs remain, which dramatically worsens cash position.
+
+**Runway calculation:** Find the first week in the bear case where the Closing Cash Balance reaches your minimum viable cash threshold (typically 4–6 weeks of fixed operating costs). The number of weeks until that point is your runway under the bear case.
+
+### Step 5: Connect to live data for automatic updates
+
+---
+
+#### Shopify
+
+Use **Shopify's built-in Finances export** (scheduled weekly) or connect via:
+- **Shopify + Google Sheets:** Install the **Sheets for Shopify** app to sync orders and payouts automatically into your cash flow spreadsheet
+- **Shopify + Xero/QuickBooks:** Use the **Xero** or **QuickBooks** Shopify integration to sync payout data into your accounting system, then build your forecast in your accounting tool
+
+#### WooCommerce
+
+- Connect **WooCommerce → QuickBooks** (via the official WooCommerce QuickBooks plugin) or **WooCommerce → Xero** (via the WooCommerce Xero extension)
+- Use **Metorik** to export weekly revenue data into a CSV that feeds your spreadsheet model
+
+#### Dedicated cash flow tools (all platforms)
+
+These tools connect to your bank, payment processors, and ecommerce platforms to build automated cash flow forecasts:
+- **Float** (floatapp.com): Connects to Xero/QuickBooks; great for 13-week cash forecasting
+- **Pulse** (pulseapp.com): Simple cash flow tool with manual and bank-feed inputs
+- **Dryrun**: More advanced; supports scenario modeling and connects to accounting systems
+- **Runway** (runway.com): More comprehensive financial planning tool; connects to QuickBooks/Xero
 
 ## Best Practices
 
-1. **Update the 13-week forecast weekly** — Build an automated pipeline that refreshes the short-term forecast every Monday morning with actual last-week data and updated forward projections.
-
-2. **Track forecast accuracy by cohort** — Compare your forecast from 4 weeks ago against actual results. A well-maintained forecast should have less than 10% variance week-over-week.
-
-3. **Model Amazon payment timing explicitly** — Amazon disbursements are bi-weekly and can be delayed by account health issues. If Amazon is a significant channel, model the exact disbursement schedule, not a simple daily average.
-
-4. **Build a "minimum viable cash" threshold** — Define the minimum cash balance needed to operate (typically 4-6 weeks of fixed operating costs). Alert when the forecast shows cash approaching this floor.
-
-5. **Separate fixed from variable outflows** — Fixed costs (payroll, rent, software) flow out regardless of revenue. Variable costs (COGS payments, marketing) are correlated with revenue. This separation is critical for scenario analysis.
-
-6. **Account for sales tax timing** — Sales tax collected is not your money — it must be remitted to tax authorities on a monthly or quarterly basis. Model tax remittances as a scheduled outflow, not revenue.
-
-7. **Model capital expenditures separately** — Large one-time investments (warehouse equipment, system implementations) distort the operating cash flow trend. Keep them on a separate capital plan tab.
-
-8. **Build a credit facility buffer** — If you have a revolving credit line or inventory financing facility, model the draw and repayment schedule separately from operating cash flows.
-
-9. **Reconcile forecast to actual bank balance weekly** — Pull actual bank balances via API (Plaid, direct bank connection) and compare to forecast. Unexplained variances indicate a forecasting model error or a transaction that was missed.
-
-10. **Communicate cash position in board reports** — The cash runway chart (cash balance over time under base/bear/bull scenarios) is one of the most important slides in a board deck. Keep it current and context-rich.
-
----
+- **Update the 13-week forecast every Monday morning** — use prior-week actuals to replace the oldest week's projection and roll the forecast forward one week
+- **Reconcile the forecast to your actual bank balance weekly** — if there is a gap between forecast and actual closing balance, find it before it compounds
+- **Model Amazon payment timing explicitly** — Amazon bi-weekly disbursements are the single largest source of cash timing surprises for marketplace sellers; map the exact disbursement dates for the next 13 weeks
+- **Build a minimum viable cash threshold** — define the minimum cash balance needed to operate; alert yourself when the forecast shows cash approaching this floor
+- **Track the ad spend cash outflow date, not the spend date** — Meta and Google bill monthly or when a threshold is reached; the credit card payment date is when cash leaves, not when impressions run
+- **Schedule tax remittances as known outflows** — sales tax remittances, quarterly estimated income taxes, and VAT payments are predictable; put them on the calendar in the model
 
 ## Common Pitfalls
 
-### Pitfall 1: Confusing Revenue with Cash
-Recognized revenue and cash receipt are different. A $50,000 wholesale invoice recognized in March will not generate cash until May under Net-60 terms. Build the timing layer between revenue and cash from day one.
+| Problem | Solution |
+|---------|----------|
+| Confusing revenue with cash | A $50K wholesale invoice recognized in March will not generate cash until May under Net-60 terms; always model the timing layer separately |
+| Ignoring seasonal inventory build-up | Heavy inventory spend in July–September (buying Q4 stock) causes a cash trough months before holiday revenue arrives; forecast the inventory payment schedule explicitly |
+| Not modeling returns as cash outflows | Refunds are cash outflows that happen before you recover inventory; high-return categories need a return cash reserve modeled into weekly outflows |
+| Ad spend lag not accounted for | Monthly credit card billings for ad platforms clear days after the billing period; model the card payment date as the cash outflow, not the daily spend date |
+| Single-point estimate only | Always run base and bear scenarios; a model showing only the base case gives false confidence |
+| Missing one-time outflows | Tax payments, insurance renewals, software annual contracts, and trade show expenses are predictable; add them to a forward calendar and populate the model |
 
-### Pitfall 2: Ignoring Seasonal Inventory Buildup
-Many ecommerce businesses spend heavily on inventory in July-September to prepare for Q4 peak season. This creates a significant cash outflow well before the holiday revenue inflow. Forecast the inventory build-up explicitly.
+## Related Skills
 
-### Pitfall 3: Modeling Inflows Without Modeling Returns
-Return cash flows are typically negative: you pay the customer back before recovering the inventory. High-return categories (apparel, electronics) can have 15-25% return rates that materially reduce net cash from sales.
-
-### Pitfall 4: Not Modeling the Ad Spend Lag
-Many advertising platforms bill in arrears (monthly) or have credit card auto-pay that clears days after the billing period. Model ad spend cash outflows based on when the credit card payment clears, not when the spend occurs.
-
-### Pitfall 5: Using a Single-Point Estimate Instead of Scenarios
-A cash flow model that only shows the base case gives false confidence. Always present at least base and bear scenarios. The bear case should reflect a plausible downside (e.g., 70% of base revenue) to stress-test the runway.
-
-### Pitfall 6: Forgetting One-Time Outflows
-Tax payments (annual, quarterly estimated), insurance renewals, software annual contracts, and trade show expenses are not monthly but can be significant. Build a calendar of known one-time payments.
-
-### Pitfall 7: Not Modeling the First 30 Days Carefully Enough
-The 13-week forecast is most accurate in the near term. Weeks 1-4 should be built from specific known transactions (open purchase orders, scheduled payroll, confirmed customer payments), not from statistical models.
+- @ecommerce-budgeting-forecasting
+- @financial-reporting-dashboard
+- @profit-margin-analysis
+- @unit-economics-tracking
+- @marketplace-fee-reconciliation

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [bnpl, klarna, afterpay, affirm, buy-now-pay-later, installments, financing]
 triggers: ["buy now pay later", "BNPL", "Klarna integration", "Afterpay integration", "Affirm integration", "pay in installments", "split payment"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,276 +16,173 @@ difficulty: intermediate
 
 ## Overview
 
-Integrate one or more Buy Now, Pay Later providers to offer installment payment options at checkout. Covers the three main integrations (Klarna, Afterpay, Affirm), eligibility amount checks so BNPL is only shown for qualifying order totals, messaging widgets that display installment breakdowns on product pages and in the cart, and the redirect-based vs. SDK-based integration patterns.
+Buy Now, Pay Later lets shoppers split purchases into 4 interest-free installments or longer financing plans. Offering BNPL at checkout typically increases average order value (AOV) by 15–40% and reduces checkout abandonment for high-ticket items. The three major providers — Klarna, Afterpay (Clearpay in UK), and Affirm — each have native integrations for Shopify, WooCommerce, and BigCommerce that require no custom code to install.
 
 ## When to Use This Skill
 
-- When average order value (AOV) is high enough that installments would meaningfully help conversion ($100-$3,000 range is typical)
+- When AOV is in the $100–$3,000 range where installments meaningfully help conversion
 - When analytics show customers abandoning checkout at the payment step due to price
 - When competitors offer BNPL and it is becoming a category expectation (fashion, electronics, furniture)
-- When adding BNPL via Stripe (Klarna, Afterpay are available as payment methods on Stripe)
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+- When adding BNPL to an existing Stripe integration (Klarna and Afterpay are available as Stripe payment methods)
 
 ## Core Instructions
 
-1. **Understand the BNPL provider landscape**
+### Step 1: Determine your platform and choose the right BNPL approach
 
-   ```
-   Provider  | Markets        | Model              | Merchant Fee | Order Range
-   ----------|----------------|--------------------|--------------|------------------
-   Klarna    | US, EU, UK     | Pay in 4 / Financing | 2.49% + $0.30 | $10 - $10,000
-   Afterpay  | US, AU, UK, CA | Pay in 4 (6 weeks)  | 4-6%          | $35 - $2,000
-   Affirm    | US, CA         | Monthly installments | 5.99% - 29.99%| $50 - $17,500
-   Zip       | US, AU, UK     | Pay in 4            | 4-6%          | $35 - $1,500
+| Platform | Recommended Approach | Notes |
+|----------|---------------------|-------|
+| **Shopify** | Enable via Shopify Payments (Klarna, Afterpay built in) or install provider's app | Shopify Payments includes Klarna and Afterpay with zero additional integration; just enable them |
+| **WooCommerce** | Install the provider's official WooCommerce plugin | Klarna, Afterpay, and Affirm all have official WooCommerce plugins |
+| **BigCommerce** | Install from BigCommerce App Marketplace | All three providers have native BigCommerce apps |
+| **Custom / Headless** | Enable via Stripe (Klarna, Afterpay) or provider SDK | If using Stripe, enable as payment methods on the Payment Intent; no separate SDK needed |
 
-   Recommendation:
-   - For Stripe-based stores: enable Klarna + Afterpay via Stripe payment methods (simplest)
-   - For non-Stripe stores: integrate Afterpay JS SDK directly
-   ```
+**Provider comparison:**
 
-2. **Enable Klarna and Afterpay via Stripe**
+| Provider | Markets | Model | Merchant Fee | Order Range |
+|----------|---------|-------|--------------|-------------|
+| Klarna | US, EU, UK | Pay in 4 / Financing | ~2.49% + $0.30 | $10–$10,000 |
+| Afterpay | US, AU, UK, CA | Pay in 4 (6 weeks) | 4–6% | $35–$2,000 |
+| Affirm | US, CA | Monthly installments | 5.99%–29.99% APR on consumer | $50–$17,500 |
 
-   If already using Stripe, enabling BNPL is a configuration change — no separate SDK required.
+Recommendation: Start with Klarna or Afterpay — they have the broadest platform support and lowest friction to enable. Add Affirm for high-ticket items ($1,000+) where monthly financing matters more than 4-installment splits.
 
-   ```javascript
-   // Server: include bnpl methods in the payment intent
-   const paymentIntent = await stripe.paymentIntents.create({
-     amount: orderTotal,
-     currency: 'usd',
-     payment_method_types: [
-       'card',
-       'klarna',
-       'afterpay_clearpay',
-       'affirm',
-     ],
-     metadata: { order_id: orderId },
-   });
-   ```
+### Step 2: Enable BNPL on your platform
 
-   ```jsx
-   // Client: Stripe Elements shows BNPL options automatically based on amount and country
-   import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+---
 
-   // PaymentElement with automatic_payment_methods shows all eligible methods
-   // including BNPL without any extra code
-   function CheckoutPaymentForm() {
-     return (
-       <form>
-         <PaymentElement
-           options={{
-             layout: 'tabs', // Shows payment methods as tabs: Card | Klarna | Afterpay
-           }}
-         />
-         <SubmitButton />
-       </form>
-     );
-   }
-   ```
+#### Shopify
 
-3. **Integrate Afterpay directly with the Afterpay.js SDK**
+**Option A: Via Shopify Payments (recommended)**
 
-   For non-Stripe implementations, use Afterpay's own JavaScript SDK.
+1. Go to **Settings → Payments → Shopify Payments → Manage**
+2. Under **Wallets and payment methods**, find **Klarna** and **Afterpay** and toggle them on
+3. Click **Save** — BNPL options will now appear automatically at checkout for eligible orders
+4. To add BNPL messaging to product pages, install the **Klarna On-Site Messaging** app or **Afterpay On-Site Messaging** app from the Shopify App Store
 
-   ```javascript
-   // Load Afterpay SDK
-   // In <head>:
-   // <script src="https://js.afterpay.com/afterpay-1.x.js" async></script>
+**Option B: Install the provider's Shopify app directly**
 
-   // Step 1: Create an Afterpay checkout token server-side
-   // POST /api/afterpay/create-checkout
-   export async function createAfterpayCheckout(req, res) {
-     const { cartId } = req.body;
-     const cart = await getCart(cartId);
+- Klarna: Install **Klarna Payments** from the Shopify App Store
+- Afterpay: Install **Afterpay** from the Shopify App Store
+- Affirm: Install **Affirm** from the Shopify App Store
 
-     const response = await fetch('https://global-api.afterpay.com/v2/checkouts', {
-       method: 'POST',
-       headers: {
-         Authorization: `Basic ${Buffer.from(`${process.env.AFTERPAY_MERCHANT_ID}:${process.env.AFTERPAY_SECRET_KEY}`).toString('base64')}`,
-         'Content-Type': 'application/json',
-         'User-Agent': `YourStore/1.0 (Merchant/${process.env.AFTERPAY_MERCHANT_ID})`,
-       },
-       body: JSON.stringify({
-         amount: { amount: cart.total.toFixed(2), currency: 'USD' },
-         consumer: { email: cart.email, givenNames: cart.firstName, surname: cart.lastName },
-         merchant: {
-           redirectConfirmUrl: `${process.env.STORE_URL}/checkout/afterpay/confirm`,
-           redirectCancelUrl: `${process.env.STORE_URL}/checkout`,
-         },
-         items: cart.items.map(item => ({
-           name: item.title,
-           sku: item.sku,
-           quantity: item.quantity,
-           price: { amount: item.unitPrice.toFixed(2), currency: 'USD' },
-         })),
-       }),
-     });
+Each app guides you through account creation and automatically adds the payment method to your checkout.
 
-     const checkout = await response.json();
-     if (!response.ok) {
-       return res.status(400).json({ error: checkout.message });
-     }
+**Adding installment messaging to product pages (Shopify):**
 
-     res.json({ token: checkout.token, redirectUrl: checkout.redirectCheckoutUrl });
-   }
-   ```
+After installing the Klarna or Afterpay app, go to **Online Store → Themes → Customize** and add the BNPL messaging block to your product page template. This displays "4 interest-free payments of $X" beneath the price.
 
-   ```javascript
-   // Step 2: Launch the Afterpay popup
-   AfterPay.initialize({ countryCode: 'US' });
+---
 
-   AfterPay.redirect({
-     token: checkoutToken,
-     onComplete: async ({ status, orderToken }) => {
-       if (status === 'SUCCESS') {
-         await captureAfterpayOrder(orderToken);
-       }
-     },
-   });
+#### WooCommerce
 
-   // Step 3: Capture the payment server-side
-   // POST /api/afterpay/capture/:orderToken
-   async function captureAfterpayOrder(orderToken) {
-     const res = await fetch(`https://global-api.afterpay.com/v2/payments/capture`, {
-       method: 'POST',
-       headers: {
-         Authorization: `Basic ${Buffer.from(`${process.env.AFTERPAY_MERCHANT_ID}:${process.env.AFTERPAY_SECRET_KEY}`).toString('base64')}`,
-         'Content-Type': 'application/json',
-         'Idempotency-Key': orderToken,
-       },
-       body: JSON.stringify({ token: orderToken, merchantReference: orderId }),
-     });
-     const capture = await res.json();
-     return capture;
-   }
-   ```
+**Klarna:**
+1. Install the **Klarna Payments for WooCommerce** plugin from WordPress.org or the WooCommerce Marketplace
+2. Go to **WooCommerce → Settings → Payments → Klarna Payments** and enter your Klarna API credentials
+3. Enable the payment method and configure which Klarna products to offer (Pay Now, Pay Later, Slice It)
+4. For product page messaging, install the **Klarna On-Site Messaging for WooCommerce** plugin and add your Client ID
 
-4. **Add BNPL messaging widgets to product pages and cart**
+**Afterpay:**
+1. Install the **Afterpay Gateway for WooCommerce** plugin
+2. Go to **WooCommerce → Settings → Payments → Afterpay** and enter your Merchant ID and Secret Key (from your Afterpay merchant portal)
+3. Configure the minimum and maximum order amounts to match Afterpay's eligibility range ($35–$2,000)
+4. Enable the on-site messaging widget to show installment amounts on product pages
 
-   BNPL providers supply JavaScript widgets that show "Pay 4x $X" messaging inline.
+**Affirm:**
+1. Install the **Affirm Gateway for WooCommerce** plugin
+2. Go to **WooCommerce → Settings → Payments → Affirm** and enter your Public API Key and Private API Key (from your Affirm merchant portal)
+3. Set the minimum order threshold (Affirm recommends showing only for orders $50+)
 
-   ```jsx
-   // AfterpayMessage.jsx — displays "4 interest-free payments of $X" on the PDP
-   import { useEffect, useRef } from 'react';
+---
 
-   export function AfterpayMessage({ price }) {
-     const MIN_AMOUNT = 35;   // Afterpay US minimum
-     const MAX_AMOUNT = 2000; // Afterpay US maximum
+#### BigCommerce
 
-     if (price < MIN_AMOUNT || price > MAX_AMOUNT) return null;
+1. Go to **Apps → Marketplace** and search for Klarna, Afterpay, or Affirm
+2. Install the provider's app and follow the in-app setup wizard — you will need your merchant account credentials from the provider's portal
+3. The app automatically adds the BNPL payment method to your checkout and can add product page messaging
+4. Configure eligibility amounts in the app settings to match the provider's supported range
 
-     return (
-       <afterpay-placement
-         data-locale="en_US"
-         data-currency="USD"
-         data-amount={price.toFixed(2)}
-         data-size="sm"
-         data-logo-type="badge"
-       />
-     );
-   }
+---
 
-   // Klarna on-site messaging widget
-   export function KlarnaMessage({ price }) {
-     useEffect(() => {
-       window.Klarna?.OnsiteMessaging?.refresh();
-     }, [price]);
+#### Custom / Headless
 
-     return (
-       <klarna-placement
-         data-key="credit-promotion-auto-size"
-         data-locale="en-US"
-         data-purchase-amount={String(Math.round(price * 100))} /* Amount in cents */
-       />
-     );
-   }
-   ```
-
-5. **Implement eligibility guard to conditionally show BNPL**
-
-   Do not show BNPL options if the order total is outside the provider's eligible range.
-
-   ```javascript
-   // lib/bnplEligibility.js
-
-   const BNPL_RANGES = {
-     afterpay: { min: 35,  max: 2000,  countries: ['US', 'CA', 'AU', 'NZ', 'GB'] },
-     klarna:   { min: 10,  max: 10000, countries: ['US', 'DE', 'GB', 'SE', 'NL', 'FI', 'NO', 'DK', 'AT', 'CH', 'BE', 'ES', 'IT', 'FR', 'AU'] },
-     affirm:   { min: 50,  max: 17500, countries: ['US', 'CA'] },
-   };
-
-   export function getEligibleBNPLProviders(orderTotal, countryCode) {
-     return Object.entries(BNPL_RANGES)
-       .filter(([, range]) =>
-         orderTotal >= range.min &&
-         orderTotal <= range.max &&
-         range.countries.includes(countryCode)
-       )
-       .map(([provider]) => provider);
-   }
-   ```
-
-## Examples
-
-### Full Stripe-based BNPL with Klarna
-
-When using Stripe's `PaymentElement`, Klarna appears automatically for eligible US orders. Add these Stripe configurations to control which methods display:
+**Via Stripe (recommended — enables Klarna and Afterpay with no separate SDK):**
 
 ```javascript
-// Configure Stripe to only show specific methods
-const paymentElementOptions = {
-  layout: 'accordion',
-  paymentMethodOrder: ['card', 'klarna', 'afterpay_clearpay'],
-  defaultValues: {
-    billingDetails: {
-      name: customer.name,
-      email: customer.email,
-    },
-  },
-};
+// Server: include BNPL methods on the payment intent
+const paymentIntent = await stripe.paymentIntents.create({
+  amount: orderTotalInCents,
+  currency: 'usd',
+  payment_method_types: ['card', 'klarna', 'afterpay_clearpay'],
+  metadata: { order_id: orderId },
+});
 ```
 
-### Installment breakdown display
-
-Show a clear breakdown so customers understand what they are committing to:
+On the client, use Stripe's `PaymentElement` — it automatically shows Klarna and Afterpay tabs for eligible order amounts with no additional configuration:
 
 ```jsx
-function InstallmentBreakdown({ total, provider }) {
-  const installmentAmount = (total / 4).toFixed(2);
+import { PaymentElement } from '@stripe/react-stripe-js';
+
+function CheckoutForm() {
   return (
-    <p className="installment-note">
-      or 4 interest-free payments of <strong>${installmentAmount}</strong>
-      {' '}with <strong>{provider}</strong>. No impact on credit score.
-    </p>
+    <form>
+      <PaymentElement options={{ layout: 'tabs' }} />
+      {/* Tabs render: Card | Klarna | Afterpay based on eligibility */}
+    </form>
   );
 }
 ```
 
+**Adding installment messaging to product pages (headless):**
+
+Klarna provides a web component for price messaging. Load the Klarna script and add the component:
+
+```html
+<!-- Load Klarna's on-site messaging library -->
+<script async src="https://js.klarna.com/web-sdk/v1/klarna.js"
+  data-client-id="YOUR_KLARNA_CLIENT_ID">
+</script>
+
+<!-- Display "4 payments of $X" on the product page -->
+<klarna-placement
+  data-key="credit-promotion-auto-size"
+  data-locale="en-US"
+  data-purchase-amount="9999">
+  <!-- Amount in cents: 9999 = $99.99 -->
+</klarna-placement>
+```
+
+Afterpay provides a similar web component:
+
+```html
+<afterpay-placement
+  data-locale="en_US"
+  data-currency="USD"
+  data-amount="99.99"
+  data-size="sm">
+</afterpay-placement>
+```
+
+### Step 3: Verify eligibility rules are enforced
+
+Each provider has minimum and maximum order amounts. The platform apps and Stripe's PaymentElement handle this automatically — they only show the BNPL option when the order total is within the eligible range. Verify this is working correctly by testing with an order below the minimum (BNPL should not appear) and within range (BNPL should appear).
+
 ## Best Practices
 
-- **Use Stripe payment methods if already on Stripe** — enabling Klarna/Afterpay through Stripe requires zero additional SDK integration; it is just a configuration change
-- **Show installment messaging on PDPs and cart** — research shows BNPL messaging on product pages increases AOV by 15-25% before the customer even reaches checkout
-- **Only show BNPL within eligible amount ranges** — each provider has minimum and maximum amounts; displaying BNPL for a $10 order misleads customers
-- **Capture payments server-side** — never trust client-side callbacks alone; always capture/confirm the BNPL payment from your server
-- **Handle webhook events for BNPL** — Afterpay and Klarna send webhook events for payment updates, refunds, and chargebacks; register and handle them
-- **Display clear terms** — "4 interest-free payments" must be accurate; check the provider's compliance requirements for messaging in each market
+- **Enable via Shopify Payments if you are on Shopify** — zero extra integration; just toggle on in payment settings
+- **Show installment messaging on product pages and cart** — BNPL messaging before checkout increases AOV even for customers who end up paying in full
+- **Only show BNPL within eligible amount ranges** — displaying BNPL for a $10 order misleads customers; the platform apps handle this automatically
+- **Monitor fee impact on margin** — Afterpay charges 4–6%, which is 2–3x higher than a standard card fee; ensure your margins support the provider's rate before enabling
+- **Display clear terms** — "4 interest-free payments" must be accurate; each provider has compliance requirements for how you can describe their product
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Afterpay popup blocked | The `AfterPay.redirect()` call must be triggered directly by a user click event; do not call it from inside an async/await chain |
-| BNPL shown for ineligible amounts | Implement server-side eligibility check; also enforce client-side with the `getEligibleBNPLProviders` function |
-| Duplicate order on Afterpay redirect confirmation | Use the `orderToken` as an idempotency key when capturing; check for an existing order with that token before creating a new one |
-| Klarna messaging widget not updating on variant change | Call `Klarna.OnsiteMessaging.refresh()` whenever the price changes; the widget reads the updated `data-purchase-amount` attribute |
-| Afterpay returns success but payment not actually captured | `onComplete` status `SUCCESS` means the customer approved — you still must call the capture API server-side to move the money |
+| BNPL option not appearing at checkout | Check that the order amount is within the provider's eligible range; verify the API credentials in the plugin/app settings are for the correct environment (live vs. sandbox) |
+| BNPL appearing for ineligible order amounts | Set minimum/maximum amount thresholds in the plugin settings; Stripe's PaymentElement enforces this automatically |
+| Product page messaging not updating when variant price changes | Klarna and Afterpay web components read the `data-purchase-amount` attribute; update this attribute in JavaScript when the price changes |
+| Customers confused about BNPL terms | Link to the provider's "How it works" page in the messaging widget; each provider has compliant messaging templates you must follow |
+| Higher dispute rate with BNPL orders | BNPL disputes go through the provider (Klarna, Afterpay), not your payment processor; ensure your fulfillment process creates clear tracking and delivery confirmation |
 
 ## Related Skills
 

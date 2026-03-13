@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [data-retention, gdpr, lifecycle, purging, archival, compliance, cron-jobs, data-governance]
 triggers: ["data retention", "data lifecycle", "automated purging", "order data retention", "customer data lifecycle", "data archival ecommerce"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-E-commerce platforms accumulate vast amounts of personal data — customer profiles, order histories, payment records, browsing sessions, and marketing interactions. Data retention policies define how long each data category is kept, when it is archived, and when it is purged, balancing legal obligations (tax records, consumer protection laws) against privacy regulations (GDPR's data minimization principle). This skill covers defining retention schedules, implementing automated purge jobs, archiving data for compliance, and auditing the data lifecycle.
+Data retention policies define how long each category of data is kept, when it is archived, and when it is purged. E-commerce stores must balance legal obligations (tax records must typically be kept 5–7 years) against privacy regulations (GDPR's data minimization principle requires deleting data that is no longer needed). The right approach depends on your platform — Shopify handles some retention automatically, while WooCommerce/custom stores require explicit implementation.
 
 ## When to Use This Skill
 
@@ -26,389 +26,228 @@ E-commerce platforms accumulate vast amounts of personal data — customer profi
 - When storage costs are growing due to uncontrolled data accumulation
 - When a customer submits a Subject Access Request and you need to know exactly where their data lives
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles PCI compliance, SSL, and infrastructure security. Focus on app-level security, GDPR consent (via Shopify Privacy API), and access controls.
-**WooCommerce**: You manage your own hosting security. Use security plugins (Wordfence, Sucuri), SSL certificate, and PCI-compliant payment gateways. GDPR handled via cookie consent plugins.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Understanding of your platform's security model, relevant compliance requirements
-
 ## Core Instructions
 
-1. **Define a data retention schedule**
+### Step 1: Document your retention schedule first
 
-   Map every data category to a retention period based on legal requirements and business need:
+Before configuring any tool, document a retention schedule. Legal, compliance, and engineering must agree before implementation. This Register of Processing Activities (RoPA) is required under GDPR Article 30 for large processors and recommended for all:
 
-   ```typescript
-   // lib/data-retention/schedule.ts
-   export const RETENTION_SCHEDULE = {
-     // Legal obligations — cannot be shortened
-     orders: {
-       retentionDays: 365 * 7,    // 7 years — tax law (US IRS, EU VAT)
-       action: 'anonymize',        // Keep order record, anonymize PII
-       legalBasis: 'tax_compliance',
-     },
-     invoices: {
-       retentionDays: 365 * 7,
-       action: 'archive',          // Move to cold storage, do not delete
-       legalBasis: 'tax_compliance',
-     },
+| Data Category | Retention Period | Action After Period | Legal Basis |
+|--------------|-----------------|---------------------|-------------|
+| Orders (financial records) | 7 years | Anonymize PII; keep financial data | Tax law (US IRS, EU VAT) |
+| Invoices | 7 years | Archive to cold storage | Tax compliance |
+| Customer accounts | 3 years after last activity | Delete | Legitimate interest |
+| Sessions / login logs | 90 days | Delete | Legitimate interest |
+| Marketing email consent | Until unsubscribe | Delete on unsubscribe | GDPR consent |
+| Abandoned cart data | 30 days | Delete | Legitimate interest |
+| Fraud/security logs | 90 days | Anonymize | Legitimate interest |
+| Analytics events | 13 months | Aggregate then delete | Legitimate interest |
 
-     // Contractual/operational
-     customerAccounts: {
-       retentionDays: 365 * 3,    // 3 years after last activity
-       action: 'delete',
-       trigger: 'last_activity',
-       legalBasis: 'legitimate_interest',
-     },
-     sessions: {
-       retentionDays: 90,
-       action: 'delete',
-       legalBasis: 'legitimate_interest',
-     },
+**Key principle**: Never delete what the law requires you to keep. For orders, anonymize the customer's PII (name, email, address) while preserving the financial record (amounts, tax, payment method brand/last 4).
 
-     // Consent-based — must delete when consent is withdrawn
-     marketingEmails: {
-       retentionDays: null,        // Indefinite while consent is active
-       action: 'delete_on_unsubscribe',
-       legalBasis: 'consent',
-     },
-     browsingHistory: {
-       retentionDays: 365,
-       action: 'delete',
-       legalBasis: 'legitimate_interest',
-     },
+### Step 2: Platform-specific retention configuration
 
-     // Short-lived operational data
-     cartData: {
-       retentionDays: 30,
-       action: 'delete',
-       legalBasis: 'contract',
-     },
-     fraudLogs: {
-       retentionDays: 90,
-       action: 'anonymize',
-       legalBasis: 'legitimate_interest',
-     },
-     analyticsEvents: {
-       retentionDays: 395,         // 13 months — GA4 default, aligns with annual comparison
-       action: 'aggregate_then_delete', // Keep aggregate stats, delete event-level data
-       legalBasis: 'legitimate_interest',
-     },
-   } as const;
-   ```
+---
 
-2. **Implement automated purge jobs**
+#### Shopify
 
-   Run retention jobs on a schedule using a job queue or cron. Never delete in one large batch — use pagination to avoid locking tables:
+Shopify stores order data indefinitely by default and handles platform-level data retention for infrastructure components.
 
-   ```typescript
-   // jobs/data-retention.ts
-   import {CronJob} from 'cron';
+**Customer data export and deletion (GDPR compliance):**
+Shopify provides built-in GDPR webhooks:
+1. Go to **Settings → Customers → Customer privacy**
+2. Shopify automatically sends `customers/data_request` and `customers/redact` webhooks to any installed apps when a customer requests their data or deletion
+3. For your own app or custom code, register webhook handlers for these events
 
-   // Run nightly at 2 AM UTC
-   new CronJob('0 2 * * *', async () => {
-     await runRetentionJobs();
-   }).start();
+**Manual customer anonymization:**
+1. Open a customer record → **More actions → Anonymize this customer**
+2. Shopify replaces PII with anonymized placeholders while keeping order records
+3. This is irreversible — confirm before proceeding
 
-   async function runRetentionJobs() {
-     const jobs = [
-       purgeSessions,
-       purgeAbandonedCarts,
-       anonymizeOldFraudLogs,
-       archiveOldOrders,
-       purgeInactiveCustomers,
-       deleteExpiredMarketingData,
-     ];
+**Automated email list cleanup:**
+Use Klaviyo (or your email provider) to automatically suppress or delete contacts who haven't opened an email in 12+ months. Most email providers have "sunset" automation features built in.
 
-     for (const job of jobs) {
-       try {
-         const result = await job();
-         await db.retentionAudit.log({job: job.name, ...result, runAt: new Date()});
-       } catch (err) {
-         await alertOpsTeam(`Retention job failed: ${job.name}`, err);
-       }
-     }
-   }
+**Data export for archiving:**
+1. Go to **Customers → Export** to download customer data as CSV for archival
+2. For orders: **Orders → Export**
+3. Store exports in encrypted cold storage (e.g., AWS S3 with Glacier lifecycle policy)
 
-   async function purgeSessions(): Promise<{deleted: number}> {
-     const cutoff = new Date(Date.now() - RETENTION_SCHEDULE.sessions.retentionDays * 86400_000);
-     let deleted = 0;
-     let cursor = 0;
+---
 
-     do {
-       const batch = await db.sessions.findExpired(cutoff, {limit: 1000, cursor});
-       if (batch.length === 0) break;
+#### WooCommerce
 
-       await db.sessions.deleteBatch(batch.map(s => s.id));
-       deleted += batch.length;
-       cursor = batch[batch.length - 1].id;
+WooCommerce does not enforce data retention automatically. You need to configure it via plugins and scheduled tasks.
 
-       // Yield between batches to avoid overloading the database
-       await new Promise(resolve => setTimeout(resolve, 100));
-     } while (true);
+**WooCommerce's built-in cleanup:**
+1. Go to **WooCommerce → Status → Tools**
+2. Use **Clean up WooCommerce sessions** to delete expired session data
+3. Use **WooCommerce tracker cleanup** to clear tracking data
 
-     return {deleted};
-   }
+**GDPR / data retention plugin:**
+Install **WP GDPR Compliance** or **GDPR Cookie Consent** (by WebToffee):
+1. Go to **WP GDPR Compliance → Settings → Data Retention**
+2. Configure retention periods per data type
+3. The plugin creates scheduled cleanups via WP-Cron
 
-   async function archiveOldOrders(): Promise<{archived: number}> {
-     const cutoff = new Date(Date.now() - RETENTION_SCHEDULE.orders.retentionDays * 86400_000);
-     const orders = await db.orders.findOlderThan(cutoff, {archived: false, limit: 500});
+**Manual scheduled cleanup (WP-Cron):**
+```php
+// Add to your theme's functions.php or a custom plugin
+// Schedule a daily cleanup job
+if (!wp_next_scheduled('wc_data_retention_cleanup')) {
+    wp_schedule_event(time(), 'daily', 'wc_data_retention_cleanup');
+}
 
-     if (orders.length === 0) return {archived: 0};
+add_action('wc_data_retention_cleanup', 'run_data_retention');
 
-     // Write to cold storage (S3 Glacier)
-     const s3Key = `archive/orders/${new Date().toISOString().split('T')[0]}.json.gz`;
-     await s3.putObject({
-       Bucket: process.env.ARCHIVE_BUCKET!,
-       Key: s3Key,
-       Body: gzip(JSON.stringify(orders)),
-       ContentType: 'application/json',
-       ContentEncoding: 'gzip',
-       StorageClass: 'GLACIER',
-     });
-
-     // Mark as archived in the database (keep metadata, not full data)
-     await db.orders.markArchived(orders.map(o => o.id), s3Key);
-     return {archived: orders.length};
-   }
-   ```
-
-3. **Anonymize data instead of deleting when records must be kept**
-
-   For orders required by tax law, anonymize the customer PII while keeping the financial record:
-
-   ```typescript
-   async function anonymizeOldOrders(cutoffDays: number) {
-     const cutoff = new Date(Date.now() - cutoffDays * 86400_000);
-
-     // Use a database transaction to ensure atomicity
-     await db.transaction(async (trx) => {
-       const orders = await trx.orders
-         .where('created_at', '<', cutoff)
-         .where('pii_anonymized_at', null)
-         .limit(500);
-
-       for (const order of orders) {
-         await trx.orders.update(order.id, {
-           // Preserve financial data
-           // total_amount, tax_amount, payment_method_brand, payment_method_last4: unchanged
-
-           // Anonymize PII
-           customer_email: `anon_${order.id}@deleted.invalid`,
-           customer_name: 'Anonymous Customer',
-           shipping_name: 'Anonymous',
-           shipping_street: null,
-           shipping_city: order.shipping_city,    // Keep for tax jurisdiction
-           shipping_country: order.shipping_country,
-           billing_name: 'Anonymous',
-           billing_street: null,
-
-           // Stamp the anonymization date
-           pii_anonymized_at: new Date(),
-         });
-       }
-     });
-   }
-   ```
-
-4. **Track data lineage and create an audit log**
-
-   ```typescript
-   // Every retention action must be logged
-   interface RetentionAuditEntry {
-     jobName: string;
-     dataCategory: string;
-     action: 'deleted' | 'anonymized' | 'archived';
-     recordCount: number;
-     cutoffDate: Date;
-     executedAt: Date;
-     executedByJob: string;
-     durationMs: number;
-   }
-
-   // Store retention audit log in a separate, append-only table
-   // Never delete from this table — it is your compliance evidence
-
-   export async function logRetentionAction(entry: RetentionAuditEntry) {
-     await db.retentionAuditLog.insert(entry);
-   }
-
-   // Query to produce a compliance report
-   export async function getRetentionReport(year: number) {
-     return db.retentionAuditLog
-       .where('executed_at', '>=', new Date(`${year}-01-01`))
-       .where('executed_at', '<', new Date(`${year + 1}-01-01`))
-       .groupBy(['data_category', 'action'])
-       .select(['data_category', 'action', db.raw('SUM(record_count) as total'), db.raw('MAX(executed_at) as last_run')]);
-   }
-   ```
-
-5. **Handle deletion cascades across services**
-
-   When a customer account is purged, ensure all satellite services are notified:
-
-   ```typescript
-   // lib/data-retention/purge-customer.ts
-   export async function purgeCustomerData(customerId: string, reason: 'gdpr_request' | 'inactivity' | 'account_closure') {
-     // Verify no legal hold prevents deletion
-     const legalHold = await checkLegalHold(customerId);
-     if (legalHold) {
-       throw new Error(`Cannot purge ${customerId}: active legal hold — ${legalHold.reason}`);
-     }
-
-     const purgeLog: string[] = [];
-
-     // 1. Primary database
-     await anonymizeOrdersForCustomer(customerId);
-     await deleteCustomerProfile(customerId);
-     purgeLog.push('primary_db');
-
-     // 2. Search index (Elasticsearch/Algolia)
-     await searchIndex.deleteCustomer(customerId);
-     purgeLog.push('search_index');
-
-     // 3. Analytics platform
-     await analytics.deleteUser(customerId);
-     purgeLog.push('analytics');
-
-     // 4. Email platform
-     await emailPlatform.deleteContact(customerId);
-     purgeLog.push('email_platform');
-
-     // 5. CDN edge cache (invalidate any cached account pages)
-     await cdn.purgePrefix(`/account/${customerId}`);
-     purgeLog.push('cdn_cache');
-
-     // 6. Backup system (flag for exclusion from next restore)
-     await backupSystem.excludeFromRestore(customerId);
-     purgeLog.push('backup_exclusion_flag');
-
-     await db.retentionAuditLog.insert({
-       action: 'customer_purged',
-       customerId,
-       reason,
-       systemsPurged: purgeLog,
-       executedAt: new Date(),
-     });
-   }
-   ```
-
-6. **Test data retention jobs in staging**
-
-   ```typescript
-   // test/data-retention.test.ts
-   describe('Data Retention Jobs', () => {
-     it('should purge sessions older than 90 days', async () => {
-       // Create sessions at different ages
-       await db.sessions.insert({id: 'session_old', createdAt: daysAgo(91), customerId: 'cust_1'});
-       await db.sessions.insert({id: 'session_new', createdAt: daysAgo(10), customerId: 'cust_2'});
-
-       await purgeSessions();
-
-       expect(await db.sessions.findById('session_old')).toBeNull();
-       expect(await db.sessions.findById('session_new')).not.toBeNull();
-     });
-
-     it('should anonymize order PII but preserve financial data', async () => {
-       const orderId = await db.orders.insert({
-         customerEmail: 'jane@example.com',
-         customerName: 'Jane Doe',
-         totalAmount: 5999,
-         createdAt: daysAgo(365 * 8),
-       });
-
-       await anonymizeOldOrders(365 * 7);
-
-       const order = await db.orders.findById(orderId);
-       expect(order.customerEmail).toContain('@deleted.invalid');
-       expect(order.customerName).toBe('Anonymous Customer');
-       expect(order.totalAmount).toBe(5999); // Financial data preserved
-     });
-   });
-   ```
-
-## Examples
-
-### PostgreSQL scheduled purge with pg_cron
-
-```sql
--- Install pg_cron extension (available on RDS, Supabase, Neon)
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-
--- Purge expired sessions nightly at 02:00 UTC
-SELECT cron.schedule(
-  'purge-expired-sessions',
-  '0 2 * * *',
-  $$DELETE FROM sessions WHERE expires_at < NOW() AND id IN (
-    SELECT id FROM sessions WHERE expires_at < NOW() LIMIT 10000
-  )$$
-);
-
--- Anonymize old order PII monthly
-SELECT cron.schedule(
-  'anonymize-old-orders',
-  '0 3 1 * *',  -- 1st of each month at 03:00
-  $$UPDATE orders SET
-    customer_email = 'anon_' || id || '@deleted.invalid',
-    customer_name = 'Anonymous',
-    shipping_street = NULL
-  WHERE created_at < NOW() - INTERVAL '7 years'
-    AND pii_anonymized_at IS NULL
-    AND id IN (SELECT id FROM orders WHERE created_at < NOW() - INTERVAL '7 years' AND pii_anonymized_at IS NULL LIMIT 5000)$$
-);
+function run_data_retention() {
+    // Delete WooCommerce sessions older than 90 days
+    global $wpdb;
+    $wpdb->query(
+        $wpdb->prepare(
+            "DELETE FROM {$wpdb->prefix}woocommerce_sessions WHERE session_expiry < %d",
+            time() - (90 * DAY_IN_SECONDS)
+        )
+    );
+    // Log the cleanup
+    error_log('WC data retention: cleaned sessions older than 90 days');
+}
 ```
 
-### S3 Lifecycle Policy for archived order data
+**Order PII anonymization for tax compliance:**
+Do not delete orders (required for tax records). Instead, anonymize PII while keeping financial data. Install **WooCommerce GDPR** (WebToffee) which adds an "Anonymize" action to orders.
 
-```json
-{
-  "Rules": [
-    {
-      "ID": "archive-orders-lifecycle",
-      "Status": "Enabled",
-      "Filter": {"Prefix": "archive/orders/"},
-      "Transitions": [
-        {"Days": 0, "StorageClass": "GLACIER"},
-        {"Days": 365, "StorageClass": "DEEP_ARCHIVE"}
-      ],
-      "Expiration": {"Days": 3650}
-    },
-    {
-      "ID": "delete-temp-exports",
-      "Status": "Enabled",
-      "Filter": {"Prefix": "gdpr-exports/"},
-      "Expiration": {"Days": 30}
+---
+
+#### BigCommerce
+
+BigCommerce provides customer data management tools in the admin panel.
+
+**Customer data export:**
+1. Go to **Customers → Export → All Customers** (CSV)
+2. Use for archival before deleting customer accounts
+
+**Customer deletion:**
+1. Go to **Customers → find the customer → Delete**
+2. BigCommerce retains associated order records when a customer account is deleted
+
+**Automated retention:**
+BigCommerce does not have built-in scheduled data retention. Use the BigCommerce **Customers API** and **Orders API** to:
+1. Query customers inactive for more than 3 years
+2. Archive their data
+3. Delete or anonymize their accounts
+
+This requires a custom script or a third-party integration (e.g., via Zapier or a custom app).
+
+---
+
+#### Custom / Headless
+
+For custom storefronts, implement automated purge and anonymization jobs that run on a schedule.
+
+**Key principle: batch small, run off-peak, always log:**
+
+```typescript
+// Run nightly at 2 AM UTC
+import { CronJob } from 'cron';
+
+new CronJob('0 2 * * *', runRetentionJobs).start();
+
+async function runRetentionJobs() {
+  const jobs = [
+    { name: 'purge_sessions', fn: purgeSessions },
+    { name: 'purge_abandoned_carts', fn: purgeAbandonedCarts },
+    { name: 'anonymize_old_orders', fn: anonymizeOldOrders },
+    { name: 'purge_inactive_customers', fn: purgeInactiveCustomers },
+  ];
+
+  for (const job of jobs) {
+    try {
+      const result = await job.fn();
+      await db.retentionAuditLog.insert({ job: job.name, ...result, runAt: new Date() });
+    } catch (err) {
+      await alertOps(`Retention job failed: ${job.name}`, err);
     }
-  ]
+  }
+}
+
+// Paginated delete — avoids table locks
+async function purgeSessions(): Promise<{ deleted: number }> {
+  const cutoff = new Date(Date.now() - 90 * 86400_000);
+  let deleted = 0;
+  while (true) {
+    const batch = await db.sessions.findExpired(cutoff, { limit: 1000 });
+    if (batch.length === 0) break;
+    await db.sessions.deleteBatch(batch.map(s => s.id));
+    deleted += batch.length;
+    await new Promise(r => setTimeout(r, 100)); // yield between batches
+  }
+  return { deleted };
+}
+
+// Anonymize order PII but keep financial data (7-year tax requirement)
+async function anonymizeOldOrders(): Promise<{ anonymized: number }> {
+  const cutoff = new Date(Date.now() - 7 * 365 * 86400_000);
+  const orders = await db.orders.findWhere({ created_at: { lt: cutoff }, pii_anonymized_at: null }, { limit: 500 });
+  for (const order of orders) {
+    await db.orders.update(order.id, {
+      customer_email:   `anon_${order.id}@deleted.invalid`,
+      customer_name:    'Anonymous Customer',
+      shipping_name:    'Anonymous',
+      shipping_street:  null,
+      shipping_city:    order.shipping_city,    // Keep for tax jurisdiction
+      shipping_country: order.shipping_country,
+      billing_name:     'Anonymous',
+      billing_street:   null,
+      // Financial data (total_amount, tax_amount, payment_method_last4): UNCHANGED
+      pii_anonymized_at: new Date(),
+    });
+  }
+  return { anonymized: orders.length };
+}
+```
+
+**Cross-service customer deletion:**
+When deleting a customer, purge data from every system that holds it:
+
+```typescript
+async function purgeCustomer(customerId: string, reason: 'gdpr_request' | 'inactivity') {
+  // 1. Anonymize orders (keep for tax, remove PII)
+  await anonymizeOrdersForCustomer(customerId);
+  // 2. Delete from email platform (Klaviyo, Mailchimp)
+  await emailPlatform.deleteContact(customerId);
+  // 3. Delete from search index (Algolia, Elasticsearch)
+  await searchIndex.deleteCustomer(customerId);
+  // 4. Delete analytics identifier
+  await analytics.deleteUser(customerId);
+  // 5. Delete the customer profile
+  await db.customers.anonymize(customerId);
+  // 6. Log for compliance evidence
+  await db.retentionAuditLog.insert({ action: 'customer_purged', customerId, reason, executedAt: new Date() });
 }
 ```
 
 ## Best Practices
 
-- **Document your retention schedule before implementing it** — legal, compliance, and engineering teams should agree on the schedule; unilateral engineering decisions can create compliance gaps
-- **Never delete what the law requires you to keep** — anonymize financial records rather than deleting them; deleting legally required records is itself a compliance violation
-- **Run purge jobs off-peak with row-level locking** — use `SELECT ... LIMIT n` batches to avoid table locks that impact live traffic; schedule during low-traffic windows
-- **Keep a separate, append-only retention audit log** — this is your evidence for compliance auditors that data was purged according to policy; store it separately so it cannot be accidentally deleted
-- **Test your purge jobs on production-scale data in staging** — purge jobs that work fine on 10,000 rows may time out or lock tables on 10,000,000 rows; benchmark before rolling out
-- **Handle cross-service deletion with a saga** — purge jobs that span multiple services (database, email platform, analytics) must be resilient; use a checklist pattern so partially-completed purges can be resumed
-- **Set up monitoring alerts for failed retention jobs** — a retention job that silently fails means data is not purged on schedule; alert when jobs fail or when the volume purged is significantly different from expected
+- **Document before implementing** — legal, compliance, and engineering must agree on the retention schedule; unilateral engineering decisions create compliance gaps
+- **Anonymize financial records, never delete them** — orders must be retained for the tax statutory period; replace PII fields with anonymized placeholders
+- **Keep a separate, append-only retention audit log** — this is your evidence for compliance auditors; never delete from this log
+- **Run purge jobs in small batches off-peak** — use `SELECT ... LIMIT n` batches to avoid table locks that impact live traffic
+- **Handle cross-service deletion as a checklist** — purges spanning multiple services (database, email platform, analytics) must be resilient; log completion for each system separately
+- **Respond to GDPR deletion requests within 30 days** — build automated workflows with reminders and escalations; track all requests with deadlines
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Retention job locks production tables | Use small batch sizes (500–5000 rows), add a `LIMIT` to every DELETE/UPDATE, and run during maintenance windows |
-| Purging customers who still have open disputes | Implement a legal hold mechanism; check for pending chargebacks, support tickets, and active subscriptions before any purge |
-| Forgetting search indexes and analytics warehouses | Maintain a registry of all systems that store personal data; include each system in every deletion workflow |
-| Backup tapes containing data past retention period | Implement a backup exclusion list; flag purged customer IDs so that if a backup is restored for DR purposes, those records are immediately re-purged |
-| GDPR deletion request not completed within 30 days | Build an automated workflow with reminders and escalations; track all requests with deadlines in a dedicated table |
+| Retention job locks production tables | Use small batch sizes (500–5000 rows), add `LIMIT` to every DELETE/UPDATE, run during low-traffic hours |
+| Purging customers with open disputes or pending orders | Check for pending chargebacks, open orders, and active subscriptions before any purge; implement a legal hold mechanism |
+| Forgetting search indexes and analytics warehouses | Maintain a registry of all systems that store personal data; include each in every deletion workflow |
+| GDPR deletion request not completed within 30 days | Build an automated workflow with a 30-day deadline tracker; escalate to a human if not completed 5 days before the deadline |
+| Backup systems containing data past retention period | Flag purged customer IDs so that if a backup is restored for disaster recovery, those records are immediately re-purged |
 
 ## Related Skills
 
 - @gdpr-ecommerce
 - @account-security
-- @monitoring-alerting-commerce
-- @database-optimization-commerce
+- @financial-audit-trail
+- @financial-compliance-sox

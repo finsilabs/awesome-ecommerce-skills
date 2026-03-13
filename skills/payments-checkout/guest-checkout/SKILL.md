@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [guest-checkout, account-creation, conversion, frictionless, email-capture, post-purchase]
 triggers: ["guest checkout", "checkout without account", "guest purchase", "post-purchase account creation", "frictionless checkout"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: beginner
 ---
 
@@ -16,338 +16,174 @@ difficulty: beginner
 
 ## Overview
 
-Implement a frictionless guest checkout that requires only an email address to start, defers account creation to after the purchase is complete, and includes a post-purchase account creation prompt with a single-click password setup. Removing mandatory account creation can increase checkout completion by 20-35%.
+Requiring account creation before purchase is one of the top causes of checkout abandonment — it adds friction for first-time buyers who do not yet trust your store enough to commit to a relationship. Enabling guest checkout and deferring account creation to after the purchase typically increases checkout completion by 20–35%. All major platforms support this with a single settings change.
 
 ## When to Use This Skill
 
 - When checkout funnel analysis shows a significant drop-off at the account creation or login step
-- When implementing a new checkout flow and need to decide on account requirements
+- When setting up a new store and deciding on account requirements
 - When adding a "Buy as Guest" option to an existing checkout that currently requires login
 - When optimizing first-time buyer conversion rates
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
-
 ## Core Instructions
 
-1. **Structure the guest order flow**
+### Step 1: Enable guest checkout on your platform
 
-   A guest order requires only email. The full address and payment details are collected as part of checkout — no account needed.
+---
 
-   ```
-   Guest checkout flow:
-   1. Cart → Click "Checkout"
-   2. Checkout page:
-      a. Enter email (only field shown initially)
-      b. Check if email has existing account → prompt to log in or continue as guest
-      c. Enter shipping address
-      d. Select shipping method
-      e. Enter payment
-      f. Place order
-   3. Order confirmation page:
-      - Order number and summary shown
-      - "Create an account to track orders" prompt (one click, just set a password)
-   ```
+#### Shopify
 
-2. **Email-first checkout entry**
+Guest checkout is enabled by default on Shopify. To verify or configure it:
 
-   ```jsx
-   // EmailStep.jsx
-   import { useState } from 'react';
+1. Go to **Settings → Checkout → Customer accounts**
+2. Choose one of:
+   - **Accounts are optional** (recommended): customers can check out as a guest or log in; Shopify shows a "Continue as guest" option
+   - **Accounts are disabled**: checkout requires no account at all
+   - **Accounts are required**: blocks guest checkout — avoid this unless you specifically need a members-only store
+3. Click **Save**
 
-   export function EmailStep({ onContinueAsGuest, onLogin }) {
-     const [email, setEmail] = useState('');
-     const [checking, setChecking] = useState(false);
-     const [accountExists, setAccountExists] = useState(null);
+For the post-purchase account creation prompt (so guests can save their details after buying):
+1. Under **Settings → Checkout → Customer accounts**, enable **Self-serve returns** and **Order status page** — this lets guests view their order status without an account
+2. Shopify automatically sends a "Create an account" link in the order confirmation email when accounts are optional
 
-     async function handleEmailContinue() {
-       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
-       setChecking(true);
+#### WooCommerce
 
-       const res = await fetch('/api/auth/check-email', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ email }),
-       });
-       const { exists } = await res.json();
-       setChecking(false);
-       setAccountExists(exists);
+1. Go to **WooCommerce → Settings → Accounts & Privacy**
+2. Under **Guest checkout**:
+   - Check **Allow customers to place orders without an account** (enables guest checkout)
+   - Uncheck **Allow customers to log into an existing account during checkout** if you want to simplify the checkout form (or leave checked to offer both)
+3. Under **Account creation**:
+   - Check **Allow customers to create an account during checkout** — this shows an optional "Create an account" checkbox on the checkout page
+   - Check **Allow customers to create an account on the "My account" page** — this lets guests create an account after ordering via the confirmation email link
+4. Click **Save changes**
 
-       if (!exists) {
-         // No account — proceed directly to guest checkout
-         onContinueAsGuest(email);
-       }
-       // If exists, show the login prompt / continue as guest option
-     }
+For post-purchase account creation, WooCommerce automatically includes an account creation prompt in the order confirmation email when the above settings are enabled.
 
-     return (
-       <div className="email-step">
-         <label htmlFor="checkout-email">Email address</label>
-         <input
-           id="checkout-email"
-           type="email"
-           value={email}
-           onChange={e => setEmail(e.target.value)}
-           onKeyDown={e => e.key === 'Enter' && handleEmailContinue()}
-           autoComplete="email"
-           autoFocus
-         />
-         <button onClick={handleEmailContinue} disabled={checking}>
-           {checking ? 'Checking...' : 'Continue'}
-         </button>
+#### BigCommerce
 
-         {accountExists && (
-           <div className="account-exists-prompt">
-             <p>An account with this email already exists.</p>
-             <button onClick={() => onLogin(email)} className="btn-primary">Log in</button>
-             <button onClick={() => onContinueAsGuest(email)} className="btn-secondary">
-               Continue as guest
-             </button>
-           </div>
-         )}
-       </div>
-     );
-   }
-   ```
+1. Go to **Settings → Store Setup → Account Signup**
+2. Under **Customer accounts**, select **Optional — customers can check out as guests or create an account**
+3. Enable **Send account creation email** — this sends a post-purchase email prompting the customer to activate an account with a single click
 
-3. **Create a guest order without an account**
+Alternatively, BigCommerce supports **Apple ID login** and **Google login** which let returning customers authenticate without a traditional password — lower friction than full account creation.
 
-   ```javascript
-   // api/orders/guest.js
-   export async function placeGuestOrder(req, res) {
-     const { email, shippingAddress, billingAddress, paymentMethodId, cartId } = req.body;
+---
 
-     // Validate email
-     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-       return res.status(400).json({ error: 'Valid email is required' });
-     }
+#### Custom / Headless
 
-     const cart = await db.carts.findUnique({
-       where: { id: cartId },
-       include: { items: { include: { variant: true } } },
-     });
-     if (!cart) return res.status(404).json({ error: 'Cart not found' });
+For headless storefronts, implement the guest checkout pattern with post-purchase account creation:
 
-     // Create order without user_id
-     const order = await db.orders.create({
-       data: {
-         userId: null,            // No account
-         guestEmail: email,
-         status: 'pending',
-         shippingAddress,
-         billingAddress,
-         lineItems: {
-           create: cart.items.map(item => ({
-             variantId: item.variantId,
-             quantity: item.quantity,
-             unitPrice: item.unitPrice,
-             title: item.title,
-           })),
-         },
-         subtotal: cart.subtotal,
-         total: cart.total,
-       },
-     });
+**Guest order flow:**
+1. Email is the only required identifier — collect it at the start of checkout
+2. Check if an account exists for that email; if yes, offer to log in or continue as guest
+3. Place the order without linking it to a user account
+4. Generate a time-limited account creation token (72 hours) and include it in the confirmation email
 
-     // Process payment
-     const paymentResult = await processPayment({
-       amount: order.total,
-       currency: 'usd',
-       paymentMethodId,
-       metadata: { orderId: order.id },
-     });
+```javascript
+// POST /api/auth/check-email — check if account exists before showing login prompt
+async function checkEmail(req, res) {
+  const { email } = req.body;
+  const exists = await db.users.findUnique({ where: { email: email.toLowerCase() } });
+  res.json({ exists: !!exists });
+}
 
-     if (paymentResult.status !== 'succeeded') {
-       await db.orders.update({ where: { id: order.id }, data: { status: 'payment_failed' } });
-       return res.status(402).json({ error: 'Payment failed', details: paymentResult.error });
-     }
+// POST /api/auth/create-account-from-order — called when guest clicks "Create account" link
+async function createAccountFromOrder(req, res) {
+  const { token, password } = req.body;
+  const record = await db.accountCreationTokens.findUnique({ where: { token } });
 
-     await db.orders.update({ where: { id: order.id }, data: { status: 'confirmed', paidAt: new Date() } });
-     await db.carts.update({ where: { id: cartId }, data: { status: 'converted', orderId: order.id } });
+  if (!record || record.expiresAt < new Date()) {
+    return res.status(400).json({ error: 'Link expired — request a new one from your account page' });
+  }
 
-     // Generate a temporary account creation token (valid 72 hours)
-     const accountToken = await generateAccountCreationToken(email, order.id);
-     await sendOrderConfirmationEmail(order, email, accountToken);
+  const user = await db.users.create({
+    data: { email: record.email, passwordHash: await hashPassword(password) },
+  });
 
-     res.json({ orderId: order.id, orderNumber: order.orderNumber });
-   }
-   ```
+  // Associate all guest orders with this email to the new account
+  await db.orders.updateMany({
+    where: { guestEmail: record.email, userId: null },
+    data: { userId: user.id },
+  });
 
-4. **Generate post-purchase account creation token**
+  await db.accountCreationTokens.delete({ where: { token } });
+  res.json({ success: true });
+}
+```
 
-   ```javascript
-   // lib/accountCreationToken.js
-   import crypto from 'crypto';
-
-   export async function generateAccountCreationToken(email, orderId) {
-     const token = crypto.randomBytes(32).toString('hex');
-     const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours
-
-     await db.accountCreationTokens.create({
-       data: { token, email, orderId, expiresAt },
-     });
-
-     return token;
-   }
-
-   // POST /api/auth/create-account-from-order
-   export async function createAccountFromOrder(req, res) {
-     const { token, password } = req.body;
-
-     const record = await db.accountCreationTokens.findUnique({ where: { token } });
-     if (!record || record.expiresAt < new Date()) {
-       return res.status(400).json({ error: 'Token expired or invalid' });
-     }
-
-     // Check no account exists yet
-     const existing = await db.users.findUnique({ where: { email: record.email } });
-     if (existing) {
-       return res.status(409).json({ error: 'An account already exists for this email' });
-     }
-
-     // Create account and link existing orders
-     const user = await db.users.create({
-       data: {
-         email: record.email,
-         passwordHash: await hashPassword(password),
-       },
-     });
-
-     // Associate all guest orders with the same email to this new account
-     await db.orders.updateMany({
-       where: { guestEmail: record.email, userId: null },
-       data: { userId: user.id },
-     });
-
-     // Clean up the token
-     await db.accountCreationTokens.delete({ where: { token } });
-
-     // Log the user in
-     req.session.userId = user.id;
-     res.json({ success: true });
-   }
-   ```
-
-5. **Post-purchase account creation prompt**
-
-   ```jsx
-   // OrderConfirmationPage.jsx
-   export function OrderConfirmationPage({ order, accountCreationToken }) {
-     const [password, setPassword] = useState('');
-     const [created, setCreated] = useState(false);
-     const [creating, setCreating] = useState(false);
-
-     async function handleCreateAccount() {
-       setCreating(true);
-       const res = await fetch('/api/auth/create-account-from-order', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ token: accountCreationToken, password }),
-       });
-       if (res.ok) setCreated(true);
-       setCreating(false);
-     }
-
-     return (
-       <div className="order-confirmation">
-         <h1>Thank you for your order!</h1>
-         <p>Order #{order.orderNumber} confirmed. A confirmation email has been sent to {order.guestEmail}.</p>
-
-         {!created && accountCreationToken && (
-           <div className="account-creation-prompt">
-             <h2>Save your details for next time</h2>
-             <p>Create a free account to track this order and check out faster next time.</p>
-             <label htmlFor="new-password">Choose a password</label>
-             <input
-               id="new-password"
-               type="password"
-               value={password}
-               onChange={e => setPassword(e.target.value)}
-               minLength={8}
-               autoComplete="new-password"
-             />
-             <button onClick={handleCreateAccount} disabled={password.length < 8 || creating}>
-               {creating ? 'Creating...' : 'Create Account'}
-             </button>
-             <button className="skip-link" onClick={() => setCreated(true)}>No thanks</button>
-           </div>
-         )}
-         {created && <p className="success">Account created! You can now log in to track your orders.</p>}
-       </div>
-     );
-   }
-   ```
-
-## Examples
-
-### Order tracking without an account
-
-Let guest customers track orders via order number + email without logging in:
+**Order tracking without an account:**
+Let guest customers track orders via order number + email, without requiring login:
 
 ```javascript
 // GET /api/orders/track?orderNumber=ORDER-12345&email=customer@example.com
-export async function trackGuestOrder(req, res) {
+async function trackGuestOrder(req, res) {
   const { orderNumber, email } = req.query;
-
   const order = await db.orders.findFirst({
     where: {
       orderNumber,
-      OR: [
-        { guestEmail: email.toLowerCase() },
-        { user: { email: email.toLowerCase() } },
-      ],
+      OR: [{ guestEmail: email.toLowerCase() }, { user: { email: email.toLowerCase() } }],
     },
-    include: { fulfillments: true, lineItems: true },
+    include: { fulfillments: true },
   });
-
   if (!order) return res.status(404).json({ error: 'Order not found' });
-
   res.json({ order });
 }
 ```
 
-### Email template for post-purchase account creation
+### Step 2: Optimize the post-purchase account creation prompt
 
-Include the account creation link prominently in the order confirmation email:
+The order confirmation page is the ideal time to offer account creation — the customer is in a positive, just-purchased state and has a concrete reason to create an account (tracking their order).
+
+**Best practices for the prompt:**
+
+- **Lead with the benefit**, not the action: "Track this order and check out faster next time" vs. "Create an account"
+- **Make it one click**: show a password field only; all other details are already known from the order
+- **Include in the confirmation email**: many customers miss the on-page prompt; the email gives them a 72-hour window to create the account
+
+**Email template for post-purchase account creation:**
 
 ```
 Subject: Your order #{{orderNumber}} is confirmed!
 
 Hi {{email}},
 
-Your order has been placed and will ship within 2 business days.
+Your order is on its way!
 
 ---
-SAVE TIME ON YOUR NEXT ORDER
-Set your password to create an account and track orders anytime:
+SAVE YOUR DETAILS FOR NEXT TIME
+Create a free account to track your order and check out faster:
 {{accountCreationUrl}}
-(Link expires in 72 hours)
+(This link expires in 72 hours)
 ---
 ```
+
+### Step 3: Measure guest checkout adoption
+
+Track these metrics in Google Analytics 4 or your analytics platform:
+
+- **Guest checkout rate**: what % of orders are placed as guest? (target: 40–60% for new customers)
+- **Post-purchase account creation rate**: what % of guests create accounts within 72 hours? (target: 15–25%)
+- **Checkout completion rate by type**: compare guest vs. account checkout completion rates
+
+If guest checkout completion is significantly higher than account checkout completion, consider making accounts optional store-wide rather than having the login prompt appear prominently.
 
 ## Best Practices
 
 - **Require only email at checkout entry** — do not ask for a password or account creation before taking payment; defer it entirely to post-purchase
 - **Offer to log in, not force it** — when the email has an existing account, show both "Log in" and "Continue as guest"; never block checkout
-- **Send the account creation link in the confirmation email** — many shoppers miss the on-page prompt; email gives them a second chance
-- **Link historical guest orders on account creation** — when the user creates an account, transfer all orders with that email to the new user ID
-- **Expire account creation tokens** — 48-72 hours is appropriate; long enough to read the email, short enough for security
-- **Track post-purchase account creation rate** — measure how many guests convert to accounts; a rate below 20% suggests the prompt is not compelling enough
+- **Send the account creation link in the confirmation email** — many shoppers miss the on-page prompt
+- **Link historical guest orders on account creation** — when a guest creates an account, transfer all prior orders with that email to their new account
+- **Expire account creation tokens** — 72 hours is appropriate; long enough to read the email, short enough for security
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Guest's order becomes inaccessible after they create an account | Associate the guest order using email match when creating the account; update all orders with that `guestEmail` to the new `userId` |
-| Account creation token can be reused | Delete (or mark used) the token immediately after successful account creation |
-| Guest checkout bypasses fraud prevention | Apply the same fraud scoring (address verification, velocity checks) to guest orders as authenticated orders |
-| Confirmation email goes to spam | Ensure the "From" domain has SPF/DKIM configured; avoid spam trigger words in the subject line |
+| Shopify requiring account login at checkout | Go to Settings → Checkout → Customer accounts and set to "Accounts are optional" |
+| WooCommerce not allowing guest checkout | Enable "Allow customers to place orders without an account" in WooCommerce → Settings → Accounts & Privacy |
+| Guest orders inaccessible after account creation | When creating the account, associate all orders matching the guest email to the new user ID |
+| Account creation link in email expired | Set token expiry to 72 hours minimum; include a link to request a new one in the confirmation email |
+| Guest checkout bypasses fraud prevention | Apply the same fraud scoring to guest orders as authenticated orders — Shopify Fraud Analysis and Stripe Radar both work regardless of account status |
 
 ## Related Skills
 

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [marketplace-fees, reconciliation, amazon-fees]
 triggers: ["reconcile marketplace fees", "Amazon seller fees", "eBay fees", "marketplace fee analysis", "net marketplace revenue", "settlement reconciliation", "FBA fee analysis"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -18,352 +18,175 @@ difficulty: intermediate
 
 Selling on marketplaces like Amazon, eBay, Walmart, and Etsy introduces a complex layer of fees that significantly impact net profitability. Amazon alone has over a dozen distinct fee types: referral fees, FBA fulfillment fees, storage fees, advertising fees, return processing fees, and more. These fees are deducted before disbursement, making it easy to lose track of how much of your gross revenue actually reaches your bank account.
 
-Fee reconciliation is the practice of matching marketplace settlement data against your expected fee schedule, verifying that you have been charged correctly, and computing true net revenue by SKU and category. Fees are frequently miscalculated — Amazon FBA fees are based on dimensional weight and product category, and even small errors in product dimensions can result in systematic overcharges.
+Fee reconciliation is the practice of matching marketplace settlement data against your expected fee schedule, verifying that you have been charged correctly, and computing true net revenue by SKU and category.
 
-This skill covers downloading and parsing settlement reports from each major marketplace, categorizing and analyzing fees, computing net revenue, identifying overcharges, and generating optimization recommendations to reduce fee burden.
+This skill guides you through downloading settlement reports from each major marketplace, reconciling fees against expectations, and using dedicated tools to automate this process.
 
----
+## When to Use This Skill
 
-## When to Use
-
-- You sell on Amazon, eBay, Walmart, Etsy, or other marketplaces and need to understand true net revenue
-- You suspect you are being overcharged on FBA fulfillment fees due to incorrect product dimensions
-- You want to reconcile marketplace payouts against your GL on a monthly basis
-- You need to compute true contribution margin per SKU by channel including marketplace fees
-- You are evaluating whether to move products from FBA to FBM (fulfilled by merchant)
-- You are building a multi-channel profitability model and need normalized fee data
-- You want to identify opportunities to reduce ACOS and increase net margin on Amazon
-
----
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When selling on Amazon, eBay, Walmart, or Etsy and needing to understand true net revenue
+- When suspecting FBA fulfillment fee overcharges due to incorrect product dimensions
+- When reconciling marketplace payouts against your GL on a monthly basis
+- When computing true contribution margin per SKU by channel including marketplace fees
+- When evaluating whether to move products from FBA to FBM (fulfilled by merchant)
+- When building a multi-channel profitability model with normalized fee data
 
 ## Core Instructions
 
-### Step 1 — Download Settlement Reports by Marketplace
+### Step 1: Download settlement reports from each marketplace
 
-**Amazon:**
-- In Seller Central: Reports → Payments → Transaction View → Download flat file
-- Or via SP-API: `GET /finances/v0/financialEventGroups` and `GET /finances/v0/financialEvents`
-- Settlement periods are typically bi-weekly
+**Amazon (Seller Central):**
+1. Go to **Seller Central → Reports → Payments → Transaction View**
+2. Click **Download flat file (.txt)** for each settlement period (bi-weekly)
+3. Alternatively, access via the **SP-API** (Selling Partner API): use the `/finances/v0/financialEventGroups` endpoint for automated downloads
+4. Key settlement fields: transaction type, fee type, amount, order ID, SKU
 
 **eBay:**
-- Account → Payments → Payments report (CSV or XML)
-- Or via eBay Finances API
+1. Go to **eBay Seller Hub → Payments → Payments report**
+2. Download as CSV (monthly or custom date range)
+3. eBay Payments API is available for programmatic access
 
-**Walmart:**
-- Seller Center → Payments → Transaction Report
-- Available as CSV, monthly
+**Walmart Marketplace:**
+1. Go to **Walmart Seller Center → Payments → Transaction Report**
+2. Download monthly CSV
+3. Walmart's Seller API provides programmatic access via the `/payments/filepayments` endpoint
 
 **Etsy:**
-- Finance → Payment account → Monthly statements
+1. Go to **Etsy Shop Manager → Finances → Payment account**
+2. Download monthly statement CSV
+3. Note: Etsy fees include listing fees, transaction fees (6.5%), payment processing fees, and offsite ads fees (if enrolled)
 
-### Step 2 — Normalize Settlement Data to a Common Schema
+### Step 2: Use a dedicated reconciliation tool (recommended)
 
-```sql
--- Unified marketplace transaction table
-CREATE TABLE marketplace_transactions (
-    transaction_id      VARCHAR(100) NOT NULL,
-    marketplace         VARCHAR(20) NOT NULL,  -- 'amazon', 'ebay', 'walmart', 'etsy'
-    settlement_id       VARCHAR(50),
-    transaction_date    DATE NOT NULL,
-    transaction_type    VARCHAR(50) NOT NULL,  -- 'order', 'refund', 'fee', 'advertising', 'adjustment'
-    fee_type            VARCHAR(100),          -- Amazon-specific: FBAPerUnitFulfillmentFee, Commission, etc.
-    order_id            VARCHAR(100),
-    sku                 VARCHAR(50),
-    asin                VARCHAR(20),
-    product_name        VARCHAR(200),
-    quantity            INTEGER,
-    selling_price       NUMERIC(12,2),
-    marketplace_fee     NUMERIC(12,2),         -- negative for fees deducted from seller
-    tax_collected       NUMERIC(12,2),
-    tax_remitted        NUMERIC(12,2),
-    net_proceeds        NUMERIC(12,2),
-    currency            CHAR(3) DEFAULT 'USD',
-    settlement_period_start DATE,
-    settlement_period_end   DATE,
-    PRIMARY KEY (marketplace, transaction_id)
-);
+Before building custom tooling, check if an existing tool handles your marketplace:
 
-CREATE INDEX idx_mktplace_txn_sku ON marketplace_transactions(sku, marketplace);
-CREATE INDEX idx_mktplace_txn_period ON marketplace_transactions(settlement_period_start);
-CREATE INDEX idx_mktplace_txn_type ON marketplace_transactions(transaction_type, fee_type);
+| Tool | Marketplaces Supported | Key Feature |
+|------|----------------------|-------------|
+| **A2X** | Amazon, Shopify, eBay, Etsy, Walmart | Reconciles marketplace settlements to QuickBooks/Xero with GAAP journal entries; fee categorization built-in |
+| **Link My Books** | Amazon, eBay, Etsy, Shopify | Automatically maps settlement data to accounting chart of accounts; fee overcharge alerts |
+| **Getida** | Amazon FBA | Specializes in Amazon reimbursement auditing; works on contingency (takes % of recovered fees) |
+| **Seller Ledger** | Amazon, eBay, Etsy, Walmart | Bookkeeping designed for marketplace sellers; fee reconciliation + tax tracking |
+| **InventoryLab** | Amazon FBA | COGS tracking, fee analysis, and profit calculation per ASIN |
+
+**A2X setup (most comprehensive):**
+1. Connect A2X to your marketplace accounts (Amazon Seller Central, eBay, Etsy)
+2. Connect A2X to QuickBooks Online or Xero
+3. A2X automatically imports each settlement, categorizes fees (referral, fulfillment, storage, advertising, refund fees), and creates journal entries
+4. Go to **A2X → Settlements** — view each settlement with fee breakdown; click any settlement to see the journal entry it will create
+5. Review and post journal entries to your accounting system monthly
+
+### Step 3: Categorize and analyze marketplace fees
+
+**Amazon fee categories to track separately:**
+
+| Fee Type | Amazon Label | Typical Rate |
+|----------|-------------|-------------|
+| Referral fee | `Commission` | 6–45% of selling price (varies by category) |
+| FBA per-unit fulfillment | `FBAPerUnitFulfillmentFee` | $3–$8+ per unit (based on size/weight) |
+| FBA storage fee | `FBAStorageFee` | $0.75–$2.40/cubic foot/month |
+| Long-term storage fee | `FBALongTermStorageFee` | $6.90/cubic foot on inventory >365 days old |
+| Return processing fee | `RefundCommission` | 20% of referral fee on returned items |
+| Advertising (Sponsored Products) | Listed separately in Advertising reports | Varies by ACOS target |
+
+**Build a fee summary by SKU (using a spreadsheet or A2X):**
+
+For each SKU and period, calculate:
+```
+Gross Revenue
+  - Returns & Refunds
+= Net Sales
+
+  - Referral Fees
+  - FBA Fulfillment Fees
+  - Storage Fees
+  - Long-term Storage Fees
+  - Advertising Fees
+  - Return Processing Fees
+= Net Marketplace Proceeds
+
+Total Fee Rate % = Total Fees / Net Sales × 100
+Net Margin % = Net Proceeds / Net Sales × 100
 ```
 
-### Step 3 — Parse Amazon Settlement Files
+**Typical Amazon total take rate by category:**
+- Apparel: 25–35% (high referral + FBA for bulky items)
+- Electronics: 15–20%
+- Health & Beauty: 20–30%
+- Home & Kitchen: 18–28%
+- Books: 15–20%
 
-Amazon's flat-file settlement is the most complex of the major marketplaces.
+If your actual fee rate is 5%+ above these ranges, investigate for potential overcharges.
 
-```python
-import pandas as pd
-from decimal import Decimal
+### Step 4: Identify FBA fee overcharges
 
-AMAZON_FEE_CATEGORIES = {
-    'FBAPerUnitFulfillmentFee': 'fulfillment',
-    'FBAPerOrderFulfillmentFee': 'fulfillment',
-    'FBAWeightBasedFee': 'fulfillment',
-    'Commission': 'referral_fee',
-    'VariableClosingFee': 'referral_fee',
-    'RefundCommission': 'refund_fee',
-    'FBAStorageFee': 'storage',
-    'FBALongTermStorageFee': 'storage_long_term',
-    'Subscription': 'monthly_subscription',
-    'Selling fees': 'referral_fee',
-    'FBA transaction fees': 'fulfillment',
-    'other-transaction': 'other',
-    'Lightning Deal fees': 'promotional',
-    'Sponsored Products': 'advertising',
-    'Sponsored Brands': 'advertising',
-}
+Amazon FBA fees are based on product dimensions and weight stored in their system. If Amazon has incorrect measurements for your product, you may be paying systematically higher fees on every unit shipped.
 
-def parse_amazon_settlement(filepath: str) -> pd.DataFrame:
-    """
-    Parse Amazon flat-file settlement report into normalized transaction records.
-    """
-    df = pd.read_csv(filepath, sep='\t', encoding='utf-8', thousands=',')
+**How to check for FBA measurement errors:**
+1. Go to **Seller Central → Reports → Fulfillment → Fee Preview** — download the fee preview report
+2. Compare the dimensions Amazon has on file against your actual product measurements
+3. Go to **Seller Central → Inventory → Manage Inventory → [Product] → FBA product review** to see the dimensions Amazon is using
 
-    # Rename columns to normalized schema
-    col_mapping = {
-        'settlement-id': 'settlement_id',
-        'settlement-start-date': 'settlement_period_start',
-        'settlement-end-date': 'settlement_period_end',
-        'transaction-type': 'transaction_type',
-        'order-id': 'order_id',
-        'merchant-order-id': 'merchant_order_id',
-        'shipment-id': 'shipment_id',
-        'marketplace-name': 'marketplace_name',
-        'amount-type': 'fee_type',
-        'amount-description': 'fee_description',
-        'amount': 'amount',
-        'quantity-purchased': 'quantity',
-        'posted-date': 'transaction_date',
-        'sku': 'sku',
-        'product-description': 'product_name',
-    }
-    df = df.rename(columns={k: v for k, v in col_mapping.items() if k in df.columns})
-    df['marketplace'] = 'amazon'
-    df['fee_category'] = df['fee_type'].map(AMAZON_FEE_CATEGORIES).fillna('other')
-    df['amount'] = pd.to_numeric(df.get('amount', 0), errors='coerce').fillna(0)
+**How to dispute an FBA measurement:**
+1. Go to **Seller Central → Help → Contact Us → FBA issue → FBA fee dispute**
+2. Submit a dispute with photos showing your product's actual dimensions
+3. Amazon has up to 90 days to investigate; if the dispute is upheld, fees are corrected going forward
+4. For historical overcharges: file a reimbursement request via **Seller Central → Help → Contact Us → Reimbursements**
 
-    return df
+**Using Getida for systematic reimbursement recovery:**
+1. Sign up at [getida.com](https://getida.com) — Getida works on a contingency fee basis (takes ~25% of recovered amounts)
+2. Grant Getida SP-API access to your Seller Central account
+3. Getida audits 18 months of historical FBA fees and claims reimbursements automatically
+4. You receive the net recovery with no upfront cost
 
-def summarize_amazon_fees_by_sku(settlement_df: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate fees and net proceeds by SKU for a settlement period."""
-    return settlement_df.groupby(['sku', 'fee_category']).agg(
-        total_amount=('amount', 'sum'),
-        transaction_count=('transaction_date', 'count')
-    ).reset_index().pivot_table(
-        index='sku',
-        columns='fee_category',
-        values='total_amount',
-        aggfunc='sum',
-        fill_value=0
-    ).reset_index()
-```
+### Step 5: Monitor long-term storage fees proactively
 
-### Step 4 — Compute Net Revenue Per SKU Per Marketplace
+Amazon charges long-term storage fees on inventory held more than 365 days, assessed on February 15 and August 15 each year. These fees can be significant — $6.90 per cubic foot.
 
-```sql
--- Net revenue computation by SKU and marketplace
-WITH fee_summary AS (
-    SELECT
-        marketplace,
-        sku,
-        DATE_TRUNC('month', transaction_date) AS period,
-        SUM(CASE WHEN transaction_type = 'order' THEN selling_price ELSE 0 END) AS gross_revenue,
-        SUM(CASE WHEN fee_category = 'referral_fee' THEN ABS(marketplace_fee) ELSE 0 END) AS referral_fees,
-        SUM(CASE WHEN fee_category = 'fulfillment' THEN ABS(marketplace_fee) ELSE 0 END) AS fulfillment_fees,
-        SUM(CASE WHEN fee_category = 'storage' THEN ABS(marketplace_fee) ELSE 0 END) AS storage_fees,
-        SUM(CASE WHEN fee_category = 'storage_long_term' THEN ABS(marketplace_fee) ELSE 0 END) AS long_term_storage_fees,
-        SUM(CASE WHEN fee_category = 'advertising' THEN ABS(marketplace_fee) ELSE 0 END) AS advertising_fees,
-        SUM(CASE WHEN fee_category = 'refund_fee' THEN ABS(marketplace_fee) ELSE 0 END) AS refund_fees,
-        SUM(CASE WHEN fee_category = 'other' THEN ABS(marketplace_fee) ELSE 0 END) AS other_fees,
-        SUM(CASE WHEN transaction_type = 'refund' THEN ABS(selling_price) ELSE 0 END) AS refunds,
-        SUM(net_proceeds) AS total_net_proceeds
-    FROM marketplace_transactions
-    GROUP BY 1, 2, 3
-)
-SELECT
-    marketplace,
-    sku,
-    period,
-    gross_revenue,
-    refunds,
-    gross_revenue - refunds AS net_sales,
-    referral_fees,
-    fulfillment_fees,
-    storage_fees,
-    long_term_storage_fees,
-    advertising_fees,
-    refund_fees,
-    other_fees,
-    referral_fees + fulfillment_fees + storage_fees + long_term_storage_fees + advertising_fees + refund_fees + other_fees AS total_fees,
-    ROUND((referral_fees + fulfillment_fees + storage_fees + long_term_storage_fees + advertising_fees) / NULLIF(net_sales, 0) * 100, 1) AS total_fee_rate_pct,
-    net_sales - (referral_fees + fulfillment_fees + storage_fees + long_term_storage_fees + advertising_fees + refund_fees) AS net_marketplace_proceeds,
-    ROUND((net_sales - (referral_fees + fulfillment_fees + storage_fees + long_term_storage_fees + advertising_fees + refund_fees)) / NULLIF(net_sales, 0) * 100, 1) AS net_margin_pct
-FROM fee_summary
-ORDER BY marketplace, net_sales DESC;
-```
+**Proactive monitoring:**
+1. 60 days before the assessment date (December 15 and June 15), go to **Seller Central → Reports → Fulfillment → Inventory Age**
+2. Download the report and filter for items with more than 270 days in FBA
+3. For items approaching 365 days, evaluate:
+   - **Price reduction:** Run a sale or promotion to accelerate sell-through
+   - **Removal order:** Request Amazon to return inventory to you (removal fee applies but is lower than long-term storage fee for most items)
+   - **Liquidation:** Amazon's liquidation program sells inventory to resellers at ~5–10% of the listed price
 
-### Step 5 — Detect FBA Fee Overcharges
+### Step 6: Build a multi-channel fee comparison
 
-Amazon FBA fees are based on product dimensions and weight stored in their system, which may not match your actual product. Systematic errors compound across thousands of units.
+Once you have fee data from multiple marketplaces, compare net margin per SKU across channels:
 
-```python
-def detect_fba_fee_overcharges(
-    actual_dimensions: dict,   # {sku: {'length': float, 'width': float, 'height': float, 'weight_oz': float}}
-    charged_fees: pd.DataFrame,  # sku, units_shipped, total_fba_fee_charged
-    amazon_fba_rate_table: dict,  # size_tier -> {weight_range: rate}
-) -> pd.DataFrame:
-    """
-    Compare expected FBA fees based on actual product dimensions against charged fees.
-    Returns a DataFrame of potential overcharges.
-    """
-    overcharges = []
+**Example comparison for one SKU at $39.99 selling price:**
 
-    for _, row in charged_fees.iterrows():
-        sku = row['sku']
-        dims = actual_dimensions.get(sku)
-        if not dims:
-            continue
+| Channel | Gross Revenue | Fees | Net Proceeds | Net Margin |
+|---------|-------------|------|-------------|-----------|
+| Own Website (Shopify + Stripe) | $39.99 | $1.46 (Stripe: 2.9% + $0.30) + $5 shipping | $33.53 | 83.8% of revenue |
+| Amazon FBA | $39.99 | $5.99 referral (15%) + $4.50 FBA + $0.82 storage | $28.68 | 71.7% of revenue |
+| eBay | $39.99 | $5.20 final value (13%) + $0.30 payment + $5 shipping | $29.49 | 73.7% of revenue |
+| Etsy | $39.99 | $2.60 transaction (6.5%) + $0.90 payment + $0.20 listing | $36.29 | 90.7% of revenue |
 
-        # Compute size tier
-        longest = max(dims['length'], dims['width'], dims['height'])
-        median = sorted([dims['length'], dims['width'], dims['height']])[1]
-        shortest = min(dims['length'], dims['width'], dims['height'])
-        girth = 2 * (median + shortest)
-        weight_lbs = dims['weight_oz'] / 16
-        dim_weight = (dims['length'] * dims['width'] * dims['height']) / 139
-        billable_weight = max(weight_lbs, dim_weight)
-
-        if longest <= 15 and median <= 12 and shortest <= 0.75 and weight_lbs <= 0.75:
-            size_tier = 'small_standard'
-        elif longest <= 18 and median <= 14 and shortest <= 8 and weight_lbs <= 20:
-            size_tier = 'large_standard'
-        else:
-            size_tier = 'large_bulky'
-
-        expected_fee_per_unit = amazon_fba_rate_table.get(size_tier, {}).get(
-            min((k for k in amazon_fba_rate_table[size_tier] if k >= billable_weight), default=None)
-        ) or 0
-
-        expected_total = expected_fee_per_unit * row['units_shipped']
-        actual_total = row['total_fba_fee_charged']
-        variance = actual_total - expected_total
-
-        if variance > 10.0:  # Flag overcharges > $10 per settlement period
-            overcharges.append({
-                'sku': sku,
-                'size_tier': size_tier,
-                'billable_weight_lbs': round(billable_weight, 3),
-                'expected_fee_per_unit': round(expected_fee_per_unit, 2),
-                'units_shipped': row['units_shipped'],
-                'expected_total_fee': round(expected_total, 2),
-                'charged_total_fee': round(actual_total, 2),
-                'overcharge_amount': round(variance, 2),
-                'action': 'submit_reimbursement_request',
-            })
-
-    return pd.DataFrame(overcharges).sort_values('overcharge_amount', ascending=False)
-```
-
-### Step 6 — Fee Optimization Recommendations
-
-```python
-def generate_fee_optimization_recommendations(
-    sku_fee_analysis: pd.DataFrame,
-    product_costs: dict,  # sku -> landed_cost
-) -> list[dict]:
-    """Generate fee optimization recommendations for high-cost SKUs."""
-    recommendations = []
-
-    for _, row in sku_fee_analysis.iterrows():
-        sku = row['sku']
-        net_margin = row.get('net_margin_pct', 0)
-        long_term_storage = row.get('long_term_storage_fees', 0)
-        fulfillment_fees = row.get('fulfillment_fees', 0)
-        gross_revenue = row.get('gross_revenue', 0)
-        fba_fee_rate = fulfillment_fees / max(gross_revenue, 1) * 100
-
-        if long_term_storage > 100:
-            recommendations.append({
-                'sku': sku,
-                'category': 'inventory_liquidation',
-                'priority': 'high',
-                'current_cost': long_term_storage,
-                'recommendation': f"SKU {sku} has ${long_term_storage:.2f} in long-term storage fees. "
-                                  f"Consider running a removal order or liquidation to avoid continued charges.",
-            })
-
-        if fba_fee_rate > 20:
-            recommendations.append({
-                'sku': sku,
-                'category': 'fbm_switch',
-                'priority': 'medium' if net_margin > 0 else 'high',
-                'current_cost': fulfillment_fees,
-                'recommendation': f"FBA fees are {fba_fee_rate:.1f}% of revenue for {sku}. "
-                                  f"Evaluate FBM fulfillment cost — if lower, switch to reduce fee burden.",
-            })
-
-        if net_margin < 5:
-            landed_cost = product_costs.get(sku, 0)
-            recommendations.append({
-                'sku': sku,
-                'category': 'pricing_review',
-                'priority': 'high',
-                'recommendation': f"Net margin is {net_margin:.1f}% on {sku}. "
-                                  f"Review selling price or consider discontinuing if not improving.",
-            })
-
-    return sorted(recommendations, key=lambda x: {'high': 0, 'medium': 1, 'low': 2}[x['priority']])
-```
-
----
+This comparison shows which channel generates the most net proceeds per unit sold.
 
 ## Best Practices
 
-1. **Reconcile every settlement, not just month-end** — Amazon produces bi-weekly settlements; eBay and Walmart are monthly. Reconcile each settlement file against your expected payouts within 3 business days of receipt to catch discrepancies early.
-
-2. **Build a fee expectation model** — Precompute expected fees by SKU based on category, dimensions, and weight. Compare actuals to expected every period. Unexplained variance signals miscategorization or fee errors.
-
-3. **Track fee rates as a percentage of revenue** — Absolute fee amounts grow with revenue. Track FBA fee rate (%), referral fee rate (%), and total take rate (%) to monitor fee efficiency independent of volume.
-
-4. **Submit FBA reimbursement claims systematically** — Amazon's Reimbursement Center handles fee overcharges, but claims must typically be submitted within 90-180 days. Automate the detection and submission process; many sellers leave significant money unclaimed.
-
-5. **Separate advertising spend from transaction fees in the data model** — Marketing spend (Sponsored Products, Sponsored Brands) is a strategic investment decision. Transaction fees (referral, fulfillment) are unavoidable cost of sales. Keep them in separate GL accounts and analyze separately.
-
-6. **Monitor long-term storage proactively** — Amazon charges long-term storage fees on inventory older than 365 days on February 15 and August 15 each year. Pull an aging inventory report 60 days before these dates and plan removal orders or pricing adjustments.
-
-7. **Benchmark referral fee rates against category norms** — Amazon referral fees range from 6% (consumer electronics) to 45% (Amazon device accessories). Knowing your category's standard rate helps identify miscategorized products being over-charged.
-
-8. **Automate monthly GL postings** — Marketplace fees should flow automatically from settlement data into your GL, mapped to the correct expense accounts. Manual entry at month-end is error-prone and time-consuming.
-
-9. **Track net payout timing for cash flow purposes** — Marketplace disbursements often have holds (new seller reserves, chargeback reserves). Track the gap between earned revenue and actual bank receipt for cash flow planning.
-
-10. **Consolidate multi-marketplace fees into a single dashboard** — If you sell on multiple marketplaces, build a unified fee analysis view that shows total fee rate per SKU across all channels. Some SKUs may be more profitably sold on one marketplace vs. another.
-
----
+- **Reconcile every settlement, not just month-end** — Amazon produces bi-weekly settlements; reconcile each one within 3 business days of receipt to catch discrepancies early
+- **Use A2X or Link My Books to automate journal entries** — manual entry of marketplace settlements is error-prone; these tools save 4–8 hours per month and create accurate GAAP entries
+- **Track fee rates as a percentage of revenue** — absolute fee amounts grow with revenue; tracking fee rate % lets you monitor fee efficiency independent of volume changes
+- **Submit FBA reimbursement claims systematically** — claims must typically be submitted within 90–180 days; automate detection with Getida or SELLERBOARD to avoid leaving money unclaimed
+- **Separate advertising spend from transaction fees** — marketing spend (Sponsored Products) is a strategic investment decision; transaction fees (referral, fulfillment) are unavoidable cost of sales; keep them in separate GL accounts
+- **Monitor net payout timing for cash flow** — marketplace disbursements have holds and reserves; build the expected payout schedule into your cash flow model (see @cash-flow-forecasting)
 
 ## Common Pitfalls
 
-### Pitfall 1: Using Gross Payout as Revenue
-The amount deposited to your bank account by Amazon includes marketplace price × units minus all fees. Using this as revenue understates gross sales and distorts your P&L. Record gross sales as revenue and fees as cost of revenue / selling expenses separately.
+| Problem | Solution |
+|---------|----------|
+| Using marketplace payout amount as revenue | The amount deposited by Amazon is net of all fees; record gross sales as revenue and fees as cost of revenue separately |
+| Missing FBA inventory reimbursements | Amazon loses or damages FBA inventory and is obligated to reimburse; reconcile expected inventory against FBA inventory reports monthly; use Getida or SELLERBOARD for systematic auditing |
+| Not tracking fee changes in Amazon's annual fee schedule update | Amazon updates FBA fees annually (typically in January/February); update your expected fee model or reconciliation will show unexplained variances throughout the year |
+| Currency conversion fees ignored for international marketplaces | If selling on Amazon UK/DE/JP, currency conversion fees reduce disbursements; track separately and include in international channel profitability analysis |
+| Long-term storage fees as a surprise | Pull the FBA Inventory Age report 60 days before Feb 15 and Aug 15 assessment dates; take action before fees are assessed |
 
-### Pitfall 2: Missing Co-mingled FBA Inventory Issues
-If your FBA inventory is co-mingled (commingled with other sellers' units), you may receive returns of other sellers' products or have your products sold in others' name. Monitor for unusual return patterns and request label-only (stickered) inventory if co-mingling causes issues.
+## Related Skills
 
-### Pitfall 3: Not Claiming FBA Inventory Reimbursements
-Amazon loses or damages FBA inventory and is obligated to reimburse you. These credits appear in settlement data but can be missed if not tracked. Reconcile expected inventory against Amazon's FBA inventory reports monthly.
-
-### Pitfall 4: Ignoring Currency Conversion Fees for International Marketplaces
-If you sell on Amazon UK, DE, JP, etc., there are currency conversion fees on disbursements. Track these separately and factor them into your international channel profitability analysis.
-
-### Pitfall 5: Not Tracking Fee Changes in Amazon's Annual Fee Schedule Update
-Amazon updates its FBA fee schedule annually (typically in February). If you do not update your expected fee model, your reconciliation will show unexplained variances throughout the year. Build a fee change monitoring process.
+- @profit-margin-analysis
+- @cost-allocation-analysis
+- @cash-flow-forecasting
+- @financial-reporting-dashboard

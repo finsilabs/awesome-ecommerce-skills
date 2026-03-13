@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [cart, state-management, persistence, session, merge, add-to-cart, line-items]
 triggers: ["shopping cart", "add to cart", "cart state management", "cart persistence", "merge carts", "cart implementation"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,336 +16,181 @@ difficulty: intermediate
 
 ## Overview
 
-Implement robust shopping cart state management covering the full lifecycle: add/remove/update items, price recalculation, guest cart persistence in localStorage/cookies, server-side cart for authenticated users, and merging the guest cart into the server cart on login. Covers the cart data model, atomic quantity updates, and the cart context pattern for React applications.
+Cart logic covers how your store manages items a shopper intends to buy: adding, removing, and updating items; persisting the cart across page loads and devices; and merging a guest cart into an account when the customer logs in. On Shopify, WooCommerce, and BigCommerce, the cart is built into the platform — the goal is to configure it correctly and extend it when needed. Custom code is only required for headless storefronts.
 
 ## When to Use This Skill
 
-- When building or refactoring a shopping cart from scratch
 - When cart state is lost when users navigate between pages (missing persistence)
 - When guest cart items disappear after login (missing merge logic)
 - When implementing real-time cart price updates (coupons, quantity changes, shipping estimates)
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+- When building a headless storefront that needs a custom cart implementation
 
 ## Core Instructions
 
-1. **Define the cart and line item data model**
+### Step 1: Understand how your platform handles cart logic
 
-   ```javascript
-   // Cart schema (server-side, database)
-   {
-     id: 'cart_abc123',
-     user_id: null,           // null for guest carts
-     guest_token: 'gt_xyz',   // UUID token stored in cookie for guest carts
-     status: 'active'|'abandoned'|'converted',
-     currency: 'USD',
-     line_items: [
-       {
-         id: 'li_001',
-         cart_id: 'cart_abc123',
-         product_id: 'prod_001',
-         variant_id: 'var_red_M',
-         quantity: 2,
-         unit_price: 29.99,          // Price at time of adding to cart
-         original_unit_price: 39.99, // Before any discounts
-         title: 'Classic Tee — Red / M',
-         image_url: '/images/tee-red.jpg',
-       },
-     ],
-     coupon_code: null,
-     discount_amount: 0,
-     subtotal: 59.98,
-     tax_amount: 0,           // Calculated at checkout
-     shipping_estimate: 0,    // Updated when address is entered
-     total: 59.98,
-     created_at: Date,
-     updated_at: Date,
-   }
-   ```
+| Platform | Cart Behavior | Where to Configure |
+|----------|--------------|-------------------|
+| **Shopify** | Built-in cart with automatic persistence; uses cookies/localStorage | Theme Liquid templates + Cart API; extend with Cart Transform Shopify Function |
+| **WooCommerce** | Built-in cart with session persistence; configures via PHP hooks | WooCommerce settings + `woocommerce_add_cart_item_data` and `woocommerce_cart_item_price` filters |
+| **BigCommerce** | Built-in Storefront Cart API; cart persists via cookie | BigCommerce Stencil theme + Storefront Cart API |
+| **Custom / Headless** | Must build from scratch using platform APIs or Shopify/BigCommerce Storefront API | See Custom / Headless section below |
 
-2. **Build cart API endpoints with atomic operations**
+### Step 2: Configure and extend cart behavior
 
-   ```javascript
-   // api/cart.js
+---
 
-   // POST /api/cart/items — add item to cart
-   export async function addToCart(req, res) {
-     const { variantId, quantity = 1 } = req.body;
-     const cartId = await getOrCreateCart(req, res);
+#### Shopify
 
-     // Validate variant exists and has sufficient stock
-     const variant = await db.productVariants.findUnique({ where: { id: variantId } });
-     if (!variant) return res.status(404).json({ error: 'Product variant not found' });
+Shopify's cart is managed automatically. To extend it:
 
-     const available = variant.inventoryQuantity - (variant.reservedQuantity ?? 0);
-     if (!variant.backorderAllowed && available < quantity) {
-       return res.status(409).json({
-         error: 'Insufficient stock',
-         available: Math.max(0, available),
-       });
-     }
+**Customize the cart drawer or page:**
+1. Go to **Online Store → Themes → Customize**
+2. Select the cart section and configure: cart type (drawer vs. page), item display, quantity controls
+3. Enable **Cart notes** and **Shipping estimate** in the cart settings if needed
 
-     // Upsert line item — if variant already in cart, increment quantity
-     const existing = await db.cartItems.findFirst({
-       where: { cartId, variantId },
-     });
+**Enable cart persistence across devices** (requires accounts):
+- Shopify automatically persists cart for logged-in customers; the cart is stored server-side on their account
+- For guest carts, Shopify uses a `cart_token` cookie (30-day expiry by default)
 
-     if (existing) {
-       await db.cartItems.update({
-         where: { id: existing.id },
-         data: { quantity: existing.quantity + quantity },
-       });
-     } else {
-       await db.cartItems.create({
-         data: {
-           cartId,
-           productId: variant.productId,
-           variantId,
-           quantity,
-           unitPrice: variant.price,
-           originalUnitPrice: variant.compareAtPrice ?? variant.price,
-           title: await buildLineItemTitle(variant),
-           imageUrl: variant.imageUrl,
-         },
-       });
-     }
+**Merge guest cart on login:**
+- Shopify handles this automatically — when a guest logs in, their cart is merged with any existing account cart
 
-     const cart = await recalculateCart(cartId);
-     res.json(cart);
-   }
+**Cart customization via Shopify Functions:**
+Use **Cart Transform** Shopify Functions to modify cart items, apply custom discounts, or bundle products. Go to **Settings → Custom data** and deploy a Cart Transform function via the Shopify CLI.
 
-   // PATCH /api/cart/items/:itemId — update quantity
-   export async function updateCartItem(req, res) {
-     const { quantity } = req.body;
-     if (quantity <= 0) return removeCartItem(req, res); // Delegate to remove
+**Custom cart upsells and cross-sells:**
+Install **CartHook**, **ReConvert**, or **Frequently Bought Together** from the Shopify App Store for cart upsell logic without custom code.
 
-     await db.cartItems.update({
-       where: { id: req.params.itemId },
-       data: { quantity },
-     });
-     const cart = await recalculateCart(req.params.cartId);
-     res.json(cart);
-   }
+---
 
-   // DELETE /api/cart/items/:itemId — remove item
-   export async function removeCartItem(req, res) {
-     await db.cartItems.delete({ where: { id: req.params.itemId } });
-     const cart = await recalculateCart(req.params.cartId);
-     res.json(cart);
-   }
-   ```
+#### WooCommerce
 
-3. **Implement guest cart persistence with cookies**
+WooCommerce's cart is built-in and session-based.
 
-   ```javascript
-   // lib/cartSession.js
-   import { v4 as uuid } from 'uuid';
+**Configure cart behavior:**
+1. Go to **WooCommerce → Settings → Products → General** to configure cart and add-to-cart behavior
+2. Enable or disable **Redirect to cart page after successful addition** based on your store's UX preference
+3. Under **WooCommerce → Settings → Advanced → Cart page**, verify the cart page is assigned
 
-   export async function getOrCreateCart(req, res) {
-     if (req.session?.userId) {
-       // Authenticated user — find or create a server cart
-       let cart = await db.carts.findFirst({
-         where: { userId: req.session.userId, status: 'active' },
-       });
-       if (!cart) {
-         cart = await db.carts.create({
-           data: { userId: req.session.userId, currency: 'USD' },
-         });
-       }
-       return cart.id;
-     }
+**Enable persistent cart for logged-in users:**
+1. Go to **WooCommerce → Settings → Accounts & Privacy**
+2. Enable **Persistent cart** — this stores a logged-in customer's cart in the database so it survives across sessions and devices
 
-     // Guest user — use cookie-based token
-     let guestToken = req.cookies.cart_token;
-     if (!guestToken) {
-       guestToken = uuid();
-       res.cookie('cart_token', guestToken, {
-         httpOnly: true,
-         secure: process.env.NODE_ENV === 'production',
-         sameSite: 'lax',
-         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-       });
-     }
+**Guest cart to account merge:**
+WooCommerce automatically merges the guest cart with the customer's saved cart when they log in. To ensure this works, keep **Persistent cart** enabled.
 
-     let cart = await db.carts.findFirst({
-       where: { guestToken, status: 'active' },
-     });
-     if (!cart) {
-       cart = await db.carts.create({ data: { guestToken, currency: 'USD' } });
-     }
-     return cart.id;
-   }
-   ```
+**Extend cart item data** (e.g., for product customization options):
+Use the `woocommerce_add_cart_item_data` filter in your theme's `functions.php` or a custom plugin to attach extra data to cart items (gift messages, engraving text, etc.).
 
-4. **Merge guest cart into authenticated cart on login**
+**Cart abandonment tracking:**
+Install **CartFlows** or **WooCommerce Cart Abandonment Recovery** plugin to track and recover abandoned carts.
 
-   ```javascript
-   // lib/mergeCart.js
-   export async function mergeGuestCartOnLogin(guestToken, userId) {
-     const guestCart = await db.carts.findFirst({
-       where: { guestToken, status: 'active' },
-       include: { items: true },
-     });
+---
 
-     if (!guestCart || guestCart.items.length === 0) return;
+#### BigCommerce
 
-     const userCart = await db.carts.findFirst({
-       where: { userId, status: 'active' },
-       include: { items: true },
-     });
+BigCommerce uses its Storefront Cart API for cart management.
 
-     if (!userCart) {
-       // Simply assign the guest cart to the user
-       await db.carts.update({
-         where: { id: guestCart.id },
-         data: { userId, guestToken: null },
-       });
-       return;
-     }
+**Configure cart settings:**
+1. Go to **Settings → Storefront** to configure cart and checkout behavior
+2. Cart persistence is automatic via BigCommerce's session management
 
-     // Merge guest items into user cart
-     for (const guestItem of guestCart.items) {
-       const existingItem = userCart.items.find(i => i.variantId === guestItem.variantId);
-       if (existingItem) {
-         // Prefer the higher quantity (guest typically has more recent intent)
-         const mergedQty = Math.max(existingItem.quantity, guestItem.quantity);
-         await db.cartItems.update({
-           where: { id: existingItem.id },
-           data: { quantity: mergedQty },
-         });
-       } else {
-         // Add guest item to user cart
-         await db.cartItems.create({
-           data: { ...guestItem, id: undefined, cartId: userCart.id },
-         });
-       }
-     }
+**Customize the cart via Stencil theme:**
+Edit cart templates in your Stencil theme (`templates/components/cart/`) to modify the cart page layout, item display, and available actions.
 
-     // Mark guest cart as abandoned
-     await db.carts.update({
-       where: { id: guestCart.id },
-       data: { status: 'abandoned' },
-     });
+**Cart upsells:**
+Use the BigCommerce Cart API to detect items in the cart and conditionally show related products or promotions in the cart template.
 
-     await recalculateCart(userCart.id);
-   }
-   ```
+---
 
-5. **React cart context with optimistic updates**
+#### Custom / Headless
 
-   ```jsx
-   // context/CartContext.jsx
-   import { createContext, useContext, useReducer, useCallback } from 'react';
+For a headless storefront, use your platform's Storefront API rather than building cart storage from scratch:
 
-   const CartContext = createContext(null);
-
-   function cartReducer(state, action) {
-     switch (action.type) {
-       case 'SET_CART': return { ...state, ...action.cart, loading: false };
-       case 'SET_LOADING': return { ...state, loading: action.loading };
-       case 'OPTIMISTIC_ADD': {
-         const existingIdx = state.items.findIndex(i => i.variantId === action.item.variantId);
-         if (existingIdx >= 0) {
-           const items = [...state.items];
-           items[existingIdx] = { ...items[existingIdx], quantity: items[existingIdx].quantity + action.item.quantity };
-           return { ...state, items };
-         }
-         return { ...state, items: [...state.items, action.item] };
-       }
-       default: return state;
-     }
-   }
-
-   export function CartProvider({ children, initialCart }) {
-     const [cart, dispatch] = useReducer(cartReducer, { items: [], subtotal: 0, total: 0, loading: false, ...initialCart });
-
-     const addItem = useCallback(async (variant, quantity = 1) => {
-       // Optimistic update
-       dispatch({ type: 'OPTIMISTIC_ADD', item: { variantId: variant.id, quantity, unitPrice: variant.price, title: variant.name } });
-
-       try {
-         const res = await fetch('/api/cart/items', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ variantId: variant.id, quantity }),
-         });
-         const updatedCart = await res.json();
-         dispatch({ type: 'SET_CART', cart: updatedCart });
-       } catch {
-         // Revert optimistic update by re-fetching
-         const res = await fetch('/api/cart');
-         const freshCart = await res.json();
-         dispatch({ type: 'SET_CART', cart: freshCart });
-       }
-     }, []);
-
-     return <CartContext.Provider value={{ cart, addItem }}>{children}</CartContext.Provider>;
-   }
-
-   export const useCart = () => useContext(CartContext);
-   ```
-
-## Examples
-
-### Cart totals recalculation
+**Shopify Storefront API (recommended for Shopify-backed headless stores):**
 
 ```javascript
-async function recalculateCart(cartId) {
-  const cart = await db.carts.findUnique({
-    where: { id: cartId },
-    include: { items: true, coupon: true },
+// Create a cart
+const createCart = async () => {
+  const response = await fetch(`https://${SHOP_DOMAIN}/api/2024-01/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation cartCreate($input: CartInput!) {
+          cartCreate(input: $input) {
+            cart { id checkoutUrl }
+            userErrors { field message }
+          }
+        }
+      `,
+      variables: { input: { lines: [{ merchandiseId: variantGid, quantity: 1 }] } },
+    }),
   });
+  const { data } = await response.json();
+  return data.cartCreate.cart;
+};
 
-  const subtotal = cart.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const discount = cart.coupon ? applyCoupon(subtotal, cart.coupon) : 0;
-  const total = Math.max(0, +(subtotal - discount).toFixed(2));
-
-  return db.carts.update({
-    where: { id: cartId },
-    data: { subtotal: +subtotal.toFixed(2), discountAmount: +discount.toFixed(2), total },
-    include: { items: { include: { variant: { include: { product: true } } } } },
+// Add an item to an existing cart
+const addToCart = async (cartId, variantGid, quantity) => {
+  const response = await fetch(`https://${SHOP_DOMAIN}/api/2024-01/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation cartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
+          cartLinesAdd(cartId: $cartId, lines: $lines) {
+            cart { id totalQuantity cost { totalAmount { amount currencyCode } } }
+          }
+        }
+      `,
+      variables: { cartId, lines: [{ merchandiseId: variantGid, quantity }] },
+    }),
   });
-}
+  const { data } = await response.json();
+  return data.cartLinesAdd.cart;
+};
 ```
 
-### Cart abandonment tracking
+Store the `cartId` in a cookie or localStorage. On login, use `cartBuyerIdentityUpdate` to associate the cart with the customer's account — Shopify handles the merge automatically.
 
-```javascript
-// Mark carts inactive after 30 minutes of no activity
-async function markAbandonedCarts() {
-  const cutoff = new Date(Date.now() - 30 * 60 * 1000);
-  await db.carts.updateMany({
-    where: { status: 'active', updatedAt: { lt: cutoff } },
-    data: { status: 'abandoned' },
-  });
-}
-```
+**BigCommerce Storefront API (for BigCommerce-backed headless stores):**
+
+Use the BigCommerce Storefront Cart API (`/api/storefront/carts`) which handles cart creation, item management, and customer association automatically.
+
+### Step 3: Implement key cart UX behaviors
+
+Regardless of platform, these are the cart behaviors that most affect conversion:
+
+1. **Show mini-cart on add-to-cart** — most Shopify, WooCommerce, and BigCommerce themes support a slide-out cart drawer that opens when an item is added; enable this instead of redirecting to the cart page
+2. **Show stock levels in the cart** — display "Only 2 left" warnings on items with low inventory; both Shopify and WooCommerce support this via metafields and cart item data
+3. **Guest cart persistence** — ensure guest carts survive for at least 30 days so returning visitors find their items; Shopify does this by default; WooCommerce requires the session duration setting to be configured
+4. **Free shipping progress bar** — show a "You're $X away from free shipping" bar in the cart; install **Free Shipping Bar** (Shopify) or **WooCommerce Free Shipping Bar** plugin
 
 ## Best Practices
 
-- **Store prices at time of add-to-cart** — capture `unit_price` when the item is added; do not re-read prices from the variant on every cart fetch, as prices may change mid-session
-- **Validate stock before checkout, not only on add-to-cart** — items may go out of stock while sitting in the cart; re-validate availability at checkout time
-- **Use optimistic UI for add-to-cart** — update the UI immediately; revert only if the API call fails
-- **Merge guest carts on login** — do not silently lose the guest cart; merge using "take the higher quantity" strategy
-- **Persist cart token in an `httpOnly` cookie** — `localStorage` is accessible to JavaScript; an `httpOnly` cookie is safer for the cart session token
-- **Recalculate totals server-side** — never trust client-submitted totals; always recalculate subtotal, discount, and total on the server
+- **Use your platform's native cart** — Shopify, WooCommerce, and BigCommerce carts are battle-tested and handle edge cases (stock validation, price changes, tax calculation) correctly
+- **Enable persistent cart for logged-in customers** — all three platforms support server-side cart storage for accounts; enable it
+- **Validate stock at checkout, not only on add-to-cart** — items may sell out while in a guest's cart; re-validate at checkout time (platforms do this automatically)
+- **Show the cart total prominently** — including item count and subtotal; reduces anxiety about total spend
+- **For headless: use the platform's Storefront API** — Shopify and BigCommerce Storefront APIs are production-hardened and handle cart merging, stock checks, and checkout initiation correctly
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Cart disappears when user logs in | Implement the `mergeGuestCartOnLogin` function; call it immediately after authentication succeeds |
-| Same item added twice instead of incrementing quantity | Use `upsert` with increment on quantity when the variant already exists in the cart |
-| Price changes not reflected in existing carts | Store `unit_price` at add-time (historical price); show a "price changed" warning if the current price differs significantly at checkout |
-| Cart API race condition with rapid clicking | The add-to-cart endpoint should use `db.$transaction` and upsert to handle concurrent requests for the same variant |
-| Guest cart token shared between browser tabs | Use a single cookie-based token — all tabs in the same browser share it; this is intentional and correct behavior |
+| Cart disappears when user logs in (WooCommerce) | Ensure **Persistent cart** is enabled in WooCommerce → Settings → Accounts & Privacy |
+| Guest cart is empty after browser restart | Check cookie expiry settings; Shopify uses 30-day cart tokens by default; WooCommerce session duration is configurable |
+| Same item added twice instead of incrementing quantity | The platform's native cart handles this; if using headless with Storefront API, use `cartLinesUpdate` to increment quantity on existing lines |
+| Cart shows outdated prices after a price change | Shopify and WooCommerce automatically use current prices at checkout, not add-to-cart prices; a "price changed" notice appears automatically |
+| Custom add-to-cart code bypasses stock checks | Always use the platform's official add-to-cart mechanisms; custom code that writes directly to cart storage skips inventory validation |
 
 ## Related Skills
 

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [monitoring, alerting, datadog, grafana, prometheus, checkout-funnel, payment-monitoring, slo, error-tracking]
 triggers: ["ecommerce monitoring", "commerce alerting", "checkout monitoring", "payment failure alerts", "cart error tracking", "commerce dashboards", "slo ecommerce"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,361 +16,276 @@ difficulty: intermediate
 
 ## Overview
 
-Generic infrastructure monitoring (CPU, memory, error rate) is insufficient for e-commerce — you need commerce-domain metrics: checkout funnel conversion rates, payment success/failure breakdown by gateway and card type, cart abandonment rates, and inventory-out-of-stock events. This skill covers instrumenting a Node.js/Next.js storefront with OpenTelemetry, building a Grafana dashboard for commerce KPIs, and setting up alerts that fire before revenue impact becomes visible in sales reports.
+Generic infrastructure monitoring (CPU, memory, error rate) is insufficient for e-commerce — you need commerce-domain metrics: checkout funnel conversion rates, payment success/failure breakdown by gateway and card type, cart abandonment rates, and inventory out-of-stock events. This skill covers setting up monitoring across different platforms and instrumenting custom storefronts with OpenTelemetry, building dashboards for commerce KPIs, and setting up alerts that fire before revenue impact becomes visible in sales reports.
 
 ## When to Use This Skill
 
 - When setting up observability for a new headless storefront or commerce service
 - When an incident occurred and you had no alerting in place to catch it early
-- When SRE or engineering teams need SLOs (Service Level Objectives) for the checkout flow
-- When business stakeholders want real-time visibility into checkout performance and payment failures
+- When you need real-time visibility into checkout performance and payment failures
 - When diagnosing a drop in conversion rate that may be caused by a technical issue
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify manages infrastructure, CDN, and scaling. Focus on Liquid template performance, image optimization via Shopify's CDN, and app performance.
-**WooCommerce**: You manage hosting and performance. Use caching plugins (WP Rocket, Redis Object Cache), CDN (Cloudflare), and optimize database queries.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your hosting/infrastructure, monitoring tools
+- When preparing SLOs (Service Level Objectives) for the checkout flow before a major sale
 
 ## Core Instructions
 
-1. **Define commerce-specific SLOs and metrics**
+### Step 1: Determine your platform and what you can monitor
 
-   Before implementing monitoring, define what "working" means for your commerce stack:
+| Platform | Built-In Monitoring | What You Can Add |
+|----------|-------------------|-----------------|
+| **Shopify** | Shopify admin shows orders, conversion rates, and a performance report with Core Web Vitals | Install **Lucky Orange** or **Microsoft Clarity** for session recordings and funnel drop-off; connect **Shopify** to Google Analytics 4 for detailed checkout funnel tracking |
+| **WooCommerce** | WooCommerce analytics dashboard shows orders and revenue; no performance monitoring built in | Install **MonsterInsights** (GA4 integration), **WooFunnels** (checkout funnel tracking), and set up **Uptime Robot** (free tier: 50 monitors) for availability alerting |
+| **BigCommerce** | BigCommerce Analytics shows orders, conversion rate, and abandoned carts | Connect BigCommerce to GA4 via native integration; use **Lucky Orange** for heatmaps and session recordings on checkout pages |
+| **Custom / Headless** | Nothing — you build it | Instrument with OpenTelemetry, ship metrics to Grafana Cloud (free tier: 10K series) or Datadog; build checkout funnel dashboards with PromQL; see implementation below |
 
-   ```typescript
-   // lib/metrics/commerce-slos.ts
-   export const COMMERCE_SLOS = {
-     // Checkout funnel SLOs
-     checkoutStartSuccessRate: {target: 0.99, window: '1h', alert: 0.97},     // 99% of checkout page loads succeed
-     checkoutCompletionRate: {target: 0.75, window: '1h', alert: 0.60},        // 75% of started checkouts complete
-     paymentSuccessRate: {target: 0.95, window: '1h', alert: 0.90},            // 95% of payment attempts succeed
-     orderCreationLatencyP99: {target: 3000, window: '5m', alert: 5000},       // ms
+### Step 2: Platform-specific monitoring setup
 
-     // Catalog SLOs
-     productPageP50: {target: 500, window: '5m', alert: 1000},                 // ms
-     productPageP99: {target: 2000, window: '5m', alert: 4000},                // ms
-     searchResultsP99: {target: 1000, window: '5m', alert: 2000},              // ms
+---
 
-     // Availability SLOs
-     checkoutAvailability: {target: 0.999, window: '30d'},                     // 99.9% = 43 min/month downtime
-     catalogAvailability: {target: 0.9995, window: '30d'},
-   } as const;
-   ```
+#### Shopify
 
-2. **Instrument your application with OpenTelemetry**
+**Set up GA4 checkout funnel tracking:**
 
-   ```bash
-   npm install @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node \
-     @opentelemetry/exporter-metrics-otlp-http @opentelemetry/exporter-trace-otlp-http \
-     @opentelemetry/sdk-metrics prom-client
-   ```
+1. In your Shopify admin, go to **Online Store → Preferences → Google Analytics**
+2. Connect your GA4 property — Shopify sends all standard e-commerce events automatically (page_view, add_to_cart, begin_checkout, purchase)
+3. In **Google Analytics → Explore**, create a funnel exploration:
+   - Step 1: `begin_checkout` event
+   - Step 2: `add_shipping_info` event
+   - Step 3: `add_payment_info` event
+   - Step 4: `purchase` event
+   - This shows you exactly where shoppers are dropping off in checkout
 
-   ```typescript
-   // instrumentation.ts — must be required before any other imports
-   import {NodeSDK} from '@opentelemetry/sdk-node';
-   import {getNodeAutoInstrumentations} from '@opentelemetry/auto-instrumentations-node';
-   import {OTLPTraceExporter} from '@opentelemetry/exporter-trace-otlp-http';
-   import {OTLPMetricExporter} from '@opentelemetry/exporter-metrics-otlp-http';
-   import {PeriodicExportingMetricReader} from '@opentelemetry/sdk-metrics';
+**Monitor your store's Core Web Vitals:**
 
-   const sdk = new NodeSDK({
-     serviceName: 'commerce-storefront',
-     traceExporter: new OTLPTraceExporter({url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT}),
-     metricReader: new PeriodicExportingMetricReader({
-       exporter: new OTLPMetricExporter({url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT}),
-       exportIntervalMillis: 15000,
-     }),
-     instrumentations: [getNodeAutoInstrumentations({
-       '@opentelemetry/instrumentation-http': {enabled: true},
-       '@opentelemetry/instrumentation-pg': {enabled: true},
-       '@opentelemetry/instrumentation-ioredis': {enabled: true},
-     })],
-   });
+1. Go to **Online Store → Themes** and click **View report**
+2. This shows real-user LCP, CLS, and FID data from actual shoppers
+3. A poor mobile LCP score (red, > 4s) almost always means your hero image needs optimization or `fetchpriority="high"`
 
-   sdk.start();
-   ```
+**Set up availability and error alerting:**
 
-3. **Track checkout funnel events**
+1. Install **Lucky Orange** ($19/month) or **Microsoft Clarity** (free) to capture session recordings when checkout errors occur — this shows exactly what shoppers see when something breaks
+2. Set up a **Shopify Email** or Slack notification for failed orders: go to **Settings → Notifications** and enable the **Order payment failure** notification
+3. For uptime monitoring: use **Uptime Robot** (free, 5-minute checks) or **Better Uptime** to alert you if your store URL becomes unreachable
 
-   ```typescript
-   // lib/metrics/checkout-metrics.ts
-   import {metrics} from '@opentelemetry/api';
+---
 
-   const meter = metrics.getMeter('commerce-checkout');
+#### WooCommerce
 
-   // Counters
-   const checkoutStarted = meter.createCounter('checkout.started', {description: 'Number of checkout sessions started'});
-   const checkoutCompleted = meter.createCounter('checkout.completed', {description: 'Number of completed checkouts'});
-   const checkoutAbandoned = meter.createCounter('checkout.abandoned', {description: 'Number of abandoned checkouts'});
+**Connect WooCommerce to GA4:**
 
-   // Payment metrics
-   const paymentAttempts = meter.createCounter('payment.attempts', {description: 'Payment attempts by gateway and method'});
-   const paymentSuccesses = meter.createCounter('payment.successes');
-   const paymentFailures = meter.createCounter('payment.failures', {description: 'Payment failures by decline code'});
+1. Install **MonsterInsights** (free tier available, Pro from $99/year) from wordpress.org
+2. Go to **Insights → Settings → General** and connect your GA4 property
+3. Enable **Enhanced eCommerce** tracking — this sends add_to_cart, begin_checkout, and purchase events to GA4 automatically
 
-   // Histograms for latency
-   const orderCreationDuration = meter.createHistogram('order.creation.duration_ms', {
-     description: 'Time to create an order from payment confirmation',
-     boundaries: [100, 250, 500, 1000, 2000, 5000, 10000],
-   });
+**Track checkout funnel drop-off:**
 
-   export const checkoutMetrics = {
-     recordCheckoutStart(channel: string, cartValue: number) {
-       checkoutStarted.add(1, {channel});
-     },
+1. Install **WooFunnels** (free tier available) from wordpress.org
+2. Create a funnel with your cart, checkout, and order confirmation pages as steps
+3. WooFunnels shows you the conversion rate at each step and where shoppers abandon
 
-     recordCheckoutComplete(channel: string, paymentMethod: string, cartValue: number) {
-       checkoutCompleted.add(1, {channel, payment_method: paymentMethod});
-     },
+**Set up uptime and error alerting:**
 
-     recordPaymentAttempt(gateway: string, method: string) {
-       paymentAttempts.add(1, {gateway, method});
-     },
+1. Sign up for **Uptime Robot** (free tier: 50 monitors, 5-minute checks)
+2. Add monitors for your homepage, shop page, checkout page, and `/wp-admin/admin-ajax.php` (WooCommerce uses this heavily)
+3. Set up email or Slack notifications when any monitor goes down
 
-     recordPaymentSuccess(gateway: string, method: string) {
-       paymentSuccesses.add(1, {gateway, method});
-     },
+**Monitor server health:**
 
-     recordPaymentFailure(gateway: string, declineCode: string) {
-       paymentFailures.add(1, {gateway, decline_code: declineCode});
-     },
+1. In your hosting control panel (cPanel, Cloudways, Kinsta), enable email alerts for:
+   - PHP error logs (fatal errors)
+   - Disk usage above 80%
+   - Memory usage above 80%
+2. Install **Query Monitor** plugin (free, wordpress.org) in a staging environment to identify slow database queries during development — disable on production
 
-     recordOrderCreation(durationMs: number, channel: string) {
-       orderCreationDuration.record(durationMs, {channel});
-     },
-   };
-   ```
+---
 
-4. **Build a Grafana dashboard for commerce KPIs**
+#### Custom / Headless
 
-   Create a Grafana dashboard JSON with the key panels:
+For custom storefronts, implement a full observability stack: OpenTelemetry for instrumentation, Prometheus or Grafana Cloud for metrics storage, and Grafana for dashboards.
 
-   ```json
-   // Key panels to include in your commerce dashboard:
-   // Panel 1: Checkout Funnel (Sankey or bar chart showing drop-off)
-   // Panel 2: Payment Success Rate (gauge with SLO threshold)
-   // Panel 3: Revenue per Hour (time series)
-   // Panel 4: Payment Failures by Decline Code (pie chart)
-   // Panel 5: Order Creation Latency P50/P95/P99 (time series)
-   // Panel 6: Checkout Abandonment Rate (stat panel)
-   // Panel 7: Active Carts (gauge)
-   // Panel 8: Out of Stock Events (counter)
-   ```
+**Define commerce SLOs before building dashboards** — these become your alert thresholds:
 
-   Sample PromQL queries for Grafana panels:
+| Metric | Target | Alert threshold |
+|--------|--------|----------------|
+| Payment success rate | 95% | < 90% for 2 min |
+| Checkout P99 latency | < 3000ms | > 5000ms for 3 min |
+| Checkout availability | 99.9% | Zero starts for 2 min |
+| Catalog page P95 | < 1000ms | > 2000ms for 5 min |
 
-   ```promql
-   # Payment success rate over the last 5 minutes
-   rate(payment_successes_total[5m])
-   /
-   (rate(payment_successes_total[5m]) + rate(payment_failures_total[5m]))
+**Instrument your storefront with OpenTelemetry:**
 
-   # P99 order creation latency
-   histogram_quantile(0.99,
-     sum(rate(order_creation_duration_ms_bucket[5m])) by (le, channel)
-   )
-
-   # Checkout conversion rate (completions / starts)
-   rate(checkout_completed_total[1h])
-   /
-   rate(checkout_started_total[1h])
-
-   # Payment failures by decline code (top 5)
-   topk(5, sum(rate(payment_failures_total[5m])) by (decline_code))
-   ```
-
-5. **Set up actionable alerts**
-
-   ```yaml
-   # alertmanager/commerce-alerts.yaml
-   groups:
-     - name: commerce-critical
-       rules:
-         - alert: CheckoutPaymentSuccessRateLow
-           expr: |
-             (
-               rate(payment_successes_total[5m]) /
-               (rate(payment_successes_total[5m]) + rate(payment_failures_total[5m]))
-             ) < 0.90
-           for: 2m
-           labels:
-             severity: critical
-             team: payments
-           annotations:
-             summary: "Payment success rate below 90%"
-             description: "Payment success rate is {{ $value | humanizePercentage }}. SLO is 95%. Check Stripe status and recent deployments."
-             runbook: "https://wiki.mystore.com/runbooks/payment-failures"
-
-         - alert: CheckoutHighLatency
-           expr: |
-             histogram_quantile(0.99, sum(rate(order_creation_duration_ms_bucket[5m])) by (le)) > 5000
-           for: 3m
-           labels:
-             severity: warning
-             team: engineering
-           annotations:
-             summary: "Checkout P99 latency above 5 seconds"
-             description: "Order creation P99 is {{ $value }}ms. Check database slow query log."
-
-         - alert: CheckoutServiceDown
-           expr: |
-             rate(checkout_started_total[5m]) == 0
-           for: 2m
-           labels:
-             severity: critical
-             team: engineering
-           annotations:
-             summary: "No checkouts being started — possible service outage"
-             description: "Zero checkout starts in the last 5 minutes during business hours."
-
-         - alert: HighCartAbandonmentRate
-           expr: |
-             (rate(checkout_abandoned_total[30m]) / rate(checkout_started_total[30m])) > 0.60
-           for: 15m
-           labels:
-             severity: warning
-             team: product
-           annotations:
-             summary: "Cart abandonment rate above 60%"
-             description: "{{ $value | humanizePercentage }} of checkouts are being abandoned. Check for checkout errors in Sentry."
-   ```
-
-6. **Add Real User Monitoring (RUM) for frontend metrics**
-
-   Server-side metrics miss client-side failures. Add RUM for Core Web Vitals and JS errors:
-
-   ```typescript
-   // lib/rum.ts — initialize in app layout
-   import {onCLS, onFID, onLCP, onFCP, onTTFB} from 'web-vitals';
-
-   function sendToAnalytics(metric: any) {
-     const body = JSON.stringify({
-       name: metric.name,
-       value: metric.value,
-       rating: metric.rating,  // 'good', 'needs-improvement', 'poor'
-       delta: metric.delta,
-       id: metric.id,
-       page: window.location.pathname,
-     });
-
-     // Use sendBeacon for reliable delivery even on page unload
-     if (navigator.sendBeacon) {
-       navigator.sendBeacon('/api/rum/vitals', body);
-     }
-   }
-
-   export function initRUM() {
-     onCLS(sendToAnalytics);
-     onFID(sendToAnalytics);  // FID -> INP in newer versions
-     onLCP(sendToAnalytics);
-     onFCP(sendToAnalytics);
-     onTTFB(sendToAnalytics);
-   }
-
-   // Track checkout funnel client-side errors
-   window.addEventListener('error', (event) => {
-     if (window.location.pathname.includes('/checkout')) {
-       fetch('/api/rum/errors', {
-         method: 'POST',
-         body: JSON.stringify({
-           message: event.message,
-           source: event.filename,
-           line: event.lineno,
-           page: window.location.pathname,
-         }),
-         keepalive: true,
-       });
-     }
-   });
-   ```
-
-## Examples
-
-### Datadog APM checkout funnel trace
-
-```typescript
-// Instrument checkout steps as spans for distributed tracing
-import tracer from 'dd-trace';
-
-export async function processCheckout(checkoutData: CheckoutInput) {
-  return tracer.trace('checkout.process', {resource: 'checkout-api'}, async (span) => {
-     span.setTag('cart.total_cents', checkoutData.totalCents);
-     span.setTag('payment.gateway', checkoutData.paymentGateway);
-     span.setTag('customer.is_new', checkoutData.isNewCustomer);
-
-     const inventorySpan = tracer.startSpan('checkout.inventory_check', {childOf: span});
-     await checkInventory(checkoutData.lineItems);
-     inventorySpan.finish();
-
-     const paymentSpan = tracer.startSpan('checkout.payment_capture', {childOf: span});
-     const payment = await capturePayment(checkoutData);
-     paymentSpan.setTag('payment.success', payment.success);
-     paymentSpan.finish();
-
-     const orderSpan = tracer.startSpan('checkout.order_create', {childOf: span});
-     const order = await createOrder(checkoutData, payment);
-     orderSpan.setTag('order.id', order.id);
-     orderSpan.finish();
-
-     return order;
-  });
-}
+```bash
+npm install @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node \
+  @opentelemetry/exporter-metrics-otlp-http @opentelemetry/exporter-trace-otlp-http \
+  @opentelemetry/sdk-metrics
 ```
 
-### Synthetic monitoring for checkout availability
+```typescript
+// instrumentation.ts — import before any other module
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
+import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
+
+const sdk = new NodeSDK({
+  serviceName: 'commerce-storefront',
+  traceExporter: new OTLPTraceExporter({ url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT }),
+  metricReader: new PeriodicExportingMetricReader({
+    exporter: new OTLPMetricExporter({ url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT }),
+    exportIntervalMillis: 15000,
+  }),
+  instrumentations: [getNodeAutoInstrumentations({
+    '@opentelemetry/instrumentation-http': { enabled: true },
+    '@opentelemetry/instrumentation-pg': { enabled: true },
+    '@opentelemetry/instrumentation-ioredis': { enabled: true },
+  })],
+});
+sdk.start();
+```
+
+**Track checkout funnel metrics:**
 
 ```typescript
-// Run synthetic checkout transactions every 5 minutes
-// Using Playwright in a scheduled Lambda/Cloud Function
+// lib/metrics/checkout-metrics.ts
+import { metrics } from '@opentelemetry/api';
 
-import {chromium} from 'playwright';
+const meter = metrics.getMeter('commerce-checkout');
 
-export async function syntheticCheckout() {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
+const checkoutStarted = meter.createCounter('checkout.started');
+const checkoutCompleted = meter.createCounter('checkout.completed');
+const paymentAttempts = meter.createCounter('payment.attempts');
+const paymentSuccesses = meter.createCounter('payment.successes');
+const paymentFailures = meter.createCounter('payment.failures');
+const orderCreationDuration = meter.createHistogram('order.creation.duration_ms', {
+  boundaries: [100, 250, 500, 1000, 2000, 5000, 10000],
+});
 
-  const start = Date.now();
-  try {
-    await page.goto('https://mystore.com/products/test-product');
-    await page.click('[data-testid="add-to-cart"]');
-    await page.goto('https://mystore.com/checkout');
-    await page.waitForSelector('[data-testid="payment-form"]', {timeout: 5000});
+export const checkoutMetrics = {
+  recordCheckoutStart(channel: string) {
+    checkoutStarted.add(1, { channel });
+  },
+  recordCheckoutComplete(channel: string, paymentMethod: string) {
+    checkoutCompleted.add(1, { channel, payment_method: paymentMethod });
+  },
+  recordPaymentAttempt(gateway: string, method: string) {
+    paymentAttempts.add(1, { gateway, method });
+  },
+  recordPaymentSuccess(gateway: string, method: string) {
+    paymentSuccesses.add(1, { gateway, method });
+  },
+  recordPaymentFailure(gateway: string, declineCode: string) {
+    paymentFailures.add(1, { gateway, decline_code: declineCode });
+  },
+  recordOrderCreation(durationMs: number, channel: string) {
+    orderCreationDuration.record(durationMs, { channel });
+  },
+};
+```
 
-    const duration = Date.now() - start;
-    await metrics.gauge('synthetic.checkout.duration_ms', duration);
-    await metrics.increment('synthetic.checkout.success');
-  } catch (err) {
-    await metrics.increment('synthetic.checkout.failure');
-    await alertOpsTeam('Synthetic checkout failed', err);
-  } finally {
-    await browser.close();
-  }
+**PromQL queries for Grafana dashboard panels:**
+
+```promql
+# Payment success rate (gauge panel — target 95%)
+rate(payment_successes_total[5m])
+/
+(rate(payment_successes_total[5m]) + rate(payment_failures_total[5m]))
+
+# Checkout P99 latency
+histogram_quantile(0.99,
+  sum(rate(order_creation_duration_ms_bucket[5m])) by (le, channel)
+)
+
+# Checkout funnel conversion rate
+rate(checkout_completed_total[1h]) / rate(checkout_started_total[1h])
+
+# Payment failures by decline code (top 5)
+topk(5, sum(rate(payment_failures_total[5m])) by (decline_code))
+```
+
+**Prometheus alerting rules:**
+
+```yaml
+# prometheus/commerce-alerts.yaml
+groups:
+  - name: commerce-critical
+    rules:
+      - alert: PaymentSuccessRateLow
+        expr: |
+          (
+            rate(payment_successes_total[5m]) /
+            (rate(payment_successes_total[5m]) + rate(payment_failures_total[5m]))
+          ) < 0.90
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Payment success rate below 90%"
+          description: "Rate is {{ $value | humanizePercentage }}. Check Stripe status page and recent deployments."
+          runbook: "https://wiki.mystore.com/runbooks/payment-failures"
+
+      - alert: CheckoutHighLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(order_creation_duration_ms_bucket[5m])) by (le)
+          ) > 5000
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Checkout P99 latency above 5 seconds"
+          description: "P99 is {{ $value }}ms. Check database slow query log and Redis connection pool."
+
+      - alert: CheckoutServiceDown
+        expr: rate(checkout_started_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No checkouts being started — possible service outage"
+```
+
+**Add Real User Monitoring for Core Web Vitals:**
+
+```typescript
+// lib/rum.ts — initialize in root layout
+import { onCLS, onINP, onLCP, onFCP, onTTFB } from 'web-vitals';
+
+function sendVital(metric: any) {
+  navigator.sendBeacon?.('/api/rum/vitals', JSON.stringify({
+    name: metric.name,
+    value: metric.value,
+    rating: metric.rating, // 'good', 'needs-improvement', 'poor'
+    page: window.location.pathname,
+  }));
+}
+
+export function initRUM() {
+  onCLS(sendVital);
+  onINP(sendVital);
+  onLCP(sendVital);
+  onFCP(sendVital);
+  onTTFB(sendVital);
 }
 ```
 
 ## Best Practices
 
-- **Alert on symptoms, not causes** — alert on "payment success rate < 90%" (a symptom), not on "Stripe API latency > 500ms" (a cause); symptom-based alerts fire faster and are more actionable
-- **Set burn-rate alerts for SLOs** — use multi-window burn-rate alerting (1h and 6h windows) so you're alerted when you're burning through your error budget too fast before the SLO window closes
-- **Track checkout funnel step-by-step** — instrument each step (cart → checkout → payment → confirmation) separately so you can pinpoint exactly where users are dropping off
-- **Monitor decline codes, not just payment failure counts** — a 10% failure rate dominated by "insufficient_funds" is different from one dominated by "do_not_honor" (possible fraud or issuer outage); they require different responses
-- **Use synthetic monitoring for checkout availability** — real-user monitoring depends on actual traffic; synthetic transactions run even at 3 AM during low traffic and catch outages before customers do
-- **Set `for` duration in alerts to avoid flapping** — a 30-second spike in latency is normal; alerts with `for: 2m` only fire if the condition is sustained for 2 minutes
-- **Keep runbooks linked in alert annotations** — every alert should have a `runbook` annotation pointing to a page describing how to diagnose and resolve the specific condition
+- **Alert on symptoms, not causes** — alert on "payment success rate < 90%" (a symptom affecting revenue), not "Stripe API latency > 500ms" (a cause); symptom-based alerts fire faster and are more actionable
+- **Track checkout funnel step-by-step** — instrument each step (cart → checkout → payment → confirmation) separately so you can identify exactly where users drop off
+- **Monitor decline codes, not just failure counts** — a 10% failure rate dominated by `insufficient_funds` is different from `do_not_honor` (possible fraud or issuer outage); they require completely different responses
+- **Use synthetic monitoring for availability** — RUM depends on real traffic; scheduled synthetic checkout flows (Playwright + Lambda) catch outages at 3 AM before customers do
+- **Link runbooks in every alert** — every alert annotation should include a `runbook` URL pointing to a page describing how to diagnose and resolve that specific condition
+- **Set `for` duration to avoid alert flapping** — a 30-second latency spike is normal; alerts with `for: 2m` only fire if the condition is sustained
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Too many alerts, all low signal | Start with 3–5 high-value alerts (payment failures, checkout latency, service down); add more only after validating each fires at the right threshold |
-| Metrics missing during checkout pipeline errors | Instrument metrics before and after error-prone operations; a failed payment should still increment `payment.failures` even if it throws |
+| Too many alerts, low signal-to-noise | Start with 3–5 high-value alerts (payment failures, checkout latency, service down); add more only after validating each fires at the right threshold |
+| Metrics not recorded when errors occur | Instrument metrics before and after error-prone operations; a failed payment should still increment `payment.failures` even if it throws an exception |
 | Dashboard looks healthy but revenue is down | Add business metrics (orders per minute, revenue per hour) alongside technical metrics; technical SLOs can be met while UX issues suppress conversion |
-| Alert fires in staging noise, ignored in production | Use separate alert routing rules for production vs staging; suppress staging alerts outside business hours |
-| RUM data dominated by bots | Filter RUM data by user agent and session characteristics; bot traffic skews Core Web Vitals and can hide real user performance regressions |
+| RUM data skewed by bots | Filter RUM events by user agent; bot traffic distorts Core Web Vitals and can hide real user performance regressions |
+| Shopify GA4 funnel shows no data | Verify that the GA4 Measurement ID in **Online Store → Preferences** matches your GA4 property; check the GA4 DebugView to confirm events are firing |
 
 ## Related Skills
 

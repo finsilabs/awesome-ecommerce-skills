@@ -1,14 +1,14 @@
 ---
 name: customer-support-integration
-description: "Connect Zendesk or Intercom to your store so support agents see full order history and customer details without switching tools"
+description: "Connect your helpdesk (Gorgias, Zendesk, Intercom) to your store so support agents see full order history and customer details without switching tools"
 category: customer-crm
 risk: safe
 source: curated
 date_added: "2026-03-12"
-tags: [zendesk, intercom, helpdesk, customer-support, order-context, ticket, crm-integration, support-automation]
+tags: [zendesk, intercom, helpdesk, customer-support, order-context, ticket, crm-integration, support-automation, gorgias]
 triggers: ["zendesk integration", "intercom integration", "helpdesk integration", "order context in support", "customer support integration", "inject order data into zendesk", "support ticket automation"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,276 +16,227 @@ difficulty: intermediate
 
 ## Overview
 
-Injecting order and customer context into your helpdesk reduces average handle time by 40–60% because agents no longer need to switch between systems to look up order status, shipping info, or purchase history. This skill covers building Zendesk and Intercom integrations that automatically attach order context to tickets, triggering support conversations from order events (delivery failure, refund requested), and syncing support metadata back to your CRM.
+Connecting your helpdesk to your store automatically surfaces order history, tracking information, and customer spend inside every support ticket — reducing average handle time by 40–60% because agents don't switch between systems. For Shopify, Gorgias is the purpose-built helpdesk that's native to the platform. For other platforms and for Zendesk/Intercom users, dedicated integration apps connect the systems. Only build a custom integration if you need deep two-way automation (auto-create tickets from order events, VIP routing, CSAT sync back to CRM) that off-the-shelf apps don't provide.
 
 ## When to Use This Skill
 
-- When support agents repeatedly ask customers for their order number because it is not auto-populated in the ticket
+- When support agents repeatedly ask customers for their order number because it doesn't auto-populate in the ticket
 - When implementing Zendesk Sunshine Apps or Intercom Canvas Kit to show order details inside the agent interface
-- When automating ticket creation from order events (failed delivery, fraud hold, out-of-stock backorder)
+- When automating ticket creation from order events (failed delivery, fraud hold, backorder)
 - When routing tickets by order value to prioritize VIP customers
-- When syncing support sentiment and CSAT scores back to your CRM for customer health scoring
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
-**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
+- When syncing support CSAT scores back to your CRM for customer health scoring
 
 ## Core Instructions
 
-1. **Create a Zendesk Sunshine App (sidebar panel) that shows order context**
+### Step 1: Determine platform and choose the right helpdesk
 
-   Zendesk Apps are React apps served from your server and displayed in the ticket sidebar:
+| Platform | Best Helpdesk | Why |
+|----------|--------------|-----|
+| **Shopify** | Gorgias | Purpose-built for Shopify; deep order data access, macro variables that pull order info, 1-click actions (refund, cancel, reorder) from within the ticket |
+| **Shopify** | Zendesk | Good for teams that already use Zendesk; install the Shopify app for Zendesk from the App Store |
+| **WooCommerce** | Gorgias or Freshdesk | Gorgias supports WooCommerce; Freshdesk + WooCommerce plugin for teams on Freshdesk |
+| **BigCommerce** | Gorgias or Zendesk | Both have BigCommerce integrations in their app marketplaces |
+| **Custom / Headless** | Zendesk or Intercom with custom integration | Build a sidebar app to inject order context into tickets |
 
-   ```typescript
-   // server/zendesk-app-data.ts
-   // GET /api/support/zendesk-context?ticketId=xxx
-   export async function getZendeskContext(req: Request, res: Response) {
-     const { ticketId } = req.query;
+---
 
-     // Fetch the ticket from Zendesk to get the requester email
-     const ticket = await fetchZendeskTicket(ticketId as string);
-     const customerEmail = ticket.via?.source?.from?.address ?? ticket.requester?.email;
+### Step 2: Platform-specific setup
 
-     if (!customerEmail) return res.json({ customer: null, orders: [] });
+---
 
-     const customer = await db.customers.findByEmail(customerEmail, {
-       include: ['tags', 'segmentScore'],
-     });
+#### Shopify
 
-     const recentOrders = await db.orders.findManyByCustomer(customer?.id, {
-       limit: 5,
-       orderBy: { createdAt: 'desc' },
-       include: ['lineItems.product', 'shipments'],
-     });
+**Option A: Gorgias (recommended for Shopify)**
 
-     res.json({
-       customer: customer ? {
-         id: customer.id,
-         lifetimeValue: customer.lifetimeSpendCents / 100,
-         totalOrders: customer.orderCount,
-         segment: customer.segmentScore?.segment,
-         tags: customer.tags,
-       } : null,
-       orders: recentOrders.map((o) => ({
-         number: o.number,
-         status: o.status,
-         total: o.totalCents / 100,
-         createdAt: o.createdAt,
-         trackingUrl: o.shipments[0]?.trackingUrl,
-         items: o.lineItems.map((i) => ({ name: i.product.name, quantity: i.quantity })),
-       })),
-     });
-   }
-   ```
+Gorgias is the most widely-used Shopify support helpdesk with the deepest platform integration.
 
-2. **Register Zendesk webhooks to auto-create tickets from order events**
+1. Install **Gorgias** from the Shopify App Store
+2. Authorize Gorgias to access your Shopify store data
+3. Gorgias automatically pulls order history, customer details, and shipping status into every ticket when a customer emails from the address on their Shopify account
 
-   ```typescript
-   // POST /api/support/zendesk/create-ticket
-   async function createZendeskTicket(params: {
-     subject: string;
-     body: string;
-     customerEmail: string;
-     orderId: string;
-     priority: 'urgent' | 'high' | 'normal' | 'low';
-     tags?: string[];
-   }) {
-     const response = await fetch(`https://${process.env.ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/tickets.json`, {
-       method: 'POST',
-       headers: {
-         Authorization: `Basic ${Buffer.from(`${process.env.ZENDESK_EMAIL}/token:${process.env.ZENDESK_API_TOKEN}`).toString('base64')}`,
-         'Content-Type': 'application/json',
-       },
-       body: JSON.stringify({
-         ticket: {
-           subject: params.subject,
-           comment: { body: params.body },
-           requester: { email: params.customerEmail },
-           priority: params.priority,
-           tags: [...(params.tags ?? []), `order-${params.orderId}`],
-           custom_fields: [
-             { id: process.env.ZENDESK_ORDER_ID_FIELD_ID, value: params.orderId },
-           ],
-         },
-       }),
-     });
+**What Gorgias shows agents automatically:**
+- Customer name, email, total spent, order count
+- All past orders with status, items, and tracking
+- Live chat history across all channels
 
-     return response.json();
-   }
+**Setting up automation rules:**
+1. Go to **Gorgias → Automation → Rules**
+2. Create rules like:
+   - Auto-tag tickets with "VIP" when customer lifetime value > $500
+   - Auto-assign VIP tickets to a senior support team
+   - Auto-reply with order status when ticket contains "where is my order"
 
-   // Trigger on delivery failure
-   async function onDeliveryFailed(shipmentId: string) {
-     const shipment = await db.shipments.findById(shipmentId, { include: ['order.customer'] });
-     await createZendeskTicket({
-       subject: `Delivery failed — Order #${shipment.order.number}`,
-       body: `The delivery attempt for order #${shipment.order.number} failed on ${new Date().toDateString()}. Carrier: ${shipment.carrier}. Tracking: ${shipment.trackingNumber}.`,
-       customerEmail: shipment.order.customer.email,
-       orderId: shipment.orderId,
-       priority: 'high',
-       tags: ['delivery-failure', 'auto-created'],
-     });
-   }
-   ```
+**1-click actions from within Gorgias:**
+- Refund, cancel, or duplicate an order directly from the ticket sidebar
+- Apply discount codes to orders without leaving Gorgias
+- Create a draft order for a replacement
 
-3. **Inject order context into Intercom conversations**
+**Gorgias macros (template responses with dynamic variables):**
+- Create macros that pull in order data automatically: `Your order {{order.name}} is currently {{order.fulfillment_status}}`
+- Go to **Settings → Macros** to create and manage macros
 
-   Intercom uses a Canvas Kit app to show custom data in the conversation sidebar:
+---
 
-   ```typescript
-   // POST /api/support/intercom/canvas — called by Intercom when a conversation is opened
-   export async function renderIntercomCanvas(req: Request, res: Response) {
-     const { conversation_id, contact } = req.body;
-     const customerEmail = contact?.email;
+#### WooCommerce
 
-     const recentOrder = customerEmail
-       ? await db.orders.findLatestByEmail(customerEmail, { include: ['shipments'] })
-       : null;
+**Gorgias for WooCommerce:**
 
-     const canvas = {
-       content: {
-         components: recentOrder
-           ? [
-               { type: 'text', text: `Last Order: #${recentOrder.number}`, style: 'header' },
-               { type: 'text', text: `Status: ${recentOrder.status}`, style: 'paragraph' },
-               { type: 'text', text: `Total: $${(recentOrder.totalCents / 100).toFixed(2)}`, style: 'paragraph' },
-               { type: 'text', text: `Placed: ${recentOrder.createdAt.toDateString()}`, style: 'muted' },
-               ...(recentOrder.shipments[0]?.trackingUrl
-                 ? [{ type: 'button', id: 'track', label: 'Track Package', action: { type: 'url', url: recentOrder.shipments[0].trackingUrl } }]
-                 : []),
-             ]
-           : [{ type: 'text', text: 'No recent orders found', style: 'paragraph' }],
-       },
-     };
+1. Install the **Gorgias** WooCommerce plugin from WordPress.org or connect via Gorgias integrations
+2. Connect your WooCommerce store — Gorgias pulls order history automatically
 
-     res.json(canvas);
-   }
-   ```
+**Freshdesk for WooCommerce:**
+1. Install **Freshdesk Help Desk for WooCommerce** from the WordPress plugin directory
+2. The plugin creates Freshdesk tickets from WooCommerce order events
+3. Freshdesk agents see customer order details in the ticket sidebar via the integration
 
-4. **Sync support CSAT scores back to your CRM**
+**Manual integration with Zendesk:**
+1. Install **Zendesk for WooCommerce** from the Zendesk App Marketplace
+2. Agents can search for customers by email and see their order history in the ticket sidebar
 
-   ```typescript
-   // POST /api/support/zendesk/webhook — Zendesk sends events here
-   export async function handleZendeskWebhook(req: Request, res: Response) {
-     const { type, ticket_id, satisfaction } = req.body;
+---
 
-     if (type === 'ticket.satisfaction_rating.created') {
-       const ticket = await fetchZendeskTicket(ticket_id);
-       const orderId = ticket.custom_fields?.find((f: any) => f.id === process.env.ZENDESK_ORDER_ID_FIELD_ID)?.value;
-       const customerEmail = ticket.requester?.email;
+#### BigCommerce
 
-       if (customerEmail) {
-         await db.customers.updateByEmail(customerEmail, {
-           lastCsatScore: satisfaction.score, // 'good' | 'bad'
-           lastCsatAt: new Date(),
-         });
+**Gorgias for BigCommerce:**
+1. Install **Gorgias** from the BigCommerce App Marketplace
+2. Connect your store — same deep integration as Shopify
 
-         if (satisfaction.score === 'bad') {
-           // Flag for proactive outreach
-           await db.customerFlags.create({ email: customerEmail, flag: 'poor_support_experience', createdAt: new Date() });
-         }
-       }
-     }
+**Zendesk for BigCommerce:**
+1. Install the BigCommerce app from the Zendesk App Marketplace
+2. Agents see customer details and order history in the ticket sidebar
 
-     res.sendStatus(200);
-   }
-   ```
+---
 
-5. **Route tickets by customer segment to prioritize VIPs**
+#### Custom / Headless
 
-   ```typescript
-   async function applyTicketRoutingRules(ticketId: string) {
-     const ticket = await fetchZendeskTicket(ticketId);
-     const customerEmail = ticket.requester?.email;
-     const customer = await db.customers.findByEmail(customerEmail, { include: ['segmentScore'] });
+Build a Zendesk Sunshine App (sidebar panel) or Intercom Canvas Kit app that injects order context into every ticket:
 
-     if (!customer) return;
-
-     let priority: string = 'normal';
-     let groupId: string = process.env.ZENDESK_DEFAULT_GROUP_ID!;
-
-     // VIP routing: champions and cannot_lose_them segments get urgent priority
-     if (['champions', 'cannot_lose_them'].includes(customer.segmentScore?.segment ?? '')) {
-       priority = 'urgent';
-       groupId = process.env.ZENDESK_VIP_GROUP_ID!;
-     } else if (customer.lifetimeSpendCents >= 100000) {
-       priority = 'high';
-     }
-
-     await fetch(`https://${process.env.ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/tickets/${ticketId}.json`, {
-       method: 'PUT',
-       headers: { Authorization: getZendeskAuthHeader(), 'Content-Type': 'application/json' },
-       body: JSON.stringify({ ticket: { priority, group_id: groupId } }),
-     });
-   }
-   ```
-
-## Examples
-
-### One-click refund action from within Zendesk
-
-Add a sidebar button that triggers a refund directly from the ticket:
+**Zendesk sidebar app — data endpoint:**
 
 ```typescript
-// POST /api/support/zendesk/refund — called from Zendesk App button click
-export async function processRefundFromTicket(req: Request, res: Response) {
-  const { orderId, amount, reason, agentId } = req.body;
+// GET /api/support/zendesk-context?email=customer@example.com
+export async function getZendeskContext(req: Request, res: Response) {
+  const customerEmail = (req.query.email as string)?.toLowerCase();
+  if (!customerEmail) return res.json({ customer: null, orders: [] });
 
-  // Verify the agent has permission
-  const agent = await db.supportAgents.findByZendeskId(agentId);
-  if (!agent || agent.maxRefundAmount < amount) {
-    return res.status(403).json({ error: 'Refund amount exceeds agent authorization' });
+  const [customer, recentOrders] = await Promise.all([
+    db.customers.findByEmail(customerEmail, { include: ['segmentScore'] }),
+    db.orders.findMany({
+      where: { customerEmail },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      include: { lineItems: { include: { product: true } }, shipments: true },
+    }),
+  ]);
+
+  res.json({
+    customer: customer ? {
+      lifetimeValue: customer.totalSpentCents / 100,
+      orderCount: customer.orderCount,
+      segment: customer.segmentScore?.segment,
+      tags: customer.tags,
+    } : null,
+    orders: recentOrders.map(o => ({
+      number: o.orderNumber,
+      status: o.status,
+      total: o.totalCents / 100,
+      createdAt: o.createdAt,
+      trackingUrl: o.shipments[0]?.trackingUrl,
+      items: o.lineItems.map(i => ({ name: i.product.name, quantity: i.quantity })),
+    })),
+  });
+}
+```
+
+**Route high-value tickets to VIP queue:**
+
+```typescript
+// Called when a new Zendesk ticket is created (via Zendesk webhook)
+export async function applyTicketRouting(ticketId: string) {
+  const ticket = await fetchZendeskTicket(ticketId);
+  const customerEmail = ticket.requester?.email?.toLowerCase();
+  if (!customerEmail) return;
+
+  const customer = await db.customers.findByEmail(customerEmail, { include: ['segmentScore'] });
+  if (!customer) return;
+
+  const isVIP = ['champions', 'cannot_lose_them'].includes(customer.segmentScore?.segment ?? '');
+  const isHighValue = customer.totalSpentCents >= 100000;  // $1,000+
+
+  if (isVIP || isHighValue) {
+    await fetch(`https://${process.env.ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/tickets/${ticketId}.json`, {
+      method: 'PUT',
+      headers: { Authorization: getZendeskAuthHeader(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ticket: {
+          priority: 'urgent',
+          group_id: process.env.ZENDESK_VIP_GROUP_ID,
+          tags: [...(ticket.tags ?? []), 'vip-customer'],
+        },
+      }),
+    });
   }
+}
 
-  const refund = await processRefund({ orderId, amountCents: Math.round(amount * 100), reason });
-
-  // Post an internal note to the ticket
-  await addZendeskTicketNote(req.body.ticketId, `Refund of $${amount.toFixed(2)} processed by agent ${agent.name}. Refund ID: ${refund.id}`);
-
-  res.json({ refundId: refund.id });
+// Auto-create ticket on delivery failure
+export async function onDeliveryFailed(shipmentId: string) {
+  const shipment = await db.shipments.findById(shipmentId, { include: ['order.customer'] });
+  await fetch(`https://${process.env.ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/tickets.json`, {
+    method: 'POST',
+    headers: { Authorization: getZendeskAuthHeader(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ticket: {
+        subject: `Delivery failed — Order #${shipment.order.orderNumber}`,
+        comment: { body: `Delivery attempt failed on ${new Date().toDateString()}. Carrier: ${shipment.carrier}. Tracking: ${shipment.trackingNumber}.` },
+        requester: { email: shipment.order.customer.email },
+        priority: 'high',
+        tags: ['delivery-failure', 'auto-created'],
+      },
+    }),
+  });
 }
 ```
 
-### Sync order updates back to Zendesk ticket as note
+---
 
-```typescript
-// In order status webhook handler
-async function syncOrderStatusToZendesk(orderId: string, newStatus: string) {
-  const ticket = await db.zendesk_tickets.findByOrderId(orderId);
-  if (!ticket) return;
+### Step 3: Set up ticket routing rules for VIP customers
 
-  await addZendeskTicketNote(ticket.zendeskTicketId, `Order #${orderId} status changed to: ${newStatus}`);
-}
-```
+Ensure your most valuable customers get faster responses by routing their tickets to your best agents.
+
+**Gorgias routing rules:**
+1. Go to **Automation → Rules → Create Rule**
+2. Condition: `Customer → Total spent → is greater than → $500`
+3. Actions: `Add tag → vip`, `Assign to → VIP Support Team`, `Set priority → Urgent`
+
+**Zendesk trigger:**
+1. Go to **Admin → Business Rules → Triggers → Add trigger**
+2. Conditions: ticket tag contains "vip-customer"
+3. Actions: assign to group (VIP Support), set priority to Urgent
+
+**Define SLA targets:**
+- VIP customers: first response within 1 hour
+- Standard customers: first response within 24 hours
+- Set these in **Gorgias → Settings → Business hours and SLAs** or **Zendesk → Admin → SLAs**
 
 ## Best Practices
 
-- **Attach the order ID to every ticket as a custom field** — this is the key that links your support system to your commerce database and enables two-way sync
-- **Prioritize tickets by customer lifetime value** — a champion customer waiting 4 hours is far more costly than a first-time buyer
-- **Use webhook delivery with retry** — Zendesk and Intercom webhooks can fail; ensure your endpoint returns 200 within 5 seconds and implement retry for critical events
-- **Keep the Intercom/Zendesk app data fresh** — cache order context for 60 seconds maximum; an agent seeing stale order status is worse than seeing a loading spinner
-- **Never store Zendesk API tokens in client-side code** — the Zendesk API token has write access to all tickets; always proxy requests through your server
-- **Log every agent action taken via the sidebar** — maintain an audit trail of refunds, order edits, and status changes initiated from within the helpdesk
-- **Segment auto-created tickets** with specific tags — `auto-created`, `delivery-failure` etc. — so manual and automated tickets can be analyzed separately
+- **Use Gorgias for Shopify stores** — it's the purpose-built solution; the time saved on setup and the depth of integration are worth the subscription cost
+- **Never store helpdesk API tokens in client-side code** — Zendesk and Intercom API tokens have write access to all tickets; always proxy requests through your server
+- **Attach the order ID to every ticket** — this is the key that links your support system to your commerce database and enables two-way sync and automation
+- **Keep order context fresh in the sidebar** — cache data for 60 seconds maximum; an agent seeing stale order status is worse than a loading spinner
+- **Log every agent action taken on an order** — maintain an audit trail of refunds, order changes, and status updates initiated from within the helpdesk
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Zendesk App shows wrong customer because email lookup is case-sensitive | Normalize all emails to lowercase before lookup; `jane@example.com` and `Jane@example.com` are the same customer |
-| Webhook payload from Zendesk is not verified | Implement HMAC signature verification using the Zendesk webhook signing secret before processing any payload |
-| Intercom Canvas app times out loading order data | Canvas Kit has a 5-second timeout — ensure your order lookup query is indexed and responds in < 2 seconds |
-| Order ID custom field not populated for inbound tickets | Auto-detect the order number from the ticket subject/body using regex and backfill the custom field via the Zendesk API |
+| Agent sees wrong customer because email lookup is case-sensitive | Normalize all emails to lowercase before lookup; `Jane@example.com` and `jane@example.com` must resolve to the same customer |
+| Webhook payload not verified | Implement HMAC signature verification using the Zendesk/Gorgias webhook signing secret before processing any payload |
 | CSAT sync creates duplicate customer records | Always look up by email first; never create a new customer record from a support webhook — link to existing or skip |
+| Auto-created tickets missing order context | Set the order ID in a custom ticket field at creation time; this enables bidirectional sync and accurate routing |
 
 ## Related Skills
 
 - @live-chat-commerce
 - @customer-segmentation
 - @customer-lifetime-value
-- @product-reviews-ratings
-- @referral-program

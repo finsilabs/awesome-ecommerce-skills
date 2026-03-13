@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [pci-dss, security, compliance, payments, encryption, tokenization, saq]
 triggers: ["implement PCI compliance", "PCI-DSS requirements", "secure payment data", "PCI SAQ selection"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,512 +16,197 @@ difficulty: advanced
 
 ## Overview
 
-Implement PCI-DSS (Payment Card Industry Data Security Standard) requirements for e-commerce applications including scope reduction through tokenization, SAQ (Self-Assessment Questionnaire) selection, network segmentation, encryption at rest and in transit, access control, logging and monitoring, and vulnerability management. This skill covers the 12 PCI-DSS requirements as they apply to web-based commerce, the practical engineering tasks to achieve compliance, and strategies to minimize your cardholder data environment (CDE).
+PCI-DSS (Payment Card Industry Data Security Standard) applies to any merchant that accepts card payments. The scope and complexity of your compliance obligations depend almost entirely on how card data flows through your systems. Merchants who use hosted payment forms (Shopify Payments, Stripe Checkout, PayPal hosted) can qualify for the simplest assessment (SAQ A, ~22 controls). Merchants who run custom payment pages face the most complex assessment (SAQ D, ~330 controls). The single most important PCI decision is: choose a payment method that minimizes your scope.
 
 ## When to Use This Skill
 
 - When accepting credit card payments and need to determine your PCI compliance scope
 - When selecting between SAQ A, SAQ A-EP, SAQ D, or other questionnaire types
-- When implementing tokenization to reduce PCI scope (Stripe Elements, Braintree, Adyen)
+- When implementing tokenization to reduce PCI scope
 - When setting up logging, monitoring, and alerting infrastructure for PCI audit readiness
 - When preparing for a QSA (Qualified Security Assessor) audit or completing an SAQ
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles PCI compliance, SSL, and infrastructure security. Focus on app-level security, GDPR consent (via Shopify Privacy API), and access controls.
-**WooCommerce**: You manage your own hosting security. Use security plugins (Wordfence, Sucuri), SSL certificate, and PCI-compliant payment gateways. GDPR handled via cookie consent plugins.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Understanding of your platform's security model, relevant compliance requirements
-
 ## Core Instructions
 
-1. **Determine your SAQ type based on payment integration**
+### Step 1: Determine your PCI scope based on payment method
 
-   The SAQ type depends on how cardholder data flows through your systems:
+The most important decision in PCI compliance is how card data flows through your environment:
 
-   ```
-   Decision tree for SAQ selection:
+| Integration Method | SAQ Type | Approx. Controls | Who This Applies To |
+|-------------------|----------|-----------------|---------------------|
+| Fully hosted checkout (Shopify Payments, Stripe Checkout, PayPal hosted) | **SAQ A** | ~22 | Card data never touches your server; customer is redirected to the processor's payment page |
+| JavaScript tokenization on your page (Stripe Elements, Braintree Drop-in) | **SAQ A-EP** | ~191 | Card data is entered in an iframe on your page; your server never sees raw card numbers |
+| Your server touches card data | **SAQ D** | ~330 | Card data passes through your application server |
 
-   Does cardholder data ever touch your server?
-   ├── YES → SAQ D (most requirements apply, ~330 controls)
-   └── NO
-       ├── Is the payment form an iframe from the processor?
-       │   ├── YES (Stripe Checkout, PayPal hosted) → SAQ A (~22 controls)
-       │   └── NO
-       │       └── JS from processor collects card data on your page?
-       │           ├── YES (Stripe Elements, Braintree Drop-in) → SAQ A-EP (~191 controls)
-       │           └── NO → Consult your QSA
-   ```
+**Recommendation: Always choose SAQ A when possible.** Use Shopify Payments, Stripe Checkout, or a PayPal-hosted checkout. Moving from SAQ D to SAQ A reduces your annual compliance effort by ~85%.
 
-   Scope reduction strategy -- always prefer SAQ A when possible:
+### Step 2: Platform-specific PCI setup
 
-   ```typescript
-   // SAQ A: Use Stripe Checkout (hosted payment page) — card data never touches your server
-   // This is the gold standard for scope reduction
-   const session = await stripe.checkout.sessions.create({
-     line_items: [{ price: priceId, quantity: 1 }],
-     mode: 'payment',
-     success_url: `${YOUR_DOMAIN}/success?session_id={CHECKOUT_SESSION_ID}`,
-     cancel_url: `${YOUR_DOMAIN}/cancel`,
-   });
-   // Redirect customer to session.url — Stripe hosts the entire payment form
+---
 
-   // SAQ A-EP: Stripe Elements (JS tokenization on your page)
-   // Card data is collected in an iframe but your page JS controls the flow
-   const elements = stripe.elements({ clientSecret });
-   const paymentElement = elements.create('payment');
-   paymentElement.mount('#payment-element');
-   ```
+#### Shopify
 
-2. **Implement encryption in transit (Requirement 4)**
+Shopify is a PCI-DSS Level 1 Service Provider. When you use Shopify Payments or any payment gateway through Shopify's checkout, Shopify handles PCI compliance for the payment processing environment.
 
-   ```nginx
-   # nginx.conf — TLS 1.2+ only, strong cipher suites
-   server {
-       listen 443 ssl http2;
-       server_name store.example.com;
+**Your PCI scope as a Shopify merchant:**
+- Using Shopify's hosted checkout and Shopify Payments: **SAQ A** — Shopify handles everything
+- You are responsible only for: ensuring your Shopify admin access is secured (strong passwords, 2FA), not storing cardholder data in apps or spreadsheets, and vetting third-party apps for security
 
-       ssl_certificate     /etc/ssl/certs/store.example.com.pem;
-       ssl_certificate_key /etc/ssl/private/store.example.com.key;
+**Completing your SAQ A on Shopify:**
+1. Download the SAQ A from the PCI Security Standards Council (pcisecuritystandards.org)
+2. Shopify's merchant PCI compliance documentation is at help.shopify.com/en/manual/payments/pci-compliance
+3. Shopify provides an Attestation of Compliance (AoC) for their platform — use this as evidence for your acquirer
 
-       # PCI-DSS requires TLS 1.2 or higher
-       ssl_protocols TLSv1.2 TLSv1.3;
+**Key controls you still own:**
+- Admin account security: 2FA for all Shopify staff accounts (Settings → Users → require 2FA)
+- Not storing card numbers anywhere outside Shopify (no spreadsheets, no third-party databases)
+- Vetting installed apps for data security practices
 
-       # Strong cipher suites only
-       ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
-       ssl_prefer_server_ciphers on;
+---
 
-       # HSTS (Requirement 4.1)
-       add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+#### WooCommerce
 
-       # Redirect HTTP to HTTPS
-       if ($scheme != "https") {
-           return 301 https://$host$request_uri;
-       }
+WooCommerce itself is not PCI-compliant — compliance depends on your hosting, payment gateway, and implementation choices.
 
-       # Security headers
-       add_header X-Content-Type-Options "nosniff" always;
-       add_header X-Frame-Options "SAMEORIGIN" always;
-       add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://js.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com;" always;
-   }
-   ```
+**Minimize scope: use a hosted payment gateway:**
 
-3. **Set up logging and monitoring (Requirements 10 & 11)**
-
-   ```typescript
-   // Centralized audit logging for PCI-DSS Requirement 10
-   interface AuditLogEntry {
-     timestamp: string;        // ISO 8601 with timezone
-     userId: string;           // Who performed the action
-     userIp: string;           // Source IP
-     action: string;           // What was done
-     resource: string;         // What was affected
-     resourceId?: string;
-     outcome: 'success' | 'failure';
-     details?: Record<string, unknown>;
-   }
-
-   class AuditLogger {
-     constructor(private readonly transport: LogTransport) {}
-
-     async log(entry: Omit<AuditLogEntry, 'timestamp'>): Promise<void> {
-       const fullEntry: AuditLogEntry = {
-         ...entry,
-         timestamp: new Date().toISOString(),
-       };
-
-       // Write to immutable log store (Requirement 10.5 — logs must be tamper-proof)
-       await this.transport.write(fullEntry);
-     }
-
-     // Requirement 10.2 — specific events that MUST be logged
-     async logAuthentication(userId: string, ip: string, success: boolean): Promise<void> {
-       await this.log({
-         userId,
-         userIp: ip,
-         action: 'authentication',
-         resource: 'session',
-         outcome: success ? 'success' : 'failure',
-       });
-     }
-
-     async logAccessToCardholder(userId: string, ip: string, resource: string): Promise<void> {
-       await this.log({
-         userId,
-         userIp: ip,
-         action: 'access_cardholder_data',
-         resource,
-         outcome: 'success',
-       });
-     }
-
-     async logAdminAction(userId: string, ip: string, action: string, details: Record<string, unknown>): Promise<void> {
-       await this.log({
-         userId,
-         userIp: ip,
-         action: `admin:${action}`,
-         resource: 'system',
-         outcome: 'success',
-         details,
-       });
-     }
-
-     async logPrivilegeEscalation(userId: string, ip: string, newRole: string): Promise<void> {
-       await this.log({
-         userId,
-         userIp: ip,
-         action: 'privilege_change',
-         resource: 'user_role',
-         outcome: 'success',
-         details: { newRole },
-       });
-     }
-   }
-   ```
-
-4. **Implement access control (Requirements 7 & 8)**
-
-   ```typescript
-   // Role-based access control for admin panel
-   // Requirement 7: Restrict access to cardholder data by business need-to-know
-   // Requirement 8: Assign unique IDs, enforce MFA, strong passwords
-
-   enum AdminRole {
-     VIEWER = 'viewer',           // Read-only access to orders (no card data)
-     OPERATOR = 'operator',       // Process orders, manage inventory
-     ADMIN = 'admin',             // Full access, user management
-     PAYMENT_ADMIN = 'payment_admin',  // Access to payment configuration
-   }
-
-   const rolePermissions: Record<AdminRole, string[]> = {
-     [AdminRole.VIEWER]: ['orders:read', 'products:read', 'customers:read'],
-     [AdminRole.OPERATOR]: ['orders:read', 'orders:update', 'products:*', 'inventory:*'],
-     [AdminRole.ADMIN]: ['*'],
-     [AdminRole.PAYMENT_ADMIN]: ['orders:read', 'payments:*', 'refunds:*'],
-   };
-
-   function checkPermission(userRole: AdminRole, requiredPermission: string): boolean {
-     const permissions = rolePermissions[userRole] || [];
-     return permissions.some(p =>
-       p === '*' || p === requiredPermission ||
-       (p.endsWith(':*') && requiredPermission.startsWith(p.replace(':*', ':')))
-     );
-   }
-
-   // Middleware: enforce authentication + authorization
-   function requirePermission(permission: string) {
-     return async (req: Request, res: Response, next: NextFunction) => {
-       const user = req.adminUser;
-       if (!user) {
-         await auditLogger.logAuthentication('unknown', req.ip, false);
-         return res.status(401).json({ error: 'Authentication required' });
-       }
-
-       if (!checkPermission(user.role, permission)) {
-         await auditLogger.log({
-           userId: user.id,
-           userIp: req.ip,
-           action: 'access_denied',
-           resource: permission,
-           outcome: 'failure',
-         });
-         return res.status(403).json({ error: 'Insufficient permissions' });
-       }
-
-       next();
-     };
-   }
-
-   // Requirement 8.3.6: Password complexity requirements
-   const PASSWORD_POLICY = {
-     minLength: 12,
-     requireUppercase: true,
-     requireLowercase: true,
-     requireNumbers: true,
-     requireSpecialChars: true,
-     maxAge: 90,             // Days before forced rotation
-     historyCount: 4,        // Cannot reuse last N passwords
-     lockoutAttempts: 6,     // Lock after N failed attempts
-     lockoutDuration: 30,    // Minutes
-   };
-   ```
-
-5. **Configure Content Security Policy for payment pages (Requirement 6)**
-
-   ```typescript
-   // CSP middleware — Requirement 6.4.3 (PCI-DSS v4.0)
-   // All payment page scripts must be inventoried and authorized
-   function paymentPageCSP(req: Request, res: Response, next: NextFunction) {
-     const nonce = crypto.randomBytes(16).toString('base64');
-     res.locals.cspNonce = nonce;
-
-     const csp = [
-       `default-src 'self'`,
-       `script-src 'self' 'nonce-${nonce}' https://js.stripe.com`,
-       `frame-src https://js.stripe.com https://hooks.stripe.com`,
-       `connect-src 'self' https://api.stripe.com`,
-       `style-src 'self' 'nonce-${nonce}'`,
-       `img-src 'self' data: https://*.stripe.com`,
-       `font-src 'self'`,
-       `object-src 'none'`,
-       `base-uri 'self'`,
-       `form-action 'self'`,
-     ].join('; ');
-
-     res.setHeader('Content-Security-Policy', csp);
-     next();
-   }
-
-   // Requirement 6.4.3 also requires a script inventory
-   // Maintain a documented list of all scripts on payment pages:
-   const AUTHORIZED_PAYMENT_PAGE_SCRIPTS = [
-     { src: 'https://js.stripe.com/v3/', justification: 'Stripe payment tokenization', owner: 'Stripe Inc.' },
-     { src: '/js/checkout.js', justification: 'Checkout form logic', owner: 'Internal' },
-   ];
-   ```
-
-6. **Set up vulnerability scanning and patch management (Requirements 5, 6, 11)**
-
-   ```yaml
-   # .github/workflows/pci-security-scan.yml
-   name: PCI Security Scanning
-   on:
-     push:
-       branches: [main]
-     schedule:
-       - cron: '0 6 * * 1'  # Weekly Monday 6 AM — Requirement 11.3
-
-   jobs:
-     dependency-scan:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-
-         # Requirement 6.3.2: Inventory third-party software components
-         - name: Dependency audit
-           run: npm audit --audit-level=high
-
-         # Requirement 6.2.4: Software composition analysis
-         - name: Snyk vulnerability scan
-           uses: snyk/actions/node@master
-           env:
-             SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-           with:
-             args: --severity-threshold=high
-
-     container-scan:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-
-         - name: Build container
-           run: docker build -t store:latest .
-
-         # Requirement 11.3.1: Internal vulnerability scan
-         - name: Trivy container scan
-           uses: aquasecurity/trivy-action@master
-           with:
-             image-ref: 'store:latest'
-             severity: 'HIGH,CRITICAL'
-             exit-code: '1'
-
-     sast:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-
-         # Requirement 6.3.1: Static application security testing
-         - name: CodeQL analysis
-           uses: github/codeql-action/analyze@v3
-           with:
-             languages: javascript
-   ```
-
-## Examples
-
-### PCI-DSS requirements checklist for e-commerce
-
-```markdown
-## PCI-DSS v4.0 Requirements Mapped to E-commerce Engineering Tasks
-
-### 1. Network Security
-- [ ] Firewall/WAF configured to restrict inbound traffic to ports 443 only
-- [ ] Network segmentation isolates payment-processing systems from general servers
-- [ ] Database servers not directly accessible from the internet
-
-### 2. Secure Configuration
-- [ ] Default passwords changed on all systems, databases, and admin panels
-- [ ] Unnecessary services and ports disabled
-- [ ] System hardening applied (CIS benchmarks or vendor guidelines)
-
-### 3. Protect Stored Data
-- [ ] No raw PAN (card numbers) stored anywhere in your systems
-- [ ] Tokenization via Stripe/Braintree replaces card data with tokens
-- [ ] Database encryption at rest enabled (AES-256)
-
-### 4. Encrypt Transmissions
-- [ ] TLS 1.2+ enforced on all external connections
-- [ ] HSTS headers configured with min 1-year max-age
-- [ ] Internal service-to-service communication encrypted
-
-### 5. Anti-Malware
-- [ ] Container images scanned for vulnerabilities before deployment
-- [ ] Runtime protection (Falco, Sysdig) on production servers
-
-### 6. Secure Development
-- [ ] SAST (static analysis) runs in CI/CD pipeline
-- [ ] Dependency scanning (npm audit, Snyk) with auto-PR for critical CVEs
-- [ ] Code review required before merge to main branch
-- [ ] Payment page script inventory documented (Req 6.4.3)
-
-### 7-8. Access Control
-- [ ] Role-based access control with least privilege
-- [ ] Unique user IDs for all admin and system accounts
-- [ ] MFA enabled for all admin access
-- [ ] Password policy enforces 12+ characters, complexity, 90-day rotation
-
-### 9. Physical Security
-- [ ] Cloud provider SOC 2 / PCI-DSS attestation on file
-- [ ] No local storage of cardholder data on workstations
-
-### 10. Logging & Monitoring
-- [ ] All authentication events logged (success and failure)
-- [ ] All admin actions logged with user ID, timestamp, IP
-- [ ] Logs shipped to immutable storage (CloudWatch, Datadog, Splunk)
-- [ ] Log retention: 12 months minimum, 3 months immediately available
-
-### 11. Vulnerability Management
-- [ ] Quarterly external vulnerability scans by ASV (Approved Scanning Vendor)
-- [ ] Annual penetration test
-- [ ] Weekly internal vulnerability scans
-
-### 12. Policy & Procedures
-- [ ] Information security policy documented and reviewed annually
-- [ ] Incident response plan documented and tested
-- [ ] Employee security awareness training completed annually
+Option A — **Stripe Checkout (hosted redirect)** → SAQ A
+```php
+// Use WooCommerce Stripe Gateway in "Stripe Checkout" mode
+// In WooCommerce → Settings → Payments → Stripe → Stripe Checkout: enable
+// Customer is redirected to stripe.com for payment; SAQ A applies
 ```
 
-### Terraform infrastructure for PCI-compliant AWS setup
+Option B — **Stripe Elements in WooCommerce** → SAQ A-EP
+- The official WooCommerce Stripe plugin uses Stripe Elements by default
+- Card data is captured in a Stripe iframe; your server receives only a payment token
+- This is SAQ A-EP (more controls than SAQ A but far fewer than SAQ D)
 
-```hcl
-# VPC with network segmentation (Requirement 1)
-resource "aws_vpc" "pci_vpc" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-  tags = { Name = "pci-compliant-vpc" }
-}
+**WooCommerce hosting requirements for SAQ A-EP:**
+Your web hosting must meet minimum PCI requirements:
+1. **SSL/TLS**: Ensure your hosting provider uses TLS 1.2+ and an up-to-date certificate
+2. **Patching**: Keep WordPress, WooCommerce, plugins, and PHP up to date
+3. **Managed hosting**: WP Engine, Nexcess, and Kinsta are PCI-aware managed hosts with relevant controls
+4. **Wordfence**: Install Wordfence Security for malware scanning and WAF protection (Requirement 5, 6)
 
-# Public subnet (web tier only)
-resource "aws_subnet" "public" {
-  vpc_id            = aws_vpc.pci_vpc.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-east-1a"
-  tags = { Name = "pci-public-web" }
-}
+**What to verify for WooCommerce PCI:**
+- No credit card numbers logged in WooCommerce order notes or custom fields
+- WooCommerce debug logging does not capture payment data (disable debug logging in production)
+- All admin accounts have strong, unique passwords and 2FA
+- All plugins updated within 30 days of available security patches
 
-# Private subnet (application tier — no direct internet access)
-resource "aws_subnet" "private_app" {
-  vpc_id            = aws_vpc.pci_vpc.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-east-1a"
-  tags = { Name = "pci-private-app" }
-}
+---
 
-# Isolated subnet (database — no internet, no web access)
-resource "aws_subnet" "private_db" {
-  vpc_id            = aws_vpc.pci_vpc.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "us-east-1a"
-  tags = { Name = "pci-private-db" }
-}
+#### BigCommerce
 
-# Security group for web tier — HTTPS only
-resource "aws_security_group" "web" {
-  vpc_id = aws_vpc.pci_vpc.id
+BigCommerce is a PCI-DSS Level 1 certified platform. Using BigCommerce's hosted checkout and supported payment gateways puts you in SAQ A territory.
 
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+**Completing compliance on BigCommerce:**
+- BigCommerce provides an AoC for their platform infrastructure
+- For merchants using BigCommerce Payments or a supported payment gateway through BigCommerce checkout: SAQ A applies
+- For custom payment integrations or custom checkout pages: the scope increases; consult a QSA
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
+**Key BigCommerce settings:**
+1. Go to **Store Settings → Security** — ensure HTTPS is enforced on all pages
+2. Go to **Account Settings → Users** — ensure all admin accounts have unique IDs and strong passwords
+3. Enable 2FA for admin accounts under account security settings
+4. Review installed apps — only grant apps the minimum permissions they need
 
-# Security group for database — only from app tier
-resource "aws_security_group" "database" {
-  vpc_id = aws_vpc.pci_vpc.id
+---
 
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.app.id]
-  }
-}
+#### Custom / Headless
 
-# RDS with encryption at rest (Requirement 3)
-resource "aws_db_instance" "pci_db" {
-  engine                 = "postgres"
-  instance_class         = "db.r6g.large"
-  allocated_storage      = 100
-  storage_encrypted      = true           # Requirement 3.4
-  kms_key_id             = aws_kms_key.pci_key.arn
-  db_subnet_group_name   = aws_db_subnet_group.private.name
-  vpc_security_group_ids = [aws_security_group.database.id]
-  multi_az               = true
-  backup_retention_period = 30
-  deletion_protection     = true
+For custom storefronts, your PCI scope is determined by how you integrate payment processing. Use Stripe Elements or Braintree Drop-in UI to stay in SAQ A-EP territory.
 
-  # Requirement 10: Enable audit logging
-  enabled_cloudwatch_logs_exports = ["postgresql"]
-}
+**SAQ A-EP implementation with Stripe Elements:**
 
-# CloudTrail for API audit logging (Requirement 10)
-resource "aws_cloudtrail" "pci_trail" {
-  name                       = "pci-audit-trail"
-  s3_bucket_name             = aws_s3_bucket.audit_logs.id
-  include_global_service_events = true
-  is_multi_region_trail      = true
-  enable_log_file_validation = true  # Tamper detection (Requirement 10.5)
-}
+```typescript
+// Client-side: Stripe handles card data in an iframe — your code never sees card numbers
+const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const elements = stripe.elements({ clientSecret });
+const paymentElement = elements.create('payment');
+paymentElement.mount('#payment-element');
+
+// On submit — Stripe creates a PaymentMethod on their servers
+const { error, paymentIntent } = await stripe.confirmPayment({
+  elements,
+  confirmParams: { return_url: `${window.location.origin}/order-confirmation` },
+});
+// Your server never receives a card number — only a paymentMethodId or paymentIntentId
 ```
+
+**Key controls for SAQ A-EP (custom storefronts):**
+
+```nginx
+# Requirement 4: TLS 1.2+ only, strong cipher suites
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+```
+
+**Content Security Policy for payment pages (Requirement 6.4.3 in PCI-DSS v4.0):**
+
+```typescript
+// Strict CSP on checkout pages — only authorized scripts allowed
+const csp = [
+  `default-src 'self'`,
+  `script-src 'self' 'nonce-${nonce}' https://js.stripe.com`,
+  `frame-src https://js.stripe.com https://hooks.stripe.com`,
+  `connect-src 'self' https://api.stripe.com`,
+  `object-src 'none'`,
+].join('; ');
+response.headers.set('Content-Security-Policy', csp);
+```
+
+**Audit logging (Requirement 10):**
+
+```typescript
+// Log every authentication event, admin action, and access to payment data
+interface AuditEntry {
+  timestamp: string;
+  userId: string;
+  userIp: string;
+  action: string;
+  resource: string;
+  outcome: 'success' | 'failure';
+}
+// Ship logs to an immutable store: CloudWatch Logs, Datadog, or S3 with Object Lock
+// Requirement 10.7: Retain logs for 12 months; 3 months immediately available
+```
+
+**PCI-DSS controls checklist:**
+
+| Requirement | Key Engineering Task |
+|-------------|---------------------|
+| Req 3: Protect stored data | No raw card numbers stored; use Stripe/Braintree tokens only |
+| Req 4: Encrypt transmissions | TLS 1.2+; HSTS headers; no mixed content |
+| Req 6: Secure development | Dependency scanning (npm audit, Snyk) in CI; SAST; script inventory on payment pages |
+| Req 7–8: Access control | Role-based access; unique IDs; MFA for admin; password policy |
+| Req 10: Logging | All auth events, admin actions, and CDE access logged with user ID, timestamp, IP |
+| Req 11: Vulnerability management | Quarterly external scans by ASV; annual penetration test |
 
 ## Best Practices
 
-- **Minimize your CDE (Cardholder Data Environment)** -- use hosted payment forms (Stripe Checkout, Adyen Drop-in) to qualify for SAQ A and reduce from ~330 controls to ~22
-- **Never store, process, or transmit raw card numbers** -- always use tokenization; if you never see card data, most PCI requirements don't apply to your servers
-- **Ship logs to immutable storage** -- use append-only log destinations (S3 with Object Lock, CloudWatch Logs) so attackers cannot tamper with audit trails
-- **Enforce MFA for all admin access** -- Requirement 8.4.2 mandates MFA for all access to the CDE; implement it for all admin panels, SSH, and cloud console access
-- **Automate vulnerability scanning** -- run dependency audits (npm audit, Snyk) in CI/CD and schedule quarterly ASV scans; don't rely on manual processes
-- **Document everything** -- PCI auditors want evidence of policies, procedures, and controls; maintain runbooks for incident response, access reviews, and change management
-- **Segment your network** -- isolate payment-processing systems on their own subnet/VPC; database servers should never be reachable from the internet
-- **Review access quarterly** -- Requirement 7.2.5 requires regular review of user access; automate access review reports and revoke unused accounts
+- **Minimize your Cardholder Data Environment (CDE)** — use hosted payment forms to qualify for SAQ A and reduce from ~330 controls to ~22; this is the highest-leverage PCI decision
+- **Never store raw card numbers** — always use tokenization; if you never see card data, most PCI requirements don't apply to your servers
+- **Ship logs to immutable storage** — use append-only log destinations (S3 with Object Lock, CloudWatch Logs) so attackers cannot tamper with audit trails
+- **Enforce MFA for all admin access** — PCI-DSS v4.0 Requirement 8.4.2 mandates MFA for all access to the CDE
+- **Automate vulnerability scanning** — run dependency audits in CI/CD and schedule quarterly ASV scans; manual processes are consistently missed
+- **Document your script inventory** — PCI-DSS v4.0 Requirement 6.4.3 requires a documented inventory of all scripts on payment pages with business justification
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| SAQ type is wrong — selected SAQ A but payment form is on your page | If you use Stripe Elements (JS tokenization on your page), you need SAQ A-EP, not SAQ A; only fully hosted redirects (Stripe Checkout) qualify for SAQ A |
-| Logs don't include all required fields | PCI-DSS 10.2 requires: user ID, event type, date/time, success/failure, origination (IP), and affected resource; audit your log format against this list |
-| TLS 1.0/1.1 still enabled on load balancer | Run `nmap --script ssl-enum-ciphers -p 443 store.example.com` to verify; disable TLS 1.0/1.1 in your load balancer and CDN settings |
-| Default admin credentials in staging | PCI scope includes all environments connected to production; apply the same hardening to staging if it shares infrastructure |
-| No incident response plan | Requirement 12.10.1 requires a documented incident response plan that is tested annually; create one even if you've never had an incident |
-| Third-party scripts on payment page not inventoried | PCI-DSS v4.0 Requirement 6.4.3 requires a documented inventory of all scripts on payment pages with business justification; audit with browser dev tools |
+| Selected SAQ A but using Stripe Elements | Stripe Elements (JavaScript on your page) is SAQ A-EP, not SAQ A; only a fully hosted redirect (Stripe Checkout) qualifies for SAQ A |
+| Debug logging enabled in production captures payment data | Disable WordPress/WooCommerce debug logging in production; WC_DEBUG and WP_DEBUG must be false |
+| TLS 1.0/1.1 still enabled on load balancer | Verify with `nmap --script ssl-enum-ciphers -p 443 yourstore.com`; disable TLS 1.0/1.1 in your load balancer and CDN |
+| Third-party scripts on checkout page not inventoried | PCI v4.0 requires a documented inventory; audit with browser dev tools; remove non-essential scripts from payment pages |
+| No incident response plan | PCI Requirement 12.10.1 requires a documented IR plan tested annually; create a basic one even if you've never had an incident |
 
 ## Related Skills
 
-- @stripe-integration
-- @customer-accounts
-- @ecommerce-caching
-- @erp-integration
-- @ecommerce-data-warehouse
+- @secure-checkout
+- @fraud-detection
+- @account-security
+- @financial-audit-trail

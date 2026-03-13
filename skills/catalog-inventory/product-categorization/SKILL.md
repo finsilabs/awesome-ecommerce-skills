@@ -1,6 +1,6 @@
 ---
 name: product-categorization
-description: "Build a clean product hierarchy with breadcrumb navigation, automated category assignment, and SEO-friendly URLs for each category level"
+description: "Build a clean product hierarchy with collections, categories, tags, and breadcrumb navigation using your platform's native tools"
 category: catalog-inventory
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [categories, taxonomy, breadcrumbs, seo, hierarchy, auto-categorization, navigation]
 triggers: ["product categories", "category hierarchy", "product taxonomy", "breadcrumb navigation", "auto-categorize products", "category SEO"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Design and implement a hierarchical product taxonomy that scales to thousands of categories while staying fast to query. Covers the adjacency list vs. materialized path data models, breadcrumb generation, URL slug strategies for SEO, and AI-assisted auto-categorization for bulk product ingestion.
+A well-structured product taxonomy makes products findable and drives SEO through category pages. Every platform handles categorization differently: Shopify uses Collections and tags, WooCommerce uses hierarchical Categories and tags, and BigCommerce uses Categories with subcategories. Understanding the platform's native model and configuring it correctly is more impactful than building a custom taxonomy system.
 
 ## When to Use This Skill
 
@@ -26,277 +26,257 @@ Design and implement a hierarchical product taxonomy that scales to thousands of
 - When category pages need SEO-optimized URLs and meta tags
 - When ingesting large supplier catalogs that need automatic categorization
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
-**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with product catalog access, API credentials
-
 ## Core Instructions
 
-1. **Design the category data model with materialized paths**
+### Step 1: Understand how your platform handles categories
 
-   Materialized paths store the full ancestry path on each row, making breadcrumb queries O(1) and subtree queries efficient without recursive CTEs.
+| Platform | Category Model | URL Structure |
+|----------|---------------|---------------|
+| **Shopify** | Collections (flat or nested via themes); tags for additional filtering | `/collections/womens-dresses` |
+| **WooCommerce** | Hierarchical categories (parent/child) + tags | `/product-category/clothing/womens/dresses/` |
+| **BigCommerce** | Nested categories (unlimited depth) | `/clothing/womens/dresses/` |
+| **Custom / Headless** | Build with materialized paths for efficient breadcrumb queries | `/c/clothing/women/dresses` |
 
-   ```javascript
-   // categories table
-   {
-     id: 'cat_dresses',
-     name: 'Dresses',
-     slug: 'dresses',
-     parent_id: 'cat_women',
-     path: 'clothing/women/dresses',          // Materialized path — ancestor slugs joined by /
-     path_ids: ['cat_root','cat_clothing','cat_women','cat_dresses'], // IDs for fast joins
-     depth: 3,
-     position: 2,                             // Sort order among siblings
-     published: true,
-     seo_title: 'Shop Women\'s Dresses | Your Store',
-     seo_description: 'Browse 500+ dresses...',
-     image_url: '/images/categories/dresses.jpg',
-   }
-   ```
+Choose a depth strategy before building:
+- **2–3 levels** is optimal for most stores (e.g., Clothing → Womens → Dresses)
+- **4 levels maximum** — deeper hierarchies confuse shoppers and dilute SEO
+- **Flat + tags** works well for small catalogs (under 200 products)
 
-2. **Efficiently query categories with breadcrumbs**
+---
 
-   ```javascript
-   // lib/categories.js
+### Step 2: Platform-specific setup
 
-   // Get the full breadcrumb for a category in one query using materialized path
-   export async function getCategoryWithBreadcrumb(slug) {
-     const category = await db.categories.findUnique({ where: { slug } });
-     if (!category) return null;
+---
 
-     // Breadcrumb ancestors are stored in path_ids — fetch all in one query
-     const ancestors = await db.categories.findMany({
-       where: { id: { in: category.pathIds.slice(0, -1) } },  // Exclude self
-       orderBy: { depth: 'asc' },
-     });
+#### Shopify
 
-     return {
-       ...category,
-       breadcrumbs: [
-         ...ancestors.map(a => ({ name: a.name, slug: a.slug, url: `/c/${a.path}` })),
-         { name: category.name, slug: category.slug, url: `/c/${category.path}` },
-       ],
-     };
-   }
+Shopify uses **Collections** as the primary categorization mechanism. Collections can be manual (hand-curated) or automated (rules-based).
 
-   // Get the full category tree (for mega menu or sitemap)
-   export async function getCategoryTree(rootSlug = null) {
-     const all = await db.categories.findMany({
-       where: { published: true },
-       orderBy: [{ depth: 'asc' }, { position: 'asc' }],
-     });
+**Creating a collection hierarchy:**
 
-     // Build tree from flat list
-     const map = new Map(all.map(c => [c.id, { ...c, children: [] }]));
-     const roots = [];
-     for (const cat of map.values()) {
-       if (cat.parentId) {
-         map.get(cat.parentId)?.children.push(cat);
-       } else {
-         roots.push(cat);
-       }
-     }
-     return roots;
-   }
-   ```
+1. Go to **Admin → Products → Collections → Create collection**
+2. For the "Women's Dresses" example:
+   - Create a parent collection: "Clothing" (manual, for navigation menu)
+   - Create a child collection: "Women's Dresses" (automated, rule: tag contains `womens-dress`)
+3. Set the collection's SEO fields: **Title**, **Meta description**, and **URL handle**
+4. Add a collection image and description — these improve SEO and conversion on the collection page
 
-3. **Maintain materialized paths on category moves**
+**Automated collections (rule-based — recommended):**
+- Set rules like: Product type equals "Dress" AND tags contain "womens"
+- Products matching the rules are automatically added — no manual curation needed
+- Best for large catalogs where you can't manually assign every product
 
-   When a category is moved to a new parent, update the path of the entire subtree.
+**Manual collections:**
+- Best for curated edits (e.g., "Summer Picks", "Staff Favorites")
+- Add products by hand from the collection edit page
 
-   ```javascript
-   export async function moveCategory(categoryId, newParentId) {
-     const category = await db.categories.findUnique({ where: { id: categoryId } });
-     const newParent = newParentId
-       ? await db.categories.findUnique({ where: { id: newParentId } })
-       : null;
+**Navigation menu hierarchy:**
 
-     const newPath = newParent
-       ? `${newParent.path}/${category.slug}`
-       : category.slug;
-     const newPathIds = newParent
-       ? [...newParent.pathIds, categoryId]
-       : [categoryId];
+1. Go to **Online Store → Navigation**
+2. Open the main menu
+3. Add each collection as a menu item; nest items by dragging sub-items under parent items
+4. This creates the visual hierarchy in your storefront's navigation even though Shopify collections are technically flat
 
-     // Update this category and all descendants
-     const descendants = await db.categories.findMany({
-       where: { path: { startsWith: category.path + '/' } },
-     });
+**Tags for additional filtering:**
+- Add product tags like `color-red`, `size-M`, `material-cotton`
+- Use a faceted filtering app (Boost Commerce, Searchpie) to turn tags into filterable attributes on collection pages
 
-     await db.$transaction([
-       db.categories.update({
-         where: { id: categoryId },
-         data: {
-           parentId: newParentId,
-           path: newPath,
-           pathIds: newPathIds,
-           depth: newPath.split('/').length,
-         },
-       }),
-       ...descendants.map(desc => db.categories.update({
-         where: { id: desc.id },
-         data: {
-           path: desc.path.replace(category.path, newPath),
-           pathIds: [...newPathIds, ...desc.pathIds.slice(category.pathIds.length)],
-           depth: desc.path.replace(category.path, newPath).split('/').length,
-         },
-       })),
-     ]);
-   }
-   ```
+**Breadcrumbs:**
+Most Shopify themes include breadcrumbs automatically. If not:
+- Go to **Online Store → Themes → Customize**
+- Search for "breadcrumb" in theme settings — many themes have a toggle
+- For Dawn/Debut: breadcrumbs are theme-specific and may need liquid code changes
 
-4. **Implement AI-assisted auto-categorization**
+---
 
-   For bulk imports, use an LLM to suggest categories based on product title and description.
+#### WooCommerce
 
-   ```javascript
-   // lib/autoCategorize.js
-   import OpenAI from 'openai';
+WooCommerce has hierarchical product categories — the closest to a traditional category tree.
 
-   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+**Create a category hierarchy:**
 
-   export async function suggestCategories(product, categoryTree) {
-     const categoryList = flattenTree(categoryTree)
-       .map(c => `${c.id}: ${c.path} (${c.name})`)
-       .join('\n');
+1. Go to **Products → Categories → Add New Category**
+2. Create your top-level category: "Clothing"
+3. Create a child category: "Women's" — select "Clothing" as the Parent Category
+4. Create a grandchild: "Dresses" — select "Women's" as the Parent
 
-     const response = await openai.chat.completions.create({
-       model: 'gpt-4o-mini',
-       messages: [
-         {
-           role: 'system',
-           content: `You are a product categorization assistant. Given a product and a list of categories, return the 1-3 most appropriate category IDs as a JSON array. Only return valid IDs from the list provided.`,
-         },
-         {
-           role: 'user',
-           content: `Product: ${product.title}\nDescription: ${product.description}\n\nCategories:\n${categoryList}\n\nReturn JSON: { "categoryIds": ["cat_id1", "cat_id2"] }`,
-         },
-       ],
-       response_format: { type: 'json_object' },
-       temperature: 0.1,
-     });
+WooCommerce generates SEO-friendly URLs automatically:
+- Clothing: `/product-category/clothing/`
+- Women's: `/product-category/clothing/womens/`
+- Dresses: `/product-category/clothing/womens/dresses/`
 
-     const result = JSON.parse(response.choices[0].message.content);
-     return result.categoryIds ?? [];
-   }
+**Assign products to categories:**
 
-   function flattenTree(nodes, acc = []) {
-     for (const node of nodes) {
-       acc.push(node);
-       if (node.children?.length) flattenTree(node.children, acc);
-     }
-     return acc;
-   }
-   ```
+1. Open a product and go to the **Product Categories** widget in the sidebar
+2. Check all applicable categories (products can belong to multiple categories)
+3. Check the **Primary category** for breadcrumb display (requires Yoast SEO)
 
-5. **Generate SEO-optimized category page meta tags**
+**Category page SEO:**
 
-   ```javascript
-   // lib/categorySeo.js
-   export function getCategoryMeta(category, productCount) {
-     const title = category.seoTitle ??
-       `Shop ${category.name} | ${process.env.STORE_NAME}`;
-     const description = category.seoDescription ??
-       `Browse ${productCount.toLocaleString()} ${category.name.toLowerCase()} products. Free shipping on orders over $50.`;
+1. Edit a category: **Products → Categories → [Category] → Edit**
+2. Set a **Description** (unique text appears above the product grid — important for SEO)
+3. Upload a **Thumbnail** image
+4. With **Yoast SEO**: scroll to the Yoast section on the category edit page and set **SEO title** and **Meta description** for each category
 
-     return {
-       title,
-       description,
-       canonical: `https://${process.env.STORE_DOMAIN}/c/${category.path}`,
-       openGraph: {
-         title,
-         description,
-         image: category.imageUrl,
-         type: 'website',
-       },
-       structuredData: {
-         '@context': 'https://schema.org',
-         '@type': 'CollectionPage',
-         name: category.name,
-         description,
-         url: `https://${process.env.STORE_DOMAIN}/c/${category.path}`,
-         breadcrumb: {
-           '@type': 'BreadcrumbList',
-           itemListElement: category.breadcrumbs.map((crumb, i) => ({
-             '@type': 'ListItem',
-             position: i + 1,
-             name: crumb.name,
-             item: `https://${process.env.STORE_DOMAIN}${crumb.url}`,
-           })),
-         },
-       },
-     };
-   }
-   ```
+**Breadcrumbs:**
+- Install **Yoast SEO** (free) — it adds breadcrumb navigation automatically
+- Or enable breadcrumbs in **WooCommerce → Settings → Advanced → Breadcrumbs**
+- Configure the breadcrumb separator and home label
 
-## Examples
+---
 
-### Breadcrumb component with structured data
+#### BigCommerce
 
-```jsx
-function Breadcrumbs({ breadcrumbs }) {
-  return (
-    <nav aria-label="Breadcrumb">
-      <ol className="breadcrumbs" itemScope itemType="https://schema.org/BreadcrumbList">
-        {breadcrumbs.map((crumb, i) => (
-          <li key={crumb.url} itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
-            {i < breadcrumbs.length - 1 ? (
-              <a href={crumb.url} itemProp="item">
-                <span itemProp="name">{crumb.name}</span>
-              </a>
-            ) : (
-              <span itemProp="name" aria-current="page">{crumb.name}</span>
-            )}
-            <meta itemProp="position" content={String(i + 1)} />
-          </li>
-        ))}
-      </ol>
-    </nav>
-  );
+BigCommerce has a nested category system with unlimited depth.
+
+**Create categories:**
+
+1. Go to **Products → Product Categories → Add**
+2. Enter the category name, description, and URL (BigCommerce lets you customize the URL)
+3. Select a **Parent category** to nest it
+4. Upload a category image
+5. Set **SEO Title** and **Meta description** for each category
+
+**Assign products to categories:**
+1. Edit a product
+2. Under **Categories**, check all applicable categories
+3. BigCommerce supports assigning a product to multiple categories
+
+**Category sort order:**
+- Set sort order per category: manual, price ascending/descending, newest, bestselling
+- Configure under the category edit page → **Sort Products By**
+
+**Breadcrumbs:**
+BigCommerce themes include breadcrumbs by default, automatically following the nested category path. Customize the breadcrumb template in your theme's Stencil files if needed.
+
+---
+
+#### Custom / Headless
+
+For headless storefronts, use a materialized path model for efficient breadcrumb queries:
+
+```typescript
+// Category model with materialized path
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+  path: string;       // e.g., "clothing/women/dresses" — ancestor slugs joined by /
+  pathIds: string[];  // IDs for fast joins: ['cat_root', 'cat_clothing', 'cat_women', 'cat_dresses']
+  depth: number;
+  position: number;   // Sort order among siblings
+  published: boolean;
+  seoTitle?: string;
+  seoDescription?: string;
+}
+
+// Get breadcrumbs in one query using materialized path
+export async function getCategoryWithBreadcrumb(slug: string) {
+  const category = await db.categories.findUnique({ where: { slug } });
+  if (!category) return null;
+
+  // Fetch all ancestors in one query using pathIds
+  const ancestors = await db.categories.findMany({
+    where: { id: { in: category.pathIds.slice(0, -1) } },
+    orderBy: { depth: 'asc' },
+  });
+
+  return {
+    ...category,
+    breadcrumbs: [
+      ...ancestors.map(a => ({ name: a.name, url: `/c/${a.path}` })),
+      { name: category.name, url: `/c/${category.path}` },
+    ],
+  };
+}
+
+// Update materialized paths when a category is moved
+export async function moveCategory(categoryId: string, newParentId: string | null) {
+  const category = await db.categories.findUnique({ where: { id: categoryId } });
+  const newParent = newParentId ? await db.categories.findUnique({ where: { id: newParentId } }) : null;
+
+  const newPath = newParent ? `${newParent.path}/${category.slug}` : category.slug;
+  const newPathIds = newParent ? [...newParent.pathIds, categoryId] : [categoryId];
+
+  // Update this category and all descendants in a transaction
+  const descendants = await db.categories.findMany({ where: { path: { startsWith: category.path + '/' } } });
+
+  await db.$transaction([
+    db.categories.update({
+      where: { id: categoryId },
+      data: { parentId: newParentId, path: newPath, pathIds: newPathIds, depth: newPath.split('/').length },
+    }),
+    ...descendants.map(desc => db.categories.update({
+      where: { id: desc.id },
+      data: {
+        path: desc.path.replace(category.path, newPath),
+        pathIds: [...newPathIds, ...desc.pathIds.slice(category.pathIds.length)],
+        depth: desc.path.replace(category.path, newPath).split('/').length,
+      },
+    })),
+  ]);
 }
 ```
 
-### Category URL structure
+---
 
-```
-/c/clothing                           → Top-level category
-/c/clothing/women                     → Level 2
-/c/clothing/women/dresses             → Level 3 (leaf)
-/c/clothing/women/dresses?color=red   → Faceted filter on leaf category
-```
+### Step 3: Optimize category pages for SEO
 
-Rules:
-- Keep paths short (max 3-4 levels) for both UX and SEO
-- Use hyphens in slugs (not underscores): `evening-dresses` not `evening_dresses`
-- Avoid stop words in slugs when possible: `womens-dresses` not `for-women-dresses`
+Regardless of platform, every category page needs:
+
+1. **Unique description**: 100–200 words of original text describing what's in this category. "Shop women's dresses" is not enough — describe the styles, materials, occasions.
+2. **Category image**: A hero or banner image relevant to the category
+3. **SEO title**: Format — `[Category Name] | [Store Name]` (e.g., "Women's Dresses | YourStore")
+4. **Meta description**: 150–160 characters highlighting what makes your selection unique
+5. **Canonical URL**: The category's clean URL without filter parameters (e.g., `/clothing/womens/dresses`, not `/clothing/womens/dresses?color=red`)
+
+**Canonical URLs for filtered pages:**
+- Shopify: themes handle this automatically for collection pages
+- WooCommerce + Yoast SEO: Yoast sets the canonical automatically
+- BigCommerce: set canonicals in category settings
+
+---
+
+### Step 4: Bulk-assign categories for large catalogs
+
+For catalogs with hundreds or thousands of products to categorize:
+
+**Shopify:**
+- In Admin → Products, select multiple products using the checkboxes
+- Click **Bulk actions → Add to collection** to assign them all at once
+- For automated collections, products are assigned automatically when they match the rules
+
+**WooCommerce:**
+- Use **WP All Import** to bulk-assign categories via CSV
+- Or use the Products Bulk Edit in WooCommerce admin
+
+**AI-assisted categorization (any platform):**
+- Export your product catalog with titles and descriptions
+- Use an AI tool to suggest categories based on product content
+- Import the suggested categories back in bulk using Matrixify (Shopify) or WP All Import (WooCommerce)
+- Always review AI suggestions for accuracy before publishing
 
 ## Best Practices
 
-- **Use materialized paths, not recursive CTEs** — querying ancestry with recursive SQL is slower and harder to index; materialized paths allow O(1) breadcrumb retrieval
-- **Slugs must be unique within a parent** — not globally; `/clothing/pants` and `/furniture/pants` can coexist
-- **Update materialized paths in a transaction when moving categories** — a partially updated tree causes broken breadcrumbs
-- **Implement category images and descriptions** — category pages with unique content outperform generic product listings in organic search
-- **Limit category depth to 4 levels** — deeper hierarchies confuse shoppers and dilute SEO link equity
-- **Use AI auto-categorization as a suggestion, not a final decision** — require human review for products that the model is uncertain about (low confidence score)
+- **Use automated (rule-based) collections on Shopify** for the main taxonomy — they self-update as products are added; manual collections are for curated editorial picks
+- **Write unique descriptions for every category page** — pages without descriptions are thin content and rarely rank; even 100 words of original text makes a meaningful SEO difference
+- **Limit depth to 3 levels** for most stores — the extra specificity of level 4 rarely helps SEO and creates navigation complexity
+- **Use tags for cross-cutting attributes** (color, material, occasion) rather than categories — tags power faceted filtering without multiplying your category tree
+- **Update paths in a transaction when moving categories** — a partially updated tree creates broken breadcrumbs; always update the category and all its descendants atomically
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Breadcrumb generates wrong path after category rename | Re-compute materialized path when slug changes; update all descendants' paths in the same transaction |
-| Duplicate slugs within the same parent | Add a unique database constraint on `(parent_id, slug)` |
-| Category move leaves orphaned product associations | When archiving a category, reassign its products to the parent category or require the operator to reassign first |
-| SEO: duplicate content on category + faceted URLs | Add `rel="canonical"` pointing to the unfaceted category URL for facet combinations; block non-primary combinations in `robots.txt` |
-| Performance: loading entire category tree on every page | Cache the tree in Redis with a 5-minute TTL; invalidate on any category update |
+| Breadcrumb shows wrong category | On WooCommerce, install Yoast SEO and set the primary category per product; without a primary category, the breadcrumb may show any assigned category |
+| Shopify collection page has no unique content | Add a collection description in Admin → Collections → [Collection] → Description; many merchants leave this blank and miss an SEO opportunity |
+| Duplicate content on category + filtered URLs | Set canonical tags pointing to the clean category URL for all filter variations; block crawling of paginated pages beyond page 2 |
+| Products assigned to too many categories | Each product should have one primary category plus optional secondary ones; too many categories dilutes the signals and confuses navigation |
+| Category rename breaks existing links | When renaming, set up a URL redirect from the old URL to the new URL; all platforms support redirects in settings |
 
 ## Related Skills
 
-- @faceted-navigation
 - @product-data-modeling
-- @search-autocomplete
-- @mega-menu-builder
+- @product-content-enrichment
+- @catalog-import-export

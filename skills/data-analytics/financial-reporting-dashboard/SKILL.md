@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [financial-reporting, dashboard, p-and-l]
 triggers: ["build financial dashboard", "P&L dashboard", "income statement reporting", "balance sheet dashboard", "cash flow report", "investor reporting", "management reporting"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,383 +16,192 @@ difficulty: advanced
 
 ## Overview
 
-A financial reporting dashboard consolidates the three core financial statements — Profit & Loss (Income Statement), Balance Sheet, and Cash Flow Statement — into an interactive interface that management, investors, and board members can navigate without relying on static spreadsheets or requesting custom reports from the finance team.
+A financial reporting dashboard consolidates your three core financial statements — P&L (Income Statement), Balance Sheet, and Cash Flow — into an interactive view that management, investors, and board members can navigate without requesting custom reports from finance.
 
-For ecommerce businesses, these dashboards are especially valuable because financial performance is highly granular: different products, channels, geographies, and customer cohorts all contribute differently to the top and bottom lines. A well-designed dashboard surfaces these differences through drill-down capabilities, period-over-period comparisons, and variance explanations.
+For ecommerce businesses, the most valuable feature is drill-down: the ability to see total gross margin and then click through to gross margin by product category, channel, or geography. This transforms static financials into an investigation tool.
 
-This skill covers data modeling, metric definitions, query patterns, visualization recommendations, and the specific ecommerce line items that belong in each statement. It is intended for engineers and analysts building the reporting layer, as well as finance leads defining requirements.
+This skill guides you through connecting your accounting system to a dashboard layer, structuring the ecommerce-specific P&L, and building drill-down reports using your platform data.
 
----
+## When to Use This Skill
 
-## When to Use
-
-- You are building a management reporting suite for a seed-to-Series B ecommerce company
-- Your CFO or investors request monthly P&L and cash position reports
-- You need to replace manual spreadsheet-based financials with an automated dashboard
-- You want drill-down from consolidated totals to channel, product category, or SKU level
-- You are preparing for a board meeting, fundraise, or M&A process and need clean financials
-- Your accounting system (QuickBooks, Xero, NetSuite) does not produce ecommerce-specific breakdowns
-- You need to reconcile revenue reported in your ecommerce platform against your GL
-
----
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When your CFO or investors request monthly P&L and cash position reports
+- When replacing manual spreadsheet-based financials with an automated dashboard
+- When you need drill-down from consolidated totals to channel, product category, or SKU level
+- When preparing for a board meeting, fundraise, or M&A process
+- When your accounting system does not produce ecommerce-specific breakdowns
+- When you need to reconcile revenue in your ecommerce platform against your GL
 
 ## Core Instructions
 
-### Step 1 — Define the Data Model
+### Step 1: Connect your accounting system to your platform
 
-Your dashboard needs a unified financial data model that maps ecommerce-specific data sources to standard accounting line items.
+A financial reporting dashboard must be built on your accounting system (QuickBooks, Xero, NetSuite), not on your ecommerce platform data alone. Platform revenue data diverges from GAAP financials due to recognition timing, payout lags, and adjustments.
 
-**Source systems to integrate:**
-- Ecommerce platform (Shopify, WooCommerce, Magento): Orders, refunds, discounts
-- Payment processor (Stripe, Braintree): Payouts, fees, chargebacks
-- Advertising platforms (Meta, Google, TikTok): Ad spend
-- Fulfillment / 3PL: Fulfillment costs, shipping charges
-- Accounting GL (QuickBooks, Xero, NetSuite): Chart of accounts, journal entries
-- Inventory system: COGS, inventory valuation
+**Ecommerce platform → accounting system integrations:**
 
-```sql
--- Unified P&L fact table
-CREATE TABLE financial_facts (
-    fact_id             SERIAL PRIMARY KEY,
-    accounting_date     DATE NOT NULL,
-    fiscal_period       VARCHAR(7) NOT NULL,  -- e.g., '2026-03'
-    account_code        VARCHAR(20) NOT NULL,
-    account_name        VARCHAR(100) NOT NULL,
-    statement_type      VARCHAR(20) NOT NULL CHECK (statement_type IN ('pnl', 'balance_sheet', 'cash_flow')),
-    line_item           VARCHAR(100) NOT NULL,
-    channel             VARCHAR(50),
-    product_category    VARCHAR(50),
-    geography           VARCHAR(50),
-    amount              NUMERIC(14,2) NOT NULL,
-    source_system       VARCHAR(50),
-    created_at          TIMESTAMP DEFAULT NOW()
-);
+| Ecommerce Platform | Accounting System | Recommended Integration |
+|-------------------|------------------|------------------------|
+| Shopify | QuickBooks Online | **A2X** (Shopify App Store) — reconciles Shopify payouts to period-matched QBO journal entries |
+| Shopify | Xero | **A2X for Xero** — same; creates summary journal entries per payout period |
+| Shopify | Both | **Finaloop** (Shopify App Store) — automated bookkeeping designed for Shopify; handles COGS, inventory, and financial statements |
+| WooCommerce | QuickBooks Online | **WooCommerce QuickBooks plugin** (WooCommerce.com, $79/yr) |
+| WooCommerce | Xero | **WooCommerce Xero extension** (WooCommerce.com, $79/yr) |
+| BigCommerce | QuickBooks Online | **Webgility** (BigCommerce App Marketplace) |
+| BigCommerce | Xero | **Amaka** (BigCommerce App Marketplace) |
 
-CREATE INDEX idx_financial_facts_period ON financial_facts(fiscal_period);
-CREATE INDEX idx_financial_facts_line_item ON financial_facts(line_item);
-CREATE INDEX idx_financial_facts_channel ON financial_facts(channel);
-```
+**A2X setup for Shopify (most common workflow):**
+1. Install A2X from the Shopify App Store
+2. Connect A2X to your QuickBooks Online or Xero account
+3. Map Shopify transaction types (sales, refunds, shipping, discounts, fees) to your chart of accounts
+4. A2X creates one summary journal entry per Shopify payout period — matches what hits your bank account with the accounting entries
 
-### Step 2 — Build the P&L Structure
+### Step 2: Structure the ecommerce P&L
 
-An ecommerce P&L typically follows this structure:
+The ecommerce P&L has a specific structure that differs from a generic income statement:
 
 ```
 INCOME STATEMENT
-─────────────────────────────────────────────────
-Gross Revenue (GMV)
+─────────────────────────────────────────
+Gross Revenue (total selling price × units)
   - Returns & Refunds
   - Discounts & Promotions
 = Net Revenue
 
-Cost of Goods Sold (COGS)
-  Product cost (weighted average or FIFO)
-  Inbound freight
-  Duties & tariffs
+  - Cost of Goods Sold
+    Product cost (weighted average or FIFO)
+    Inbound freight & duties
 = Gross Profit
-
-Gross Margin %
+  Gross Margin % = Gross Profit / Net Revenue × 100
 
 Operating Expenses
-  Fulfillment & Shipping
-  Marketing & Advertising
-  Technology & Platform
-  Customer Service
-  G&A (salaries, rent, legal, accounting)
-  Depreciation & Amortization
-= Total OpEx
+  - Fulfillment & Shipping (outbound, 3PL)
+  - Marketing & Advertising (Meta, Google, TikTok, email)
+  - Technology & Platform fees (Shopify, apps, SaaS)
+  - Customer Service payroll
+  - G&A (salaries, rent, legal, accounting)
+  - Depreciation & Amortization
+= Total Operating Expenses
 
-= EBITDA  (Net Revenue - COGS - OpEx + D&A)
-= EBIT    (Net Revenue - COGS - OpEx)
+= EBITDA (Net Revenue - COGS - OpEx + D&A)
+= EBIT  (Net Revenue - COGS - OpEx)
 
-Other Income / Expense
-  Interest income
-  Interest expense
+  Interest income / expense
   FX gains/losses
-= EBT (Earnings Before Tax)
-  Income tax provision
+= EBT
+  Income tax
 = Net Income
 ```
 
-```sql
--- P&L summary query with period-over-period comparison
-WITH current_period AS (
-    SELECT
-        line_item,
-        SUM(amount) AS current_amount
-    FROM financial_facts
-    WHERE fiscal_period = :current_period
-      AND statement_type = 'pnl'
-    GROUP BY line_item
-),
-prior_period AS (
-    SELECT
-        line_item,
-        SUM(amount) AS prior_amount
-    FROM financial_facts
-    WHERE fiscal_period = :prior_period
-      AND statement_type = 'pnl'
-    GROUP BY line_item
-)
-SELECT
-    c.line_item,
-    c.current_amount,
-    p.prior_amount,
-    c.current_amount - COALESCE(p.prior_amount, 0) AS variance_absolute,
-    CASE
-        WHEN COALESCE(p.prior_amount, 0) = 0 THEN NULL
-        ELSE ROUND((c.current_amount - p.prior_amount) / ABS(p.prior_amount) * 100, 1)
-    END AS variance_pct
-FROM current_period c
-LEFT JOIN prior_period p USING (line_item)
-ORDER BY line_item;
-```
+**Set up chart of accounts in QuickBooks / Xero** with separate accounts for each ecommerce-specific line item. This is what enables channel and category drill-down later.
 
-### Step 3 — Build the Balance Sheet Structure
-
-```
-BALANCE SHEET
-─────────────────────────────────────────────────
-ASSETS
-Current Assets
-  Cash & Cash Equivalents
-  Accounts Receivable
-  Inventory (net of reserves)
-  Prepaid Expenses
-  Other Current Assets
-= Total Current Assets
-
-Non-Current Assets
-  Property, Plant & Equipment (net)
-  Intangible Assets (domain, software, trademarks)
-  Right-of-Use Assets
-  Deposits
-= Total Non-Current Assets
-
-= TOTAL ASSETS
-
-LIABILITIES
-Current Liabilities
-  Accounts Payable
-  Deferred Revenue (gift cards, subscriptions)
-  Accrued Expenses
-  Sales Tax Payable
-  Credit Card Payable
-  Current Portion of Long-Term Debt
-= Total Current Liabilities
-
-Non-Current Liabilities
-  Long-Term Debt
-  Deferred Tax Liabilities
-= Total Non-Current Liabilities
-
-= TOTAL LIABILITIES
-
-EQUITY
-  Common Stock / Paid-in Capital
-  Retained Earnings
-  Current Period Net Income
-= TOTAL EQUITY
-
-= TOTAL LIABILITIES + EQUITY  (must equal TOTAL ASSETS)
-```
-
-### Step 4 — Build the Cash Flow Statement
-
-The indirect method cash flow reconciles from net income to operating cash flows:
-
-```sql
--- Cash flow statement — indirect method
-WITH net_income AS (
-    SELECT SUM(amount) AS value FROM financial_facts
-    WHERE fiscal_period = :period AND line_item = 'net_income'
-),
-adjustments AS (
-    SELECT
-        line_item,
-        SUM(amount) AS value
-    FROM financial_facts
-    WHERE fiscal_period = :period
-      AND statement_type = 'cash_flow'
-      AND section IN ('operating_adjustments', 'working_capital_changes')
-    GROUP BY line_item
-),
-investing AS (
-    SELECT SUM(amount) AS total FROM financial_facts
-    WHERE fiscal_period = :period
-      AND statement_type = 'cash_flow'
-      AND section = 'investing'
-),
-financing AS (
-    SELECT SUM(amount) AS total FROM financial_facts
-    WHERE fiscal_period = :period
-      AND statement_type = 'cash_flow'
-      AND section = 'financing'
-)
-SELECT
-    'Net Income' AS line_item,
-    (SELECT value FROM net_income) AS amount
-UNION ALL
-SELECT line_item, value FROM adjustments
-UNION ALL
-SELECT 'Total Investing Activities', (SELECT total FROM investing)
-UNION ALL
-SELECT 'Total Financing Activities', (SELECT total FROM financing);
-```
-
-### Step 5 — Implement Drill-Down Dimensions
-
-Drill-down is the feature that turns a static financial statement into an actionable management tool. Design your fact table and queries to support filtering by:
-
-- **Channel:** Direct website, Amazon, eBay, Walmart, retail wholesale, B2B
-- **Product category:** Electronics, apparel, consumables, digital products
-- **Geography:** Country, state/province, metro area
-- **Customer segment:** New vs. returning, B2B vs. B2C, loyalty tier
-- **Time period:** Day, week, month, quarter, YTD, trailing 12 months
-
-```python
-def build_pnl_query(filters: dict) -> tuple[str, list]:
-    """
-    Dynamically build a P&L query with dimension filters.
-
-    WARNING: Never interpolate filter values directly into the SQL string using f-strings
-    (e.g., f"channel = '{filters['channel']}'") — this is vulnerable to SQL injection.
-    Always use parameterized queries. This function returns the query string with %s
-    placeholders alongside the corresponding list of parameter values.
-    """
-    where_clauses = ["statement_type = 'pnl'", "fiscal_period = %s"]
-    params: list = [filters.get('period')]
-
-    if filters.get('channel'):
-        where_clauses.append("channel = %s")
-        params.append(filters['channel'])
-    if filters.get('product_category'):
-        where_clauses.append("product_category = %s")
-        params.append(filters['product_category'])
-    if filters.get('geography'):
-        where_clauses.append("geography = %s")
-        params.append(filters['geography'])
-
-    where_str = " AND ".join(where_clauses)
-    query = f"""
-        SELECT
-            line_item,
-            SUM(amount) AS total
-        FROM financial_facts
-        WHERE {where_str}
-        GROUP BY line_item
-        ORDER BY line_item;
-    """
-    return query, params
-```
-
-### Step 6 — Key Metrics and KPI Cards
-
-Every financial dashboard needs headline KPI cards at the top:
-
-```python
-FINANCIAL_KPIS = [
-    {
-        'name': 'Net Revenue',
-        'query': "SELECT SUM(amount) FROM financial_facts WHERE line_item = 'net_revenue' AND fiscal_period = :period",
-        'format': 'currency',
-        'comparison': 'prior_period',
-    },
-    {
-        'name': 'Gross Margin %',
-        'query': """
-            SELECT
-                ROUND(
-                    (SUM(CASE WHEN line_item = 'gross_profit' THEN amount ELSE 0 END) /
-                     NULLIF(SUM(CASE WHEN line_item = 'net_revenue' THEN amount ELSE 0 END), 0)) * 100,
-                    1
-                )
-            FROM financial_facts WHERE fiscal_period = :period AND statement_type = 'pnl'
-        """,
-        'format': 'percent',
-        'benchmark': 40.0,  # alert if below this
-    },
-    {
-        'name': 'EBITDA',
-        'query': "SELECT SUM(amount) FROM financial_facts WHERE line_item = 'ebitda' AND fiscal_period = :period",
-        'format': 'currency',
-        'comparison': 'prior_period',
-    },
-    {
-        'name': 'Cash Balance',
-        'query': "SELECT SUM(amount) FROM financial_facts WHERE line_item = 'cash_and_equivalents' AND fiscal_period = :period AND statement_type = 'balance_sheet'",
-        'format': 'currency',
-        'comparison': 'prior_period',
-    },
-]
-```
-
-### Step 7 — Visualization Recommendations
-
-| Statement | Chart Type | Notes |
-|---|---|---|
-| P&L Waterfall | Waterfall chart | Shows flow from revenue to net income |
-| Revenue Trend | Line chart with bands | Current year vs prior year, with forecast |
-| Margin Mix | Stacked bar by channel | Gross margin by sales channel |
-| Expense Breakdown | Donut / treemap | Proportion of each expense category |
-| Balance Sheet | Bar chart (assets vs liabilities) | Stacked grouped bar |
-| Cash Flow Bridge | Waterfall | From opening to closing cash |
-| YTD vs Budget | Bullet chart or gauge | Shows actuals vs plan |
+### Step 3: Build the financial reporting dashboard
 
 ---
+
+#### Shopify
+
+**Option A: QuickBooks Online Reporting (recommended starting point)**
+1. Connect Shopify to QuickBooks via A2X (see Step 1)
+2. In QuickBooks, go to **Reports → Profit and Loss** — generate monthly P&L with comparison to prior period or budget
+3. Go to **Reports → Profit and Loss Detail** for transaction-level drill-down
+4. For board reporting: use **QuickBooks Advanced** which provides customizable dashboards and scheduled report emails
+
+**Option B: Xero Reporting**
+1. In Xero, go to **Accounting → Reports → Profit and Loss** — configure date range, comparison period, and layout
+2. Enable **Tracking Categories** in Xero (Settings → Advanced → Tracking Categories) — create categories for "Channel" (DTC, Amazon, Wholesale) and "Department" to get drill-down in P&L
+3. Tag transactions by channel as they are entered; Xero P&L then shows margin by channel automatically
+
+**Option C: Google Looker Studio (free, for visual dashboards)**
+1. Connect QuickBooks or Xero to Google Sheets using **Coupler.io** or **G-Accon** (exports accounting data to Google Sheets on a schedule)
+2. Build a Looker Studio report on top of the Google Sheet data: add scorecards for Net Revenue, Gross Margin %, and EBITDA; add a time-series chart for monthly P&L trend; add a bar chart for expense category breakdown
+3. Share the Looker Studio URL with board members — auto-refreshes when the Google Sheet updates
+
+**Option D: Finaloop (fully automated Shopify bookkeeping + reporting)**
+1. Install **Finaloop** from the Shopify App Store
+2. Finaloop handles all bookkeeping automatically: categorizes Shopify transactions, tracks COGS, and generates GAAP-ready P&L, balance sheet, and cash flow statements
+3. Financial statements are available in the Finaloop dashboard and exportable to PDF; integrates with QuickBooks and Xero
+
+---
+
+#### WooCommerce
+
+1. Connect WooCommerce to your accounting system (QuickBooks via the WooCommerce QuickBooks plugin or Xero via the Xero extension)
+2. Use your accounting system's reporting (**QuickBooks Reports → P&L** or **Xero → Profit and Loss**) as the primary financial reporting layer
+3. For WooCommerce-specific drill-down by product/category, use **Metorik** alongside your accounting system — Metorik provides product-level and category-level revenue and margin, while your accounting system provides the GAAP-accurate totals
+4. For a unified view: export monthly P&L from QuickBooks/Xero to Google Sheets and export Metorik channel/product breakdown to a second sheet; build a Looker Studio dashboard that combines both
+
+---
+
+#### BigCommerce
+
+1. Connect BigCommerce to accounting via **Webgility** (QuickBooks) or **Amaka** (Xero)
+2. Use your accounting system for financial statements
+3. **Glew.io** (BigCommerce App Marketplace) provides ecommerce-specific financial analytics including gross margin by product, channel, and customer segment — complement your accounting system's P&L with Glew's operational margin view
+
+---
+
+### Step 4: Add drill-down capabilities
+
+The value of a financial reporting dashboard over static statements is drill-down. Set up these dimensions in your reporting:
+
+**By channel (DTC vs. Amazon vs. Wholesale):**
+- In QuickBooks: Use **Classes** (QuickBooks Advanced) to tag transactions by channel; run P&L by class
+- In Xero: Use **Tracking Categories** as described above
+- In Looker Studio: Add a channel filter that refreshes all charts based on the selected channel
+
+**By product category:**
+- Map your product categories to your accounting system's chart of accounts
+- Alternatively, use your ecommerce platform's analytics (Shopify Analytics → Sales by product, Metorik → Products) for product-level margin, and your accounting system for company-level totals
+
+**By time period:**
+- All accounting systems support P&L comparison: current month vs. prior month, current month vs. prior year same month, YTD vs. prior YTD
+- For trailing-12-month views and rolling period analysis, use Google Looker Studio or a BI tool connected to your data warehouse
+
+### Step 5: Automate report distribution
+
+Replace email attachments with shared dashboard links:
+
+**Scheduled reports in QuickBooks:**
+1. Go to **Reports → [Report Name] → Save and Schedule**
+2. Set schedule: monthly, on the 5th business day after month close
+3. Add recipients (CFO, CEO, board members) — they receive the report by email with the latest numbers
+
+**Scheduled reports in Xero:**
+1. Xero does not natively schedule report emails, but you can use **G-Accon for Xero** (Google Sheets add-on) to automatically refresh Xero data in Sheets and trigger email distribution via Apps Script
+
+**Board reporting package:**
+For board meetings, produce a standard 1-page financial summary with:
+- Net Revenue vs. budget (current month and YTD)
+- Gross Margin % vs. prior year
+- EBITDA vs. budget
+- Cash balance and runway
+- Top 3 variance explanations
+
+Most accounting systems can produce this as a PDF report; automate generation with QuickBooks Advanced or Xero's scheduled reporting.
 
 ## Best Practices
 
-1. **Use a single source of truth for GL data** — Pull financials from your accounting system, not from the ecommerce platform alone. Platform revenue data will diverge from GAAP financials due to recognition timing, adjustments, and intercompany transactions.
-
-2. **Automate period closes** — Set up a monthly job that snapshots financial facts as of period close. Do not allow historical periods to change once closed; instead, post adjusting entries in the current period.
-
-3. **Build a chart of accounts mapping table** — Different systems use different account codes. Maintain a mapping table that translates platform-specific cost categories to your standard GL accounts.
-
-4. **Separate actuals from forecasts in the data model** — Use a `version` column ('actuals', 'budget', 'forecast_v1') so you can display actuals vs. budget in the same chart without union query hacks.
-
-5. **Implement row-level security** — Finance dashboards contain sensitive data. Ensure the data layer enforces access controls so that, for example, a channel manager only sees their channel's P&L.
-
-6. **Show percentage metrics alongside absolute values** — Gross margin percentage is more comparable across periods than gross margin dollars. Always show both.
-
-7. **Define currency and rounding conventions** — Establish whether numbers are in whole dollars or thousands. State the currency. Handle multi-currency consolidation (functional vs. presentation currency).
-
-8. **Build a data freshness indicator** — Show the last-updated timestamp prominently so users know whether they are looking at yesterday's close or real-time data.
-
-9. **Annotate unusual variances** — Allow finance team members to add text annotations to chart data points explaining one-time items (e.g., inventory write-down, marketing surge for launch).
-
-10. **Produce an audit trail** — Every number in the dashboard should be traceable to source transactions. Build a transaction detail panel that opens when a user clicks on any line item.
-
----
+- **Build on your accounting system, not platform data** — Shopify gross sales and accounting net revenue are not the same number; always report from your GL, not the ecommerce platform API
+- **Automate period closes** — set up a monthly job that locks financial facts as of period close; do not allow historical periods to change; post adjusting entries in the current period
+- **Show percentage metrics alongside absolute values** — gross margin % is more comparable across periods than gross margin dollars; always show both
+- **Define currency and rounding conventions** — document whether numbers are in whole dollars or thousands; handle multi-currency consolidation explicitly
+- **Build a data freshness indicator** — show the last-updated timestamp prominently on dashboards so users know whether they are looking at yesterday's close or real-time data
+- **Annotate unusual variances** — allow the finance team to add text annotations to period variances explaining one-time items (inventory write-down, marketing launch surge)
 
 ## Common Pitfalls
 
-### Pitfall 1: Building on Top of Raw Platform Data
-Shopify gross sales and accounting net revenue are not the same number. Platform data includes pending orders, authorization holds, and pre-recognition amounts. Build on top of your GL, not the platform API.
+| Problem | Solution |
+|---------|----------|
+| Building on raw platform data instead of accounting system | Shopify/WooCommerce platform data includes pending orders, authorization holds, and pre-recognition amounts; always build financial reports from your GL |
+| Mixing cash and accrual basis | If your accounting system is accrual-based, all financial statements must be accrual-based; do not add Stripe payout data (cash-basis) directly into an accrual P&L |
+| Returns not handled in the correct period | A return processed in April for a March purchase should be a March adjustment; set up a returns reserve methodology in your accounting system |
+| Dashboard loads from raw transaction tables (too slow) | Pre-aggregate monthly financial summaries; serve financial dashboards from aggregated tables, not live transaction queries |
+| No variance commentary workflow | A dashboard showing a 30% margin decline is useless without explanation; build a Notion or Slack workflow where the finance team adds commentary on variances before sharing with leadership |
 
-### Pitfall 2: Mixing Cash and Accrual Basis
-If your accounting system is on accrual basis, your dashboard must reflect accrual-basis figures. Adding Stripe payout data (cash basis) directly into an accrual dashboard creates a hybrid that is neither consistent nor auditable.
+## Related Skills
 
-### Pitfall 3: Not Handling Returns in the Right Period
-A return processed in April for a March purchase should be reflected as a March adjustment (contra-revenue accrual) not an April charge. Establish a returns reserve methodology.
-
-### Pitfall 4: Hardcoding Fiscal Calendar Logic
-Many ecommerce companies use 4-4-5 or 13-period fiscal calendars. Hardcoding month-end dates will break for these companies. Build a fiscal calendar dimension table and join to it.
-
-### Pitfall 5: Ignoring Intercompany Eliminations
-If you operate multiple legal entities (e.g., a US operating company and a UK subsidiary), intercompany transactions must be eliminated at the consolidated level. Failing to do this double-counts revenue or expenses.
-
-### Pitfall 6: Dashboard Loads Too Slowly
-Financial dashboards that query raw transaction tables over multi-year history will time out. Pre-aggregate monthly financial facts in a summary table and serve the dashboard from that.
-
-### Pitfall 7: No Variance Commentary Workflow
-A dashboard that shows a 30% decline in gross margin is useless without explanation. Build a commentary workflow where the finance team can attach notes to period variances before the dashboard is shared with leadership.
+- @financial-analytics-dashboard
+- @cash-flow-forecasting
+- @ecommerce-budgeting-forecasting
+- @revenue-recognition-accounting
+- @profit-margin-analysis

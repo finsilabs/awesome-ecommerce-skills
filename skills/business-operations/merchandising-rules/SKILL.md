@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [merchandising, product-ranking, collections, sorting, curation, search-relevance, boosting]
 triggers: ["implement merchandising rules", "build product ranking", "automate collection curation", "product sorting algorithm"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Build a merchandising rules engine for e-commerce that controls product ranking on collection pages, automated collection membership, search result boosting, and visual merchandising (pinning, burying, and slot-based placement). This skill covers the data model for merchandising rules, scoring algorithms that blend business metrics with manual overrides, automated collection rules (smart collections), and A/B testing hooks for measuring the revenue impact of different ranking strategies.
+Merchandising rules control which products appear first in your collections and search results. The goal is to surface products that are likely to convert — in-stock, popular, high-margin — while giving merchandisers manual control to pin hero products, hide out-of-stock items, and boost seasonal collections. Every major platform has some built-in sorting options; apps like Searchpie, Intelligems, or SearchPie add automated performance-based ranking.
 
 ## When to Use This Skill
 
@@ -26,651 +26,204 @@ Build a merchandising rules engine for e-commerce that controls product ranking 
 - When adding pinning (manual placement) and slot-based merchandising to collection pages
 - When measuring the revenue impact of different product ranking strategies
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
-**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
-
 ## Core Instructions
 
-1. **Define the merchandising rule data model**
-
-   ```typescript
-   interface MerchandisingRule {
-     id: string;
-     name: string;
-     type: 'ranking' | 'collection' | 'search_boost' | 'pinning';
-     scope: {
-       target: 'collection' | 'search' | 'global';
-       collectionId?: string;
-       searchQuery?: string;
-     };
-     conditions: RuleCondition[];
-     actions: RuleAction[];
-     priority: number;           // Higher = applied first
-     schedule?: {
-       startsAt: Date;
-       endsAt?: Date;
-     };
-     isActive: boolean;
-     createdAt: Date;
-     updatedAt: Date;
-   }
-
-   interface RuleCondition {
-     field: string;               // 'tag', 'vendor', 'product_type', 'price', 'inventory', 'created_at'
-     operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than' | 'in' | 'not_in';
-     value: string | number | string[];
-   }
-
-   interface RuleAction {
-     type: 'boost' | 'bury' | 'pin' | 'exclude' | 'include';
-     value?: number;              // Boost/bury weight (-100 to 100)
-     position?: number;           // Pin to specific slot (1-based)
-   }
-
-   interface CollectionRule {
-     id: string;
-     collectionId: string;
-     title: string;
-     conditions: RuleCondition[];
-     conditionLogic: 'all' | 'any';  // AND vs OR
-     sortOrder: SortOrder;
-     manualOverrides: ManualOverride[];
-     isAutomatic: boolean;
-     refreshInterval: number;     // Minutes
-   }
-
-   type SortOrder =
-     | { type: 'best_selling' }
-     | { type: 'newest' }
-     | { type: 'price_asc' }
-     | { type: 'price_desc' }
-     | { type: 'manual' }
-     | { type: 'score'; weights: ScoreWeights };
-
-   interface ScoreWeights {
-     salesVelocity: number;       // 0-1, weight for recent sales
-     revenue: number;             // 0-1, weight for total revenue
-     conversionRate: number;      // 0-1, weight for conversion rate
-     margin: number;              // 0-1, weight for profit margin
-     recency: number;             // 0-1, weight for product newness
-     inventory: number;           // 0-1, weight for stock levels
-   }
-
-   interface ManualOverride {
-     productId: string;
-     action: 'pin' | 'bury' | 'exclude';
-     position?: number;
-   }
-   ```
-
-2. **Build the product scoring engine**
-
-   ```typescript
-   class ProductScoringEngine {
-     constructor(
-       private metricsRepo: ProductMetricsRepository,
-       private defaultWeights: ScoreWeights = {
-         salesVelocity: 0.30,
-         revenue: 0.20,
-         conversionRate: 0.20,
-         margin: 0.15,
-         recency: 0.10,
-         inventory: 0.05,
-       }
-     ) {}
-
-     async scoreProducts(
-       productIds: string[],
-       weights?: ScoreWeights
-     ): Promise<Map<string, number>> {
-       const w = weights || this.defaultWeights;
-       const metrics = await this.metricsRepo.getMetrics(productIds);
-       const scores = new Map<string, number>();
-
-       // Normalize each metric to 0-1 range across the product set
-       const normalized = this.normalizeMetrics(metrics);
-
-       for (const product of normalized) {
-         const score =
-           product.salesVelocity * w.salesVelocity +
-           product.revenue * w.revenue +
-           product.conversionRate * w.conversionRate +
-           product.margin * w.margin +
-           product.recency * w.recency +
-           product.inventoryScore * w.inventory;
-
-         scores.set(product.productId, Math.round(score * 1000) / 1000);
-       }
-
-       return scores;
-     }
-
-     private normalizeMetrics(metrics: ProductMetrics[]): NormalizedMetrics[] {
-       if (metrics.length === 0) return [];
-
-       // Find min/max for each metric
-       const ranges = {
-         salesVelocity: this.getRange(metrics.map(m => m.unitsSold30d)),
-         revenue: this.getRange(metrics.map(m => m.revenue30d)),
-         conversionRate: this.getRange(metrics.map(m => m.conversionRate)),
-         margin: this.getRange(metrics.map(m => m.grossMarginPct)),
-         recency: this.getRange(metrics.map(m => m.daysSinceCreated)),
-         inventory: this.getRange(metrics.map(m => m.inventoryQuantity)),
-       };
-
-       return metrics.map(m => ({
-         productId: m.productId,
-         salesVelocity: this.normalize(m.unitsSold30d, ranges.salesVelocity),
-         revenue: this.normalize(m.revenue30d, ranges.revenue),
-         conversionRate: this.normalize(m.conversionRate, ranges.conversionRate),
-         margin: this.normalize(m.grossMarginPct, ranges.margin),
-         // Invert recency: newer products = higher score
-         recency: 1 - this.normalize(m.daysSinceCreated, ranges.recency),
-         // Moderate inventory: not too high (overstock), not too low
-         inventoryScore: m.inventoryQuantity > 0
-           ? Math.min(this.normalize(m.inventoryQuantity, ranges.inventory), 0.8)
-           : 0,
-       }));
-     }
-
-     private normalize(value: number, range: { min: number; max: number }): number {
-       if (range.max === range.min) return 0.5;
-       return (value - range.min) / (range.max - range.min);
-     }
-
-     private getRange(values: number[]): { min: number; max: number } {
-       return { min: Math.min(...values), max: Math.max(...values) };
-     }
-   }
-   ```
-
-3. **Implement collection product ranking with manual overrides**
-
-   ```typescript
-   class CollectionMerchandiser {
-     constructor(
-       private scoringEngine: ProductScoringEngine,
-       private productRepo: ProductRepository,
-       private rulesRepo: MerchandisingRulesRepository
-     ) {}
-
-     async getCollectionProducts(
-       collectionId: string,
-       page: number = 1,
-       limit: number = 24
-     ): Promise<{ products: RankedProduct[]; total: number }> {
-       const rule = await this.rulesRepo.getCollectionRule(collectionId);
-       if (!rule) {
-         // Fallback to default sorting
-         return this.productRepo.getByCollection(collectionId, { page, limit });
-       }
-
-       // 1. Get all products in the collection (or matching automatic rules)
-       let productIds: string[];
-       if (rule.isAutomatic) {
-         productIds = await this.evaluateAutomaticCollection(rule);
-       } else {
-         productIds = await this.productRepo.getProductIdsByCollection(collectionId);
-       }
-
-       // 2. Score products
-       const scores = rule.sortOrder.type === 'score'
-         ? await this.scoringEngine.scoreProducts(productIds, rule.sortOrder.weights)
-         : await this.getSimpleSortScores(productIds, rule.sortOrder);
-
-       // 3. Apply merchandising rule boosts/buries
-       const activeRules = await this.rulesRepo.getActiveRules(collectionId);
-       for (const merchRule of activeRules) {
-         this.applyBoostBury(scores, productIds, merchRule);
-       }
-
-       // 4. Apply manual overrides (pinning and exclusions)
-       const ranked = this.applyManualOverrides(
-         productIds,
-         scores,
-         rule.manualOverrides
-       );
-
-       // 5. Paginate
-       const total = ranked.length;
-       const offset = (page - 1) * limit;
-       const pageProducts = ranked.slice(offset, offset + limit);
-
-       // 6. Fetch full product data for the page
-       const products = await this.productRepo.getByIds(
-         pageProducts.map(p => p.productId)
-       );
-
-       return {
-         products: pageProducts.map(rp => ({
-           ...products.find(p => p.id === rp.productId)!,
-           score: rp.score,
-           isPinned: rp.isPinned,
-         })),
-         total,
-       };
-     }
-
-     private applyBoostBury(
-       scores: Map<string, number>,
-       productIds: string[],
-       rule: MerchandisingRule
-     ): void {
-       for (const action of rule.actions) {
-         const matchingProducts = this.filterByConditions(productIds, rule.conditions);
-
-         for (const productId of matchingProducts) {
-           const currentScore = scores.get(productId) || 0;
-
-           if (action.type === 'boost') {
-             scores.set(productId, currentScore + (action.value || 50) / 100);
-           } else if (action.type === 'bury') {
-             scores.set(productId, currentScore - (action.value || 50) / 100);
-           } else if (action.type === 'exclude') {
-             scores.delete(productId);
-           }
-         }
-       }
-     }
-
-     private applyManualOverrides(
-       productIds: string[],
-       scores: Map<string, number>,
-       overrides: ManualOverride[]
-     ): RankedProduct[] {
-       // Remove excluded products
-       const excludedIds = new Set(
-         overrides.filter(o => o.action === 'exclude').map(o => o.productId)
-       );
-
-       // Sort by score (descending)
-       const sorted = productIds
-         .filter(id => !excludedIds.has(id) && scores.has(id))
-         .sort((a, b) => (scores.get(b) || 0) - (scores.get(a) || 0))
-         .map(id => ({
-           productId: id,
-           score: scores.get(id) || 0,
-           isPinned: false,
-         }));
-
-       // Insert pinned products at their positions
-       const pinned = overrides
-         .filter(o => o.action === 'pin' && o.position)
-         .sort((a, b) => (a.position || 0) - (b.position || 0));
-
-       for (const pin of pinned) {
-         // Remove from current position if present
-         const existingIdx = sorted.findIndex(p => p.productId === pin.productId);
-         if (existingIdx !== -1) sorted.splice(existingIdx, 1);
-
-         // Insert at pinned position (1-based)
-         const insertIdx = Math.min((pin.position || 1) - 1, sorted.length);
-         sorted.splice(insertIdx, 0, {
-           productId: pin.productId,
-           score: 999,
-           isPinned: true,
-         });
-       }
-
-       return sorted;
-     }
-   }
-   ```
-
-4. **Build automated (smart) collection evaluation**
-
-   ```typescript
-   async evaluateAutomaticCollection(rule: CollectionRule): Promise<string[]> {
-     // Build database query from rule conditions
-     let query = this.productRepo.createQueryBuilder('p')
-       .where('p.status = :status', { status: 'active' });
-
-     for (const condition of rule.conditions) {
-       const clause = this.buildConditionClause(condition);
-       if (rule.conditionLogic === 'all') {
-         query = query.andWhere(clause.sql, clause.params);
-       } else {
-         query = query.orWhere(clause.sql, clause.params);
-       }
-     }
-
-     const products = await query.select('p.id').getMany();
-     return products.map(p => p.id);
-   }
-
-   private buildConditionClause(condition: RuleCondition): { sql: string; params: Record<string, any> } {
-     const paramKey = `cond_${condition.field}`;
-
-     switch (condition.operator) {
-       case 'equals':
-         return {
-           sql: `p.${condition.field} = :${paramKey}`,
-           params: { [paramKey]: condition.value },
-         };
-       case 'contains':
-         return {
-           sql: `p.${condition.field} ILIKE :${paramKey}`,
-           params: { [paramKey]: `%${condition.value}%` },
-         };
-       case 'greater_than':
-         return {
-           sql: `p.${condition.field} > :${paramKey}`,
-           params: { [paramKey]: condition.value },
-         };
-       case 'less_than':
-         return {
-           sql: `p.${condition.field} < :${paramKey}`,
-           params: { [paramKey]: condition.value },
-         };
-       case 'in':
-         return {
-           sql: `p.${condition.field} = ANY(:${paramKey})`,
-           params: { [paramKey]: condition.value },
-         };
-       default:
-         return { sql: '1=1', params: {} };
-     }
-   }
-   ```
-
-5. **Implement search result boosting**
-
-   ```typescript
-   class SearchMerchandiser {
-     constructor(
-       private searchEngine: SearchEngine,  // Elasticsearch, Algolia, Meilisearch
-       private rulesRepo: MerchandisingRulesRepository
-     ) {}
-
-     async search(
-       query: string,
-       filters: Record<string, string[]>,
-       page: number = 1,
-       limit: number = 24
-     ): Promise<SearchResult> {
-       // Get active search boost rules
-       const boostRules = await this.rulesRepo.getSearchBoostRules(query);
-
-       // Build the search request with merchandising boosts
-       const searchRequest: SearchRequest = {
-         query,
-         filters,
-         page,
-         limit,
-         boosts: [],
-       };
-
-       for (const rule of boostRules) {
-         for (const action of rule.actions) {
-           if (action.type === 'boost') {
-             searchRequest.boosts.push({
-               conditions: rule.conditions,
-               weight: action.value || 50,
-             });
-           }
-         }
-       }
-
-       // Example: Elasticsearch function_score query
-       const esQuery = this.buildElasticsearchQuery(searchRequest);
-       return this.searchEngine.search(esQuery);
-     }
-
-     private buildElasticsearchQuery(request: SearchRequest): object {
-       const functions: object[] = [];
-
-       // Add merchandising boosts
-       for (const boost of request.boosts) {
-         for (const condition of boost.conditions) {
-           functions.push({
-             filter: this.conditionToEsFilter(condition),
-             weight: 1 + (boost.weight / 100),  // Convert percentage to weight multiplier
-           });
-         }
-        }
-
-       // Default: boost products that are in stock
-       functions.push({
-         filter: { range: { inventory_quantity: { gt: 0 } } },
-         weight: 1.5,
-       });
-
-       // Slight boost for products with images
-       functions.push({
-         filter: { exists: { field: 'featured_image' } },
-         weight: 1.1,
-       });
-
-       return {
-         function_score: {
-           query: {
-             multi_match: {
-               query: request.query,
-               fields: ['title^3', 'description', 'tags^2', 'vendor'],
-               type: 'best_fields',
-               fuzziness: 'AUTO',
-             },
-           },
-           functions,
-           score_mode: 'multiply',
-           boost_mode: 'multiply',
-         },
-       };
-     }
-
-     private conditionToEsFilter(condition: RuleCondition): object {
-       switch (condition.operator) {
-         case 'equals':
-           return { term: { [condition.field]: condition.value } };
-         case 'contains':
-           return { match: { [condition.field]: condition.value } };
-         case 'greater_than':
-           return { range: { [condition.field]: { gt: condition.value } } };
-         case 'in':
-           return { terms: { [condition.field]: condition.value } };
-         default:
-           return { match_all: {} };
-       }
-     }
-   }
-   ```
-
-6. **Add a merchandising admin API**
-
-   ```typescript
-   // POST /api/admin/merchandising/rules
-   async function createRule(req: AuthRequest, res: Response) {
-     const input = merchandisingRuleSchema.parse(req.body);
-
-     const rule = await rulesRepo.create({
-       ...input,
-       createdBy: req.adminUser.id,
-     });
-
-     // If it's a collection rule, regenerate the collection immediately
-     if (rule.type === 'collection' && rule.scope.collectionId) {
-       await collectionMerchandiser.regenerate(rule.scope.collectionId);
-     }
-
-     await auditLog.log({
-       userId: req.adminUser.id,
-       action: 'merchandising_rule_created',
-       resource: `rule:${rule.id}`,
-       details: { ruleName: rule.name, ruleType: rule.type },
-     });
-
-     res.status(201).json({ rule });
-   }
-
-   // POST /api/admin/merchandising/collections/:id/pin
-   async function pinProduct(req: AuthRequest, res: Response) {
-     const { collectionId } = req.params;
-     const { productId, position } = req.body;
-
-     await rulesRepo.addManualOverride(collectionId, {
-       productId,
-       action: 'pin',
-       position,
-     });
-
-     // Regenerate the collection
-     await collectionMerchandiser.regenerate(collectionId);
-
-     res.json({ message: `Product pinned to position ${position}` });
-   }
-
-   // POST /api/admin/merchandising/collections/:id/preview
-   async function previewCollection(req: AuthRequest, res: Response) {
-     const { collectionId } = req.params;
-     const { weights } = req.body;  // Override weights for preview
-
-     const result = await collectionMerchandiser.getCollectionProducts(
-       collectionId, 1, 48, weights
-     );
-
-     res.json({
-       products: result.products.map(p => ({
-         id: p.id,
-         title: p.title,
-         price: p.price,
-         image: p.featuredImage,
-         score: p.score,
-         isPinned: p.isPinned,
-       })),
-       total: result.total,
-     });
-   }
-   ```
-
-## Examples
-
-### Time-based merchandising rules for seasonal campaigns
+### Step 1: Determine your platform and choose the right merchandising tool
+
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Shopify's built-in collection sorting + Kimonix or SearchPie | Shopify has built-in sort options; Kimonix and SearchPie add performance-based automated sorting with manual override capability |
+| **WooCommerce** | WooCommerce's default sort + YITH WooCommerce Catalog Mode or WooCommerce Product Table | WooCommerce supports basic sorting; YITH and similar plugins add advanced catalog control |
+| **BigCommerce** | Built-in Collection Sorting + SearchPie or Boost Commerce | BigCommerce has strong built-in category sorting; Boost Commerce adds advanced search merchandising |
+| **Custom / Headless** | Algolia or Elasticsearch with a merchandising rules layer | Algolia has a built-in "Rules" and "Pinning" feature in its dashboard; Elasticsearch needs custom scoring rules |
+
+### Step 2: Configure basic collection sorting
+
+#### Shopify
+
+**Built-in sorting options (no app needed):**
+1. Go to **Products → Collections → [Collection] → Products**
+2. From the "Sort" dropdown, choose:
+   - **Best Selling** — sorts by total units sold historically (most popular first)
+   - **Newest** — most recently added products first
+   - **Price (Low to High / High to Low)** — price-based sorting
+   - **Manually** — lets you drag products to specific positions
+3. The "Manual" sort lets you pin specific products by dragging them to the top — useful for hero products and new launches
+
+**Smart (automated) collections:**
+1. Go to **Products → Collections → Create collection**
+2. Set type to **Automated**
+3. Add conditions: e.g., "Tag is equal to 'summer'" or "Product price is greater than $50"
+4. Shopify automatically adds/removes products that meet the conditions
+5. Set the sort order for the smart collection (Best Selling, Newest, etc.)
+
+**Shopify Search & Discovery app (free):**
+1. Install the **Shopify Search & Discovery** app from the App Store (free, by Shopify)
+2. This app lets you boost specific products in search results and collection pages
+3. Go to the app → Collections → [Collection] → Boost products to pin products to the top
+4. Go to Bury products to push low-priority items (clearance, out-of-season) to the bottom
+
+#### WooCommerce
+
+**Built-in sorting:**
+1. Go to **WooCommerce → Settings → Products → Default product sorting**
+2. Options: Default (custom ordering), Popularity, Average Rating, Latest, Price (Low to High)
+3. "Custom ordering" lets you drag products to specific positions in WooCommerce → Products
+4. Enable multiple sort options for customers in WooCommerce → Settings → Products → Enable sorting
+
+**Category product display (manual control):**
+1. Go to **Products → Categories → [Category] → Products tab**
+2. Drag products to reorder them within the category page
+3. For programmatic control: install **WooCommerce Custom Order / Alphabetical Order** plugin
+
+#### BigCommerce
+
+1. Go to **Products → Product Categories → [Category]**
+2. Click the **Sort** tab to set the default sort order for the category
+3. Options: Name, Price, Date, Sales (best selling), Featured, Manual
+4. "Manual" sort allows dragging products into specific positions
+5. "Featured" sort shows products marked as "Featured" first, then falls back to the default
+
+**BigCommerce Search:**
+- BigCommerce's search returns results based on relevance by default
+- To boost specific products in search: mark them as "Featured" or add keywords in the product SEO fields
+- For advanced search merchandising: install **Boost Commerce** from the BigCommerce App Marketplace
+
+### Step 3: Set up performance-based automated ranking
+
+Performance-based ranking automatically promotes products that are selling well and pushes down slow-movers. This typically requires an app.
+
+#### Shopify — Kimonix
+
+1. Install **Kimonix** from the Shopify App Store (paid, starts ~$30/month)
+2. Kimonix connects to your Shopify analytics and builds a score for each product based on:
+   - Sales velocity (recent units sold)
+   - Conversion rate (add-to-cart rate from collection)
+   - Inventory level (deprioritize products about to go out of stock)
+   - Margin (optional, if you've entered cost data)
+3. Configure the weighting in Kimonix → Strategies: e.g., 50% sales velocity, 30% conversion rate, 20% inventory
+4. Kimonix re-sorts the collection automatically on a schedule (hourly, daily, or triggered by events)
+5. Override: manually pin products to specific positions — Kimonix respects manual pins and sorts the rest by algorithm
+
+**Using Shopify Search & Discovery (free) for simpler boosts:**
+1. Open the Search & Discovery app
+2. Under Collections, select a collection and click "Add boost"
+3. You can boost by product tag (e.g., boost all products tagged "new-arrival"), specific products, or product type
+4. "Bury" works the same way for clearance items or out-of-season products
+
+#### WooCommerce
+
+**Using YITH WooCommerce Ajax Product Filter + WooCommerce Visual Products Configurator:**
+- For basic automated sorting based on sales: WooCommerce's built-in "Sort by Popularity" uses a `total_sales` meta field that increments with each sale
+- For advanced scoring: install **Booster for WooCommerce** which adds weighted product sorting based on custom criteria
+
+#### BigCommerce — Boost Commerce
+
+1. Install **Boost Commerce** from the BigCommerce App Marketplace
+2. Boost Commerce adds smart sorting (by revenue, conversion rate, or custom score) to your category pages
+3. Create "Merchandising Rules" in Boost Commerce to pin, boost, or bury specific products
+4. Set up time-limited rules for seasonal campaigns (e.g., boost "winter" tagged products Dec–Feb)
+
+### Step 4: Set up search result merchandising
+
+#### Shopify
+
+**Shopify Search & Discovery — search boosts:**
+1. Open the Search & Discovery app → Search
+2. Under "Boosts", click "Add boost" for specific search queries
+3. Example: for the query "jacket", boost products tagged "featured-jacket" to the top
+4. Under "Synonyms": add common spelling variations (e.g., "t-shirt" = "tshirt" = "tee")
+5. Under "Product filters": configure which filters appear on search results (price, color, size, etc.)
+
+#### WooCommerce
+
+- **WooCommerce Product Search** plugin (WooCommerce.com) adds relevance-based search
+- Configure search weights: title weight = 5, tag weight = 3, category weight = 2, description weight = 1
+- For advanced merchandising: use **SearchWP** with its WooCommerce integration to create custom search rules
+
+#### Custom / Headless — Algolia
+
+1. Sign up at algolia.com and install the Algolia client in your store
+2. Push your product catalog to Algolia with a background job
+3. In Algolia's dashboard → Rules, create merchandising rules:
+   - Pin a product to position 1 for a specific query
+   - Boost products with a specific attribute (e.g., `in_stock: true`)
+   - Bury products with `clearance: true`
+4. Custom ranking: in Algolia → Indices → Ranking → Custom Ranking, add:
+   - `desc(sales_30d)` — sort by recent sales descending
+   - `desc(conversion_rate)` — secondary sort by conversion rate
+5. Algolia updates rankings in real time as you push new product metrics to the index
+
+### Step 5: Custom / Headless — scoring engine
 
 ```typescript
-// Automatically boost winter products in November-January
-const winterBoostRule: MerchandisingRule = {
-  id: 'winter-boost-2026',
-  name: 'Winter Collection Boost',
-  type: 'ranking',
-  scope: { target: 'global' },
-  conditions: [
-    { field: 'tag', operator: 'in', value: ['winter', 'cold-weather', 'holiday'] },
-  ],
-  actions: [
-    { type: 'boost', value: 40 },  // +40% score boost
-  ],
-  priority: 10,
-  schedule: {
-    startsAt: new Date('2026-11-01'),
-    endsAt: new Date('2027-01-31'),
-  },
-  isActive: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+// Compute a merchandising score for a set of products
+interface ProductMetrics {
+  productId: string;
+  unitsSold30d: number;
+  revenue30d: number;
+  conversionRatePct: number;   // (add-to-carts / page views) × 100
+  grossMarginPct: number;
+  daysInStock: number;         // 0 = out of stock
+  daysSinceAdded: number;
+}
 
-// Bury out-of-season clearance items (don't exclude — they should still be findable)
-const clearanceBuryRule: MerchandisingRule = {
-  id: 'clearance-bury',
-  name: 'Bury Clearance Items',
-  type: 'ranking',
-  scope: { target: 'global' },
-  conditions: [
-    { field: 'tag', operator: 'contains', value: 'clearance' },
-  ],
-  actions: [
-    { type: 'bury', value: 60 },  // -60% score penalty
-  ],
-  priority: 5,
-  isActive: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-```
+interface ScoreWeights {
+  salesVelocity: number;    // e.g., 0.35
+  revenue: number;          // e.g., 0.20
+  conversion: number;       // e.g., 0.20
+  margin: number;           // e.g., 0.15
+  recency: number;          // e.g., 0.10 (newer products get a boost)
+}
 
-### Product metrics collection job
+function scoreProducts(metrics: ProductMetrics[], weights: ScoreWeights): { productId: string; score: number }[] {
+  // Normalize each metric to 0–1 range across the set
+  const normalize = (values: number[]) => {
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    return values.map(v => max === min ? 0.5 : (v - min) / (max - min));
+  };
 
-```typescript
-// Run daily to aggregate product performance metrics for the scoring engine
-async function collectProductMetrics(): Promise<void> {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const salesScores = normalize(metrics.map(m => m.unitsSold30d));
+  const revenueScores = normalize(metrics.map(m => m.revenue30d));
+  const conversionScores = normalize(metrics.map(m => m.conversionRatePct));
+  const marginScores = normalize(metrics.map(m => m.grossMarginPct));
+  // Recency: newer = higher score (invert daysAdded)
+  const recencyScores = normalize(metrics.map(m => -m.daysSinceAdded));
 
-  const metrics = await db.query(`
-    SELECT
-      p.id AS product_id,
-      COALESCE(SUM(oi.quantity), 0) AS units_sold_30d,
-      COALESCE(SUM(oi.net_revenue), 0) AS revenue_30d,
-      CASE
-        WHEN SUM(oi.net_revenue) > 0
-        THEN ((SUM(oi.net_revenue) - COALESCE(SUM(oi.quantity * p_cost.cost_price), 0))
-              / SUM(oi.net_revenue) * 100)
-        ELSE 0
-      END AS gross_margin_pct,
-      COALESCE(views.view_count, 0) AS page_views_30d,
-      CASE
-        WHEN COALESCE(views.view_count, 0) > 0
-        THEN (COUNT(DISTINCT oi.order_id)::numeric / views.view_count * 100)
-        ELSE 0
-      END AS conversion_rate,
-      EXTRACT(DAY FROM NOW() - p.created_at) AS days_since_created,
-      SUM(v.inventory_quantity) AS inventory_quantity
-    FROM products p
-    LEFT JOIN order_line_items oi
-      ON oi.product_id = p.id AND oi.created_at >= $1
-    LEFT JOIN product_variants v ON v.product_id = p.id
-    LEFT JOIN (
-      SELECT product_id, COUNT(*) AS view_count
-      FROM page_views
-      WHERE viewed_at >= $1
-      GROUP BY product_id
-    ) views ON views.product_id = p.id
-    LEFT JOIN product_variants p_cost ON p_cost.product_id = p.id
-    WHERE p.status = 'active'
-    GROUP BY p.id, views.view_count, p.created_at
-  `, [thirtyDaysAgo]);
+  return metrics.map((m, i) => {
+    const score =
+      salesScores[i] * weights.salesVelocity +
+      revenueScores[i] * weights.revenue +
+      conversionScores[i] * weights.conversion +
+      marginScores[i] * weights.margin +
+      recencyScores[i] * weights.recency;
 
-  // Write metrics to the product_metrics table
-  for (const row of metrics.rows) {
-    await metricsRepo.upsert(row);
-  }
-
-  console.log(`Updated metrics for ${metrics.rows.length} products`);
+    // Out-of-stock products get pushed to the bottom
+    const adjustedScore = m.daysInStock === 0 ? score - 2 : score;
+    return { productId: m.productId, score: Math.round(adjustedScore * 1000) / 1000 };
+  }).sort((a, b) => b.score - a.score);
 }
 ```
 
 ## Best Practices
 
-- **Blend algorithmic scoring with manual control** -- automated scoring handles the long tail of products; manual pinning and boosting let merchandisers promote hero products and new arrivals
-- **Use weighted scoring, not hard rules** -- instead of "always show new products first," assign weights so newness contributes to the score alongside sales velocity and margin
-- **Refresh scores on a schedule, not on every request** -- pre-compute product scores daily or hourly and store them; serving pre-computed scores is fast, scoring in real-time is slow
-- **Provide a preview mode** -- let merchandisers see how a rule change will affect the collection before publishing; this prevents costly mistakes
-- **Log every merchandising change** -- maintain an audit trail of who changed which rule and when; this helps debug unexpected ranking changes
-- **A/B test ranking strategies** -- measure whether a different weight configuration improves revenue per visitor; don't rely on intuition alone
-- **Bury out-of-stock products, don't exclude them** -- out-of-stock products should still be findable (for SEO and wishlists) but ranked lower; exclude only discontinued products
-- **Cap the boost/bury range** -- use a bounded scale (-100 to +100) to prevent a single rule from completely overriding the scoring algorithm
+- **Bury out-of-stock products, don't exclude them** — out-of-stock products should still appear in search (for SEO and wishlists) but rank lower; only completely remove discontinued products
+- **Refresh scores daily, not on every page load** — pre-compute and store product scores; computing scores in real time on every collection request is too slow
+- **Pin hero products and new arrivals manually** — automated scoring is good for the long tail; manually pin the 3–5 key products you're actively promoting each season
+- **Provide a preview mode before applying new rules** — the Shopify Search & Discovery app and Kimonix both offer preview functionality; use it to verify the collection order before pushing live
+- **Cap the number of pinned products** — if you pin too many products, the algorithm never gets to show other products; keep manual pins to ≤ 5 per collection
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Best-selling products always dominate the top positions | Add diversity constraints: limit max 3 products per vendor in top 10; boost recency weight to surface new products |
-| Pinned products shift position when pagination changes | Use absolute positions (slot 1, slot 5) and resolve conflicts (two products pinned to same slot) by priority or creation order |
-| Smart collection query is too slow for large catalogs | Pre-compute collection membership and store in a junction table; refresh on a schedule rather than evaluating rules on every page load |
-| Score normalization breaks with outlier products | Use percentile-based normalization instead of min-max; cap outliers at the 95th percentile to prevent one viral product from compressing all other scores |
-| Merchandising rules conflict with each other | Apply rules in priority order and define clear precedence: manual pins beat boost rules beat algorithmic scoring |
-| New products get zero score (no sales data yet) | Apply a "newness boost" for products created in the last 14 days that decays linearly; this gives new products visibility while they build sales history |
+| Best-selling products dominate every collection indefinitely | Add a recency weight and a "new product boost" for items added in the last 14 days; this gives new products a chance to get exposure |
+| Merchandising rule conflicts with another rule | In Shopify Search & Discovery and Kimonix, rules have priority order — define which rules override others and document the priority scheme |
+| Smart collection adds products that shouldn't be there | Review your collection conditions carefully; using "any condition" instead of "all conditions" is the most common cause of unintended inclusions |
+| Performance scores skewed by a single viral day | Use a rolling 30-day window for sales metrics, not all-time totals; cap extreme outliers at the 95th percentile |
 
 ## Related Skills
 
-- @product-data-modeling
-- @ecommerce-seo
-- @ecommerce-data-warehouse
-- @discount-engine
-- @product-page-design
+- @multi-channel-selling
+- @demand-forecasting

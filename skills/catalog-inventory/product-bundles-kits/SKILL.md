@@ -1,6 +1,6 @@
 ---
 name: product-bundles-kits
-description: "Sell grouped products as bundles or kits with automatic inventory deduction for each component, bundle pricing, and display logic"
+description: "Sell grouped products as bundles or kits with automatic inventory deduction, bundle pricing, and display logic using platform apps"
 category: catalog-inventory
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [bundles, kits, product-sets, dynamic-pricing, upsell, inventory, cross-sell]
 triggers: ["product bundle", "product kit", "bundle pricing", "buy together", "kit builder", "bundle discount", "frequently bought together"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Implement product bundles and kits where multiple products are sold together — optionally at a discount — as a single purchasable item. Covers two bundle types: fixed bundles (a predefined set of products) and dynamic kits (shopper selects from option groups). Handles per-component inventory deduction, bundle pricing rules, and display on both the PDP and the cart.
+Product bundles let you sell multiple products together — optionally at a discount — as a single purchasable unit. This increases average order value and is one of the most effective upsell mechanisms in e-commerce. Dedicated bundle apps handle the inventory tracking, pricing, and display logic that platforms don't support natively. Only build a custom bundle system if your kit configuration requirements (dynamic assembly, real-time pricing, component substitution) exceed what apps offer.
 
 ## When to Use This Skill
 
@@ -25,299 +25,198 @@ Implement product bundles and kits where multiple products are sold together —
 - When offering a discount for purchasing a set of products together
 - When building a custom kit builder where shoppers assemble their own set from options
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
-**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with product catalog access, API credentials
-
 ## Core Instructions
 
-1. **Design the bundle data model**
+### Step 1: Determine platform and choose the right tool
 
-   ```javascript
-   // product_bundles table
-   {
-     id: 'bundle_camera_kit',
-     name: 'Camera Starter Kit',
-     handle: 'camera-starter-kit',
-     description: 'Everything you need to start shooting',
-     bundle_type: 'fixed'|'dynamic',
-     pricing_type: 'sum'|'fixed'|'discount_pct'|'discount_abs',
-     pricing_value: 10,    // 10% off if pricing_type='discount_pct'
-     published: true,
-   }
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Bundler — Product Bundles or Bundle Builder | Bundler is the most popular; handles fixed bundles, mix-and-match, and inventory deduction per component |
+| **WooCommerce** | WooCommerce Product Bundles (WooCommerce extension) | Official WooCommerce extension; supports fixed and configurable bundles, per-component pricing, and inventory |
+| **BigCommerce** | Product Bundler app or native "Frequently Bought Together" | BigCommerce App Marketplace has several bundle apps; native "Frequently Bought Together" for simple cross-sells |
+| **Custom / Headless** | Build bundle data model with component inventory deduction | Required when bundle logic (real-time pricing, dynamic component substitution) exceeds app capabilities |
 
-   // bundle_components table
-   {
-     id,
-     bundle_id: 'bundle_camera_kit',
-     product_id: 'prod_camera_body',
-     variant_id: null,          // null = shopper selects variant
-     group_name: 'Camera Body', // For dynamic kits — groups shopper picks from
-     quantity: 1,
-     is_required: true,
-     position: 0,
-     // For dynamic kits: list of selectable products in this slot
-     selectable_product_ids: ['prod_a6000', 'prod_a6400'],
-   }
-   ```
+---
 
-2. **Calculate bundle price dynamically**
+### Step 2: Platform-specific setup
 
-   ```javascript
-   // lib/bundlePricing.js
-   export async function calculateBundlePrice(bundle, selectedVariants) {
-     // Fetch current prices for all component variants
-     const prices = await Promise.all(
-       selectedVariants.map(async ({ variantId, quantity }) => {
-         const variant = await db.productVariants.findUnique({
-           where: { id: variantId },
-           select: { price: true, compareAtPrice: true },
-         });
-         return { variantId, unitPrice: variant.price, quantity };
-       })
-     );
+---
 
-     const sumPrice = prices.reduce((total, p) => total + p.unitPrice * p.quantity, 0);
+#### Shopify
 
-     let bundlePrice;
-     switch (bundle.pricingType) {
-       case 'sum':
-         bundlePrice = sumPrice;
-         break;
-       case 'fixed':
-         bundlePrice = bundle.pricingValue;
-         break;
-       case 'discount_pct':
-         bundlePrice = +(sumPrice * (1 - bundle.pricingValue / 100)).toFixed(2);
-         break;
-       case 'discount_abs':
-         bundlePrice = Math.max(0, +(sumPrice - bundle.pricingValue).toFixed(2));
-         break;
-       default:
-         bundlePrice = sumPrice;
-     }
+**Option A: Bundler — Product Bundles (recommended)**
 
-     const savings = +(sumPrice - bundlePrice).toFixed(2);
+1. Install **Bundler — Product Bundles** from the Shopify App Store
+2. Go to **Bundler → Bundles → Create bundle**
+3. Select bundle type:
+   - **Fixed bundle**: a predefined set of products (e.g., "Skincare Starter Kit")
+   - **Mix & Match**: shopper picks X items from a collection
+   - **Build a Box**: shopper fills a box with any combination
+4. Add component products and set quantities
+5. Set pricing:
+   - **Percentage discount** (e.g., 15% off the combined price)
+   - **Fixed bundle price** (e.g., $49.99 regardless of component prices)
+   - **Sum of parts** (no discount — just convenience bundling)
+6. Bundler handles inventory: when a bundle is purchased, it decrements each component's stock automatically
 
-     return {
-       componentSum: sumPrice,
-       bundlePrice,
-       savings,
-       savingsPct: sumPrice > 0 ? Math.round((savings / sumPrice) * 100) : 0,
-     };
-   }
-   ```
+**For "Frequently Bought Together":**
+- Install **Frequently Bought Together** by Code Black Belt (App Store)
+- The app analyzes your order history and automatically suggests products to bundle on the PDP
+- Works out of the box with no manual configuration
 
-3. **Add a bundle to the cart as separate line items**
+**Important for Shopify Plus:**
+- For bundles that must appear as a single line item in the cart (for loyalty points, discount exclusions, etc.), consider **Shopify Bundles** (native, available in admin under **Products → Bundles**)
+- Shopify's native Bundles product type creates a parent SKU that the buyer purchases, with automatic inventory deduction of components
 
-   Bundles are stored in the cart as grouped line items (not a single composite item), which simplifies inventory tracking, tax calculation, and fulfillment.
+---
 
-   ```javascript
-   // lib/cartBundles.js
-   export async function addBundleToCart(cartId, bundleId, selectedVariants) {
-     const bundle = await db.productBundles.findUnique({
-       where: { id: bundleId },
-       include: { components: true },
-     });
+#### WooCommerce
 
-     const pricing = await calculateBundlePrice(bundle, selectedVariants);
+**WooCommerce Product Bundles (official extension):**
 
-     // Create a bundle group record to keep line items visually associated
-     const bundleCartGroup = await db.cartBundleGroups.create({
-       data: {
-         cartId,
-         bundleId,
-         bundlePrice: pricing.bundlePrice,
-         bundleSavings: pricing.savings,
-       },
-     });
+1. Install **WooCommerce Product Bundles** from WooCommerce.com
+2. Create a new product: **Products → Add Product → Product type: Bundle**
+3. Go to the **Bundled Products** tab
+4. Add each component:
+   - Search and select the product
+   - Set the default quantity and whether it's optional (for configurable bundles)
+   - Enable **Ship separately** if components ship from different locations
+5. Set bundle pricing under the **General** tab:
+   - **Per-item pricing**: bundle price = sum of component prices (with optional discount)
+   - **Static bundle pricing**: enter a fixed price for the bundle
+6. **Inventory**: enable **Manage stock?** if you want to cap how many bundles can be sold (based on component availability)
 
-     // Add each component as an individual line item, tagged with the group
-     const lineItems = selectedVariants.map(({ variantId, quantity }) => ({
-       cartId,
-       variantId,
-       quantity,
-       bundleGroupId: bundleCartGroup.id,
-       // Pro-rate the discount across components
-       unitPrice: applyProRatedDiscount(variantId, selectedVariants, pricing),
-     }));
+**For "Frequently Bought Together":**
+- Install **WooCommerce Frequently Bought Together** (free or paid versions available)
+- Or use **YITH WooCommerce Frequently Bought Together**
 
-     await db.cartItems.createMany({ data: lineItems });
+---
 
-     return bundleCartGroup;
-   }
+#### BigCommerce
 
-   function applyProRatedDiscount(variantId, selectedVariants, pricing) {
-     // Distribute the discount proportionally to each item's share of the total
-     const item = selectedVariants.find(v => v.variantId === variantId);
-     const itemSubtotal = item.unitPrice * item.quantity;
-     const discountShare = pricing.savings * (itemSubtotal / pricing.componentSum);
-     return +((item.unitPrice - discountShare / item.quantity)).toFixed(4);
-   }
-   ```
+**Bundle apps from the App Marketplace:**
 
-4. **Deduct inventory from each bundle component on fulfillment**
+1. Search for **"Bundle"** in the **Apps** section of your BigCommerce admin
+2. **Bold Bundles** is widely used — install and configure bundle products linking to existing SKUs
+3. Set discount rules (percent off, fixed price, BOGO)
+4. Bold Bundles handles inventory decrement for each component automatically
 
-   Since bundles are stored as individual line items, standard inventory deduction applies. But validate bundle availability before allowing add-to-cart.
+**Native cross-sell / "Frequently Bought Together":**
+1. Go to **Products → [Product] → Related Products tab**
+2. Add related products — these appear as suggestions on the PDP
+3. No automatic discount, but customers can add individual items
 
-   ```javascript
-   export async function checkBundleAvailability(bundleId, selectedVariants) {
-     const unavailable = [];
+---
 
-     for (const { variantId, quantity } of selectedVariants) {
-       const level = await db.inventoryLevels.findFirst({
-         where: { variantId },
-       });
-       const available = (level?.onHand ?? 0) - (level?.reserved ?? 0);
+#### Custom / Headless
 
-       if (available < quantity) {
-         const variant = await db.productVariants.findUnique({
-           where: { id: variantId }, include: { product: true },
-         });
-         unavailable.push({
-           variantId,
-           productName: variant.product.name,
-           requested: quantity,
-           available: Math.max(0, available),
-         });
-       }
-     }
+For headless storefronts, build a bundle model where components are stored as separate cart line items (simplifies inventory, tax, and fulfillment):
 
-     return { available: unavailable.length === 0, unavailable };
-   }
-   ```
+```typescript
+// lib/bundles.ts
 
-5. **Render the bundle product page**
+interface BundleComponent { variantId: string; quantity: number; unitPrice: number; }
+interface BundlePricing { componentSum: number; bundlePrice: number; savings: number; savingsPct: number; }
 
-   ```jsx
-   // BundlePDP.jsx
-   import { useState, useEffect } from 'react';
+// Calculate bundle price dynamically from current component prices
+export async function calculateBundlePrice(bundle: Bundle, selectedVariants: BundleComponent[]): Promise<BundlePricing> {
+  const componentSum = selectedVariants.reduce((total, c) => total + c.unitPrice * c.quantity, 0);
 
-   export function BundlePDP({ bundle }) {
-     const [selections, setSelections] = useState(() =>
-       // Pre-select the first available variant for each required component
-       Object.fromEntries(
-         bundle.components
-           .filter(c => c.isRequired && !c.variantId)
-           .map(c => [c.id, c.selectableProducts[0]?.variants[0]?.id])
-       )
-     );
-     const [pricing, setPricing] = useState(null);
+  let bundlePrice: number;
+  switch (bundle.pricingType) {
+    case 'fixed': bundlePrice = bundle.pricingValue; break;
+    case 'discount_pct': bundlePrice = +(componentSum * (1 - bundle.pricingValue / 100)).toFixed(2); break;
+    case 'discount_abs': bundlePrice = Math.max(0, +(componentSum - bundle.pricingValue).toFixed(2)); break;
+    default: bundlePrice = componentSum;
+  }
 
-     useEffect(() => {
-       const allSelected = bundle.components
-         .filter(c => c.isRequired)
-         .every(c => c.variantId || selections[c.id]);
+  const savings = +(componentSum - bundlePrice).toFixed(2);
+  return { componentSum, bundlePrice, savings, savingsPct: componentSum > 0 ? Math.round((savings / componentSum) * 100) : 0 };
+}
 
-       if (!allSelected) return;
+// Check availability for all bundle components atomically
+export async function checkBundleAvailability(selectedVariants: BundleComponent[]) {
+  const unavailable = [];
+  for (const { variantId, quantity } of selectedVariants) {
+    const level = await db.inventoryLevels.findFirst({ where: { variantId } });
+    const available = (level?.onHand ?? 0) - (level?.reserved ?? 0);
+    if (available < quantity) {
+      unavailable.push({ variantId, requested: quantity, available: Math.max(0, available) });
+    }
+  }
+  return { available: unavailable.length === 0, unavailable };
+}
 
-       const variants = bundle.components.map(c => ({
-         variantId: c.variantId ?? selections[c.id],
-         quantity: c.quantity,
-       }));
+// Add bundle to cart as separate line items (grouped by bundle ID for UI display)
+export async function addBundleToCart(cartId: string, bundleId: string, selectedVariants: BundleComponent[]) {
+  const bundle = await db.productBundles.findUnique({ where: { id: bundleId } });
+  const pricing = await calculateBundlePrice(bundle, selectedVariants);
 
-       fetch('/api/bundles/price', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ bundleId: bundle.id, variants }),
-       })
-         .then(r => r.json())
-         .then(setPricing);
-     }, [selections, bundle]);
+  const { available, unavailable } = await checkBundleAvailability(selectedVariants);
+  if (!available) throw new Error(`Bundle not available: ${unavailable.map(u => u.variantId).join(', ')}`);
 
-     return (
-       <div className="bundle-pdp">
-         <h1>{bundle.name}</h1>
-         {bundle.components.map(component => (
-           <ComponentSlot
-             key={component.id}
-             component={component}
-             selectedVariantId={component.variantId ?? selections[component.id]}
-             onSelect={(variantId) => setSelections(s => ({ ...s, [component.id]: variantId }))}
-           />
-         ))}
-         {pricing && (
-           <div className="bundle-pricing">
-             <p>Bundle price: <strong>${pricing.bundlePrice}</strong></p>
-             {pricing.savings > 0 && (
-               <p className="savings">
-                 You save ${pricing.savings} ({pricing.savingsPct}% off)
-               </p>
-             )}
-           </div>
-         )}
-         <button onClick={() => addBundleToCart(bundle.id, selections)}>
-           Add Bundle to Cart
-         </button>
-       </div>
-     );
-   }
-   ```
+  // Create a bundle group record to keep line items visually associated
+  const bundleGroup = await db.cartBundleGroups.create({
+    data: { cartId, bundleId, bundlePrice: pricing.bundlePrice, bundleSavings: pricing.savings },
+  });
 
-## Examples
+  // Pro-rate the discount across components proportionally to their share of the total
+  const lineItems = selectedVariants.map(({ variantId, quantity, unitPrice }) => {
+    const itemSubtotal = unitPrice * quantity;
+    const discountShare = pricing.savings * (itemSubtotal / pricing.componentSum);
+    const discountedUnitPrice = +(unitPrice - discountShare / quantity).toFixed(4);
+    return { cartId, variantId, quantity, bundleGroupId: bundleGroup.id, unitPrice: discountedUnitPrice };
+  });
 
-### Cart display for bundle groups
-
-Show bundled items in the cart under a visual group header:
-
-```jsx
-function CartBundleGroup({ group, items }) {
-  return (
-    <div className="cart-bundle-group">
-      <div className="bundle-group-header">
-        <strong>{group.bundleName}</strong>
-        {group.bundleSavings > 0 && (
-          <span className="savings-badge">Save ${group.bundleSavings}</span>
-        )}
-      </div>
-      {items.map(item => (
-        <CartLineItem key={item.id} item={item} showBundleIndicator />
-      ))}
-    </div>
-  );
+  await db.cartItems.createMany({ data: lineItems });
+  return bundleGroup;
 }
 ```
 
-### API: check bundle availability
+---
 
-```
-GET /api/bundles/:bundleId/availability?variant[]=var_a&variant[]=var_b
+### Step 3: Configure bundle display on product pages
 
-Response:
-{
-  "available": true,
-  "components": [
-    { "variantId": "var_a", "available": 15 },
-    { "variantId": "var_b", "available": 3 }
-  ]
-}
-```
+**Bundle display checklist:**
+- Show "Value: $149 | Bundle price: $119 — Save $30 (20% off)" to make the discount tangible
+- Show which items are included with product images and names
+- Show availability: if any component is out of stock, show which item and suggest a substitute
+- On the cart page, group bundle line items under a visual header with the bundle name and total savings badge
+
+**For Shopify/Bundler:** The app generates a bundle product page automatically — customize the template in **Bundler → Customize**
+
+**For WooCommerce Product Bundles:** The plugin renders a bundle-specific product page layout; style it using the built-in CSS settings or child theme overrides
+
+---
+
+### Step 4: Verify inventory deduction is working
+
+After setting up bundles, test that inventory deducts correctly for each component:
+
+1. Place a test order for a bundle
+2. Check inventory levels for each component product — each should have decremented by the bundle component quantity
+3. Test the edge case: a bundle where one component has exactly 1 unit remaining; ordering 2 bundles should fail on the second
 
 ## Best Practices
 
-- **Store bundle components as individual cart line items** — this simplifies inventory, tax, shipping, and fulfillment; use a `bundle_group_id` to keep them visually associated in the cart
-- **Recalculate bundle pricing server-side** — never trust client-submitted prices; recalculate based on current variant prices at add-to-cart time
-- **Check availability for all components together** — a bundle is only addable if every component has sufficient stock; validate atomically before reserving
-- **Display per-item and bundle prices** — show "Value: $149 | Bundle price: $119 — Save $30" to make the discount tangible
-- **Handle partial availability gracefully** — if one component is out of stock, show which item is unavailable and suggest alternatives
+- **Use apps instead of building from scratch** — Bundler for Shopify and WooCommerce Product Bundles handle edge cases (split fulfillment, partial availability, refunds) that take weeks to build correctly
+- **Always validate bundle availability server-side** — check that all components have sufficient stock atomically before adding to cart; a bundle is only purchasable if every component is in stock
+- **Recalculate bundle pricing at checkout** — never trust client-submitted bundle prices; recalculate from current component prices at order time
+- **Show per-item and bundle prices together** — the discount is only meaningful when customers can see what they're saving against
+- **Keep bundles to 2–5 components** — larger bundles confuse shoppers and are harder to merchandise clearly
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Bundle discount applied to wrong items | Pro-rate discounts proportionally by item price when distributing across components |
-| One bundle component goes out of stock mid-cart | Check availability again at checkout; display a specific error indicating which component is now unavailable |
-| Bundle pricing stale when component prices change | Recalculate bundle price on each cart refresh and at checkout, not just at add-to-cart |
-| Fulfillment system confused by grouped cart items | Ensure each line item has a standard `variant_id` and `quantity`; use `bundle_group_id` only for UI grouping |
+| Bundle discount applied incorrectly at checkout | Use the app's built-in discount logic; don't layer additional discount codes on top of bundle discounts without testing the interaction |
+| One bundle component goes out of stock mid-cart | Re-check availability at checkout; display which specific component is unavailable so the customer can adjust |
+| Bundle pricing stale when component prices change | Recalculate bundle price on each cart refresh and at checkout, not just at add-to-cart time |
+| Fulfillment system confused by bundle line items | For headless builds, ensure each line item has a standard `variant_id` and `quantity`; use `bundle_group_id` only for UI grouping |
+| Inventory not decremented for all bundle components | After setup, always test with a real order and verify each component SKU decremented by the correct quantity |
 
 ## Related Skills
 
 - @variant-matrix
 - @inventory-tracking
-- @cart-logic
-- @pricing-promotions
+- @product-content-enrichment

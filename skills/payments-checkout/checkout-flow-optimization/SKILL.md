@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [checkout, conversion, ux, funnel, single-page-checkout, multi-step, abandonment]
 triggers: ["optimize checkout", "checkout conversion", "reduce cart abandonment", "single page checkout", "checkout UX", "checkout flow"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,294 +16,179 @@ difficulty: intermediate
 
 ## Overview
 
-Design and implement a checkout flow that maximizes completion rate by reducing friction at every step. Covers the trade-offs between multi-step (progress clarity) and single-page (fewer reloads) layouts, address autocomplete, express checkout buttons placement, inline validation, and order summary visibility patterns that collectively improve checkout conversion by 10-25%.
+Checkout abandonment averages 70% across ecommerce. The biggest friction points — too many form fields, no guest checkout, hidden fees revealed late, and no express payment options — are all fixable through platform settings and apps without custom code. Best-in-class stores achieve 50–60% checkout completion by applying a handful of high-impact changes.
 
 ## When to Use This Skill
 
-- When checkout abandonment rate exceeds 70% (industry average is ~70%; best-in-class is 50-60%)
+- When checkout abandonment rate exceeds 70% and you need to diagnose the cause
 - When redesigning checkout as part of a storefront rebuild
-- When A/B testing checkout layout changes
 - When integrating express checkout (Apple Pay, Google Pay, PayPal Express) into an existing flow
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+- When A/B testing checkout layout changes
 
 ## Core Instructions
 
-1. **Choose the right checkout layout for your store**
+### Step 1: Determine your platform and the available optimization levers
 
-   The layout decision depends on order complexity and mobile vs. desktop split.
+| Platform | Checkout Control Level | Best Optimization Approach |
+|----------|----------------------|---------------------------|
+| **Shopify** | Limited (Shopify controls the core flow) | Use Checkout Extensibility apps + Settings to configure; no custom HTML/CSS without Plus |
+| **Shopify Plus** | Full control via Checkout Extensibility | Use checkout.liquid customizations + Shopify Functions + checkout extension apps |
+| **WooCommerce** | Full control | Configure settings + use checkout optimization plugins |
+| **BigCommerce** | Moderate control via Stencil theme | Theme customization + One Page Checkout configuration |
+| **Custom / Headless** | Full control | Build optimized flow using Stripe Elements or platform Storefront API |
 
-   ```
-   Single-page checkout (recommended for most stores):
-   ✓ Fewer page loads = less abandonment
-   ✓ Progress is visible in full
-   ✓ Easy on desktop where screen height is sufficient
-   ✗ Can feel overwhelming on mobile with many form sections
+### Step 2: Apply the highest-impact checkout optimizations
 
-   Multi-step checkout (better for complex orders):
-   ✓ Each step feels manageable on mobile
-   ✓ Clear progress indicator reduces anxiety
-   ✓ Error isolation — errors on step 2 do not invalidate step 1
-   ✗ Each step is a potential drop-off point
-   ✗ Requires extra navigation (back/next buttons)
+---
 
-   Recommendation: Single-page on desktop, collapsible steps on mobile
-   ```
+#### Shopify
 
-2. **Structure the checkout page with collapsible sections**
+**Enable one-page checkout (Shopify's default as of 2023):**
+1. Go to **Settings → Checkout**
+2. Under **Checkout layout**, select **One-page checkout** — this combines contact, shipping, and payment on a single page instead of 3 steps
+3. If you are on an older theme, update to Dawn or another OS 2.0 theme that supports one-page checkout natively
 
-   ```jsx
-   // CheckoutPage.jsx
-   const STEPS = ['contact', 'shipping', 'payment'];
+**Enable express checkout buttons:**
+1. Go to **Settings → Payments**
+2. Under **Wallets**, enable **Shop Pay**, **Apple Pay**, **Google Pay**, and **Meta Pay**
+3. Shop Pay has the highest conversion rate of any express payment method on Shopify — enable it first
+4. Go to **Online Store → Themes → Customize** and add express checkout buttons to your cart page and product pages
 
-   export function CheckoutPage({ cart }) {
-     const [completedSteps, setCompletedSteps] = useState(new Set());
-     const [activeStep, setActiveStep] = useState('contact');
+**Enable address autocomplete:**
+Shopify uses Google Maps address autocomplete by default in checkout. Ensure it is not disabled. Go to **Settings → Checkout → Customer contact** and verify address autocomplete is enabled.
 
-     function completeStep(stepId, data) {
-       setCompletedSteps(prev => new Set([...prev, stepId]));
-       const nextStep = STEPS[STEPS.indexOf(stepId) + 1];
-       if (nextStep) setActiveStep(nextStep);
-     }
+**Remove friction from checkout fields:**
+1. Go to **Settings → Checkout → Customer information**
+2. Set **Full name** to single-field (first + last in one field) rather than two separate fields
+3. Set **Company name** to hidden (unless you primarily serve B2B)
+4. Set **Address line 2** to optional or hidden to reduce visual clutter
 
-     return (
-       <div className="checkout-layout">
-         <div className="checkout-form">
-           <CheckoutSection
-             id="contact"
-             title="Contact"
-             isActive={activeStep === 'contact'}
-             isCompleted={completedSteps.has('contact')}
-             onEdit={() => setActiveStep('contact')}
-           >
-             <ContactForm onComplete={data => completeStep('contact', data)} />
-           </CheckoutSection>
+**Enable order notes only if you need them:**
+Go to **Settings → Checkout** and disable **Order notes** unless your store actively uses custom order instructions — unnecessary fields increase cognitive load.
 
-           <CheckoutSection
-             id="shipping"
-             title="Shipping"
-             isActive={activeStep === 'shipping'}
-             isCompleted={completedSteps.has('shipping')}
-             isLocked={!completedSteps.has('contact')}
-             onEdit={() => setActiveStep('shipping')}
-           >
-             <ShippingForm onComplete={data => completeStep('shipping', data)} />
-           </CheckoutSection>
+**Install a checkout optimization app (Shopify Plus or Standard):**
+- **Rebuy Smart Cart**: adds upsells, free shipping progress, and cart recommendations
+- **Checkout X**: adds upsells and trust badges within the checkout flow (Plus required for checkout page customization)
+- **ReConvert**: post-purchase optimization
 
-           <CheckoutSection
-             id="payment"
-             title="Payment"
-             isActive={activeStep === 'payment'}
-             isLocked={!completedSteps.has('shipping')}
-           >
-             <PaymentForm />
-           </CheckoutSection>
-         </div>
+#### WooCommerce
 
-         {/* Sticky order summary */}
-         <div className="checkout-summary">
-           <OrderSummary cart={cart} />
-         </div>
-       </div>
-     );
-   }
-   ```
+**Enable one-page checkout:**
+1. Install the **WooCommerce One Page Checkout** plugin from WooCommerce.com
+2. Configure the checkout layout to show product selection, order details, and payment on a single page
+3. Alternatively, configure your WooCommerce theme (Storefront, Flatsome, Astra) to use their built-in one-page or optimized checkout template
 
-3. **Add address autocomplete to reduce typing**
+**Enable address autocomplete:**
+1. Install **WooCommerce Address Autocomplete** by DHL or use **Google Places Autocomplete for WooCommerce** from the WordPress plugin repository
+2. Enter your Google Places API key in the plugin settings — this reduces address form completion time by ~40%
 
-   Google Places Autocomplete reduces address form completion time by ~40% and reduces address errors.
+**Remove unnecessary checkout fields:**
+1. Go to **WooCommerce → Settings → Advanced → Checkout** or use a field editor plugin
+2. Install **Checkout Field Editor for WooCommerce** (ThemeHigh) to hide or reorder fields without code
+3. Hide the company field, address line 2, and phone number if not required
 
-   ```jsx
-   // AddressAutocomplete.jsx
-   import { useEffect, useRef } from 'react';
+**Enable express checkout buttons:**
+1. Install **WooCommerce Stripe** plugin and enable **Payment Request Buttons** in its settings — this adds Apple Pay and Google Pay to the cart and checkout pages
+2. Install the **WooCommerce PayPal Payments** plugin and enable **PayPal Smart Payment Buttons** — adds PayPal Express, Venmo, and Pay Later
+3. Configure button placement in the plugin settings to appear above the standard checkout form
 
-   export function AddressAutocomplete({ onSelect }) {
-     const inputRef = useRef(null);
+**Enable cart page optimization:**
+1. Install **WooCommerce Cart Abandonment Recovery** or **CartFlows** to add urgency elements, save-for-later, and cross-sells to the cart page
+2. Configure a free shipping threshold bar: go to **WooCommerce → Settings → Shipping** and set a free shipping threshold, then add a progress message to your cart template
 
-     useEffect(() => {
-       if (!window.google?.maps?.places) return;
+#### BigCommerce
 
-       const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-         types: ['address'],
-         componentRestrictions: { country: ['us', 'ca', 'gb'] },
-       });
+**Enable Optimized One-Page Checkout:**
+1. Go to **Settings → Checkout**
+2. Enable **Optimized One-Page Checkout** — this is BigCommerce's recommended checkout experience that consolidates all steps
+3. Configure the checkout fields to show only what is necessary
 
-       autocomplete.addListener('place_changed', () => {
-         const place = autocomplete.getPlace();
-         const components = place.address_components ?? [];
+**Enable express checkout:**
+1. Go to **Settings → Payment Methods → Digital Wallets**
+2. Enable **Stripe Link**, **Apple Pay**, **Google Pay**, and **PayPal Express** — configure each with your account credentials
+3. Digital wallet buttons appear automatically at the top of the checkout flow for eligible customers
 
-         const getComponent = (type) =>
-           components.find(c => c.types.includes(type))?.long_name ?? '';
-         const getShortComponent = (type) =>
-           components.find(c => c.types.includes(type))?.short_name ?? '';
+**Address autocomplete:**
+BigCommerce's optimized checkout includes Google address autocomplete by default. Verify it is enabled in **Settings → Checkout → Google address autocomplete**.
 
-         onSelect({
-           street: `${getComponent('street_number')} ${getComponent('route')}`.trim(),
-           city: getComponent('locality') || getComponent('sublocality'),
-           state: getShortComponent('administrative_area_level_1'),
-           zip: getComponent('postal_code'),
-           country: getShortComponent('country'),
-         });
-       });
-     }, [onSelect]);
+**Install checkout enhancement apps:**
+Go to the **BigCommerce App Marketplace** and search for checkout optimization. Popular options: **Justuno** (offers and social proof), **PureClarity** (personalization), and **Shogun** (custom page building including cart pages).
 
-     return (
-       <input
-         ref={inputRef}
-         type="text"
-         autoComplete="street-address"
-         placeholder="Start typing your address..."
-       />
-     );
-   }
-   ```
+---
 
-4. **Implement inline form validation**
+#### Custom / Headless
 
-   Validate fields on blur (not on keystroke) to avoid distracting users while they type.
+For headless storefronts, build the checkout with these high-impact patterns:
 
-   ```jsx
-   // useCheckoutForm.js
-   import { useState, useCallback } from 'react';
-
-   const VALIDATORS = {
-     email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : 'Enter a valid email address',
-     phone: (v) => /^\+?[\d\s\-().]{7,15}$/.test(v) ? null : 'Enter a valid phone number',
-     zip: (v) => v?.length >= 4 ? null : 'Enter a valid ZIP/postal code',
-     cardNumber: (v) => v?.replace(/\s/g, '').length === 16 ? null : 'Card number must be 16 digits',
-   };
-
-   export function useCheckoutForm(initialValues) {
-     const [values, setValues] = useState(initialValues);
-     const [errors, setErrors] = useState({});
-     const [touched, setTouched] = useState({});
-
-     const handleBlur = useCallback((field) => {
-       setTouched(prev => ({ ...prev, [field]: true }));
-       const validator = VALIDATORS[field];
-       if (validator) {
-         const error = validator(values[field]);
-         setErrors(prev => ({ ...prev, [field]: error }));
-       }
-     }, [values]);
-
-     const handleChange = useCallback((field, value) => {
-       setValues(prev => ({ ...prev, [field]: value }));
-       // Clear error when user starts typing after a failed validation
-       if (touched[field] && errors[field]) {
-         setErrors(prev => ({ ...prev, [field]: null }));
-       }
-     }, [touched, errors]);
-
-     return { values, errors, touched, handleChange, handleBlur };
-   }
-   ```
-
-5. **Surface express checkout buttons prominently**
-
-   Express checkout (Apple Pay, Google Pay, PayPal Express) should appear at the TOP of the checkout page, above the form, to offer the fastest path to purchase.
-
-   ```jsx
-   // ExpressCheckout.jsx
-   export function ExpressCheckout({ cart }) {
-     return (
-       <div className="express-checkout">
-         <p className="express-checkout__label">Express checkout</p>
-         <div className="express-checkout__buttons">
-           <ApplePayButton cart={cart} />
-           <GooglePayButton cart={cart} />
-           <PayPalExpressButton cart={cart} />
-         </div>
-         <div className="express-checkout__divider">
-           <span>or pay with card</span>
-         </div>
-       </div>
-     );
-   }
-   ```
-
-   Placement rules:
-   - Show express buttons at the cart page AND at the top of checkout
-   - Size buttons to meet Apple Pay and Google Pay brand guidelines (min 44px tall)
-   - Test availability dynamically — only show Apple Pay if the device supports it (`ApplePaySession.canMakePayments()`)
-
-## Examples
-
-### Checkout progress indicator
+**Express checkout buttons (highest priority):**
+Place express checkout buttons at the top of the checkout page — above the form — so Apple Pay and Google Pay users can complete in two taps. Use Stripe's `PaymentRequestButton` element:
 
 ```jsx
-function CheckoutProgress({ steps, activeStep, completedSteps }) {
-  return (
-    <nav aria-label="Checkout progress">
-      <ol className="progress-steps">
-        {steps.map((step, i) => {
-          const status = completedSteps.has(step.id) ? 'complete'
-            : step.id === activeStep ? 'current' : 'upcoming';
-          return (
-            <li key={step.id} className={`progress-step progress-step--${status}`}
-                aria-current={status === 'current' ? 'step' : undefined}>
-              <span className="step-indicator">{completedSteps.has(step.id) ? '✓' : i + 1}</span>
-              <span className="step-label">{step.label}</span>
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
-  );
+import { PaymentRequestButtonElement, useStripe } from '@stripe/react-stripe-js';
+import { useState, useEffect } from 'react';
+
+function ExpressCheckout({ cart }) {
+  const stripe = useStripe();
+  const [paymentRequest, setPaymentRequest] = useState(null);
+
+  useEffect(() => {
+    if (!stripe) return;
+    const pr = stripe.paymentRequest({
+      country: 'US',
+      currency: 'usd',
+      total: { label: 'Total', amount: Math.round(cart.total * 100) },
+      requestPayerName: true,
+      requestPayerEmail: true,
+      requestShipping: true,
+    });
+    pr.canMakePayment().then(result => {
+      if (result) setPaymentRequest(pr);
+    });
+  }, [stripe, cart.total]);
+
+  return paymentRequest
+    ? <PaymentRequestButtonElement options={{ paymentRequest }} />
+    : null;
 }
 ```
 
-### Checkout layout CSS
+**Collapsible checkout sections (contact → shipping → payment):**
+Show sections sequentially — reveal shipping after contact is complete, payment after shipping is complete. This reduces overwhelm on mobile while keeping all data visible on desktop.
 
-```css
-.checkout-layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 1rem;
-}
+**Address autocomplete:**
+Use Google Places Autocomplete to reduce address form completion time and address entry errors. Set `componentRestrictions` to the countries your store ships to.
 
-@media (min-width: 768px) {
-  .checkout-layout {
-    grid-template-columns: 1fr 380px;
-    align-items: start;
-  }
+**Validate on blur, not on submit:**
+Show field errors when the user moves away from a field, not only when they click submit. This lets users fix errors progressively rather than being confronted with a list of errors at the end.
 
-  .checkout-summary {
-    position: sticky;
-    top: 1rem;
-  }
-}
-```
+### Step 3: Measure the impact
+
+After making changes, monitor these metrics in Google Analytics 4 (configure a checkout funnel under **Reports → Funnel exploration**):
+
+| Metric | Target | Source |
+|--------|--------|--------|
+| Checkout initiation rate | > 30% of cart sessions | Cart to checkout step 1 |
+| Checkout completion rate | > 50% of initiated checkouts | Checkout to order confirmed |
+| Express checkout usage | > 20% of completions | Filter by payment method |
+| Mobile checkout completion | > 45% | Segment by device |
 
 ## Best Practices
 
 - **Show order summary at all times** — never hide the cart contents during checkout; shoppers need reassurance about what they are buying
 - **Put express checkout buttons above the form** — Apple Pay and Google Pay users can complete purchase in two taps; do not bury them below a long form
-- **Validate on blur, not on submit** — inline errors on blur let users fix issues before reaching the submit button
-- **Never clear form fields on error** — if the card fails, do not clear the shipping address; fix only the payment section
-- **Auto-detect country** — use IP-based geolocation to pre-select country/currency; reduces friction for international customers
-- **Show trust signals near the payment section** — SSL badge, accepted card logos, and a short return policy link near the payment fields reduce anxiety at the highest-risk step
-- **Preserve form state on accidental navigation** — use `beforeunload` to warn and session storage to restore partially completed forms
+- **Show shipping costs early** — revealing shipping cost at the last checkout step is the top reason for abandonment; show an estimate in the cart or at the first checkout step
+- **Use a single email field at the top** — capturing email first enables abandonment recovery even if the customer does not complete checkout
+- **Trust signals near payment** — SSL badge, accepted card logos, and a short return policy link near the payment fields reduce anxiety at the highest-risk step
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Multi-step checkout loses data when user goes back | Store each step's data in session storage and restore it when the user navigates to a previous step |
-| Express checkout buttons not showing on iOS | Apple Pay requires HTTPS, a valid domain association file (`/.well-known/apple-developer-merchantid-domain-association`), and a registered merchant ID |
-| Address autocomplete selects wrong country | Restrict the `componentRestrictions` in Google Places to the countries your store ships to |
-| Inline validation fires on every keystroke | Validate on `blur` event; only re-validate on `change` if the field was already touched and had an error |
-| Checkout accessible but not usable by keyboard | Test the full checkout flow with Tab-only navigation; ensure all interactive elements are reachable and that section expand/collapse works with Enter/Space |
+| Apple Pay not showing on iOS | Apple Pay requires HTTPS, a verified domain, and a registered merchant ID with Apple; on Shopify this is handled automatically when you enable it in Payment settings |
+| Express checkout buttons appearing but not working | Each button requires testing in the live environment with a real device; test Apple Pay on an iOS device with a saved card, not in a browser emulator |
+| Address autocomplete selecting wrong country | Restrict autocomplete to the countries your store ships to; WooCommerce plugins and Shopify both allow country restriction |
+| Checkout abandonment increasing after redesign | Run an A/B test before fully committing; use Google Optimize or VWO to test the old vs. new checkout and compare completion rates |
+| Mobile checkout form too long | On mobile, consolidate fields and use platform-native address autocomplete to minimize typing; consider a single-column layout |
 
 ## Related Skills
 

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [fraud, fraud-detection, 3ds, velocity-checks, stripe-radar, machine-learning, manual-review, chargeback]
 triggers: ["fraud detection", "fraud prevention", "chargeback prevention", "3ds authentication", "velocity checks", "fraud scoring", "payment fraud"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,343 +16,213 @@ difficulty: advanced
 
 ## Overview
 
-Payment fraud costs e-commerce merchants 2–3% of revenue through chargebacks, lost goods, and dispute fees. Effective fraud detection layers rule-based velocity checks, device fingerprinting, 3D Secure (3DS2) authentication, and ML-based risk scoring to block fraudulent transactions while minimizing friction for legitimate customers. This skill covers implementing multi-layer fraud detection using Stripe Radar, custom velocity rules, and a manual review queue.
+Payment fraud costs e-commerce merchants 2–3% of revenue through chargebacks, lost goods, and dispute fees. Effective fraud detection layers platform-native risk scoring, 3D Secure authentication, velocity checks, and manual review queues for suspicious orders. The right approach depends on your platform — Shopify includes a built-in fraud analysis tool, while WooCommerce and BigCommerce require a dedicated fraud prevention service or payment processor's fraud tools.
 
 ## When to Use This Skill
 
-- When chargeback rates exceed 0.5% of transaction volume (Visa threshold for "excessive" disputes is 0.9%)
+- When chargeback rates exceed 0.5% of transaction volume (Visa's threshold for "excessive" disputes is 0.9%)
 - When launching in a new market with unfamiliar fraud patterns
 - When selling high-value, easily resold goods (electronics, gift cards, luxury items)
 - When you observe account takeover patterns, card testing, or bulk bot purchases
 - When building or auditing a checkout flow that processes card-not-present transactions
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles PCI compliance, SSL, and infrastructure security. Focus on app-level security, GDPR consent (via Shopify Privacy API), and access controls.
-**WooCommerce**: You manage your own hosting security. Use security plugins (Wordfence, Sucuri), SSL certificate, and PCI-compliant payment gateways. GDPR handled via cookie consent plugins.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Understanding of your platform's security model, relevant compliance requirements
-
 ## Core Instructions
 
-1. **Enable Stripe Radar and configure rules**
+### Step 1: Determine the merchant's platform and choose the right fraud tools
 
-   Stripe Radar is included with standard Stripe processing and provides ML fraud scoring on every charge. Enable it and add custom rules in the Stripe Dashboard under **Radar → Rules**:
+| Platform | Built-in Fraud Analysis | Recommended Fraud Service |
+|----------|------------------------|--------------------------|
+| **Shopify** | Shopify Fraud Analysis (included free); basic risk scoring on orders | Enable Stripe Radar or Signifyd (Shopify App Store) for advanced ML scoring |
+| **WooCommerce** | None built in | Use Stripe (with Radar) or Braintree as payment processor; or install Kount or NoFraud plugin |
+| **BigCommerce** | Payment processor fraud tools (varies by processor) | Signifyd integrates natively with BigCommerce; NoFraud also supports BigCommerce |
+| **All platforms** | — | Stripe Radar (if using Stripe) provides ML-based fraud scoring on every charge at no extra cost |
 
-   ```javascript
-   // Stripe automatically attaches a risk score to every PaymentIntent
-   // Retrieve it after the payment attempt
-   const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-     expand: ['latest_charge'],
-   });
+### Step 2: Enable and configure platform-native fraud tools
 
-   const charge = paymentIntent.latest_charge;
-   const riskScore = charge.outcome?.risk_score;      // 0–100
-   const riskLevel = charge.outcome?.risk_level;      // "normal", "elevated", "highest"
-   const outcomeType = charge.outcome?.type;          // "authorized", "manual_review", "blocked"
+---
 
-   console.log(`Risk score: ${riskScore}, Level: ${riskLevel}`);
+#### Shopify
+
+Shopify includes a **Fraud analysis** indicator on every order based on signals like IP/billing address mismatch, card verification failure, and known fraud patterns.
+
+**Reviewing fraud indicators:**
+1. Open any order in Shopify admin
+2. Click **Fraud analysis** in the order details panel
+3. Shopify shows a risk level (High / Medium / Low) with specific reasons (e.g., "Card verification value failed", "IP and billing address country differ")
+
+**Configuring fraud response rules:**
+1. Go to **Settings → Payments → Fraud prevention** (if using Shopify Payments)
+2. Enable **Automatic review** for orders flagged as high risk — Shopify will hold these orders and send you an email
+3. Set **Automatically cancel** for orders Shopify deems highest risk
+
+**Signifyd (Shopify App Store — Guaranteed Fraud Protection):**
+Signifyd provides chargeback guarantees — if they approve an order and it results in a chargeback, they reimburse you. This is the most comprehensive solution for Shopify.
+1. Install **Signifyd** from the Shopify App Store
+2. Signifyd automatically reviews every order using ML scoring
+3. Orders Signifyd flags go into a review queue in the Signifyd console
+4. Set up the Signifyd Shopify integration to automatically hold or cancel high-risk orders
+
+---
+
+#### WooCommerce
+
+WooCommerce does not include fraud detection. You need either a payment processor with built-in fraud tools or a dedicated plugin.
+
+**Option A: Stripe Radar (recommended if using Stripe for WooCommerce)**
+
+If using the **WooCommerce Stripe Payment Gateway**:
+1. Stripe Radar is automatically enabled — it scores every charge on your Stripe account
+2. In the Stripe Dashboard, go to **Radar → Rules** to add custom blocking/review rules:
    ```
+   # Block orders over $500 from high-fraud-rate IP countries
+   Block if :order_amount: > 50000 and :ip_country: in ('NG', 'RO')
 
-   Custom Stripe Radar rules (set in Dashboard or via API):
-   ```
-   # Block orders over $500 from countries with high fraud rates
-   Block if :order_amount: > 50000 and :ip_country: in ('NG', 'RO', 'UA')
-
-   # Review new customers placing large orders
+   # Review first-time customers placing large orders
    Review if :order_amount: > 20000 and :customer_account_age: < 7
 
    # Block cards used more than 3 times in the last hour
    Block if :card_velocity_hour: > 3
-
-   # Review if billing/shipping countries differ for digital goods
-   Review if :shipping_address_country: != :billing_address_country: and :is_digital_good: = true
    ```
+3. Orders flagged for review appear in Stripe Dashboard → Radar → Reviews
 
-2. **Implement velocity checks in your application layer**
+**Option B: WooCommerce Anti-Fraud plugin (free)**
+1. Install **WooCommerce Anti-Fraud** from the plugin directory
+2. Configure risk scoring rules based on:
+   - Order amount thresholds
+   - New customer + high value combination
+   - Proxy/VPN IP detection
+   - Billing/shipping country mismatch
+3. High-risk orders are placed in "On Hold" status for manual review
 
-   Don't rely solely on Stripe Radar — add application-layer velocity checks for business-specific patterns:
+**Option C: Kount or NoFraud (enterprise)**
+For high-volume WooCommerce stores, enterprise fraud prevention platforms offer:
+- **Kount**: full fraud management platform with ML scoring, manual review tools, and chargeback management
+- **NoFraud**: provides a fraud protection guarantee similar to Signifyd; integrates via WooCommerce plugin
 
-   ```typescript
-   import Redis from 'ioredis';
+---
 
-   const redis = new Redis(process.env.REDIS_URL!);
+#### BigCommerce
 
-   interface VelocityCheckResult {
-     allowed: boolean;
-     reason?: string;
-   }
+**Signifyd for BigCommerce:**
+1. Install the **Signifyd** app from the BigCommerce App Marketplace
+2. Configure automatic hold or cancellation of high-risk orders
+3. Signifyd's guarantee covers chargebacks on approved orders
 
-   export async function checkVelocity(params: {
-     email: string;
-     ip: string;
-     cardFingerprint: string;
-     amount: number;
-   }): Promise<VelocityCheckResult> {
-     const {email, ip, cardFingerprint, amount} = params;
-     const now = Date.now();
-     const oneHour = 3600;
-     const oneDay = 86400;
+**Payment processor fraud tools:**
+- **Stripe (via BigCommerce Stripe integration)**: Radar is included; configure rules in the Stripe Dashboard
+- **PayPal**: PayPal's fraud management filters are available in your PayPal business account settings
+- **Braintree**: Advanced fraud protection via Kount is available as an add-on
 
-     // Check IP order count in last hour
-     const ipKey = `velocity:ip:${ip}`;
-     const ipCount = await redis.incr(ipKey);
-     if (ipCount === 1) await redis.expire(ipKey, oneHour);
-     if (ipCount > 10) return {allowed: false, reason: 'ip_velocity_exceeded'};
+---
 
-     // Check email order count in last 24 hours
-     const emailKey = `velocity:email:${email}`;
-     const emailCount = await redis.incr(emailKey);
-     if (emailCount === 1) await redis.expire(emailKey, oneDay);
-     if (emailCount > 5) return {allowed: false, reason: 'email_velocity_exceeded'};
+#### Custom / Headless
 
-     // Check card fingerprint across multiple accounts
-     const cardKey = `velocity:card:${cardFingerprint}`;
-     const cardCount = await redis.incr(cardKey);
-     if (cardCount === 1) await redis.expire(cardKey, oneDay);
-     if (cardCount > 3) return {allowed: false, reason: 'card_velocity_exceeded'};
+For custom storefronts using Stripe, leverage Stripe Radar for ML scoring and add application-layer velocity checks for business-specific patterns.
 
-     // Check daily spend per card
-     const spendKey = `velocity:spend:${cardFingerprint}`;
-     const currentSpend = parseInt(await redis.get(spendKey) ?? '0');
-     const dailyLimit = 50000; // $500 in cents
-     if (currentSpend + amount > dailyLimit) return {allowed: false, reason: 'daily_spend_exceeded'};
-
-     return {allowed: true};
-   }
-
-   export async function recordSuccessfulTransaction(cardFingerprint: string, amount: number) {
-     const spendKey = `velocity:spend:${cardFingerprint}`;
-     const ttl = await redis.ttl(spendKey);
-     await redis.incrby(spendKey, amount);
-     if (ttl < 0) await redis.expire(spendKey, 86400);
-   }
-   ```
-
-3. **Enforce 3D Secure (3DS2) for high-risk transactions**
-
-   3DS2 shifts chargeback liability from the merchant to the card issuer for authenticated transactions:
-
-   ```typescript
-   // Always request 3DS for high-risk orders; optionally for normal risk
-   async function createPaymentIntentWithFraudCheck(order: Order, customer: Customer) {
-     const riskScore = await calculateRiskScore(order, customer);
-
-     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
-       amount: order.totalCents,
-       currency: order.currency,
-       customer: customer.stripeId,
-       metadata: {orderId: order.id, riskScore: riskScore.toString()},
-       automatic_payment_methods: {enabled: true},
-     };
-
-     // Force 3DS for high-risk orders
-     if (riskScore > 70) {
-       paymentIntentParams.payment_method_options = {
-         card: {request_three_d_secure: 'challenge'},
-       };
-     }
-     // Prefer 3DS even for normal risk (shifts liability)
-     else {
-       paymentIntentParams.payment_method_options = {
-         card: {request_three_d_secure: 'automatic'},
-       };
-     }
-
-     return stripe.paymentIntents.create(paymentIntentParams);
-   }
-   ```
-
-4. **Build a composite fraud score**
-
-   Combine multiple signals into a single risk score before deciding to approve/review/block:
-
-   ```typescript
-   interface FraudSignals {
-     stripeRiskScore: number;           // 0-100 from Stripe Radar
-     velocityViolations: number;        // Count of velocity rule violations
-     addressMismatch: boolean;          // Billing ≠ shipping country
-     proxyOrVpn: boolean;               // IP is a known proxy/VPN
-     emailAgeHours: number;             // Age of email on file
-     isFirstOrder: boolean;
-     orderAmountCents: number;
-     deviceFingerprintSeen: boolean;    // Device seen before
-   }
-
-   export function calculateRiskScore(signals: FraudSignals): number {
-     let score = signals.stripeRiskScore * 0.4; // Stripe ML score weighted at 40%
-
-     if (signals.velocityViolations > 0) score += signals.velocityViolations * 15;
-     if (signals.addressMismatch) score += 10;
-     if (signals.proxyOrVpn) score += 20;
-     if (signals.emailAgeHours < 24) score += 15;
-     if (signals.isFirstOrder && signals.orderAmountCents > 30000) score += 10;
-     if (!signals.deviceFingerprintSeen) score += 5;
-
-     return Math.min(100, Math.round(score));
-   }
-
-   type FraudDecision = 'approve' | 'review' | 'block';
-
-   export function getFraudDecision(score: number): FraudDecision {
-     if (score >= 80) return 'block';
-     if (score >= 50) return 'review';
-     return 'approve';
-   }
-   ```
-
-5. **Implement a manual review queue**
-
-   Orders flagged for review should be held pending human inspection before fulfillment:
-
-   ```typescript
-   // When a transaction is flagged for review:
-   async function flagForManualReview(orderId: string, riskScore: number, signals: FraudSignals) {
-     await db.orders.update(orderId, {
-       status: 'pending_fraud_review',
-       fraudRiskScore: riskScore,
-       fraudSignals: signals,
-       reviewRequestedAt: new Date(),
-     });
-
-     // Do NOT fulfill the order
-     // Do NOT capture the payment yet — authorize only
-
-     // Notify the fraud review team
-     await sendSlackAlert({
-       channel: '#fraud-review',
-       text: `Order ${orderId} flagged for review. Risk score: ${riskScore}/100`,
-       fields: [
-         {title: 'Amount', value: formatCurrency(signals.orderAmountCents)},
-         {title: 'Signals', value: Object.entries(signals).filter(([, v]) => v).join(', ')},
-       ],
-       actions: [
-         {text: 'Approve', url: `${ADMIN_URL}/fraud-review/${orderId}/approve`},
-         {text: 'Reject', url: `${ADMIN_URL}/fraud-review/${orderId}/reject`},
-       ],
-     });
-   }
-
-   // Auto-expire unreviewed orders after 48 hours (release the authorization hold)
-   // Run as a cron job
-   async function expireUnreviewedOrders() {
-     const expiredOrders = await db.orders.findExpiredReviewOrders(48);
-     for (const order of expiredOrders) {
-       await stripe.paymentIntents.cancel(order.paymentIntentId);
-       await db.orders.update(order.id, {status: 'fraud_review_expired'});
-       await sendOrderCancellationEmail(order);
-     }
-   }
-   ```
-
-6. **Monitor chargeback rates and tune rules**
-
-   ```typescript
-   // Daily fraud metrics report
-   async function generateFraudMetrics(dateRange: {start: Date; end: Date}) {
-     const orders = await db.orders.findByDateRange(dateRange);
-     const chargebacks = await db.chargebacks.findByDateRange(dateRange);
-
-     const totalRevenue = orders.reduce((sum, o) => sum + o.totalCents, 0);
-     const chargebackVolume = chargebacks.reduce((sum, c) => sum + c.amountCents, 0);
-     const chargebackRate = chargebacks.length / orders.length;
-
-     return {
-       totalOrders: orders.length,
-       blockedOrders: orders.filter(o => o.status === 'blocked_fraud').length,
-       reviewedOrders: orders.filter(o => o.status.includes('fraud_review')).length,
-       chargebacks: chargebacks.length,
-       chargebackRate: (chargebackRate * 100).toFixed(3) + '%', // Target < 0.5%
-       chargebackVolume: formatCurrency(chargebackVolume),
-       revenueProtected: formatCurrency(orders.filter(o => o.status === 'blocked_fraud').reduce((sum, o) => sum + o.totalCents, 0)),
-     };
-   }
-   ```
-
-## Examples
-
-### Device fingerprinting with FingerprintJS
+**Retrieve Stripe's fraud score after payment attempt:**
 
 ```typescript
-// Client-side: collect fingerprint at checkout load
-import FingerprintJS from '@fingerprintjs/fingerprintjs';
+const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+  expand: ['latest_charge'],
+});
+const riskScore = paymentIntent.latest_charge.outcome?.risk_score;   // 0–100
+const riskLevel = paymentIntent.latest_charge.outcome?.risk_level;   // 'normal', 'elevated', 'highest'
+```
 
-async function getDeviceFingerprint(): Promise<string> {
-  const fp = await FingerprintJS.load();
-  const result = await fp.get();
-  return result.visitorId; // Stable across sessions on same device
-}
+**Request 3D Secure for high-risk transactions** (shifts chargeback liability to card issuer):
 
-// Include in checkout session
-const visitorId = await getDeviceFingerprint();
-await fetch('/api/checkout/start', {
-  method: 'POST',
-  body: JSON.stringify({cartId, deviceFingerprint: visitorId}),
+```typescript
+const paymentIntent = await stripe.paymentIntents.create({
+  amount: order.totalCents,
+  currency: 'usd',
+  payment_method_options: {
+    card: {
+      // 'automatic' = Stripe decides; 'challenge' = always require 3DS for high-risk
+      request_three_d_secure: riskScore > 70 ? 'challenge' : 'automatic',
+    },
+  },
 });
 ```
 
-```typescript
-// Server-side: check if device is known
-async function isKnownDevice(fingerprint: string, customerId: string): Promise<boolean> {
-  const knownDevices = await db.customerDevices.findByCustomer(customerId);
-  const isKnown = knownDevices.some(d => d.fingerprint === fingerprint);
+**Application-layer velocity checks:**
 
-  if (!isKnown) {
-    await db.customerDevices.insert({customerId, fingerprint, firstSeenAt: new Date()});
-  }
-  return isKnown;
+```typescript
+import Redis from 'ioredis';
+const redis = new Redis(process.env.REDIS_URL!);
+
+async function checkVelocity(params: { email: string; ip: string; cardFingerprint: string; amountCents: number }) {
+  const { email, ip, cardFingerprint, amountCents } = params;
+
+  // IP: max 10 orders per hour
+  const ipCount = await redis.incr(`vel:ip:${ip}`);
+  if (ipCount === 1) await redis.expire(`vel:ip:${ip}`, 3600);
+  if (ipCount > 10) return { allowed: false, reason: 'ip_velocity' };
+
+  // Email: max 5 orders per 24 hours
+  const emailCount = await redis.incr(`vel:email:${email.toLowerCase()}`);
+  if (emailCount === 1) await redis.expire(`vel:email:${email.toLowerCase()}`, 86400);
+  if (emailCount > 5) return { allowed: false, reason: 'email_velocity' };
+
+  // Card: max $500 per day
+  const spendKey = `vel:spend:${cardFingerprint}`;
+  const currentSpend = parseInt(await redis.get(spendKey) ?? '0');
+  if (currentSpend + amountCents > 50000) return { allowed: false, reason: 'daily_spend_limit' };
+
+  return { allowed: true };
 }
 ```
 
-### IP reputation check with IP-API
+**Manual review queue:**
 
 ```typescript
-interface IpInfo {
-  proxy: boolean;
-  vpn: boolean;
-  tor: boolean;
-  country: string;
-  riskScore: number;
+async function flagForManualReview(orderId: string, riskScore: number, signals: Record<string, unknown>) {
+  // Hold the order — do NOT fulfill; do NOT capture payment (authorize only)
+  await db.orders.update(orderId, {
+    status: 'pending_fraud_review',
+    fraud_risk_score: riskScore,
+    fraud_signals: signals,
+    review_requested_at: new Date(),
+  });
+
+  // Notify fraud review team
+  await sendSlackAlert('#fraud-review', {
+    text: `Order ${orderId} flagged for review. Risk score: ${riskScore}/100`,
+    actions: [
+      { text: 'Approve', url: `${ADMIN_URL}/fraud-review/${orderId}/approve` },
+      { text: Reject', url: `${ADMIN_URL}/fraud-review/${orderId}/reject` },
+    ],
+  });
 }
 
-export async function checkIpReputation(ip: string): Promise<IpInfo> {
-  // IPQualityScore, MaxMind, or ip-api.com for IP intelligence
-  const res = await fetch(
-    `https://ipqualityscore.com/api/json/ip/${process.env.IPQS_API_KEY}/${ip}?strictness=1`
-  );
-  const data = await res.json();
-
-  return {
-    proxy: data.proxy,
-    vpn: data.vpn,
-    tor: data.tor,
-    country: data.country_code,
-    riskScore: data.fraud_score,
-  };
+// Auto-cancel unreviewed orders after 48 hours
+async function expireUnreviewedOrders() {
+  const expired = await db.orders.findExpiredReviews(48);
+  for (const order of expired) {
+    await stripe.paymentIntents.cancel(order.payment_intent_id);
+    await db.orders.update(order.id, { status: 'fraud_review_expired' });
+    await sendOrderCancellationEmail(order);
+  }
 }
 ```
 
 ## Best Practices
 
-- **Layer defenses** — no single signal is reliable; combine velocity checks, IP reputation, device fingerprinting, and ML scoring so fraudsters must bypass multiple layers simultaneously
-- **Tune rules using historical chargeback data** — build a confusion matrix mapping your risk thresholds to false-positive and false-negative rates; over-blocking legitimate customers costs more than the fraud itself
-- **Use authorize-then-capture for high-risk orders** — authorize the card at checkout to hold the funds, then capture only after fraud review passes; releases are less costly than refunds
+- **Layer defenses** — no single signal reliably stops all fraud; combine Stripe Radar, velocity checks, IP reputation, and device fingerprinting
+- **Use authorize-then-capture for high-risk orders** — authorize at checkout to hold funds, then capture only after fraud review passes; releasing an authorization is less costly than issuing a refund
 - **Track false positive rate as a KPI** — if more than 1% of legitimate orders are blocked or held, your rules are too aggressive; measure both fraud losses and revenue lost to false positives
-- **Rotate and obfuscate your fraud rules** — sophisticated fraudsters probe checkout flows to identify rule thresholds; don't expose block reasons in API error messages
-- **Keep a deny-list of fraudulent emails, cards, and devices** — once fraud is confirmed via chargeback, add the associated identifiers to a block list for future orders
-- **Log all fraud signals for model training** — store the full signal set for every order regardless of outcome; this data trains better ML models over time
+- **Rotate and obfuscate fraud rules** — sophisticated fraudsters probe checkout flows to find rule thresholds; never expose block reasons in API error messages
+- **Keep a deny-list of fraudulent emails, cards, and devices** — once fraud is confirmed via chargeback, add the identifiers to a blocklist for future orders
+- **Review your chargeback rate monthly** — if it climbs above 0.5% for Visa/Mastercard, review your fraud rules; exceeding 0.9% triggers Visa's dispute monitoring program
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| 3DS causing checkout abandonment | Use `automatic` 3DS mode rather than always requiring a challenge; this frictionlessly authenticates low-risk transactions and only prompts challenges when the issuer requires it |
-| Velocity rules blocking legitimate bulk buyers | Whitelist B2B customers or high-LTV customer segments from velocity rules; use a tiered limit system based on account history |
-| Chargeback filed despite 3DS authentication | Ensure your payment processor submits 3DS authentication data (`eci`, `cavv`, `xid`) correctly; without these fields the liability shift does not apply |
+| 3DS causing checkout abandonment | Use `automatic` 3DS mode — Stripe decides when a challenge is needed; this frictionlessly authenticates low-risk transactions |
+| Velocity rules blocking legitimate bulk buyers | Whitelist B2B customers or high-LTV customer segments from velocity rules; use tiered limits based on account history |
+| Manual review queue growing unboundedly | Set SLA targets (4-hour review window); implement auto-cancellation for orders not reviewed within 48 hours |
+| Chargeback filed despite 3DS authentication | Verify your processor submits 3DS authentication data (`eci`, `cavv`, `xid`) correctly; without these fields the liability shift does not apply |
 | Redis velocity keys never expiring | Always call `EXPIRE` when setting a new key; use `SET key value EX seconds NX` for atomic set-if-not-exists with expiry |
-| Manual review queue growing unboundedly | Set SLA targets (e.g., 4-hour review window); implement auto-cancellation for orders not reviewed within 48 hours |
 
 ## Related Skills
 

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [accessibility, wcag, aria, screen-reader, keyboard-navigation, a11y, inclusive-design]
 triggers: ["accessibility compliance", "WCAG 2.1", "screen reader support", "keyboard navigation", "ARIA labels", "a11y audit", "ADA compliance"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,325 +16,207 @@ difficulty: advanced
 
 ## Overview
 
-Implement WCAG 2.1 Level AA compliance across core e-commerce flows: product browsing, variant selection, cart management, and checkout. Covers screen reader announcements for dynamic cart updates, keyboard-accessible interactive components (carousels, quantity steppers, modals), focus management after navigation, and color contrast requirements for commerce UI patterns.
+WCAG 2.1 Level AA compliance covers screen reader announcements for dynamic cart updates, keyboard navigation for interactive components (carousels, quantity steppers, modals), focus management, and color contrast requirements. Accessible stores reduce legal risk under ADA, AODA, and EAA, and typically convert better across all users.
 
 ## When to Use This Skill
 
 - When an accessibility audit reveals WCAG violations blocking legal compliance (ADA, AODA, EAA)
-- When building a new storefront from scratch and baking in accessibility from the start
 - When screen reader users report inability to complete purchases
 - When keyboard-only users cannot navigate the checkout flow
 - When automated tools (axe, WAVE) surface critical issues that need remediation
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Build with Shopify themes (Liquid), Shopify Hydrogen (React), or headless with the Storefront API. These component patterns work in any React-based Shopify setup.
-**WooCommerce**: Build with WooCommerce Blocks (React), classic PHP themes, or headless with WooCommerce REST API. These patterns apply to block-based or headless storefronts.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A storefront codebase (theme, Hydrogen app, or headless frontend)
+- When building a new storefront and baking in accessibility from the start
 
 ## Core Instructions
 
-1. **Announce cart updates to screen readers with ARIA live regions**
+### Step 1: Determine the merchant's platform and choose the right approach
 
-   When a shopper adds an item to the cart, screen readers need to announce the change without redirecting focus.
+| Platform | Recommended Approach | Why |
+|----------|---------------------|-----|
+| **Shopify** | Use a WCAG-compliant theme (Dawn, Sense) from the Theme Store; install AccessiBe or EqualWeb app for automated overlays; edit Liquid for custom fixes | Shopify's built-in themes have improved a11y significantly; theme editor + Liquid edits handle most issues |
+| **WooCommerce** | Choose an accessible theme (Astra, Kadence); install WP Accessibility plugin (free) for skip links, ARIA roles, and form labels | WP Accessibility adds critical fixes without code; Gutenberg blocks have reasonable built-in accessibility |
+| **BigCommerce** | Use Cornerstone theme (most accessible); enable the built-in accessibility checker in the Theme Editor; install ADA accessibility apps from the marketplace | Cornerstone meets most WCAG AA requirements out of the box |
+| **Custom / Headless** | Implement ARIA patterns manually using the techniques in Step 4; test with NVDA+Firefox and VoiceOver+Safari | Full control requires full responsibility — use the component patterns below |
 
-   ```jsx
-   // CartLiveRegion.jsx — place once at the top of your app
-   export function CartLiveRegion({ message }) {
-     return (
-       <div
-         role="status"
-         aria-live="polite"
-         aria-atomic="true"
-         className="sr-only"  /* Visually hidden, readable by screen readers */
-       >
-         {message}
-       </div>
-     );
-   }
+### Step 2: Run an accessibility audit
 
-   // Usage: update the message after a successful add-to-cart
-   const [cartMessage, setCartMessage] = useState('');
+Before making changes, identify what needs fixing:
 
-   async function handleAddToCart(product) {
-     await addToCart(product);
-     setCartMessage(`${product.name} added to cart. Cart total: ${cartCount} items.`);
-     // Clear after announcement so the same message can be announced again
-     setTimeout(() => setCartMessage(''), 1000);
-   }
+1. **Automated scan**: Run [axe DevTools](https://www.deque.com/axe/) browser extension on your homepage, product page, cart, and checkout
+2. **WAVE tool**: Visit [wave.webaim.org](https://wave.webaim.org) and scan your store URL
+3. **Keyboard test**: Tab through your entire checkout without a mouse — every interactive element must be reachable and operable
+4. **Screen reader test**: Test with VoiceOver (Mac/iOS) or NVDA (Windows/Firefox) — navigate your product listing and complete a purchase
 
-   return (
-     <>
-       <CartLiveRegion message={cartMessage} />
-       <AddToCartButton onClick={() => handleAddToCart(product)} />
-     </>
-   );
-   ```
+Common issues found on most stores:
+- Images without meaningful alt text
+- Color-only indicators (e.g., red "out of stock" with no text)
+- Form fields without labels
+- Modals that don't trap focus or respond to Escape
+- Add-to-cart buttons that don't announce success to screen readers
 
-   ```css
-   /* Visually hidden but accessible to screen readers */
-   .sr-only {
-     position: absolute;
-     width: 1px;
-     height: 1px;
-     padding: 0;
-     margin: -1px;
-     overflow: hidden;
-     clip: rect(0, 0, 0, 0);
-     white-space: nowrap;
-     border-width: 0;
-   }
-   ```
+### Step 3: Platform-specific fixes
 
-2. **Build an accessible quantity stepper**
+---
 
-   Number inputs in checkout and cart must be usable without a mouse.
+#### Shopify
 
-   ```jsx
-   // QuantityStepper.jsx
-   export function QuantityStepper({ value, min = 1, max = 99, onChange, productName }) {
-     function decrement() {
-       if (value > min) onChange(value - 1);
-     }
-     function increment() {
-       if (value < max) onChange(value + 1);
-     }
+**Theme-level fixes (no code required):**
+1. Go to **Online Store → Themes → Customize**
+2. Set alt text on all images: **Products → Media → Edit alt text**
+3. Under **Theme settings → Typography**, ensure font sizes are at least 16px for body text
+4. Enable **Skip to content** link in **Header settings** (available in Dawn and most modern themes)
 
-     return (
-       <div className="quantity-stepper" role="group" aria-label={`Quantity for ${productName}`}>
-         <button
-           type="button"
-           onClick={decrement}
-           disabled={value <= min}
-           aria-label={`Decrease quantity of ${productName}`}
-         >
-           -
-         </button>
-         <input
-           type="number"
-           value={value}
-           min={min}
-           max={max}
-           onChange={e => {
-             const num = parseInt(e.target.value);
-             if (!isNaN(num) && num >= min && num <= max) onChange(num);
-           }}
-           aria-label={`Quantity of ${productName}`}
-         />
-         <button
-           type="button"
-           onClick={increment}
-           disabled={value >= max}
-           aria-label={`Increase quantity of ${productName}`}
-         >
-           +
-         </button>
-       </div>
-     );
-   }
-   ```
+**Liquid code fixes for custom themes:**
 
-3. **Make variant selectors accessible**
+Add ARIA live region for cart updates — edit your `cart-notification.liquid` or equivalent snippet:
+```liquid
+<div aria-live="polite" aria-atomic="true" class="sr-only" id="cart-live-region">
+  {{ cart.item_count }} items in cart
+</div>
+```
 
-   Color swatches and size buttons must communicate their state and purpose to screen readers.
+For color swatches in variant selectors, wrap in a `<fieldset>` with `<legend>`:
+```liquid
+<fieldset>
+  <legend>{{ option.name }}: <span>{{ selected_value }}</span></legend>
+  {% for value in option.values %}
+    <label class="swatch {% if forloop.first %}selected{% endif %}">
+      <input type="radio" name="{{ option.name }}" value="{{ value }}"
+             {% if value == selected_value %}checked{% endif %} />
+      <span class="sr-only">{{ value }}</span>
+      <span class="swatch-color" style="background-color: {{ value | downcase }}" aria-hidden="true"></span>
+    </label>
+  {% endfor %}
+</fieldset>
+```
 
-   ```jsx
-   // ColorSwatchGroup.jsx
-   export function ColorSwatchGroup({ options, selectedValue, onChange, productName }) {
-     return (
-       <fieldset>
-         <legend>Color: <span className="selected-label">{selectedValue}</span></legend>
-         <div className="swatch-list" role="radiogroup">
-           {options.map(option => (
-             <label
-               key={option.value}
-               className={`swatch ${selectedValue === option.value ? 'selected' : ''} ${!option.available ? 'unavailable' : ''}`}
-               title={option.available ? option.label : `${option.label} — out of stock`}
-             >
-               <input
-                 type="radio"
-                 name={`${productName}-color`}
-                 value={option.value}
-                 checked={selectedValue === option.value}
-                 disabled={!option.available}
-                 onChange={() => onChange(option.value)}
-                 className="sr-only"
-               />
-               <span
-                 className="swatch-visual"
-                 style={{ background: option.hex }}
-                 aria-hidden="true"
-               />
-               <span className="sr-only">
-                 {option.label}{!option.available ? ' (out of stock)' : ''}
-               </span>
-             </label>
-           ))}
-         </div>
-       </fieldset>
-     );
-   }
-   ```
+**App options:**
+- **AccessiBe** (Shopify App Store, ~$49/mo) — automated WCAG 2.1 AA overlay; adds screen reader adjustments and keyboard navigation without theme edits
+- **EqualWeb** — similar overlay approach with a free tier
 
-4. **Implement focus management for SPAs and modals**
+---
 
-   In single-page applications, route changes must move focus to the new page's heading or main content region.
+#### WooCommerce
 
-   ```javascript
-   // lib/focusManagement.js
+**Plugin-based fixes:**
+1. Install **WP Accessibility** (free, wordpress.org) — adds skip navigation links, ARIA landmarks, removes title attributes from links, and fixes form labels
+2. Install **Accessibility Suite for WooCommerce** — adds ARIA labels to cart and checkout elements automatically
 
-   // Call after each client-side route change
-   export function focusPageTitle() {
-     // Small delay to let the new content render
-     requestAnimationFrame(() => {
-       const heading = document.querySelector('main h1, [role="main"] h1');
-       if (heading) {
-         // Make the heading focusable temporarily
-         heading.setAttribute('tabindex', '-1');
-         heading.focus({ preventScroll: false });
-         heading.addEventListener('blur', () => heading.removeAttribute('tabindex'), { once: true });
-       }
-     });
-   }
+**Theme-based fixes:**
+- Use **Astra** or **Kadence** theme — both have strong WCAG AA coverage built in
+- In **Appearance → Customize → Typography**, set base font size to 16px minimum
 
-   // Call after opening a modal dialog
-   export function trapFocus(containerElement) {
-     const focusable = containerElement.querySelectorAll(
-       'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-     );
-     const first = focusable[0];
-     const last = focusable[focusable.length - 1];
+**Manual fixes for WooCommerce checkout fields** — add to your child theme's `functions.php`:
+```php
+// Associate checkout field labels with inputs
+add_filter('woocommerce_checkout_fields', function($fields) {
+    foreach ($fields as $fieldset => &$fieldset_fields) {
+        foreach ($fieldset_fields as $key => &$field) {
+            if (!isset($field['label'])) {
+                $field['label'] = ucfirst(str_replace('_', ' ', $key));
+            }
+        }
+    }
+    return $fields;
+});
+```
 
-     containerElement.addEventListener('keydown', (e) => {
-       if (e.key !== 'Tab') return;
-       if (e.shiftKey) {
-         if (document.activeElement === first) { e.preventDefault(); last.focus(); }
-       } else {
-         if (document.activeElement === last) { e.preventDefault(); first.focus(); }
-       }
-     });
+---
 
-     first?.focus();
-   }
-   ```
+#### BigCommerce
 
-5. **Ensure sufficient color contrast and visible focus indicators**
+1. **Start with Cornerstone theme** — it has the best baseline accessibility of all BigCommerce themes
+2. Go to **Storefront → My Themes → Customize** and enable the accessibility settings panel
+3. For color contrast: in Theme Editor, set button background color with sufficient contrast against white text (minimum 4.5:1 ratio)
+4. Install an accessibility app from the **BigCommerce App Marketplace** (search "accessibility") for overlay-style fixes
 
-   ```css
-   /* WCAG AA requires 4.5:1 for normal text, 3:1 for large text (18px+ or 14px+ bold) */
+---
 
-   /* Commerce-specific: price and availability text must meet contrast requirements */
-   .price { color: #1a202c; }              /* On white: 18.1:1 — passes AAA */
-   .price--sale { color: #c53030; }        /* On white: 4.8:1 — passes AA */
-   .badge--out-of-stock { color: #744210; background: #fefcbf; } /* 5.9:1 — passes AA */
+#### Custom / Headless
 
-   /* Visible focus indicator — never use outline:none without an alternative */
-   :focus-visible {
-     outline: 3px solid #2b6cb0;
-     outline-offset: 2px;
-     border-radius: 2px;
-   }
+Implement these patterns in your React/Vue/Svelte components:
 
-   /* Remove focus ring for mouse users only */
-   :focus:not(:focus-visible) {
-     outline: none;
-   }
-
-   /* Ensure interactive elements have a visible focus state in high-contrast mode */
-   @media (forced-colors: active) {
-     :focus-visible {
-       outline: 3px solid ButtonText;
-     }
-   }
-   ```
-
-## Examples
-
-### Accessible product image carousel
-
+**ARIA live region for cart updates:**
 ```jsx
-function ProductCarousel({ images }) {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  function prev() { setActiveIndex(i => (i - 1 + images.length) % images.length); }
-  function next() { setActiveIndex(i => (i + 1) % images.length); }
-
+// Place once at the app root; update message after add-to-cart
+export function CartLiveRegion({ message }) {
   return (
-    <div role="region" aria-label="Product images" aria-roledescription="carousel">
-      <div
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
-        Image {activeIndex + 1} of {images.length}: {images[activeIndex].alt}
-      </div>
-      <button onClick={prev} aria-label="Previous image">&#x2039;</button>
-      <img src={images[activeIndex].src} alt={images[activeIndex].alt} />
-      <button onClick={next} aria-label="Next image">&#x203a;</button>
-      <div role="tablist" aria-label="Select image">
-        {images.map((img, i) => (
-          <button
-            key={i}
-            role="tab"
-            aria-selected={activeIndex === i}
-            aria-label={`Image ${i + 1}: ${img.alt}`}
-            onClick={() => setActiveIndex(i)}
-          />
-        ))}
-      </div>
+    <div role="status" aria-live="polite" aria-atomic="true"
+         style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+      {message}
     </div>
   );
 }
 ```
 
-### Error messaging in checkout forms
-
-Accessible form validation — errors must be programmatically associated with their inputs:
-
+**Accessible variant selector using radio inputs:**
 ```jsx
-function CheckoutField({ id, label, error, ...props }) {
-  const errorId = `${id}-error`;
-  return (
-    <div className="form-field">
-      <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        aria-describedby={error ? errorId : undefined}
-        aria-invalid={!!error}
-        {...props}
-      />
-      {error && (
-        <p id={errorId} className="field-error" role="alert">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
+<fieldset>
+  <legend>Color: <strong>{selectedColor}</strong></legend>
+  {colors.map(color => (
+    <label key={color.value} className={`swatch ${!color.available ? 'unavailable' : ''}`}>
+      <input type="radio" name="color" value={color.value}
+             checked={selectedColor === color.value}
+             disabled={!color.available}
+             onChange={() => onColorChange(color.value)}
+             className="sr-only" />
+      <span className="swatch-visual" style={{ background: color.hex }} aria-hidden="true" />
+      <span className="sr-only">{color.label}{!color.available ? ' (out of stock)' : ''}</span>
+    </label>
+  ))}
+</fieldset>
 ```
+
+**Focus management for modals** — use native `<dialog>` which handles focus trapping automatically:
+```jsx
+const dialogRef = useRef(null);
+useEffect(() => {
+  if (isOpen) dialogRef.current.showModal();
+  else dialogRef.current.close();
+}, [isOpen]);
+
+return (
+  <dialog ref={dialogRef} onClose={onClose}>
+    {/* focus is automatically trapped inside <dialog> */}
+    <button onClick={onClose} aria-label="Close">×</button>
+    {children}
+  </dialog>
+);
+```
+
+**Visible focus indicators (never remove outlines):**
+```css
+:focus-visible {
+  outline: 3px solid #2b6cb0;
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+```
+
+### Step 4: Validate and test
+
+1. Re-run the axe scan after changes and verify critical and serious violations are resolved
+2. Test keyboard navigation: Tab → all interactive elements reachable; Enter/Space → activates buttons; Escape → closes modals
+3. Test with VoiceOver (Mac): `Cmd + F5` to enable, navigate using `Tab` and arrow keys; verify cart updates are announced
+4. Check color contrast with the [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/) — body text needs 4.5:1, large text 3:1
 
 ## Best Practices
 
-- **Never remove focus outlines** — only suppress them for mouse users with `:focus:not(:focus-visible)`; keyboard users depend on visible focus
-- **Use semantic HTML first** — `<button>` for actions, `<a>` for navigation, `<table>` for tabular data; ARIA cannot fix non-semantic markup
-- **Test with a screen reader** — NVDA+Firefox and VoiceOver+Safari are the most common combinations; automated tools catch only ~30-40% of real issues
-- **Ensure error messages are announced** — use `role="alert"` for critical errors, or associate errors with inputs via `aria-describedby`
-- **Make touch targets at least 44x44px** — WCAG 2.5.5 and 2.5.8 require adequate target sizes; this also benefits motor-impaired mouse users
-- **Write descriptive link and button text** — "Add to Cart" alone is fine; "Click here" is not; screen reader users navigate by link text
-- **Caption all product videos** — auto-captions are acceptable as a start, but verify accuracy for product names and pricing
+- **Never remove focus outlines** — only suppress them for mouse users with `:focus:not(:focus-visible)` so keyboard users retain visible focus
+- **Use semantic HTML first** — `<button>` for actions, `<a>` for navigation, `<table>` for tabular data; ARIA attributes cannot fix non-semantic markup
+- **Test with a real screen reader** — automated tools catch only 30-40% of real issues; NVDA+Firefox and VoiceOver+Safari are the most common combinations
+- **Make touch targets at least 44×44px** — this also benefits motor-impaired mouse users
+- **Write descriptive button text** — "Add to Cart" is fine; "Click here" is not; screen reader users navigate by button and link text
+- **Caption all product videos** — use auto-captions as a starting point but verify accuracy for product names and pricing
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Cart count badge is announced as "3" with no context | Wrap in a span with `aria-label="3 items in cart"` or use `aria-live="polite"` to announce changes with full context |
-| Color swatch selection not announced | Use `<input type="radio">` with a `<fieldset>/<legend>` wrapping the swatch group; avoid div/span click handlers |
-| Modal focus not trapped | Use the native `<dialog>` element which provides focus trapping for free, or implement the `trapFocus` pattern above |
-| Form errors not announced on submit | Add `role="alert"` to error summary or `aria-invalid="true"` + `aria-describedby` on each failing field |
-| Autocomplete dropdown not keyboard-navigable | Implement the ARIA combobox pattern with `role="combobox"`, `role="listbox"`, `aria-activedescendant`, and Arrow key handling |
+| Cart count badge announced as "3" with no context | Wrap in `aria-label="3 items in cart"` or use `aria-live="polite"` region that announces changes with full context |
+| Color swatch selection not announced | Use `<input type="radio">` with `<fieldset>/<legend>` wrapping the swatch group; div/span click handlers are invisible to screen readers |
+| Modal focus not trapped | Use the native `<dialog>` element (96%+ browser support) which provides focus trapping for free |
+| Form errors not announced | Add `role="alert"` to error summary or `aria-invalid="true"` + `aria-describedby` on each failing field |
+| Overlay accessibility apps cause conflicts | Test thoroughly after installing any overlay app — they sometimes break custom theme JavaScript; validate with axe before and after |
 
 ## Related Skills
 

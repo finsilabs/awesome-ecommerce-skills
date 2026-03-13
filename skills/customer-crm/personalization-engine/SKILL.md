@@ -1,6 +1,6 @@
 ---
 name: personalization-engine
-description: "Show each shopper personalized product recommendations based on their browsing history and what similar customers bought using collaborative filtering"
+description: "Show each shopper personalized product recommendations using platform apps and recommendation tools based on browsing history and purchase patterns"
 category: customer-crm
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [personalization, recommendations, collaborative-filtering, browsing-history, machine-learning, product-recommendations, similar-products]
 triggers: ["product recommendations", "personalization engine", "collaborative filtering", "recommendation algorithm", "frequently bought together", "similar products", "you might also like"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,7 @@ difficulty: advanced
 
 ## Overview
 
-A personalization engine increases average order value and session depth by surfacing the most relevant products for each customer. This skill covers three recommendation strategies: item-based collaborative filtering ("customers who bought X also bought Y"), browsing history-based recommendations using cosine similarity, and fallback bestseller rankings for anonymous or cold-start users. All strategies are designed to run in real-time with pre-computed similarity matrices for sub-10ms response times.
+Personalized product recommendations increase average order value and session depth by surfacing the most relevant products for each customer. "Frequently Bought Together", "You Might Also Like", and personalized homepage sections are all forms of recommendation. Every major platform has apps that handle collaborative filtering and recommendation algorithms without custom code. Only build a custom recommendation engine if your catalog size, traffic volume, or recommendation logic exceeds what app-based solutions support.
 
 ## When to Use This Skill
 
@@ -25,266 +25,245 @@ A personalization engine increases average order value and session depth by surf
 - When building a recommendation API for a mobile app or headless storefront
 - When cold-start recommendations (no history) are returning irrelevant products
 - When A/B testing the impact of personalization on AOV and revenue per session
-- When needing to exclude out-of-stock items and recently purchased products from recommendations
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify stores customer data natively. Use Shopify Customer APIs and metafields for custom data. For CRM, integrate with Klaviyo, HubSpot, or Gorgias via Shopify webhooks.
-**WooCommerce**: Customer data lives in WordPress. Extend with CRM plugins (HubSpot for WooCommerce, Metorik). Use woocommerce_created_customer and profile hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with customer data, CRM tool (Klaviyo, HubSpot) if needed
 
 ## Core Instructions
 
-1. **Build a co-purchase matrix for item-based collaborative filtering**
+### Step 1: Determine platform and choose the right recommendation tool
 
-   Pre-compute which products are frequently purchased together across all orders:
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | LimeSpot or Frequently Bought Together by Code Black Belt | LimeSpot provides personalized homepage, PDP, cart, and post-purchase recommendations powered by ML; Frequently Bought Together is purpose-built for the PDP |
+| **WooCommerce** | YITH WooCommerce Frequently Bought Together or LimeSpot | YITH is the most popular; LimeSpot supports WooCommerce with ML-based recommendations |
+| **BigCommerce** | LimeSpot or Boost AI Search & Discovery | Both provide personalized recommendations and are available on the BigCommerce App Marketplace |
+| **Custom / Headless** | Build with co-purchase matrix + cosine similarity | Required for full control over algorithm, exclusion logic, and API response format |
 
-   ```sql
-   -- PostgreSQL: co-purchase count matrix
-   -- For each pair of products that appear in the same order, count co-occurrences
-   INSERT INTO product_co_purchases (product_a_id, product_b_id, co_purchase_count)
-   SELECT
-     a.product_id AS product_a_id,
-     b.product_id AS product_b_id,
-     COUNT(DISTINCT a.order_id) AS co_purchase_count
-   FROM order_items a
-   JOIN order_items b ON a.order_id = b.order_id AND a.product_id < b.product_id
-   GROUP BY a.product_id, b.product_id
-   ON CONFLICT (product_a_id, product_b_id)
-   DO UPDATE SET co_purchase_count = EXCLUDED.co_purchase_count, updated_at = NOW();
-   ```
+---
 
-   ```typescript
-   // Refresh nightly via cron
-   async function refreshCoPurchaseMatrix() {
-     await db.query(coPurchaseMatrixSQL);
-     console.log('Co-purchase matrix refreshed');
-   }
-   ```
+### Step 2: Platform-specific setup
 
-2. **Implement item-based "Frequently Bought Together" recommendations**
+---
 
-   ```typescript
-   async function getFrequentlyBoughtTogether(
-     productId: string,
-     limit = 6,
-     excludeProductIds: string[] = []
-   ): Promise<Product[]> {
-     const pairs = await db.productCoPurchases.findMany({
-       where: {
-         OR: [
-           { productAId: productId },
-           { productBId: productId },
-         ],
-         NOT: {
-           OR: [
-             { productAId: { in: excludeProductIds } },
-             { productBId: { in: excludeProductIds } },
-           ],
-         },
-       },
-       orderBy: { coPurchaseCount: 'desc' },
-       take: limit * 2, // Fetch extra to filter out-of-stock
-     });
+#### Shopify
 
-     const relatedIds = pairs.map((p) =>
-       p.productAId === productId ? p.productBId : p.productAId
-     );
+**Option A: LimeSpot (recommended — full personalization suite)**
 
-     const products = await db.products.findManyById(relatedIds, {
-       where: { status: 'active', inventory: { gt: 0 } },
-     });
+1. Install **LimeSpot Personalizer** from the Shopify App Store
+2. LimeSpot automatically analyzes your order history and browsing data to build recommendation models
+3. Configure placement for recommendation widgets:
+   - Go to **LimeSpot → Recommendations → Configure placements**
+   - Enable: PDP ("Frequently Bought Together"), Cart ("Customers also bought"), Homepage ("Recommended for you")
+4. Choose the recommendation algorithm per placement:
+   - **Frequently Bought Together**: item-item collaborative filtering (based on order co-occurrence)
+   - **Recommended for You**: user-item collaborative filtering (based on browsing history)
+   - **Similar Products**: content-based filtering (same category, similar price, similar attributes)
+5. Configure exclusions: always exclude out-of-stock items, recently purchased items
 
-     return products.slice(0, limit);
-   }
-   ```
+**Option B: Frequently Bought Together by Code Black Belt (PDP-focused)**
 
-3. **Build a browsing-history based recommendation using product embeddings**
+1. Install from the App Store
+2. The app analyzes your past orders and automatically identifies which products are most often purchased together
+3. Displays a "Frequently Bought Together" section on the PDP with a bundle discount option
+4. No manual configuration required — the model refreshes automatically from order data
 
-   Represent each product as a vector (using category, price range, tags) and find the closest products to what a user has been browsing:
+**Testing and measuring:**
+- In LimeSpot: go to **Analytics → A/B Tests** to compare recommendation algorithms
+- Track click-through rate and add-to-cart rate per recommendation slot
+- Run each test for at least 2 weeks with sufficient traffic before concluding
 
-   ```typescript
-   // Simple attribute-based product vector (no ML required)
-   function buildProductVector(product: Product): number[] {
-     const categoryEncoding = oneHotEncode(product.categoryId, ALL_CATEGORY_IDS);
-     const priceNormalized = product.priceInCents / MAX_PRICE_CENTS; // 0–1
-     const tagEncoding = oneHotEncode(product.tags, ALL_TAGS);
-     return [...categoryEncoding, priceNormalized, ...tagEncoding];
-   }
+---
 
-   function cosineSimilarity(a: number[], b: number[]): number {
-     const dot = a.reduce((sum, val, i) => sum + val * b[i], 0);
-     const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-     const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-     return magA && magB ? dot / (magA * magB) : 0;
-   }
+#### WooCommerce
 
-   async function getRecommendationsFromBrowsingHistory(
-     sessionProductIds: string[],
-     limit = 8
-   ): Promise<Product[]> {
-     if (sessionProductIds.length === 0) return getBestSellers(limit);
+**YITH WooCommerce Frequently Bought Together (free/premium):**
 
-     // Build a "user taste vector" by averaging the vectors of browsed products
-     const browsedProducts = await db.products.findByIds(sessionProductIds);
-     const vectors = browsedProducts.map(buildProductVector);
-     const tasteVector = vectors[0].map((_, i) => vectors.reduce((sum, v) => sum + v[i], 0) / vectors.length);
+1. Install from the WordPress plugin directory
+2. Go to **YITH → Frequently Bought Together → Settings**
+3. Choose recommendation method: automatic (from order history) or manual (specify products per item)
+4. Configure the display (position on PDP, number of products to show, discount type if any)
+5. The free version supports manual product assignment; the premium version uses order history to generate automatic suggestions
 
-     // Compare to all products and rank by similarity
-     const allProducts = await db.products.findAll({
-       where: { status: 'active', inventory: { gt: 0 }, id: { notIn: sessionProductIds } },
-     });
+**LimeSpot for WooCommerce:**
+1. Install **LimeSpot Personalizer for WooCommerce**
+2. Configuration is the same as the Shopify version — provides full homepage, PDP, and cart recommendations
 
-     const ranked = allProducts
-       .map((p) => ({ product: p, score: cosineSimilarity(tasteVector, buildProductVector(p)) }))
-       .sort((a, b) => b.score - a.score);
+**WooCommerce built-in cross-sells and upsells:**
+- On any product, go to **Linked Products tab**
+- Manually add upsell products (shown on PDP) and cross-sell products (shown in cart)
+- This is manual but effective for small catalogs where you know the relationships well
 
-     return ranked.slice(0, limit).map((r) => r.product);
-   }
-   ```
+---
 
-4. **Serve recommendations with a unified API and caching**
+#### BigCommerce
 
-   ```typescript
-   // GET /api/recommendations?context=pdp&productId=xxx&userId=yyy
-   export async function getRecommendations(req: Request, res: Response) {
-     const { context, productId, userId } = req.query as Record<string, string>;
-     const sessionProductIds = getSessionBrowsingHistory(req); // from cookie or session
+**LimeSpot for BigCommerce:**
+1. Install from the BigCommerce App Marketplace
+2. Same configuration and capabilities as the Shopify/WooCommerce version
 
-     const cacheKey = `recs:${context}:${productId ?? 'none'}:${userId ?? 'anon'}`;
-     const cached = await redis.get(cacheKey);
-     if (cached) return res.json(JSON.parse(cached));
+**Boost AI Search & Discovery:**
+1. Install from the App Marketplace
+2. Includes recommendation widgets alongside search features
+3. Configure "Frequently Bought Together" and "Similar Products" sections
 
-     let products: Product[];
+---
 
-     switch (context) {
-       case 'pdp':
-         products = await getFrequentlyBoughtTogether(productId, 6, [productId]);
-         if (products.length < 4) {
-           // Backfill with browsing history recs if FBT is sparse
-           const extra = await getRecommendationsFromBrowsingHistory(sessionProductIds, 4 - products.length);
-           products = [...products, ...extra];
-         }
-         break;
-       case 'homepage':
-         if (userId) {
-           products = await getRecommendationsFromBrowsingHistory(sessionProductIds, 12);
-         } else {
-           products = await getBestSellers(12);
-         }
-         break;
-       case 'cart':
-         products = await getFrequentlyBoughtTogether(productId, 4);
-         break;
-       default:
-         products = await getBestSellers(8);
-     }
+#### Custom / Headless
 
-     await redis.setex(cacheKey, 300, JSON.stringify(products)); // 5-minute cache
-     res.json(products);
-   }
-   ```
-
-5. **Implement cold-start fallback with bestsellers**
-
-   ```typescript
-   async function getBestSellers(limit = 8, categoryId?: string): Promise<Product[]> {
-     return db.products.findMany({
-       where: {
-         status: 'active',
-         inventory: { gt: 0 },
-         ...(categoryId && { categoryId }),
-       },
-       orderBy: { salesCount: 'desc' },
-       take: limit,
-     });
-   }
-   ```
-
-## Examples
-
-### Machine learning upgrade with ALS collaborative filtering
-
-For stores with 10k+ orders, replace the cosine similarity approach with Alternating Least Squares (ALS) matrix factorization using the Implicit library (Python):
-
-```python
-import implicit
-import numpy as np
-import scipy.sparse as sparse
-
-# Build user-item interaction matrix from order history
-def build_interaction_matrix(orders):
-    user_ids = {uid: i for i, uid in enumerate(orders['customer_id'].unique())}
-    item_ids = {pid: i for i, pid in enumerate(orders['product_id'].unique())}
-
-    rows = orders['customer_id'].map(user_ids)
-    cols = orders['product_id'].map(item_ids)
-    data = np.ones(len(orders))  # implicit feedback: purchased = 1
-
-    return sparse.csr_matrix((data, (rows, cols))), user_ids, item_ids
-
-matrix, user_ids, item_ids = build_interaction_matrix(orders_df)
-
-# Train ALS model
-model = implicit.als.AlternatingLeastSquares(factors=50, iterations=20)
-model.fit(matrix.T)  # item-user matrix
-
-# Get recommendations for a user
-reverse_item_ids = {v: k for k, v in item_ids.items()}
-def get_als_recommendations(customer_id, n=10):
-    user_idx = user_ids.get(customer_id)
-    if user_idx is None:
-        return []  # cold start
-    ids, scores = model.recommend(user_idx, matrix[user_idx], N=n)
-    return [reverse_item_ids[i] for i in ids]
-```
-
-### Track recommendation click-through for A/B testing
+For headless storefronts, build a recommendation pipeline with pre-computed similarity matrices for fast responses:
 
 ```typescript
-// POST /api/recommendations/click
-export async function trackRecommendationClick(req: Request, res: Response) {
-  const { sourceProductId, clickedProductId, context, algorithm } = req.body;
-  await db.recommendationClicks.create({
-    sourceProductId,
-    clickedProductId,
-    context,
-    algorithm,
-    customerId: req.session.customerId ?? null,
-    sessionId: req.session.id,
-    clickedAt: new Date(),
+// lib/recommendations.ts
+
+// Step 1: Pre-compute co-purchase matrix nightly (run as a cron job)
+// PostgreSQL: count how often each product pair appears in the same order
+export const coPurchaseMatrixSQL = `
+  INSERT INTO product_co_purchases (product_a_id, product_b_id, co_purchase_count, updated_at)
+  SELECT
+    a.product_id AS product_a_id,
+    b.product_id AS product_b_id,
+    COUNT(DISTINCT a.order_id) AS co_purchase_count,
+    NOW() AS updated_at
+  FROM order_items a
+  JOIN order_items b ON a.order_id = b.order_id AND a.product_id < b.product_id
+  GROUP BY a.product_id, b.product_id
+  HAVING COUNT(DISTINCT a.order_id) >= 3  -- Minimum confidence threshold
+  ON CONFLICT (product_a_id, product_b_id)
+  DO UPDATE SET co_purchase_count = EXCLUDED.co_purchase_count, updated_at = NOW();
+`;
+
+// Step 2: Serve "Frequently Bought Together" from the pre-computed matrix
+export async function getFrequentlyBoughtTogether(
+  productId: string, limit = 6, excludeProductIds: string[] = []
+): Promise<Product[]> {
+  const pairs = await db.productCoPurchases.findMany({
+    where: {
+      OR: [{ productAId: productId }, { productBId: productId }],
+      NOT: { OR: [{ productAId: { in: excludeProductIds } }, { productBId: { in: excludeProductIds } }] },
+    },
+    orderBy: { coPurchaseCount: 'desc' },
+    take: limit * 2, // Fetch extra to filter out-of-stock
   });
-  res.json({ ok: true });
+
+  const relatedIds = pairs.map(p => p.productAId === productId ? p.productBId : p.productAId);
+  const products = await db.products.findMany({ where: { id: { in: relatedIds }, status: 'active', inventoryQuantity: { gt: 0 } } });
+  return products.slice(0, limit);
+}
+
+// Step 3: Browsing history recommendations using product vectors
+function buildProductVector(product: Product, allCategoryIds: string[], allTags: string[]): number[] {
+  const categoryEncoding = allCategoryIds.map(id => product.categoryId === id ? 1 : 0);
+  const priceNormalized = product.priceInCents / 100000;  // Normalize to 0-1
+  const tagEncoding = allTags.map(tag => product.tags.includes(tag) ? 1 : 0);
+  return [...categoryEncoding, priceNormalized, ...tagEncoding];
+}
+
+export async function getRecommendationsFromBrowsingHistory(
+  sessionProductIds: string[], limit = 8
+): Promise<Product[]> {
+  if (sessionProductIds.length === 0) return getBestSellers(limit);
+
+  const [browsedProducts, allProducts, allCategoryIds, allTags] = await Promise.all([
+    db.products.findMany({ where: { id: { in: sessionProductIds } } }),
+    db.products.findMany({ where: { status: 'active', inventoryQuantity: { gt: 0 }, id: { notIn: sessionProductIds } }, take: 500 }),
+    db.categories.findMany({ select: { id: true } }).then(cats => cats.map(c => c.id)),
+    db.productTags.findMany({ distinct: ['tag'] }).then(tags => tags.map(t => t.tag)),
+  ]);
+
+  // Build "taste vector" by averaging vectors of browsed products
+  const vectors = browsedProducts.map(p => buildProductVector(p, allCategoryIds, allTags));
+  const tasteVector = vectors[0].map((_, i) => vectors.reduce((sum, v) => sum + v[i], 0) / vectors.length);
+
+  // Rank all products by cosine similarity to taste vector
+  const ranked = allProducts
+    .map(p => {
+      const vec = buildProductVector(p, allCategoryIds, allTags);
+      const dot = tasteVector.reduce((sum, val, i) => sum + val * vec[i], 0);
+      const mag = Math.sqrt(tasteVector.reduce((s, v) => s + v * v, 0)) * Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
+      return { product: p, score: mag > 0 ? dot / mag : 0 };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  return ranked.slice(0, limit).map(r => r.product);
+}
+
+// Step 4: Unified recommendation API with caching
+export async function getRecommendations(context: 'pdp' | 'homepage' | 'cart', productId?: string, sessionProductIds: string[] = []) {
+  const cacheKey = `recs:${context}:${productId ?? 'none'}:${sessionProductIds.slice(0, 3).join('-')}`;
+  const cached = await redis.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+
+  let products: Product[];
+  switch (context) {
+    case 'pdp':
+      products = await getFrequentlyBoughtTogether(productId!, 6, [productId!]);
+      if (products.length < 4) {
+        const extra = await getRecommendationsFromBrowsingHistory(sessionProductIds, 4 - products.length);
+        products = [...products, ...extra];
+      }
+      break;
+    case 'homepage':
+      products = sessionProductIds.length > 0
+        ? await getRecommendationsFromBrowsingHistory(sessionProductIds, 12)
+        : await getBestSellers(12);
+      break;
+    default:
+      products = await getBestSellers(8);
+  }
+
+  await redis.setex(cacheKey, 300, JSON.stringify(products));  // 5-minute cache
+  return products;
 }
 ```
 
+**For stores with 10k+ customers:** Use the BG/NBD + ALS collaborative filtering (Python `implicit` library) for significantly more accurate user-item recommendations than the cosine similarity approach.
+
+---
+
+### Step 3: Configure recommendation exclusions
+
+Every recommendation engine must exclude:
+
+1. **Out-of-stock products** — never recommend products customers can't buy
+2. **The product currently being viewed** — excluding the current product from "Related Products" on its own PDP
+3. **Recently purchased products** — showing customers products they bought last week signals a poor experience
+
+**In LimeSpot:** Configure exclusions under **Settings → Exclusions** — out-of-stock products are excluded automatically.
+
+**In Frequently Bought Together:** The app automatically hides out-of-stock variants from the bundle suggestion.
+
+**For custom builds:** Pass `excludeProductIds` containing the current product and the customer's recently purchased products to every recommendation function.
+
+---
+
+### Step 4: Measure recommendation performance
+
+Track these weekly:
+
+| Metric | Good Benchmark | Where to Find |
+|--------|---------------|---------------|
+| Click-through rate on "Frequently Bought Together" | 5–15% | LimeSpot Analytics or custom tracking |
+| Add-to-cart rate from recommendations | 3–8% | LimeSpot Analytics |
+| Recommendation-attributed revenue | 5–20% of total revenue | LimeSpot / Tidio attribution report |
+
 ## Best Practices
 
-- **Refresh the co-purchase matrix nightly** — new orders change which products are frequently bought together; stale matrices degrade recommendation quality
-- **Always filter out-of-stock products** at query time, not at matrix build time — inventory changes faster than the recommendation model refreshes
-- **Exclude recently purchased products** from recommendations — showing a customer a product they bought last week is unhelpful and signals a poor experience
-- **Cache recommendation API responses for 5–15 minutes** — recommendation computation is expensive; customers rarely need millisecond-fresh results
-- **Implement a feedback loop** — track click-through rate (CTR) and add-to-cart rate per recommendation slot to compare algorithm variants
-- **Cap recommendation carousels at 6–8 products** — more than 8 creates choice paralysis and reduces click-through rate
-- **Use category affinity for new users** — if a visitor browses only shoes, constrain recommendations to the footwear category until broader behavior is captured
+- **Use an app before building from scratch** — LimeSpot and Frequently Bought Together are well-calibrated and handle edge cases (cold start, out-of-stock, recently purchased exclusions) that take weeks to build correctly
+- **Refresh the co-purchase matrix nightly** — new orders change which products are frequently bought together; stale data degrades recommendation quality
+- **Filter out-of-stock products at query time**, not at model build time — inventory changes faster than the recommendation model refreshes
+- **Cap recommendation carousels at 6–8 products** — more than 8 creates choice paralysis and lowers click-through rate
+- **Implement a feedback loop** — track click-through and add-to-cart rates per recommendation slot to compare algorithm variants over time
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Recommendations always show the same popular products | Add diversity by capping any single category to 30% of the recommendation slot; inject category variety |
-| Cold-start users see irrelevant bestsellers | Collect even one page-view as a signal; use the first-browsed product's category to constrain bestseller fallback |
-| Recommendations include the item the customer is currently viewing | Always pass `excludeProductIds: [currentProductId]` to the recommendation function |
-| Co-purchase matrix biased by bundle promotions | Filter orders where all items were part of the same promotion bundle, as those don't reflect genuine co-purchase affinity |
-| High co-purchase between unrelated products | Check if co-purchase is driven by a single viral order — apply a confidence threshold (e.g., min 10 co-occurrences) |
+| Recommendations always show the same popular products | Add diversity constraints — cap any single category to 30% of the recommendation slot; inject variety across price ranges |
+| Cold-start users see irrelevant bestsellers | Collect even a single page view as a signal; use the first-browsed product's category to constrain bestseller fallback |
+| Recommendations include the item being viewed | Always pass the current product ID as an exclusion to the recommendation function |
+| Co-purchase matrix biased by bundle promotions | Filter orders where all items came from the same promotional bundle — those don't reflect genuine co-purchase affinity |
 
 ## Related Skills
 
 - @customer-segmentation
 - @customer-lifetime-value
-- @product-analytics
-- @ab-testing-ecommerce
+- @product-reviews-ratings
 - @user-generated-content

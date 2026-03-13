@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [marketing-spend, roas, budget-optimization]
 triggers: ["analyze marketing spend", "ROAS analysis", "marketing budget allocation", "channel efficiency", "diminishing returns", "ad spend optimization", "blended ROAS"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,425 +16,186 @@ difficulty: intermediate
 
 ## Overview
 
-Marketing spend is typically the largest variable cost in a DTC ecommerce business — often 15-40% of revenue. Unlike most costs, marketing spend is directly controllable in near-real-time: you can increase or decrease budgets on paid channels within minutes. This creates both opportunity (scale what works) and risk (waste capital on what does not).
+Marketing spend is typically the largest variable cost in a DTC ecommerce business — often 15–40% of revenue. Unlike most costs, marketing spend is directly controllable in near-real-time: you can increase or decrease budgets on paid channels within minutes. This creates both opportunity (scale what works) and risk (waste capital on what does not).
 
-Marketing spend analysis covers the full lifecycle: tracking spend by channel and campaign, computing Return on Ad Spend (ROAS) and related efficiency metrics, identifying diminishing returns curves as spend scales, and making data-driven budget reallocation recommendations across platforms.
+The core goal is to maximize total contribution profit from your marketing investment — not just revenue. A channel with high ROAS but thin margins, high return rates, or low AOV may generate less actual profit than a channel with lower ROAS and stronger unit economics.
 
-The core goal is to maximize total contribution profit (not just revenue) from marketing investment. This distinction matters because a channel with high ROAS but high product costs, high return rates, or low average order value may generate less actual profit than a channel with lower ROAS but stronger unit economics.
+This skill guides you through building a unified view of marketing spend and performance across all channels, using tools designed specifically for ecommerce merchants.
 
-This skill covers data integration from ad platforms, metric definitions, ROAS calculations, marginal ROAS analysis, channel mix modeling concepts, and the decision framework for budget reallocation.
+## When to Use This Skill
 
----
-
-## When to Use
-
-- You manage marketing budgets across multiple platforms (Meta, Google, TikTok, Pinterest, Amazon Ads)
-- You want to identify which channels generate the most profitable customers, not just the most revenue
-- You need to build a unified marketing performance dashboard fed by multiple ad platforms
-- You are hitting diminishing returns on a key channel and need to decide how to reallocate spend
-- You are planning a marketing budget increase and need to project incremental ROAS at different spend levels
-- You want to compare platform-reported ROAS against your own first-party attribution
-- You are building a marketing efficiency report for a board or investor update
-
----
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When managing marketing budgets across multiple platforms (Meta, Google, TikTok, Amazon Ads)
+- When wanting to identify which channels generate the most profitable customers
+- When needing a unified marketing performance dashboard fed by multiple ad platforms
+- When hitting diminishing returns on a key channel and deciding how to reallocate spend
+- When comparing platform-reported ROAS against first-party attributed ROAS
+- When building a marketing efficiency report for a board or investor update
 
 ## Core Instructions
 
-### Step 1 — Build a Unified Marketing Spend Data Model
+### Step 1: Choose a unified marketing analytics tool
 
-Pull spend data from all platforms into a single normalized table. Each major platform has an API or CSV export.
+The biggest problem in marketing spend analysis is that each platform (Meta, Google, TikTok) reports its own ROAS using its own attribution window — and they all claim 100% credit. You need a tool that pulls data from all platforms into one view and compares against your actual order data.
 
-```python
-from datetime import date
+| Platform | Recommended Tool | What It Does |
+|----------|-----------------|-------------|
+| **Shopify** | **Triple Whale** or **Polar Analytics** | Connects Shopify orders + all ad platforms; shows blended ROAS, MER, and channel-level true ROAS side by side |
+| **Shopify** (budget option) | **Shopify Analytics** + **Google Analytics 4** | Free; last-click attribution only; no cross-platform comparison |
+| **WooCommerce** | **Metorik** + **GA4** | Metorik adds UTM attribution to WooCommerce orders; GA4 provides channel-level conversion reporting |
+| **BigCommerce** | **Glew.io** or **Rockerbox** | Both connect BigCommerce orders to ad platform spend data |
+| **All platforms** | **Northbeam** or **Rockerbox** | Platform-agnostic; provide first-party multi-touch attribution across all channels with spend pacing |
 
-PLATFORM_CONNECTORS = {
-    'meta': {
-        'api_url': 'https://graph.facebook.com/v18.0/act_{account_id}/insights',
-        'fields': ['date_start', 'campaign_name', 'adset_name', 'ad_name',
-                   'spend', 'impressions', 'clicks', 'purchases', 'purchase_roas'],
-        'date_field': 'date_start',
-        'spend_field': 'spend',
-        'attribution': '7d_click_1d_view',
-    },
-    'google': {
-        'api': 'Google Ads API',
-        'fields': ['date', 'campaign_name', 'ad_group', 'cost', 'impressions',
-                   'clicks', 'conversions', 'conversion_value'],
-        'date_field': 'date',
-        'spend_field': 'cost',
-        'attribution': 'last_click_30d',
-    },
-    'tiktok': {
-        'api_url': 'https://business-api.tiktok.com/open_api/v1.3/report/integrated/get/',
-        'fields': ['stat_time_day', 'campaign_name', 'spend', 'impressions',
-                   'clicks', 'real_time_conversion', 'real_time_conversion_value'],
-        'date_field': 'stat_time_day',
-        'spend_field': 'spend',
-        'attribution': '7d_click',
-    },
-    'amazon_sponsored': {
-        'api': 'Amazon Advertising API',
-        'report_type': 'campaigns',
-        'fields': ['date', 'campaignName', 'cost', 'impressions', 'clicks',
-                   'attributedSales14d', 'attributedUnitsOrdered14d'],
-        'date_field': 'date',
-        'spend_field': 'cost',
-        'attribution': '14d_click',
-    },
-    'klaviyo_email': {
-        'api': 'Klaviyo API',
-        'fields': ['date', 'campaign_name', 'revenue', 'recipients',
-                   'opens', 'clicks', 'unsubscribes'],
-        'spend_field': 'platform_cost',  # monthly fee prorated by campaign sends
-    },
-}
+**Key metrics to track in your chosen tool:**
 
-# Normalized schema
-UNIFIED_SPEND_SCHEMA = """
-    CREATE TABLE marketing_spend_daily (
-        spend_date          DATE NOT NULL,
-        platform            VARCHAR(30) NOT NULL,
-        channel_type        VARCHAR(20) NOT NULL,  -- 'paid_search', 'paid_social', 'email', etc.
-        campaign_id         VARCHAR(100),
-        campaign_name       VARCHAR(200),
-        ad_group            VARCHAR(200),
-        ad_name             VARCHAR(200),
-        spend_amount        NUMERIC(12,2) NOT NULL DEFAULT 0,
-        impressions         BIGINT DEFAULT 0,
-        clicks              INTEGER DEFAULT 0,
-        platform_conversions INTEGER DEFAULT 0,
-        platform_revenue    NUMERIC(12,2) DEFAULT 0,
-        platform_roas       NUMERIC(8,4),
-        currency            CHAR(3) DEFAULT 'USD',
-        attribution_window  VARCHAR(20),
-        PRIMARY KEY (spend_date, platform, campaign_id)
-    );
-"""
-```
+| Metric | Definition | Why It Matters |
+|--------|-----------|---------------|
+| **Platform ROAS** | Revenue attributed by each platform / spend on that platform | What the ad platform claims (typically inflated) |
+| **First-party ROAS** | Revenue attributed by your own pixel / spend | More accurate; corrects for view-through over-attribution |
+| **Blended MER** | Total revenue / total marketing spend across all channels | Overall marketing efficiency; harder to game |
+| **True ROAS** | Gross profit attributed to channel / spend | Accounts for COGS; the right metric for profitability decisions |
+| **CAC (new customers only)** | New customer acquisition spend / new customers acquired | Separate from retargeting/retention spend |
+| **ROAS break-even** | 1 / (1 - COGS rate - fulfillment rate) | Minimum ROAS needed to not lose money |
 
-### Step 2 — Define and Compute ROAS Metrics
-
-There are several ROAS definitions in common use — it is critical to use the right one for the right decision.
-
-```python
-def compute_roas_metrics(
-    period: str,
-    platform_spend: float,
-    platform_attributed_revenue: float,  # from platform's own attribution
-    first_party_attributed_revenue: float,  # from your own attribution model
-    gross_revenue: float,                # all revenue in period (including organic)
-    cogs_rate: float = 0.45,
-    variable_costs_rate: float = 0.15,   # fulfillment, payment fees, etc.
-) -> dict:
-    """
-    Compute multiple ROAS definitions for comprehensive channel evaluation.
-    """
-    # Platform ROAS (what the ad platform reports — usually optimistic)
-    platform_roas = platform_attributed_revenue / max(platform_spend, 0.01)
-
-    # Blended ROAS (total revenue / total marketing spend across all channels)
-    # Best for overall marketing efficiency, not individual channel decisions
-    blended_roas = gross_revenue / max(platform_spend, 0.01)
-
-    # First-party ROAS (using your own attribution, more conservative)
-    fp_roas = first_party_attributed_revenue / max(platform_spend, 0.01)
-
-    # TROAS (true ROAS): gross profit after variable costs / spend
-    gross_profit_attributed = first_party_attributed_revenue * (1 - cogs_rate - variable_costs_rate)
-    true_roas = gross_profit_attributed / max(platform_spend, 0.01)
-
-    # MER (Marketing Efficiency Ratio) = total revenue / total marketing spend
-    # Best metric for overall marketing health
-    mer = gross_revenue / max(platform_spend, 0.01)
-
-    # Minimum ROAS to break even on contribution margin
-    # Must cover: COGS + variable costs + marketing spend
-    # If contribution_margin_rate = 1 - cogs_rate - variable_costs_rate - marketing_rate
-    # Break-even ROAS = 1 / contribution_margin_rate_before_marketing
-    break_even_roas = 1 / max(1 - cogs_rate - variable_costs_rate, 0.01)
-
-    return {
-        'period': period,
-        'platform_spend': platform_spend,
-        'platform_roas': round(platform_roas, 2),
-        'first_party_roas': round(fp_roas, 2),
-        'true_roas': round(true_roas, 2),
-        'mer': round(mer, 2),
-        'break_even_roas': round(break_even_roas, 2),
-        'is_profitable': true_roas > break_even_roas,
-        'profit_vs_breakeven': round(true_roas - break_even_roas, 2),
-    }
-```
-
-### Step 3 — Analyze Diminishing Returns
-
-As spend on a channel increases, the marginal return per dollar typically decreases. Understanding where you are on the diminishing returns curve is essential for budget allocation decisions.
-
-```python
-import numpy as np
-from scipy.optimize import curve_fit
-
-def fit_diminishing_returns_curve(
-    weekly_spend: list[float],
-    weekly_revenue: list[float],
-) -> dict:
-    """
-    Fit a Michaelis-Menten (saturation) curve to spend vs. revenue data:
-    Revenue = (a × Spend) / (b + Spend)
-    where 'a' is max potential revenue (saturation point) and 'b' is the spend at half-saturation.
-    """
-    def saturation_curve(spend, a, b):
-        return (a * spend) / (b + spend)
-
-    try:
-        popt, pcov = curve_fit(
-            saturation_curve,
-            weekly_spend,
-            weekly_revenue,
-            p0=[max(weekly_revenue) * 2, np.median(weekly_spend)],
-            bounds=(0, [np.inf, np.inf]),
-        )
-        a, b = popt
-    except RuntimeError:
-        return {'error': 'Could not fit saturation curve — insufficient data variability'}
-
-    # Compute marginal ROAS at current spend level
-    current_spend = weekly_spend[-1]
-    marginal_revenue_at_current = (a * b) / ((b + current_spend) ** 2)  # derivative
-    marginal_roas_at_current = marginal_revenue_at_current  # = d(Revenue)/d(Spend)
-
-    # Optimal spend: where marginal ROAS = target (e.g., 1.5x for break-even at 40% margins)
-    target_marginal_roas = 1.5
-    optimal_spend = np.sqrt(a * b / target_marginal_roas) - b
-
-    return {
-        'saturation_revenue': round(a, 2),
-        'half_saturation_spend': round(b, 2),
-        'current_spend': current_spend,
-        'current_marginal_roas': round(marginal_roas_at_current, 3),
-        'optimal_spend_for_target_mroas': round(max(0, optimal_spend), 2),
-        'is_overspending': current_spend > optimal_spend,
-        'spend_recommendation': (
-            'reduce' if current_spend > optimal_spend * 1.1 else
-            'maintain' if abs(current_spend - optimal_spend) / optimal_spend < 0.1 else
-            'increase'
-        ),
-    }
-```
-
-### Step 4 — Channel Performance Scorecard
-
-```sql
--- Channel performance scorecard (last 30 days vs. prior 30 days)
-WITH current_window AS (
-    SELECT
-        platform,
-        channel_type,
-        SUM(spend_amount) AS spend,
-        SUM(platform_revenue) AS platform_attributed_revenue,
-        SUM(impressions) AS impressions,
-        SUM(clicks) AS clicks,
-        SUM(platform_conversions) AS platform_orders,
-        COUNT(DISTINCT spend_date) AS active_days
-    FROM marketing_spend_daily
-    WHERE spend_date >= CURRENT_DATE - 30
-    GROUP BY platform, channel_type
-),
-prior_window AS (
-    SELECT
-        platform,
-        channel_type,
-        SUM(spend_amount) AS prior_spend,
-        SUM(platform_revenue) AS prior_revenue,
-        SUM(platform_conversions) AS prior_orders
-    FROM marketing_spend_daily
-    WHERE spend_date BETWEEN CURRENT_DATE - 60 AND CURRENT_DATE - 31
-    GROUP BY platform, channel_type
-)
-SELECT
-    c.platform,
-    c.channel_type,
-    c.spend,
-    c.platform_attributed_revenue,
-    ROUND(c.platform_attributed_revenue / NULLIF(c.spend, 0), 2) AS roas,
-    ROUND(c.spend / NULLIF(c.platform_orders, 0), 2) AS cost_per_order,
-    ROUND(c.clicks::numeric / NULLIF(c.impressions, 0) * 100, 2) AS ctr_pct,
-    ROUND(c.platform_orders::numeric / NULLIF(c.clicks, 0) * 100, 2) AS cvr_pct,
-    p.prior_spend,
-    ROUND((c.spend - p.prior_spend) / NULLIF(p.prior_spend, 0) * 100, 1) AS spend_change_pct,
-    ROUND(c.platform_attributed_revenue / NULLIF(c.spend, 0) -
-          p.prior_revenue / NULLIF(p.prior_spend, 0), 2) AS roas_change_vs_prior
-FROM current_window c
-LEFT JOIN prior_window p USING (platform, channel_type)
-ORDER BY c.spend DESC;
-```
-
-### Step 5 — Budget Reallocation Recommendations
-
-```python
-def generate_reallocation_recommendations(
-    channel_performance: list[dict],
-    total_budget: float,
-    target_overall_roas: float = 3.0,
-) -> dict:
-    """
-    Generate budget reallocation recommendations based on channel efficiency.
-    Uses marginal ROAS to maximize total contribution at a given budget.
-    """
-    profitable = [c for c in channel_performance if c['true_roas'] >= c['break_even_roas']]
-    unprofitable = [c for c in channel_performance if c['true_roas'] < c['break_even_roas']]
-
-    recommendations = []
-
-    # Flag underperforming channels
-    for channel in unprofitable:
-        roas_gap = channel['break_even_roas'] - channel['true_roas']
-        recommendations.append({
-            'channel': channel['platform'],
-            'action': 'reduce',
-            'priority': 'high',
-            'current_spend': channel['spend'],
-            'recommended_spend': channel['spend'] * 0.50,  # cut 50% until ROAS recovers
-            'rationale': (
-                f"True ROAS of {channel['true_roas']:.2f}x is {roas_gap:.2f}x below break-even "
-                f"({channel['break_even_roas']:.2f}x). Reduce spend by 50% and optimize campaigns."
-            ),
-            'freed_budget': channel['spend'] * 0.50,
-        })
-
-    # Identify high-efficiency channels with headroom to scale
-    high_performers = sorted(
-        [c for c in profitable if c.get('marginal_roas', c['true_roas']) > target_overall_roas],
-        key=lambda x: x.get('marginal_roas', x['true_roas']),
-        reverse=True,
-    )
-
-    freed_budget = sum(r['freed_budget'] for r in recommendations)
-    budget_to_allocate = freed_budget
-
-    for channel in high_performers:
-        if budget_to_allocate <= 0:
-            break
-        headroom = channel.get('optimal_spend', channel['spend'] * 1.3) - channel['spend']
-        incremental_spend = min(headroom, budget_to_allocate)
-        if incremental_spend > 100:
-            recommendations.append({
-                'channel': channel['platform'],
-                'action': 'increase',
-                'priority': 'medium',
-                'current_spend': channel['spend'],
-                'recommended_spend': channel['spend'] + incremental_spend,
-                'rationale': (
-                    f"True ROAS of {channel['true_roas']:.2f}x is above target. "
-                    f"Incremental ${incremental_spend:,.0f} projected to yield "
-                    f"{channel.get('marginal_roas', channel['true_roas']):.2f}x marginal ROAS."
-                ),
-                'freed_budget': -incremental_spend,
-            })
-            budget_to_allocate -= incremental_spend
-
-    return {
-        'total_budget': total_budget,
-        'total_freed_from_cuts': freed_budget,
-        'total_reallocated': freed_budget - budget_to_allocate,
-        'recommendations': sorted(recommendations, key=lambda x: {'high': 0, 'medium': 1, 'low': 2}[x['priority']]),
-    }
-```
-
-### Step 6 — Weekly Marketing Efficiency Report
-
-```python
-def format_weekly_marketing_report(
-    channel_data: list[dict],
-    prior_week_data: list[dict],
-    total_budget_remaining: float,
-) -> str:
-    """Generate a formatted weekly marketing efficiency summary."""
-    total_spend = sum(c['spend'] for c in channel_data)
-    total_revenue = sum(c['attributed_revenue'] for c in channel_data)
-    blended_roas = total_revenue / max(total_spend, 0.01)
-
-    lines = [
-        f"WEEKLY MARKETING PERFORMANCE SUMMARY",
-        f"{'─' * 60}",
-        f"Total Spend: ${total_spend:,.0f}",
-        f"Total Attributed Revenue: ${total_revenue:,.0f}",
-        f"Blended ROAS: {blended_roas:.2f}x",
-        f"{'─' * 60}",
-        f"{'Channel':<20} {'Spend':>10} {'ROAS':>8} {'vs LW':>8} {'Status':>10}",
-        f"{'─' * 60}",
-    ]
-
-    prior_roas = {c['platform']: c.get('roas', 0) for c in prior_week_data}
-
-    for ch in sorted(channel_data, key=lambda x: x['spend'], reverse=True):
-        roas = ch.get('roas', 0)
-        lw_roas = prior_roas.get(ch['platform'], roas)
-        roas_delta = roas - lw_roas
-        delta_str = f"{roas_delta:+.2f}x"
-        status = 'OK' if roas >= ch.get('break_even_roas', 2.0) else 'REVIEW'
-
-        lines.append(
-            f"{ch['platform']:<20} ${ch['spend']:>9,.0f} {roas:>7.2f}x {delta_str:>8} {status:>10}"
-        )
-
-    lines.append(f"{'─' * 60}")
-    lines.append(f"Monthly Budget Remaining: ${total_budget_remaining:,.0f}")
-
-    return '\n'.join(lines)
-```
+### Step 2: Set up your marketing analytics stack
 
 ---
+
+#### Shopify
+
+**Triple Whale setup (recommended for $50K+/mo ad spend):**
+
+1. Install **Triple Whale** from the Shopify App Store
+2. Connect all ad accounts under **Settings → Integrations**: Meta, Google, TikTok, Pinterest, Snapchat
+3. Triple Whale installs a first-party pixel on your store that tracks the full customer journey
+4. Go to **Triple Whale → Summary Dashboard** — view daily spend, attributed revenue, ROAS, MER, new customer CAC, and gross profit by channel in one dashboard
+5. Go to **Triple Whale → Attribution → Channel** to see revenue under different attribution models side by side (first-click, last-click, Triple Whale's blended model)
+6. Set up **Morning Digest** emails — Triple Whale sends a daily performance summary automatically
+7. Set **Budget Alerts** under **Settings → Alerts** — get Slack/email notifications when ROAS drops below threshold or spend is pacing to overshoot monthly budget
+
+**Polar Analytics setup (mid-market, more affordable):**
+
+1. Install **Polar Analytics** from the Shopify App Store
+2. Connect ad accounts under **Integrations**
+3. Go to **Polar → Channels** — view spend, attributed revenue, ROAS, and gross profit by channel
+4. Go to **Polar → Blended Dashboard** — view overall MER and blended spend vs. revenue trend
+5. Use **Polar → AI Insights** for automated anomaly detection and spend recommendations
+
+---
+
+#### WooCommerce
+
+**Metorik + GA4 setup:**
+
+1. Install **Metorik** and connect to your WooCommerce store
+2. Metorik captures UTM parameters on every order — go to **Metorik → Reports → UTM** to see orders and revenue by utm_source, utm_medium, utm_campaign
+3. Install **Google Analytics 4** via the **Site Kit** or **MonsterInsights** plugin
+4. In GA4, go to **Advertising → Attribution → Model comparison** — select Google, Paid Social, Email as your channels and compare last-click vs. data-driven attribution
+5. For ad spend data from non-Google platforms (Meta, TikTok), manually import spend CSVs into a Google Sheet and connect to Looker Studio alongside GA4 data for a unified view
+
+**Alternative: Northbeam or Rockerbox**
+- Both support WooCommerce via JavaScript pixel + order API integration
+- Provide the same cross-platform attribution capabilities as Triple Whale but with WooCommerce compatibility
+
+---
+
+#### BigCommerce
+
+1. Install **Glew.io** from the BigCommerce App Marketplace
+2. Connect ad accounts (Meta, Google, Amazon) in Glew under **Integrations**
+3. Glew shows spend, attributed revenue, ROAS, and blended MER by channel
+4. For more advanced first-party attribution: install **Rockerbox** via script injection (BigCommerce → Storefront → Script Manager)
+
+---
+
+### Step 3: Define your ROAS break-even and targets
+
+Before analyzing whether a channel is performing well, calculate your minimum viable ROAS.
+
+**ROAS break-even formula:**
+```
+Break-even ROAS = 1 / (1 - COGS rate - variable cost rate)
+
+Example:
+  COGS rate: 45% of revenue
+  Fulfillment + payment fees: 12% of revenue
+  Break-even ROAS = 1 / (1 - 0.45 - 0.12) = 1 / 0.43 = 2.33x
+
+Any channel with true ROAS below 2.33x is losing money on every sale.
+```
+
+**Target ROAS by channel type:**
+
+| Channel Type | Target ROAS Multiplier Above Break-Even | Why |
+|-------------|----------------------------------------|-----|
+| Prospecting (new customers) | 1.5–2x break-even | Acquiring new customers has higher long-term value than single-order ROAS suggests |
+| Retargeting (existing visitors) | 2–3x break-even | Lower cost; higher conversion rate; but be careful of incrementality |
+| Brand search (Google Branded) | 5x+ | High ROAS but low incrementality; customers were coming anyway |
+| Non-brand search (Google Generic) | 1.5–2x break-even | True incremental; valuable for new customer acquisition |
+| Email/SMS | 10x+ | Low cost per send; high ROAS but measures existing customer retention, not acquisition |
+
+### Step 4: Build a weekly channel performance scorecard
+
+Set up a weekly review with this structure. Pull data from your analytics tool (Triple Whale, Glew, GA4):
+
+```
+CHANNEL PERFORMANCE SCORECARD (Last 7 Days vs. Prior 7 Days)
+─────────────────────────────────────────────────────────────
+Channel    | Spend  | 1P Revenue | 1P ROAS | vs LW | Status
+Meta Ads   | $12,400| $38,400    | 3.1x    | +0.3x | OK ✓
+Google Ads | $8,200 | $31,100    | 3.8x    | -0.2x | OK ✓
+TikTok Ads | $3,100 | $5,700     | 1.8x    | -0.8x | REVIEW ⚠
+Amazon Ads | $4,500 | $19,800    | 4.4x    | +0.1x | OK ✓
+Email/SMS  | $800   | $22,000    | 27.5x   | +2.0x | OK ✓
+─────────────────────────────────────────────────────────────
+Total      | $29,000| $117,000   | 4.0x    |       | MER: 4.0x
+Break-even ROAS: 2.33x | Monthly Budget: $125,000 | Paced to spend: $126,500 (+$1,500)
+```
+
+**TikTok is flagged:** ROAS dropped from 2.6x to 1.8x (below 2.33x break-even). Action: Investigate creative fatigue; pause underperforming ad sets; hold budget before cutting entirely.
+
+### Step 5: Make budget reallocation decisions
+
+Use this decision framework when channels are over/under-performing:
+
+**When to reduce spend on a channel:**
+- True ROAS has been below break-even for 2+ consecutive weeks
+- First-party ROAS has declined more than 30% with no operational explanation
+- Creative has not been refreshed in 30+ days and ROAS is declining (creative fatigue)
+
+**When to increase spend on a channel:**
+- True ROAS is 2x or more above break-even
+- First-party ROAS has been stable or increasing for 3+ weeks
+- Marginal ROAS at current spend level is still above break-even (not in diminishing returns territory)
+
+**Before cutting spend, investigate:**
+1. Is a top SKU out of stock? Ads running for out-of-stock products waste spend with no ability to convert
+2. Did a creative rotation happen? Performance often dips temporarily during algorithm learning phases (50+ optimization events needed)
+3. Did a competitor run a major promotion? Temporary CPM/CPC spikes are not structural channel problems
+4. Is the tracking pixel firing correctly? A sudden ROAS drop can be a tracking issue, not a performance issue
 
 ## Best Practices
 
-1. **Track true ROAS, not platform-reported ROAS** — Platform ROAS uses the platform's own attribution, which is almost always higher than reality due to view-through attribution and multi-touch double-counting. Compute ROAS from your own first-party data and compare it to platform reports to understand the discrepancy.
-
-2. **Set channel-specific ROAS targets based on margin** — A 3x ROAS is not the same profitability across products with different margins. Set minimum ROAS thresholds by product category: higher-margin products can sustain lower ROAS; lower-margin products need higher ROAS to be profitable.
-
-3. **Monitor MER (Marketing Efficiency Ratio) as a holistic metric** — Blended MER (total revenue / total marketing spend across all channels) is harder to game than individual channel ROAS and gives you a true picture of overall marketing health. A healthy ecommerce MER is typically 3-6x depending on margins.
-
-4. **Separate new customer acquisition from retention spending** — Remarketing and email/SMS to existing customers have very different economics than prospecting for new customers. Track CAC and ROAS separately for new vs. returning customer campaigns.
-
-5. **Build a weekly spend pacing report** — Track cumulative spend vs. monthly budget by the day. A channel that has spent 80% of its monthly budget by day 15 will either overspend or dramatically under-deliver in the second half of the month.
-
-6. **Investigate ROAS drops before cutting budgets** — A sudden ROAS drop often has a specific cause: creative fatigue, a competitor promotion, a tracking pixel issue, or a product going out of stock. Diagnose before cutting spend; sometimes the fix is a new creative, not a budget reduction.
-
-7. **Test incrementality before doubling down on any channel** — High ROAS on a retargeting campaign may be capturing sales that would have happened anyway. Run incrementality tests (holdout tests) to measure the true incremental impact of your marketing spend.
-
-8. **Normalize spend metrics to per-day rates** — Marketing spend varies by calendar month length. Use spend-per-day rather than spend-per-month for period comparisons.
-
-9. **Track creative performance, not just campaign performance** — Budget reallocation at the campaign level misses the insight that one creative drives 70% of a campaign's ROAS. Surface creative-level performance and prioritize winning ad formats and messages.
-
-10. **Build a channel diversification health score** — Concentration risk is real: if 80% of your customer acquisition comes from one platform, a policy change (iOS privacy changes, algorithm update, account suspension) can destroy your growth. Track channel concentration and incentivize diversification.
-
----
+- **Track true ROAS (profit-based), not platform-reported ROAS** — platform ROAS using view-through attribution is almost always higher than reality; compute ROAS from your own first-party data
+- **Monitor MER (Marketing Efficiency Ratio) as a holistic metric** — blended MER (total revenue / total marketing spend) is harder to game than individual channel ROAS; a healthy ecommerce MER is typically 3–6x
+- **Separate new customer acquisition from retention spending** — remarketing and email/SMS to existing customers have very different economics than prospecting; track CAC and ROAS separately for new vs. returning customer campaigns
+- **Build a weekly spend pacing report** — track cumulative spend vs. monthly budget by day; a channel at 80% of monthly budget by day 15 will either overspend or dramatically under-deliver in the second half
+- **Track creative performance, not just campaign performance** — one creative often drives 70% of a campaign's ROAS; surface creative-level performance and prioritize winning formats
+- **Test incrementality before doubling down** — high retargeting ROAS may be capturing sales that would have happened anyway; run holdout tests to measure true incremental impact
 
 ## Common Pitfalls
 
-### Pitfall 1: Optimizing for ROAS Instead of Profit
-High ROAS can be achieved by only running ads for low-competition, high-margin products — but this limits scale. Optimize for total incremental gross profit, not ROAS. A channel with 2.5x ROAS on $500K spend contributes more profit than one with 5x ROAS on $50K spend at most margin structures.
+| Problem | Solution |
+|---------|----------|
+| Each platform claims credit for the same order | Use a first-party attribution tool (Triple Whale, Northbeam) to de-duplicate; platform-reported ROAS always double-counts |
+| Cutting spend during a temporary ROAS dip | Investigate root cause before cutting; algorithmic learning phases (post-creative refresh) look like performance drops but recover; allow 50+ optimization events before evaluating |
+| Not separating branded from non-branded search ROAS | Google Branded campaigns have very high ROAS but low incrementality; analyze separately or you will overestimate Google's true contribution |
+| Running ads for out-of-stock products | Connect inventory status to your ad platforms; use rules-based automation in Meta/Google to pause campaigns when SKUs hit 0 stock |
+| Ignoring email and SMS in ROAS calculations | Email/SMS spend is very low relative to revenue attributed; their MER looks incredible but remember they largely serve existing customers — they are retention tools, not acquisition tools |
 
-### Pitfall 2: Ignoring Attribution Window Mismatches
-Meta uses 7-day click / 1-day view attribution by default. Google uses 30-day last-click. TikTok uses 7-day click. When you compare ROAS across platforms, you are comparing different time windows. Standardize attribution windows in your first-party model.
+## Related Skills
 
-### Pitfall 3: Not Accounting for Halo Effects
-Spending on upper-funnel brand awareness (YouTube, connected TV, influencer) drives organic and direct-traffic sales that will not show up in paid channel ROAS. Evaluate brand channels using marketing mix modeling or brand lift studies, not last-click attribution.
-
-### Pitfall 4: Cutting Spend Too Aggressively During Temporary ROAS Dips
-Short-term ROAS drops occur during audience learning phases, creative refreshes, and seasonal demand shifts. Cutting spend during an algorithmic learning period resets the learning and causes additional performance degradation. Allow platforms a full learning phase (50+ optimization events) before evaluating performance.
-
-### Pitfall 5: Not Separating Branded from Non-Branded Search ROAS
-Branded Google search (people searching your company name) has very high ROAS but low incrementality — those customers were already going to find you. Non-branded (generic) search is where you are genuinely competing for new demand. Analyze these separately to avoid overestimating Google's incremental value.
-
-### Pitfall 6: Analyzing Spend Without Inventory Context
-Running ads at full budget when a top SKU is out of stock drives spend with no ability to convert. Build an alert that flags when spend is running for products that are low or out of stock, and automatically pause those campaigns.
+- @attribution-modeling
+- @cost-allocation-analysis
+- @unit-economics-tracking
+- @ecommerce-budgeting-forecasting
+- @financial-analytics-dashboard

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [analytics, dashboard, revenue, aov, conversion, cohort, reporting, sql, data-visualization]
 triggers: ["sales dashboard", "revenue reporting", "sales reporting", "AOV dashboard", "conversion dashboard", "cohort analysis dashboard", "ecommerce analytics dashboard"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,9 @@ difficulty: intermediate
 
 ## Overview
 
-A sales reporting dashboard surfaces the metrics that matter most to an e-commerce operation: revenue, orders, average order value (AOV), conversion rate, and trend comparisons. This skill covers building the SQL queries for each core metric, implementing drill-down capabilities (by channel, category, geography), cohort revenue analysis, and structuring a REST API that a frontend charting library (Recharts, Chart.js, Metabase) can consume.
+A sales reporting dashboard surfaces the metrics that matter most to an ecommerce operation: revenue, orders, average order value (AOV), conversion rate, and trend comparisons. Having a single source of truth for these metrics — accessible to the whole team and automatically up to date — replaces manual spreadsheet reports and gives operators the data they need for daily decisions.
+
+This skill guides you through building a sales reporting dashboard using your platform's built-in tools, BI apps, and data connections.
 
 ## When to Use This Skill
 
@@ -25,248 +27,157 @@ A sales reporting dashboard surfaces the metrics that matter most to an e-commer
 - When implementing time-comparison metrics (week-over-week, month-over-month, year-over-year)
 - When product managers need category and channel drill-down beyond top-level revenue
 - When building an executive dashboard that surfaces GMV, conversion rate, and AOV trends
-- When integrating with a BI tool (Metabase, Looker, Redash) via an API or direct database views
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When integrating with a BI tool (Metabase, Looker Studio) via an API or direct database views
 
 ## Core Instructions
 
-1. **Build the core revenue metrics query**
+### Step 1: Choose your reporting tool by platform
 
-   ```sql
-   -- PostgreSQL: daily revenue summary for a date range
-   SELECT
-     DATE_TRUNC('day', o.created_at) AS day,
-     COUNT(DISTINCT o.id) AS orders,
-     COUNT(DISTINCT o.customer_id) AS unique_customers,
-     SUM(o.subtotal_cents) / 100.0 AS revenue,
-     SUM(o.subtotal_cents) / 100.0 / NULLIF(COUNT(DISTINCT o.id), 0) AS aov,
-     SUM(o.discount_cents) / 100.0 AS discounts_given,
-     (SUM(o.subtotal_cents) - SUM(o.discount_cents)) / 100.0 AS net_revenue,
-     SUM(o.refund_cents) / 100.0 AS refunds,
-     (SUM(o.subtotal_cents) - SUM(o.discount_cents) - SUM(o.refund_cents)) / 100.0 AS net_net_revenue
-   FROM orders o
-   WHERE o.status NOT IN ('cancelled')
-     AND o.created_at BETWEEN :start_date AND :end_date
-   GROUP BY 1
-   ORDER BY 1 DESC;
-   ```
+| Platform | Tool | Best For |
+|----------|------|---------|
+| **Shopify** | **Shopify Analytics** (built-in) | Revenue, orders, AOV, conversion rate; free; real-time; sufficient for most merchants |
+| **Shopify** | **Shopify + Google Looker Studio** (free) | Custom visual dashboards; combine Shopify data with GA4 and ad platform data |
+| **Shopify** | **Polar Analytics** or **Triple Whale** | Multi-channel dashboards; profit metrics; automated daily digest emails |
+| **WooCommerce** | **WooCommerce Analytics** (built-in) | Revenue, orders, products, customers; free; available in WooCommerce 3.5+ |
+| **WooCommerce** | **Metorik** | Advanced filtering, cohort analysis, customer segments; best WooCommerce analytics tool |
+| **BigCommerce** | **BigCommerce Analytics** (built-in) | Sales overview, product performance, customer metrics |
+| **BigCommerce** | **Glew.io** | Advanced cohort retention, channel drill-down, and executive dashboards |
+| **All platforms** | **Google Analytics 4** | Conversion funnel, traffic sources, session-based metrics; free; pairs with any platform |
 
-   TypeScript API endpoint:
+### Step 2: Set up your core sales reporting dashboard
 
-   ```typescript
-   // GET /api/analytics/revenue?start=2026-01-01&end=2026-03-12&granularity=day
-   export async function getRevenueSummary(req: Request, res: Response) {
-     const { start, end, granularity = 'day' } = req.query;
+---
 
-     const validGranularities = ['hour', 'day', 'week', 'month'];
-     if (!validGranularities.includes(granularity as string)) {
-       return res.status(400).json({ error: 'Invalid granularity' });
-     }
+#### Shopify
 
-     const cacheKey = `revenue:${start}:${end}:${granularity}`;
-     const cached = await redis.get(cacheKey);
-     if (cached) return res.json(JSON.parse(cached));
+**Built-in Shopify Analytics (start here):**
 
-     const rows = await db.query(`
-       SELECT
-         DATE_TRUNC($1, created_at) AS period,
-         COUNT(DISTINCT id) AS orders,
-         SUM(subtotal_cents) / 100.0 AS revenue,
-         SUM(subtotal_cents) / NULLIF(COUNT(DISTINCT id), 0) / 100.0 AS aov,
-         COUNT(DISTINCT customer_id) AS unique_customers
-       FROM orders
-       WHERE status NOT IN ('cancelled')
-         AND created_at BETWEEN $2 AND $3
-       GROUP BY 1
-       ORDER BY 1 ASC
-     `, [granularity, start, end]);
+1. Go to **Analytics → Overview** — the default dashboard shows:
+   - Today's total sales, orders, and sessions in real time
+   - Conversion rate for the current day vs. prior period
+   - AOV trend
+   - Top products by revenue
+2. Go to **Analytics → Dashboards** — Shopify lets you create custom dashboards:
+   - Click **+ Add report** to add tiles for any built-in report metric
+   - Recommended tiles: Total sales, Net sales, Orders, Conversion rate, AOV, Top products, Sales by channel, Sales by location
+3. Go to **Analytics → Reports** for all available reports:
+   - **Sales over time:** Revenue by day/week/month with period comparison
+   - **Sales by product:** Top products by revenue and units sold
+   - **Sales by channel:** Revenue breakdown by sales channel (online store, POS, draft orders, etc.)
+   - **Sales by traffic source:** Revenue by UTM source/medium (last-click)
+   - **Average order value over time:** AOV trend with comparison
+   - **Returning customer rate:** New vs. returning customer ratio
+4. All reports export to CSV for further analysis
 
-     await redis.setex(cacheKey, 300, JSON.stringify(rows));
-     res.json(rows);
-   }
-   ```
+**Setting up a Shopify + Looker Studio dashboard (free, for custom visualization):**
 
-2. **Build conversion rate metrics**
+1. Go to **Looker Studio** at [lookerstudio.google.com](https://lookerstudio.google.com)
+2. Add a data source: select **Google Sheets**
+3. In Google Sheets, set up a connection to Shopify using **Sheets for Shopify** app or by scheduling CSV exports from Shopify Analytics
+4. Build your dashboard in Looker Studio: add scorecards for key metrics, time-series charts for revenue trend, bar charts for channel breakdown
+5. Share the dashboard URL with your team — refreshes automatically when the Google Sheet updates
 
-   Conversion rate requires session data alongside order data:
+---
 
-   ```sql
-   -- Conversion rate by day (requires a sessions table)
-   SELECT
-     DATE_TRUNC('day', s.started_at) AS day,
-     COUNT(DISTINCT s.id) AS sessions,
-     COUNT(DISTINCT o.id) AS orders,
-     ROUND(100.0 * COUNT(DISTINCT o.id) / NULLIF(COUNT(DISTINCT s.id), 0), 2) AS cvr_pct,
-     -- Segment by new vs. returning
-     COUNT(DISTINCT CASE WHEN s.is_new_visitor THEN s.id END) AS new_visitor_sessions,
-     COUNT(DISTINCT CASE WHEN NOT s.is_new_visitor THEN s.id END) AS returning_visitor_sessions
-   FROM sessions s
-   LEFT JOIN orders o ON o.session_id = s.id AND o.status NOT IN ('cancelled')
-   WHERE s.started_at BETWEEN :start_date AND :end_date
-   GROUP BY 1
-   ORDER BY 1 DESC;
-   ```
+#### WooCommerce
 
-3. **Build channel drill-down**
+**WooCommerce Analytics (built-in):**
 
-   ```sql
-   -- Revenue by acquisition channel for a period
-   SELECT
-     COALESCE(oa.source, 'direct') AS channel,
-     COALESCE(oa.medium, 'none') AS medium,
-     COUNT(DISTINCT o.id) AS orders,
-     SUM(o.subtotal_cents) / 100.0 AS revenue,
-     SUM(o.subtotal_cents) / NULLIF(COUNT(DISTINCT o.id), 0) / 100.0 AS aov,
-     COUNT(DISTINCT o.customer_id) AS customers,
-     -- New vs. returning customer ratio
-     COUNT(DISTINCT CASE WHEN o.is_first_order THEN o.id END) AS new_customer_orders
-   FROM orders o
-   LEFT JOIN order_attribution oa ON oa.order_id = o.id
-   WHERE o.created_at BETWEEN :start_date AND :end_date
-     AND o.status NOT IN ('cancelled')
-   GROUP BY 1, 2
-   ORDER BY revenue DESC;
-   ```
+1. Go to **WooCommerce → Analytics → Overview** — shows revenue, orders, items sold, and refunds for the selected date range with period comparison
+2. Go to **WooCommerce → Analytics → Revenue** — detailed revenue breakdown: gross sales, returns, coupons, net revenue, taxes, shipping by day
+3. Go to **WooCommerce → Analytics → Orders** — order count, average order value, refund rate by day
+4. Go to **WooCommerce → Analytics → Products** — revenue and units sold by product
+5. Go to **WooCommerce → Analytics → Categories** — revenue and units by product category
+6. All WooCommerce Analytics reports export to CSV
 
-4. **Build category performance drill-down**
+**Metorik (advanced WooCommerce dashboards):**
 
-   ```sql
-   -- Revenue and sell-through by product category
-   SELECT
-     c.name AS category,
-     COUNT(DISTINCT oi.order_id) AS orders_with_category,
-     SUM(oi.quantity) AS units_sold,
-     SUM(oi.unit_price_cents * oi.quantity) / 100.0 AS category_revenue,
-     SUM(oi.unit_price_cents * oi.quantity) / NULLIF(SUM(SUM(oi.unit_price_cents * oi.quantity)) OVER (), 0) * 100 AS revenue_share_pct
-   FROM order_items oi
-   JOIN products p ON oi.product_id = p.id
-   JOIN product_categories pc ON p.id = pc.product_id
-   JOIN categories c ON pc.category_id = c.id
-   JOIN orders o ON oi.order_id = o.id
-   WHERE o.created_at BETWEEN :start_date AND :end_date
-     AND o.status NOT IN ('cancelled')
-   GROUP BY c.name
-   ORDER BY category_revenue DESC;
-   ```
+1. Connect Metorik to your WooCommerce store
+2. Go to **Metorik → Dashboard** — real-time revenue, orders, and customer metrics with period comparison
+3. Go to **Metorik → Reports → Revenue** — revenue by day/week/month; compare any two custom date ranges
+4. Go to **Metorik → Reports → Products** — revenue, units, refunds by product
+5. Go to **Metorik → Reports → Customers → Cohorts** — monthly cohort retention matrix showing what % of each acquisition cohort is still buying
+6. Set up **Metorik Digest emails** — automated daily or weekly summary emails sent to your team
 
-5. **Compute period-over-period comparison**
+---
 
-   ```typescript
-   async function getPeriodComparison(currentStart: Date, currentEnd: Date) {
-     const periodLengthMs = currentEnd.getTime() - currentStart.getTime();
-     const priorStart = new Date(currentStart.getTime() - periodLengthMs);
-     const priorEnd = new Date(currentStart);
+#### BigCommerce
 
-     const [current, prior] = await Promise.all([
-       db.query(revenueSummarySQL, [currentStart, currentEnd]),
-       db.query(revenueSummarySQL, [priorStart, priorEnd]),
-     ]);
+1. Go to **Analytics → Store Overview** — shows revenue, orders, conversion rate, and AOV for the selected period with trend chart
+2. Go to **Analytics → Purchase Funnel** — shows session-to-order conversion funnel: sessions → product views → add to cart → purchase
+3. Go to **Analytics → Products** → **Analytics → Merchandising → Products** — revenue and units by product
+4. Go to **Analytics → Customers** — new vs. returning customer breakdown, customer lifetime value
+5. For advanced dashboards: install **Glew.io** from the BigCommerce App Marketplace — pre-built executive sales dashboard with channel comparison, cohort retention, and automated weekly digest emails
 
-     const currRevenue = current.reduce((sum: number, r: any) => sum + r.revenue, 0);
-     const priorRevenue = prior.reduce((sum: number, r: any) => sum + r.revenue, 0);
-     const currOrders = current.reduce((sum: number, r: any) => sum + r.orders, 0);
-     const priorOrders = prior.reduce((sum: number, r: any) => sum + r.orders, 0);
+---
 
-     return {
-       current: { revenue: currRevenue, orders: currOrders, aov: currOrders ? currRevenue / currOrders : 0 },
-       prior: { revenue: priorRevenue, orders: priorOrders, aov: priorOrders ? priorRevenue / priorOrders : 0 },
-       changes: {
-         revenueChange: priorRevenue ? ((currRevenue - priorRevenue) / priorRevenue) * 100 : null,
-         ordersChange: priorOrders ? ((currOrders - priorOrders) / priorOrders) * 100 : null,
-       },
-     };
-   }
-   ```
+### Step 3: Build the key metrics your dashboard must answer
 
-## Examples
+Regardless of tool, your sales dashboard should answer these questions at a glance:
 
-### Top products report
+**Daily check (5-minute morning review):**
+- Revenue today vs. same day last week (and same day last year for seasonal businesses)
+- Order count today vs. prior
+- Conversion rate today vs. 7-day average (significant drops usually indicate a site issue)
 
-```sql
--- Top 20 products by revenue for a date range, with rank change vs. prior period
-WITH current_period AS (
-  SELECT
-    p.id,
-    p.name,
-    SUM(oi.unit_price_cents * oi.quantity) / 100.0 AS revenue,
-    SUM(oi.quantity) AS units_sold,
-    RANK() OVER (ORDER BY SUM(oi.unit_price_cents * oi.quantity) DESC) AS rank
-  FROM order_items oi
-  JOIN products p ON oi.product_id = p.id
-  JOIN orders o ON oi.order_id = o.id
-  WHERE o.created_at BETWEEN :current_start AND :current_end AND o.status != 'cancelled'
-  GROUP BY p.id, p.name
-),
-prior_period AS (
-  SELECT
-    p.id,
-    RANK() OVER (ORDER BY SUM(oi.unit_price_cents * oi.quantity) DESC) AS rank
-  FROM order_items oi
-  JOIN products p ON oi.product_id = p.id
-  JOIN orders o ON oi.order_id = o.id
-  WHERE o.created_at BETWEEN :prior_start AND :prior_end AND o.status != 'cancelled'
-  GROUP BY p.id
-)
-SELECT cp.*, pp.rank AS prior_rank, pp.rank - cp.rank AS rank_improvement
-FROM current_period cp
-LEFT JOIN prior_period pp ON cp.id = pp.id
-ORDER BY cp.rank
-LIMIT 20;
-```
+**Weekly review:**
+- Revenue this week vs. prior week vs. same week last year
+- AOV trend (is it stable, growing, or declining?)
+- Top 10 products by revenue and units sold this week
+- Channel breakdown: website vs. Amazon vs. wholesale revenue share
 
-### Revenue waterfall: from gross to net
+**Monthly executive summary:**
+- Total net revenue vs. budget
+- Gross margin % (if COGS is tracked in platform)
+- New customer revenue vs. returning customer revenue
+- Cohort retention: what % of last month's new customers have placed a second order?
 
-```typescript
-async function getRevenueWaterfall(start: Date, end: Date) {
-  const [gross, discounts, refunds, shipping] = await Promise.all([
-    db.orders.sumField('subtotal_cents', { between: [start, end] }),
-    db.orders.sumField('discount_cents', { between: [start, end] }),
-    db.orders.sumField('refund_cents', { between: [start, end] }),
-    db.orders.sumField('shipping_cents', { between: [start, end] }),
-  ]);
+### Step 4: Set up period-over-period comparison
 
-  return [
-    { label: 'Gross Revenue', value: gross / 100, type: 'positive' },
-    { label: 'Discounts', value: -(discounts / 100), type: 'negative' },
-    { label: 'Refunds', value: -(refunds / 100), type: 'negative' },
-    { label: 'Shipping Revenue', value: shipping / 100, type: 'positive' },
-    { label: 'Net Revenue', value: (gross - discounts - refunds + shipping) / 100, type: 'total' },
-  ];
-}
-```
+All platform analytics tools support date range comparison. Here is how to configure it:
+
+- **Shopify:** In any report, click the date range picker → select **Compare to** → choose Prior period, Prior year, or Custom
+- **WooCommerce Analytics:** The date range selector includes a comparison toggle; select "Previous period" or "Previous year"
+- **Metorik:** Every chart has a "Compare" button that adds a prior-period line to the chart
+- **Google Analytics 4:** Date range picker includes a comparison checkbox; select "Preceding period" or "Same period last year"
+- **Looker Studio:** Add date range control to the dashboard; use "Comparison date range" in the control to enable period comparison
+
+### Step 5: Add channel and category drill-down
+
+**Channel drill-down:**
+- **Shopify:** Analytics → Sales by traffic source (shows revenue by UTM source/medium)
+- **WooCommerce:** Metorik → Reports → UTM (shows orders and revenue by utm_source, utm_medium)
+- **BigCommerce:** Analytics → Marketing → Campaigns (shows revenue attributed to marketing campaigns)
+- **All platforms:** GA4 → Monetization → Ecommerce purchases → filter by "Session source/medium"
+
+**Category drill-down:**
+- **Shopify:** Analytics → Sales by product type (shows revenue by product type/collection)
+- **WooCommerce:** WooCommerce Analytics → Categories (built-in)
+- **BigCommerce:** Analytics → Merchandising → Categories
 
 ## Best Practices
 
-- **Cache all dashboard queries** with a 5–15 minute TTL — revenue queries on large datasets can take 5+ seconds; serving cached responses keeps the dashboard snappy
-- **Use `DATE_TRUNC` instead of `DATE()` for aggregations** in PostgreSQL — it preserves timezone information and is more consistent across all granularities
-- **Always filter cancelled orders** — including them in revenue metrics inflates GMV and skews AOV
-- **Use views or materialized views for complex joins** — wrap your revenue + attribution join into a database view so the query layer stays clean
-- **Add indexes on `(status, created_at)` for the orders table** — this is the filter pattern used in every dashboard query
-- **Separate GMV from net revenue** — GMV (gross merchandise value) includes discounts; net revenue does not; report both explicitly
-- **Provide period-over-period context for every KPI** — a $50k revenue day is meaningless without knowing whether it is up or down vs. last week
+- **Cache or pre-aggregate for large date ranges** — revenue queries over 90+ days on large stores can be slow; use pre-built aggregate reports in Shopify Analytics or Metorik rather than exporting raw order data
+- **Always filter cancelled orders** — including cancelled orders inflates GMV and skews AOV; all platform analytics tools exclude cancelled orders by default; verify this in custom SQL or exports
+- **Separate GMV from net revenue** — GMV (gross merchandise value) includes full selling price before discounts; net revenue is after discounts and refunds; report both explicitly and label clearly
+- **Provide period-over-period context for every KPI** — a $50K revenue day is meaningless without knowing whether it is up or down vs. last week
+- **Use consistent time zones** — store all timestamps in UTC and apply timezone conversion only in reporting; mixed timezone data creates apparent revenue discrepancies
+- **Build one authoritative source of truth** — if the marketing team uses GA4 revenue and the finance team uses Shopify Analytics revenue, they will often show different numbers (attribution timing, tax inclusion differences); agree on one source per metric
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Dashboard shows different revenue than payment processor | Reconcile by comparing order `subtotal_cents` against Stripe payment intents; differences usually come from multi-currency or refund timing |
-| Conversion rate looks artificially low | Ensure sessions table includes all visits, not just logged-in users; anonymous sessions are often missed |
-| AOV inflated by bulk/wholesale orders | Add a `WHERE subtotal_cents < 100000` filter (configurable) to exclude outliers from AOV calculation |
-| Revenue appears in wrong timezone | Store all timestamps in UTC in the database; apply timezone conversion only in the API response using `AT TIME ZONE` |
-| Dashboard query timeout on large date ranges | Add a materialized view or daily aggregate rollup table (`orders_daily`) for date ranges > 90 days |
+| Dashboard shows different revenue than payment processor | Reconcile by comparing order subtotal against Stripe/PayPal payouts; differences come from multi-currency, refund timing, or fee deduction |
+| Conversion rate looks artificially low | Ensure session tracking includes anonymous visitors; GA4 by default tracks all sessions; platform analytics may only count sessions that hit certain pages |
+| AOV inflated by bulk/wholesale orders | Add a filter to exclude orders above a threshold (e.g., >$5,000) from AOV calculations; analyze wholesale orders separately |
+| Revenue appears in wrong time period | Confirm whether your platform recognizes revenue at order placement or fulfillment; Shopify reports order date, not fulfillment date; align with your accounting recognition policy |
+| Weekly reports show inconsistent totals | Use the same date range definition (e.g., Monday–Sunday) consistently; avoid reporting partial weeks against full-week comparisons |
 
 ## Related Skills
 
 - @product-analytics
 - @customer-analytics
 - @attribution-modeling
+- @financial-analytics-dashboard
 - @ab-testing-ecommerce
-- @customer-segmentation

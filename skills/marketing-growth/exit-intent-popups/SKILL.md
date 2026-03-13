@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [exit-intent, popup, conversion, offer, frequency-capping, a-b-testing, email-capture, coupon]
 triggers: ["exit intent popup", "exit intent", "exit intent detection", "popup with offer", "email capture popup", "frequency capping popup", "abandon intent detection"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: beginner
 ---
 
@@ -16,7 +16,7 @@ difficulty: beginner
 
 ## Overview
 
-Exit-intent popups detect when a visitor is about to leave the page — typically by tracking rapid mouse movement toward the browser's address bar or close button on desktop — and display a targeted offer to retain them. When implemented with proper targeting, frequency capping, and A/B testing, exit-intent popups recover 5–10% of otherwise lost visitors. This skill covers native browser-based exit detection, offer targeting rules, frequency capping with localStorage, and measuring impact through a holdout group.
+Exit-intent popups detect when a visitor is about to leave — by tracking rapid mouse movement toward the browser's address bar on desktop — and display a targeted offer. When implemented with proper targeting and frequency capping, they recover 5–10% of otherwise lost visitors. Dedicated popup apps handle all the detection logic, A/B testing, and ESP integration — no custom code needed.
 
 ## When to Use This Skill
 
@@ -24,308 +24,163 @@ Exit-intent popups detect when a visitor is about to leave the page — typicall
 - When capturing email addresses for the marketing list during the session
 - When offering a first-purchase discount to new visitors who haven't converted
 - When reminding checkout abandoners about items in their cart before they leave
-- When running A/B tests on popup offer types (% off vs. free shipping vs. free gift)
-- When implementing GDPR-compliant email capture with explicit consent checkbox
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, popup/overlay tool (Privy, Justuno, or custom JS), email service for list capture
+- When A/B testing popup offer types (% off vs. free shipping vs. free gift)
 
 ## Core Instructions
 
-1. **Detect exit intent with mouse movement tracking**
+### Step 1: Choose the right popup tool
 
-   ```typescript
-   interface ExitIntentOptions {
-     threshold?: number;       // px from top of viewport (default: 20)
-     delay?: number;           // ms after page load before activating (default: 3000)
-     onExitIntent: () => void;
-   }
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Klaviyo Forms (free, syncs to Klaviyo) or Privy ($30/mo) | Klaviyo Forms integrates directly with Klaviyo flows; Privy includes A/B testing, unique coupon codes, and detailed analytics |
+| **WooCommerce** | OptinMonster ($9/mo) or Popup Maker (free) | OptinMonster has exit-intent detection, A/B testing, and WooCommerce integration; Popup Maker is simpler and free |
+| **BigCommerce** | Justuno or Klaviyo Forms | Both have native BigCommerce integrations and exit-intent detection |
+| **Custom / Headless** | Klaviyo Forms (via JavaScript embed) or custom implementation | Klaviyo Forms works on any site with a JavaScript snippet |
 
-   function initExitIntent({ threshold = 20, delay = 3000, onExitIntent }: ExitIntentOptions): () => void {
-     let activated = false;
-     let timeoutId: ReturnType<typeof setTimeout>;
+### Step 2: Configure exit-intent detection and targeting
 
-     const handleMouseMove = (e: MouseEvent) => {
-       // Trigger when cursor moves above the threshold from the top
-       if (!activated && e.clientY < threshold && e.movementY < 0) {
-         activated = true;
-         onExitIntent();
-       }
-     };
+Most popup tools have exit-intent built in. The key is configuring it correctly to avoid annoying visitors.
 
-     // Delay activation so the popup doesn't fire immediately on page load
-     timeoutId = setTimeout(() => {
-       document.addEventListener('mouseleave', (e) => {
-         if (e.clientY <= 0 && !activated) {
-           activated = true;
-           onExitIntent();
-         }
-       });
-       document.addEventListener('mousemove', handleMouseMove);
-     }, delay);
+---
 
-     // Mobile: use visibility change or beforeunload
-     document.addEventListener('visibilitychange', () => {
-       if (document.visibilityState === 'hidden' && !activated) {
-         activated = true;
-         onExitIntent();
-       }
-     });
+#### Shopify with Klaviyo Forms
 
-     // Return cleanup function
-     return () => {
-       clearTimeout(timeoutId);
-       document.removeEventListener('mousemove', handleMouseMove);
-     };
-   }
-   ```
+1. In Klaviyo, go to **Sign-up Forms → Create Form**
+2. Choose **Popup** as the form type
+3. Under **Targeting**, set:
+   - **Display when**: Exit intent (mouse moves to top of browser)
+   - **Delay**: 5 seconds minimum time on page before activating
+   - **Frequency**: Show once per 14 days (Klaviyo manages this via cookie)
+4. Under **Targeting → Conditions**, add:
+   - Show only on: Homepage, product pages, collection pages
+   - Do NOT show on: /checkout, /cart, /account
+   - Do NOT show to: Existing subscribers (Klaviyo checks this automatically for identified profiles)
+5. Under **Form Content**, set your offer:
+   - For email capture: "Get 10% off your first order" + email input + GDPR consent checkbox
+   - For cart reminder: "You have items in your cart — complete your purchase" + link back to cart
+6. Under **Success Action**, create a discount code:
+   - Connect to **Shopify → Discounts** — Klaviyo can automatically create unique single-use 10% off codes
+   - These codes appear in the success message and are automatically synced to the subscriber's profile
 
-2. **Apply targeting rules before showing the popup**
+---
 
-   Not every visitor should see a popup — irrelevant popups increase bounce rate:
+#### Shopify with Privy
 
-   ```typescript
-   interface TargetingRule {
-     id: string;
-     condition: () => boolean;
-   }
+1. Install Privy from the Shopify App Store
+2. Go to **Privy → Displays → New Display → Popup**
+3. Under **When to show**, select "Exit intent"
+4. Under **Who to show it to**, configure:
+   - New visitors only (suppress for logged-in customers)
+   - Minimum 30 seconds on site
+   - Not in checkout
+   - Frequency cap: 14 days
+5. Under **Offers**, Privy automatically generates unique coupon codes synced to Shopify's discount system
+6. Connect Privy to Klaviyo or Mailchimp under **Integrations** for automatic list sync
 
-   function shouldShowPopup(popupConfig: PopupConfig): boolean {
-     const rules: TargetingRule[] = [
-       // Don't show to existing customers already logged in
-       {
-         id: 'not_logged_in',
-         condition: () => !document.cookie.includes('customer_id='),
-       },
-       // Only on specific pages
-       {
-         id: 'target_pages',
-         condition: () =>
-           popupConfig.targetPages.length === 0 ||
-           popupConfig.targetPages.some((p) => window.location.pathname.startsWith(p)),
-       },
-       // Minimum time on page (30s — engaged visitors)
-       {
-         id: 'time_on_page',
-         condition: () => (Date.now() - pageLoadTime) > 30000,
-       },
-       // Frequency cap: don't show if shown in last N days
-       {
-         id: 'frequency_cap',
-         condition: () => !hasSeenPopupRecently(popupConfig.id, popupConfig.frequencyCapDays),
-       },
-       // Don't show on checkout pages
-       {
-         id: 'exclude_checkout',
-         condition: () => !window.location.pathname.startsWith('/checkout'),
-       },
-     ];
+---
 
-     return rules.every((rule) => rule.condition());
-   }
-   ```
+#### WooCommerce with OptinMonster
 
-3. **Implement frequency capping with localStorage**
+1. Install OptinMonster plugin from the WordPress directory
+2. Create a new campaign: **Popup → Exit Intent**
+3. Under **Display Rules**, configure:
+   - **Exit Intent** trigger: sensitivity = Medium
+   - **Time on page**: minimum 30 seconds
+   - **Page targeting**: include homepage, shop, product pages; exclude checkout, cart, my-account
+   - **Frequency**: 14-day cookie suppression (OptinMonster default)
+4. Under **Integrations**, connect to Mailchimp, Klaviyo, or your email provider
+5. For unique coupon codes: use WooCommerce → Coupons to create a coupon, then display the code in the success message (OptinMonster does not auto-generate unique codes on free tiers)
 
-   ```typescript
-   function hasSeenPopupRecently(popupId: string, capDays: number): boolean {
-     const key = `popup_seen_${popupId}`;
-     const lastSeen = localStorage.getItem(key);
-     if (!lastSeen) return false;
+---
 
-     const daysSinceSeen = (Date.now() - parseInt(lastSeen, 10)) / 86400000;
-     return daysSinceSeen < capDays;
-   }
+#### BigCommerce with Justuno
 
-   function markPopupShown(popupId: string) {
-     localStorage.setItem(`popup_seen_${popupId}`, String(Date.now()));
-   }
+1. Install Justuno from the BigCommerce App Marketplace
+2. Go to **Justuno → Promotions → New Popup**
+3. Configure exit intent triggers, targeting rules, and A/B test variants through the visual builder
+4. Justuno integrates with Klaviyo and Mailchimp for list sync
 
-   function markPopupDismissed(popupId: string) {
-     // On explicit dismiss, extend the cap significantly
-     localStorage.setItem(`popup_seen_${popupId}`, String(Date.now()));
-     localStorage.setItem(`popup_dismissed_${popupId}`, 'true');
-   }
-   ```
+---
 
-4. **Build the popup component with email capture**
+#### Custom / Headless
 
-   ```tsx
-   interface ExitPopupProps {
-     offer: { type: 'percent_off' | 'free_shipping' | 'free_gift'; value: number | string };
-     onSubmit: (email: string) => Promise<void>;
-     onDismiss: () => void;
-   }
+For custom builds, Klaviyo Forms works on any website:
 
-   export function ExitIntentPopup({ offer, onSubmit, onDismiss }: ExitPopupProps) {
-     const [email, setEmail] = useState('');
-     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+1. Add the Klaviyo JavaScript snippet to your site
+2. Go to **Klaviyo → Sign-up Forms → Create Form** and configure as above
+3. Klaviyo handles exit detection, frequency capping, and list sync
 
-     const offerText =
-       offer.type === 'percent_off' ? `${offer.value}% off your first order` :
-       offer.type === 'free_shipping' ? 'Free shipping on your first order' :
-       `Free ${offer.value} with your first order`;
+If you need full control over the popup behavior (custom exit detection logic):
 
-     async function handleSubmit(e: React.FormEvent) {
-       e.preventDefault();
-       setStatus('loading');
-       try {
-         await onSubmit(email);
-         setStatus('success');
-       } catch {
-         setStatus('error');
-       }
-     }
+```javascript
+function initExitIntent({ threshold = 20, delay = 5000, onExitIntent }) {
+  let activated = false;
 
-     return (
-       <div role="dialog" aria-modal="true" aria-label="Special offer" className="exit-popup-overlay">
-         <div className="exit-popup">
-           <button onClick={onDismiss} aria-label="Close" className="exit-popup__close">×</button>
-           <h2>Wait — before you go!</h2>
-           <p className="exit-popup__offer">{offerText}</p>
-           {status === 'success' ? (
-             <p className="exit-popup__success">Check your inbox for your discount code!</p>
-           ) : (
-             <form onSubmit={handleSubmit}>
-               <input
-                 type="email"
-                 value={email}
-                 onChange={(e) => setEmail(e.target.value)}
-                 placeholder="Enter your email"
-                 required
-                 autoFocus
-               />
-               <label className="exit-popup__consent">
-                 <input type="checkbox" required />
-                 I agree to receive marketing emails. Unsubscribe anytime.
-               </label>
-               <button type="submit" disabled={status === 'loading'}>
-                 {status === 'loading' ? 'Claiming...' : 'Claim My Offer'}
-               </button>
-             </form>
-           )}
-         </div>
-       </div>
-     );
-   }
-   ```
+  setTimeout(() => {
+    document.addEventListener('mouseleave', (e) => {
+      if (e.clientY <= 0 && !activated) {
+        activated = true;
+        onExitIntent();
+      }
+    });
+  }, delay);
 
-5. **Wire up exit intent with targeting and A/B variants**
-
-   ```typescript
-   const POPUP_VARIANTS = {
-     control: null,  // holdout — no popup
-     percent_off: { type: 'percent_off' as const, value: 10 },
-     free_shipping: { type: 'free_shipping' as const, value: 0 },
-   };
-
-   function initExitIntentSystem() {
-     const popupConfig = {
-       id: 'exit-v2',
-       targetPages: ['/', '/products', '/collections'],
-       frequencyCapDays: 14,
-     };
-
-     if (!shouldShowPopup(popupConfig)) return;
-
-     // Assign variant deterministically based on session ID
-     const sessionId = getOrCreateSessionId();
-     const variantKeys = Object.keys(POPUP_VARIANTS);
-     const variantKey = variantKeys[parseInt(sessionId.slice(-2), 16) % variantKeys.length] as keyof typeof POPUP_VARIANTS;
-     const offer = POPUP_VARIANTS[variantKey];
-
-     const cleanup = initExitIntent({
-       onExitIntent: () => {
-         if (!offer) {
-           // Control group — track the exit intent but don't show popup
-           trackExitIntent({ popupId: popupConfig.id, variant: 'control', shown: false });
-           return;
-         }
-
-         markPopupShown(popupConfig.id);
-         trackExitIntent({ popupId: popupConfig.id, variant: variantKey, shown: true });
-         renderPopup(offer, popupConfig.id);
-         cleanup();
-       },
-     });
-   }
-   ```
-
-## Examples
-
-### Submit email and generate discount code server-side
-
-```typescript
-// POST /api/exit-popup/capture
-export async function captureExitPopupEmail(req: Request, res: Response) {
-  const { email, popupId, variant } = req.body;
-
-  // Subscribe to marketing list
-  await db.marketingSubscribers.upsert(
-    { email },
-    { email, source: 'exit_popup', popupId, variant, subscribedAt: new Date() }
-  );
-
-  // Generate a unique one-time promo code
-  const code = await createOneTimePromoCode({
-    type: 'percent_off',
-    value: 10,
-    email,
-    expiresInDays: 7,
-    source: `exit_popup_${popupId}`,
+  // Mobile: use visibilitychange instead of mouseleave
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && !activated) {
+      activated = true;
+      onExitIntent();
+    }
   });
+}
 
-  // Send welcome email with the code
-  await sendTransactionalEmail(email, 'exit-popup-offer', { code, expiresInDays: 7 });
-
-  await db.exitPopupConversions.create({ email, popupId, variant, convertedAt: new Date() });
-
-  res.json({ code });
+// Check frequency cap using localStorage
+function shouldShowPopup(popupId, capDays = 14) {
+  const lastSeen = localStorage.getItem(`popup_seen_${popupId}`);
+  if (!lastSeen) return true;
+  return (Date.now() - parseInt(lastSeen)) > capDays * 86400000;
 }
 ```
 
-### Measure popup impact with holdout comparison
+### Step 3: Configure the offer and A/B test
 
-```sql
--- Compare conversion rate between popup-shown and holdout sessions
-SELECT
-  variant,
-  COUNT(DISTINCT session_id) AS sessions,
-  COUNT(DISTINCT CASE WHEN converted_to_order THEN session_id END) AS orders,
-  ROUND(100.0 * COUNT(DISTINCT CASE WHEN converted_to_order THEN session_id END) /
-        NULLIF(COUNT(DISTINCT session_id), 0), 2) AS cvr_pct,
-  COUNT(DISTINCT CASE WHEN email_captured THEN session_id END) AS email_captures
-FROM exit_intent_events
-WHERE shown_at >= NOW() - INTERVAL '30 days'
-GROUP BY variant;
-```
+The most impactful thing to test is the offer type. Run one A/B test at a time:
+
+| Offer Type | Best For | Typical Email Capture Rate |
+|-----------|---------|--------------------------|
+| 10% off first order | General merchandise | 3–8% of popup views |
+| Free shipping | High-AOV stores (shipping is expensive) | 4–9% of popup views |
+| Free gift with purchase | Beauty, supplements | 5–10% of popup views |
+| Content offer ("Download our guide") | B2C brands with content | 2–5% |
+
+**In Klaviyo/Privy**: create two variants of your form with different offers, split traffic 50/50, and measure conversion rate over 2 weeks before picking a winner.
+
+### Step 4: Generate unique discount codes (not generic codes)
+
+Generic codes like WELCOME10 get shared on coupon sites and inflate your attribution:
+
+- **Shopify + Klaviyo**: Klaviyo automatically generates unique single-use Shopify discount codes — enable this in the form's success action settings
+- **Shopify + Privy**: Privy connects to Shopify's discount system and generates unique codes automatically
+- **WooCommerce**: Use the WooCommerce Unique Coupon Generator plugin, or create a general code with per-customer usage limit
 
 ## Best Practices
 
-- **Always include a control/holdout group** (20–30%) so you can prove the popup is adding value rather than just capturing intent that would have converted anyway
-- **Delay activation by at least 3 seconds** — popups that fire immediately as the page loads train visitors to close them without reading
-- **Cap at 14–30 days** — showing the same popup to a returning visitor every session creates annoyance; use localStorage to suppress for at least 2 weeks
-- **Test one variable at a time** — rotate offer type (% off vs. free shipping), not headline + offer + design simultaneously
-- **Include a clear close button** with `aria-label` — accessibility and UX both require an obvious escape; friction-heavy popups increase bounce rate
-- **Never pre-check the email consent box** — GDPR requires explicit opt-in; pre-checked boxes are not valid consent in the EU
-- **Generate unique one-time codes** for popup offers — generic codes (WELCOME10) get shared on coupon sites, inflating attribution
-- **Exclude already-subscribed visitors** — checking for a `subscriber_id` cookie or localStorage flag prevents showing the popup to customers who are already on your list
+- **Always include a control/holdout group** (20–30%) — without a holdout, you cannot tell if the popup is adding value or just capturing conversions that would have happened anyway (most popup apps support this)
+- **Delay activation by at least 5 seconds** — popups that fire immediately train visitors to close them without reading
+- **Frequency cap at 14 days minimum** — all major popup apps handle this via cookie automatically; verify it is enabled
+- **Never pre-check the email consent checkbox** — GDPR requires explicit opt-in; pre-checked boxes are not valid consent in the EU
+- **Generate unique one-time codes** — generic codes (WELCOME10) get shared on coupon sites
+- **Exclude already-subscribed visitors** — Klaviyo checks this automatically; for other tools, suppress via cookie
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Popup fires immediately on page load | Set a minimum time-on-page delay of 3–5 seconds; also check minimum scroll depth (20%) |
-| Popup shown to the same user on every visit | Implement 14-day frequency capping with localStorage; also suppress for known customers |
-| Exit intent fires on mobile | Mobile has no mouse events — use `visibilitychange` API or a scroll-up detection instead of `mouseleave` |
-| Popup blocks content on mobile causing CLS issues | Lazy-load the popup component; only mount it in the DOM when exit intent is detected |
-| No way to measure whether the popup helps conversion | Always run with a holdout group and compare CVR using the exit-intent event log |
+| Popup fires immediately on page load | Set minimum 5-second delay AND minimum scroll depth (20%) in targeting settings |
+| Popup shown to same user on every visit | Verify frequency capping is enabled in your popup app (Klaviyo: 14 days; Privy: configurable; OptinMonster: configurable) |
+| Exit intent fires on mobile | Switch to scroll-based or time-based triggers for mobile; most tools do this automatically when exit-intent is selected |
+| No way to measure whether the popup helps conversion | Enable A/B testing with a control group in your popup app; most support this natively |
+| High popup-driven unsubscribe rate | The offer is not compelling enough; test free shipping vs. % off; also check that emails are sending too frequently after signup |
 
 ## Related Skills
 
@@ -333,4 +188,4 @@ GROUP BY variant;
 - @email-marketing-automation
 - @conversion-rate-optimization
 - @push-notifications
-- @ab-testing-ecommerce
+- @first-party-data-collection

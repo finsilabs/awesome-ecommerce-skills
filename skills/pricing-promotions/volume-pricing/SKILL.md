@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [volume-pricing, quantity-breaks, tiered-pricing, b2b, price-lists, bulk-discount]
 triggers: ["volume pricing", "quantity discounts", "bulk pricing", "tiered pricing", "price breaks", "B2B price list"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Implement quantity-based price breaks that automatically reduce the unit price as order quantities increase, with support for product-level tiers, category-level tiers, and customer-group-specific price lists. The system handles mixed-cart scenarios where items from multiple products contribute to tier qualification.
+Volume pricing — also called quantity breaks or tiered pricing — automatically reduces the unit price as order quantities increase. It is a core feature for B2B and wholesale channels, and an effective average-order-value driver for consumer stores ("Add 3 more for 10% off"). Most platforms do not include volume pricing natively; you need an app or plugin. This skill walks through setup on each platform and covers custom implementation for headless storefronts.
 
 ## When to Use This Skill
 
@@ -26,224 +26,203 @@ Implement quantity-based price breaks that automatically reduce the unit price a
 - When managing multiple customer groups (retail, wholesale, distributor) with distinct price lists
 - When building a configure-price-quote (CPQ) flow for custom bulk orders
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify's built-in discount system, Shopify Functions for custom discount logic, or apps like Bold Discounts. Price rules can be managed via the Admin API.
-**WooCommerce**: WooCommerce has built-in coupons and pricing rules. Extend with plugins (Dynamic Pricing, WooCommerce Subscriptions) or custom code via woocommerce_get_price filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with pricing control, Shopify Functions or WooCommerce hooks for custom logic
-
 ## Core Instructions
 
-1. **Design the volume pricing schema**
+### Step 1: Determine the merchant's platform and choose the right tool
 
-   ```sql
-   -- Product-level price tiers
-   CREATE TABLE price_tiers (
-     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     product_id   UUID REFERENCES products(id),       -- NULL = applies to all products
-     category_id  UUID REFERENCES categories(id),     -- NULL = not category-scoped
-     customer_group VARCHAR(32),                       -- NULL = all customers; e.g. 'wholesale'
-     min_quantity INTEGER NOT NULL,
-     max_quantity INTEGER,                             -- NULL = unlimited
-     price_type   VARCHAR(16) NOT NULL CHECK (price_type IN ('fixed', 'percentage_off')),
-     price_value  NUMERIC(10,2) NOT NULL,              -- cents if fixed; percentage if percentage_off
-     priority     INTEGER NOT NULL DEFAULT 0,          -- higher = evaluated first
-     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Wholesale Club or Quantity Breaks & Discounts by FORSBERG | Wholesale Club adds a full B2B channel with customer-group pricing; Quantity Breaks handles tiered pricing for B2C with a pricing table on product pages |
+| **Shopify Plus** | Shopify B2B (built in) | Shopify Plus includes native B2B features including company accounts, price lists, and quantity minimums |
+| **WooCommerce** | WooCommerce Dynamic Pricing extension (~$99/year) or YITH WooCommerce Dynamic Pricing & Discounts (~$70/year) | Both plugins support quantity-based tiers, customer-role-specific pricing, and product-page pricing tables |
+| **BigCommerce** | Price Lists (native, Plus plan and above) | BigCommerce's Price Lists feature is designed for B2B volume pricing — assign price lists to customer groups |
+| **Custom / Headless** | Build tier resolution logic calling your platform's pricing API | Full control over tier definitions and cart recalculation |
 
-   CREATE INDEX idx_price_tiers_lookup ON price_tiers(product_id, customer_group, min_quantity);
+### Step 2: Set up volume pricing on your platform
 
-   -- Named price lists for B2B accounts
-   CREATE TABLE price_lists (
-     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name         VARCHAR(128) NOT NULL,
-     customer_group VARCHAR(32) NOT NULL,
-     currency     VARCHAR(3) NOT NULL DEFAULT 'USD',
-     starts_at    TIMESTAMPTZ,
-     ends_at      TIMESTAMPTZ,
-     is_active    BOOLEAN NOT NULL DEFAULT true
-   );
+---
 
-   CREATE TABLE price_list_items (
-     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     price_list_id UUID NOT NULL REFERENCES price_lists(id),
-     product_id   UUID NOT NULL REFERENCES products(id),
-     price        INTEGER NOT NULL,    -- cents; overrides all tier logic for this product+list
-     min_quantity INTEGER NOT NULL DEFAULT 1
-   );
-   ```
+#### Shopify (non-Plus)
 
-2. **Resolve the unit price for a given product + quantity + customer group**
+**Option A: Quantity Breaks & Discounts app (B2C-focused)**
 
-   ```typescript
-   async function resolveUnitPrice(
-     productId: string,
-     quantity: number,
-     customerGroup: string | null,
-     basePrice: number  // cents
-   ): Promise<{ unitPrice: number; tierApplied: string | null }> {
-     // 1. Check price list (B2B override — highest priority)
-     if (customerGroup) {
-       const priceListItem = await db.priceListItems
-         .findActive({ product_id: productId, customer_group: customerGroup, min_quantity: { lte: quantity } })
-         .orderBy('min_quantity', 'desc')
-         .first();
+1. Install **Quantity Breaks & Discounts** (by FORSBERG+two) from the Shopify App Store (free tier; paid plans ~$10/month)
+2. In the app, go to **Discount Groups → Create**
+3. Choose which products or collections to apply the tiers to
+4. Add quantity tiers:
+   - Tier 1: Quantity 1+, 0% off (regular price)
+   - Tier 2: Quantity 5+, 10% off
+   - Tier 3: Quantity 10+, 20% off
+   - Tier 4: Quantity 25+, 30% off
+5. The app automatically shows a pricing table on product pages and applies the correct discount when the customer updates their cart quantity
 
-       if (priceListItem) {
-         return { unitPrice: priceListItem.price, tierApplied: 'price_list' };
-       }
-     }
+**Option B: Wholesale Club (B2B-focused)**
 
-     // 2. Find the best matching volume tier
-     const tiers = await db.priceTiers.findApplicable(productId, customerGroup);
-     const applicableTiers = tiers
-       .filter(t => quantity >= t.min_quantity && (t.max_quantity === null || quantity <= t.max_quantity))
-       .sort((a, b) => b.priority - a.priority); // highest priority first
+1. Install **Wholesale Club** from the Shopify App Store (~$30/month)
+2. Create a wholesale customer group (the app creates a tag-based system)
+3. Set wholesale prices: fixed prices or percentage discounts per product or collection
+4. Tag wholesale customers with the wholesale tag to give them access
+5. Wholesale customers see the tiered prices on product pages and at checkout
 
-     const tier = applicableTiers[0];
-     if (!tier) return { unitPrice: basePrice, tierApplied: null };
+---
 
-     const unitPrice = tier.price_type === 'fixed'
-       ? tier.price_value
-       : Math.round(basePrice * (1 - tier.price_value / 100));
+#### Shopify Plus — Native B2B
 
-     return { unitPrice, tierApplied: tier.id };
-   }
-   ```
+Shopify Plus includes a native **B2B channel** that replaces the need for a wholesale app:
 
-3. **Calculate line-item totals for a cart with volume pricing**
+1. Go to **Sales channels → B2B**
+2. Create a **Company** for each B2B client
+3. Under the company, create a **Location** and assign a **Price list**
+4. In the price list, set prices per product (fixed prices or percentage adjustments)
+5. Set **Payment terms** (net 30, net 60, etc.) and **Order minimums**
+6. Company contacts log in through your store's B2B portal and see their assigned prices automatically
 
-   ```typescript
-   interface CartLine {
-     productId: string;
-     quantity: number;
-     basePrice: number;
-   }
+---
 
-   async function calculateCartWithVolumePricing(
-     lines: CartLine[],
-     customerGroup: string | null
-   ): Promise<{
-     lines: (CartLine & { unitPrice: number; lineTotal: number; savings: number })[];
-     subtotal: number;
-     totalSavings: number;
-   }> {
-     const resolvedLines = await Promise.all(
-       lines.map(async line => {
-         const { unitPrice } = await resolveUnitPrice(
-           line.productId, line.quantity, customerGroup, line.basePrice
-         );
-         const lineTotal = unitPrice * line.quantity;
-         const savings = (line.basePrice - unitPrice) * line.quantity;
-         return { ...line, unitPrice, lineTotal, savings };
-       })
-     );
+#### WooCommerce
 
-     const subtotal = resolvedLines.reduce((sum, l) => sum + l.lineTotal, 0);
-     const totalSavings = resolvedLines.reduce((sum, l) => sum + l.savings, 0);
+**Using WooCommerce Dynamic Pricing:**
 
-     return { lines: resolvedLines, subtotal, totalSavings };
-   }
-   ```
+1. Install **WooCommerce Dynamic Pricing** from WooCommerce.com or **YITH WooCommerce Dynamic Pricing & Discounts**
+2. Go to **WooCommerce → Dynamic Pricing → Add Rule**
+3. Set:
+   - **Rule type**: Product Pricing or Category Pricing
+   - **Apply to**: specific products, categories, or all products
+   - **Pricing type**: percentage discount or fixed price override
+4. Add quantity tiers:
+   | Minimum Qty | Maximum Qty | Discount |
+   |------------|------------|---------|
+   | 1 | 4 | 0% |
+   | 5 | 9 | 10% |
+   | 10 | 24 | 20% |
+   | 25 | — | 30% |
+5. Optionally restrict by **User role** for B2B/wholesale-only tiers
+6. The plugin automatically recalculates prices when cart quantities change
 
-4. **Display a pricing table on the product page**
+**Displaying a pricing table on product pages:**
+Both Dynamic Pricing plugins include a pricing table widget that shows quantity break tiers directly on the product page. Configure its appearance in the plugin settings.
 
-   ```typescript
-   async function getPricingTable(
-     productId: string,
-     customerGroup: string | null,
-     basePrice: number
-   ): Promise<{ quantity: string; unitPrice: number; savingsPct: number }[]> {
-     const breakpoints = [1, 5, 10, 25, 50, 100, 250];
-     const table = await Promise.all(
-       breakpoints.map(async qty => {
-         const { unitPrice } = await resolveUnitPrice(productId, qty, customerGroup, basePrice);
-         const savingsPct = Math.round((1 - unitPrice / basePrice) * 100);
-         return { quantity: qty === 250 ? '250+' : `${qty}`, unitPrice, savingsPct };
-       })
-     );
+---
 
-     // Only show rows where the price actually changes
-     return table.filter((row, i) => i === 0 || row.unitPrice !== table[i - 1].unitPrice);
-   }
-   ```
+#### BigCommerce
 
-5. **Seed a wholesale price list**
+BigCommerce's **Price Lists** feature handles volume pricing natively on Plus and above plans.
 
-   ```typescript
-   async function createWholesalePriceList(productPrices: Record<string, number>): Promise<void> {
-     const priceList = await db.priceLists.insert({
-       name: 'Wholesale 2026',
-       customer_group: 'wholesale',
-       currency: 'USD',
-       is_active: true,
-     });
+**Setting up a price list with quantity tiers:**
+1. Go to **Products → Price Lists → Create Price List**
+2. Name the list (e.g., "Wholesale 2026") and assign it to a **Customer Group**
+3. Add products and set prices:
+   - For each product, you can set a base price override
+   - For quantity breaks, use the **Bulk Pricing** section on each product
+4. Go to a product → **Pricing** tab → **Bulk Pricing**:
+   - Add tiers: e.g., 5+ units = $X per unit, 10+ units = $Y per unit
+   - Set whether the bulk price applies to all customers or a specific price list
+5. Assign the price list to a customer group under **Customers → Customer Groups**
 
-     const items = Object.entries(productPrices).map(([productId, price]) => ({
-       price_list_id: priceList.id,
-       product_id: productId,
-       price,           // cents
-       min_quantity: 1,
-     }));
+---
 
-     await db.priceListItems.insertMany(items);
-   }
-   ```
+#### Custom / Headless
 
-## Examples
-
-### Define quantity break tiers for a single product
+For headless storefronts, implement tier resolution in your pricing service:
 
 ```typescript
-// Product retails at $29.99 ($2999 cents)
-// Buy 5+: 10% off → $26.99
-// Buy 10+: 20% off → $23.99
-// Buy 25+: 30% off → $20.99
+interface PriceTier {
+  minQuantity: number;
+  maxQuantity?: number;       // undefined = no upper limit
+  type: 'fixed' | 'percentage_off';
+  value: number;              // cents if fixed; percentage (0-100) if percentage_off
+  customerGroup?: string;     // null = all customers
+}
 
-await db.priceTiers.insertMany([
-  { product_id: 'prod_shirt', customer_group: null, min_quantity: 5,  price_type: 'percentage_off', price_value: 10, priority: 1 },
-  { product_id: 'prod_shirt', customer_group: null, min_quantity: 10, price_type: 'percentage_off', price_value: 20, priority: 2 },
-  { product_id: 'prod_shirt', customer_group: null, min_quantity: 25, price_type: 'percentage_off', price_value: 30, priority: 3 },
-]);
+async function resolveUnitPrice(
+  productId: string,
+  quantity: number,
+  customerGroup: string | null,
+  basePrice: number   // cents
+): Promise<{ unitPriceCents: number; savingsPct: number }> {
+  // 1. Check for customer-group-specific price list (highest priority)
+  if (customerGroup) {
+    const priceListItem = await db.priceLists
+      .findActive({ product_id: productId, customer_group: customerGroup, min_quantity: { lte: quantity } })
+      .orderBy('min_quantity', 'desc')
+      .first();
+    if (priceListItem) {
+      const savingsPct = Math.round((1 - priceListItem.price / basePrice) * 100);
+      return { unitPriceCents: priceListItem.price, savingsPct };
+    }
+  }
+
+  // 2. Find the best matching general volume tier
+  const tiers = await db.priceTiers.find({
+    product_id: productId,
+    customer_group: customerGroup ?? null,
+  });
+
+  const applicable = tiers.filter(t =>
+    quantity >= t.minQuantity && (t.maxQuantity === undefined || quantity <= t.maxQuantity)
+  ).sort((a, b) => b.minQuantity - a.minQuantity); // highest-qualifying tier first
+
+  const tier = applicable[0];
+  if (!tier) return { unitPriceCents: basePrice, savingsPct: 0 };
+
+  const unitPriceCents = tier.type === 'fixed'
+    ? tier.value
+    : Math.round(basePrice * (1 - tier.value / 100));
+  const savingsPct = Math.round((1 - unitPriceCents / basePrice) * 100);
+
+  return { unitPriceCents, savingsPct };
+}
 ```
 
-### Pricing table rendered in HTML
+**Recalculate on every cart quantity change:**
 
-```html
-<table class="pricing-table">
-  <thead>
-    <tr><th>Quantity</th><th>Unit Price</th><th>You Save</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>1–4</td>    <td>$29.99</td><td>—</td></tr>
-    <tr><td>5–9</td>    <td>$26.99</td><td>10%</td></tr>
-    <tr><td>10–24</td>  <td>$23.99</td><td>20%</td></tr>
-    <tr><td>25+</td>    <td>$20.99</td><td>30%</td></tr>
-  </tbody>
-</table>
+```typescript
+async function updateCartLinePricing(cartId: string, lineId: string, newQuantity: number) {
+  const line = await db.cartLines.findById(lineId);
+  const { unitPriceCents } = await resolveUnitPrice(
+    line.productId, newQuantity, line.customerGroup, line.basePriceCents
+  );
+  await db.cartLines.update(lineId, {
+    quantity: newQuantity,
+    unitPriceCents,
+    lineTotalCents: unitPriceCents * newQuantity,
+  });
+}
+```
+
+**Show a pricing table on product pages:**
+
+Query the tier breakpoints and display the table:
+```typescript
+async function getPricingTable(productId: string, customerGroup: string | null, basePrice: number) {
+  const breakpoints = [1, 5, 10, 25, 50, 100];
+  const rows = await Promise.all(breakpoints.map(async qty => {
+    const { unitPriceCents, savingsPct } = await resolveUnitPrice(productId, qty, customerGroup, basePrice);
+    return { quantity: qty, unitPriceCents, savingsPct };
+  }));
+  // Only show rows where the price actually changes
+  return rows.filter((row, i) => i === 0 || row.unitPriceCents !== rows[i - 1].unitPriceCents);
+}
 ```
 
 ## Best Practices
 
-- **Show the pricing table on the product page** — displaying upcoming tiers ("Add 3 more to get 10% off") is a proven AOV driver
-- **Apply tiers to the cart, not just the product page** — recalculate prices when the cart quantity changes so the customer always sees the current unit price
-- **Use a priority column for overlapping tiers** — when multiple tiers could apply, always pick the highest-priority one to ensure predictable behavior
-- **Keep price lists separate from tier logic** — price lists (B2B overrides) should take precedence over tier discounts; resolving them in a clear priority order prevents surprises
-- **Invalidate pricing cache when tiers change** — if you cache resolved prices in Redis, tag cache keys with the tier version and bust the cache on any tier update
+- **Show the pricing table on the product page** — displaying upcoming tiers ("Add 3 more to get 10% off") is a proven AOV driver; do not hide this information
+- **Recalculate prices when cart quantity changes** — ensure the unit price updates live in the cart, not just at checkout
+- **Keep price lists separate from tier logic** — B2B price list overrides should take precedence over volume tier discounts; resolve them in a clear priority order
+- **Set minimum order quantities for wholesale tiers** — if a wholesale price list requires a minimum order, enforce this at checkout, not just in the UI
+- **Validate minimum quantities on checkout** — some B2B configurations require minimum quantities; enforce server-side to prevent orders that bypass the UI
 - **Display savings prominently** — "You're saving $18.00 (30%)" is more compelling than showing only the discounted price
-- **Validate minimum order quantities on checkout** — some wholesale price lists require a minimum quantity; enforce this server-side, not just in the UI
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Cart quantity changes but price doesn't update | Recalculate all line item prices on every `PATCH /cart/lines/:id` call, not just at checkout |
+| Cart quantity changes but price doesn't update | Recalculate all line item prices on every cart quantity change in real-time, not just at checkout |
+| B2B buyer sees retail prices in order confirmation email | Pass `customerGroup` to all price resolution calls, including order confirmation email rendering |
 | A customer in two groups gets inconsistent prices | Resolve by explicit priority: price list > product tier > category tier > base price |
-| Tiered prices displayed on product pages are stale after a tier update | Store tier hash in the cache key; invalidate on any tier write |
-| B2B buyer sees retail prices in email receipts | Pass `customerGroup` to all price resolution calls, including the order confirmation email renderer |
+| Pricing table shows stale tiers after an update | Clear your pricing cache when tiers are modified; invalidate by product or tier version |
+| Tiered prices not shown on search results pages | Product cards on search/collection pages should also resolve prices server-side for logged-in B2B customers |
 
 ## Related Skills
 

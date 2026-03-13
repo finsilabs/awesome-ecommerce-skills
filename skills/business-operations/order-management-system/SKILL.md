@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [OMS, order-management, split-orders, backorders, distributed-fulfillment, fulfillment-routing]
 triggers: ["order management system", "OMS", "split orders", "backorder handling", "fulfillment routing", "distributed fulfillment", "order routing"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,308 +16,234 @@ difficulty: advanced
 
 ## Overview
 
-Design and implement a robust Order Management System (OMS) that handles the full order lifecycle from placement to delivery. Covers distributed fulfillment routing (route to the nearest warehouse or dropship supplier), automatic order splitting when items ship from multiple locations, backorder management for out-of-stock items, and the state machine that governs order status transitions.
+An Order Management System (OMS) handles the full order lifecycle from placement to delivery: routing orders to the right fulfillment source (own warehouse, 3PL, or dropship supplier), splitting orders when items must ship from multiple locations, handling backorders, and maintaining a complete audit trail. For most merchants, platform-native features plus a shipping app cover 80–90% of OMS needs. A custom OMS is warranted when you have multiple fulfillment locations, complex routing rules, or are building a platform for other brands.
 
 ## When to Use This Skill
 
-- When your order volume has outgrown a single-warehouse pick-pack-ship workflow and you need multi-location routing
+- When your order volume has outgrown a single-warehouse workflow and you need multi-location routing
 - When orders that mix in-stock and out-of-stock items need to ship in separate shipments without blocking fulfillment
 - When integrating multiple fulfillment sources (own warehouse, 3PLs, dropship suppliers) into a unified routing engine
 - When building the core order processing pipeline for a new platform that will support high order volume
 - When you need a complete audit trail of every order state change for customer service and finance
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
-**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
-
 ## Core Instructions
 
-1. **Order lifecycle state machine**
+### Step 1: Determine your platform and choose the right OMS approach
 
-   ```typescript
-   type OrderStatus =
-     | 'pending'             // payment not yet confirmed
-     | 'payment_processing'  // payment in flight
-     | 'paid'                // payment confirmed
-     | 'awaiting_fulfillment'
-     | 'partially_fulfilled' // some shipments sent, others pending
-     | 'fulfilled'           // all shipments sent
-     | 'partially_delivered'
-     | 'delivered'
-     | 'cancelled'
-     | 'refunded'
-     | 'partially_refunded';
+| Scenario | Recommended Approach | Why |
+|----------|---------------------|-----|
+| **Single warehouse, Shopify** | Shopify + ShipStation | ShipStation handles order management, label creation, and tracking natively |
+| **Multi-location, Shopify** | Shopify Locations + ShipStation or Shopify Fulfillment Network | Shopify supports up to 10 locations; ShipStation routes to the right location based on rules |
+| **3PL integration** | ShipBob, Whiplash, or Flexport + your platform's app | Each 3PL has native apps for Shopify, WooCommerce, and BigCommerce |
+| **Complex routing + backorders** | Skubana (Extensiv), Linnworks, or ShipHero | These purpose-built OMS tools handle multi-warehouse routing, backorder queues, and split shipments |
+| **Custom / Headless** | Build an OMS state machine + integrate Shippo/EasyPost for labels | Full control over routing rules, state transitions, and audit trail |
 
-   const VALID_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
-     pending:               ['payment_processing', 'cancelled'],
-     payment_processing:    ['paid', 'cancelled'],
-     paid:                  ['awaiting_fulfillment', 'cancelled'],
-     awaiting_fulfillment:  ['partially_fulfilled', 'fulfilled', 'cancelled'],
-     partially_fulfilled:   ['fulfilled', 'partially_refunded'],
-     fulfilled:             ['partially_delivered', 'delivered', 'partially_refunded', 'refunded'],
-     partially_delivered:   ['delivered', 'partially_refunded'],
-     delivered:             ['partially_refunded', 'refunded'],
-   };
+### Step 2: Set up multi-location order routing
 
-   async function transitionOrder(
-     orderId: string,
-     newStatus: OrderStatus,
-     actorId: string,
-     note?: string
-   ): Promise<void> {
-     const order = await db.orders.findById(orderId);
-     const allowed = VALID_TRANSITIONS[order.status] ?? [];
+#### Shopify
 
-     if (!allowed.includes(newStatus)) {
-       throw new Error(`Invalid order transition: ${order.status} → ${newStatus}`);
-     }
+**Shopify Locations (up to 10 locations on standard plans):**
+1. Go to **Settings → Locations → Add location** for each warehouse or fulfillment center
+2. In **Settings → Shipping and delivery → Fulfill orders from**, set your fulfillment priority:
+   - Shopify will automatically route orders to the location closest to the customer with available stock
+3. For each product variant, set which locations stock that item: go to Products → [Product] → Inventory → Check each location's stock level
+4. When an order is placed, Shopify selects the optimal fulfillment location automatically based on your priority rules
 
-     await db.transaction(async tx => {
-       await tx.orders.update(orderId, { status: newStatus, updated_at: new Date() });
-       await tx.orderEvents.insert({
-         order_id: orderId,
-         from_status: order.status,
-         to_status: newStatus,
-         actor_id: actorId,
-         note: note ?? null,
-         occurred_at: new Date(),
-       });
-     });
-   }
-   ```
+**For 3PL integration:**
+- Install the 3PL's native Shopify app (ShipBob, Whiplash, Flexport all have Shopify apps)
+- Configure which products are fulfilled by the 3PL vs. your own warehouse in the app settings
+- The 3PL app creates an additional "location" in Shopify and receives order notifications automatically
 
-2. **Route order to the optimal fulfillment source**
+**For split shipments:**
+- Shopify automatically creates separate fulfillments when an order ships from multiple locations
+- Each fulfillment gets its own tracking number and triggers its own shipping notification to the customer
 
-   ```typescript
-   interface FulfillmentSource {
-     type: 'warehouse' | 'dropship';
-     id: string;
-     name: string;
-     location?: { lat: number; lng: number };
-   }
+#### WooCommerce
 
-   async function routeOrderLine(
-     productId: string,
-     quantity: number,
-     destinationZip: string
-   ): Promise<FulfillmentSource | null> {
-     // 1. Try own warehouses first (cheapest to fulfill)
-     const warehouses = await db.warehouseInventory.findAvailable(productId, quantity);
-     if (warehouses.length > 0) {
-       // Pick the warehouse closest to the destination
-       const sorted = await sortByDistanceToZip(warehouses, destinationZip);
-       return { type: 'warehouse', id: sorted[0].warehouse_id, name: sorted[0].name };
-     }
+**Using ATUM Inventory Management:**
+1. Install **ATUM Inventory Management** (free/premium, WordPress.org)
+2. ATUM adds multi-location inventory tracking to WooCommerce
+3. Configure fulfillment priority in ATUM → Settings → Multi-inventory
+4. Orders are routed to the location with available stock based on your priority rules
 
-     // 2. Fall back to dropship supplier
-     const supplierProduct = await db.supplierProducts.findOne({
-       product_id: productId,
-       stock_qty: { gte: quantity },
-       is_active: true,
-     }, { orderBy: ['cost_price', 'asc'] });
+**For 3PL integration:**
+- ShipBob has a WooCommerce plugin; install it and configure which products ship from ShipBob
+- ShipStation's WooCommerce plugin connects to multiple carriers and warehouses; configure routing rules in ShipStation → Automation → Rules
 
-     if (supplierProduct) {
-       const supplier = await db.suppliers.findById(supplierProduct.supplier_id);
-       return { type: 'dropship', id: supplier.id, name: supplier.name };
-     }
+#### BigCommerce
 
-     return null; // no source available — will become a backorder
-   }
-   ```
+1. Go to **Inventory → Locations** to add multiple fulfillment locations (available on Plus and above)
+2. Set inventory levels per location for each product
+3. BigCommerce routes orders to the location with stock closest to the customer based on your settings
+4. For 3PL integration: ShipBob, Whiplash, and ShipStation all have native BigCommerce integrations via the App Marketplace
 
-3. **Split an order into shipment groups**
+### Step 3: Handle backorders
 
-   ```typescript
-   interface ShipmentGroup {
-     source: FulfillmentSource;
-     lines: { orderLineId: string; productId: string; quantity: number }[];
-   }
+A backorder occurs when an order is placed for an item that is out of stock. The customer still wants the item; you need to fulfill it when stock arrives.
 
-   async function planFulfillment(orderId: string): Promise<ShipmentGroup[]> {
-     const order = await db.orders.findById(orderId);
-     const lines = await db.orderLines.findByOrderId(orderId);
-     const groups = new Map<string, ShipmentGroup>();
-     const backorderedLines: typeof lines = [];
+#### Shopify
 
-     for (const line of lines) {
-       const source = await routeOrderLine(line.product_id, line.quantity, order.shipping_address.zip);
+**Enable backorders:**
+1. Go to **Products → [Product] → Variants → [Variant]**
+2. Set inventory tracking: check "Continue selling when out of stock" — this allows orders to come in even when stock = 0
+3. Be transparent: show a "Ships in 2–3 weeks" message on the product page when stock is 0
 
-       if (!source) {
-         backorderedLines.push(line);
-         continue;
-       }
+**Communicate backorders:**
+- When a product is backordered, Shopify's standard order confirmation doesn't flag this automatically
+- Use **Klaviyo** or **Shopify Email** to create a trigger: when order has a line item with quantity > available stock → send a "Backordered" email with the estimated restock date
 
-       const key = `${source.type}:${source.id}`;
-       if (!groups.has(key)) groups.set(key, { source, lines: [] });
-       groups.get(key)!.lines.push({
-         orderLineId: line.id,
-         productId: line.product_id,
-         quantity: line.quantity,
-       });
-     }
+**Fulfilling backordered orders:**
+- When stock arrives (you receive a shipment): manually fulfill the backordered orders in Shopify → Orders → filter by "Unfulfilled" and sort by order date
+- For automatic backorder fulfillment: use **Shopify Flow** (Plus) or a webhook to trigger fulfillment when inventory is replenished
 
-     if (backorderedLines.length > 0) {
-       await handleBackorders(orderId, backorderedLines);
-     }
+#### WooCommerce
 
-     return Array.from(groups.values());
-   }
+1. Go to **WooCommerce → Settings → Products → Inventory**
+2. Enable "Allow backorders" at the global level, or set per product: Products → [Product] → Inventory → Allow Backorders
+3. Options: "Do not allow", "Allow but notify customer", "Allow without notification"
+4. Recommend: "Allow but notify customer" — WooCommerce adds a "On backorder" badge and notifies the customer at checkout
+5. Backordered orders appear in WooCommerce → Orders with status "On Hold" or "Processing" depending on your payment flow
 
-   async function createFulfillmentsFromPlan(orderId: string, plan: ShipmentGroup[]): Promise<void> {
-     await db.transaction(async tx => {
-       for (const group of plan) {
-         const fulfillment = await tx.fulfillments.insert({
-           order_id: orderId,
-           fulfillment_source_type: group.source.type,
-           fulfillment_source_id: group.source.id,
-           status: 'awaiting_fulfillment',
-         });
+#### BigCommerce
 
-         await tx.fulfillmentLines.insertMany(
-           group.lines.map(l => ({ fulfillment_id: fulfillment.id, ...l }))
-         );
-       }
+1. Go to **Products → [Product] → Inventory**
+2. Enable "Allow Purchasing Out of Stock" — BigCommerce shows the product as "Available for Pre-Order" automatically when stock = 0
+3. Set "Back Ordering" message text in Store Setup → Store Settings → Product Settings
 
-       const newStatus = plan.length > 1 ? 'partially_allocated' : 'awaiting_fulfillment';
-       await tx.orders.update(orderId, { status: newStatus });
-     });
-   }
-   ```
+### Step 4: Maintain an order audit trail
 
-4. **Manage backorders**
+Every order status change should be logged with who made the change and when. This is essential for customer service and fraud investigation.
 
-   ```typescript
-   async function handleBackorders(
-     orderId: string,
-     backorderedLines: OrderLine[]
-   ): Promise<void> {
-     for (const line of backorderedLines) {
-       const product = await db.products.findById(line.product_id);
-       const estimatedRestockDate = product.next_restock_date;
+#### Shopify
 
-       await db.backorders.insert({
-         order_id: orderId,
-         order_line_id: line.id,
-         product_id: line.product_id,
-         quantity: line.quantity,
-         estimated_restock_date: estimatedRestockDate,
-         status: 'pending',
-       });
+- Shopify automatically logs all order status changes in **Orders → [Order] → Timeline**
+- The Timeline shows every event: payment confirmed, fulfillment created, shipping label purchased, tracking updated, etc.
+- Add manual notes to the Timeline (visible to staff only) for any manual actions taken
 
-       await db.orderLines.update(line.id, { fulfillment_status: 'backordered' });
-     }
+#### WooCommerce
 
-     // Notify customer
-     const order = await db.orders.findById(orderId);
-     await emailService.send({
-       to: order.customer_email,
-       template: 'backorder-notification',
-       data: {
-         orderNumber: order.order_number,
-         backordered: backorderedLines.map(l => ({
-           name: l.product_name,
-           qty: l.quantity,
-           estimatedDate: l.estimated_restock_date,
-         })),
-       },
-     });
-   }
+- WooCommerce logs order notes in each order's **Order Notes** section
+- Status changes are logged automatically ("Order status changed from Processing to Completed")
+- For more comprehensive audit logging: install **WooCommerce Order Status Manager** or **Activity Log** plugin
 
-   // Called when new inventory arrives (from a PO receipt or return)
-   async function fulfillBackorders(productId: string, availableQty: number): Promise<void> {
-     const pending = await db.backorders.findAll({
-       product_id: productId,
-       status: 'pending',
-     }, { orderBy: ['created_at', 'asc'] }); // FIFO
+#### BigCommerce
 
-     let remaining = availableQty;
+- BigCommerce logs order status changes in the **Order Activity** section of each order
+- The activity log shows all status changes, notes added, and system actions
 
-     for (const backorder of pending) {
-       if (remaining <= 0) break;
-       if (backorder.quantity > remaining) continue; // can't partially fulfill a line
+#### Custom / Headless — order state machine with event log
 
-       await db.backorders.update(backorder.id, { status: 'fulfilled' });
-       await db.orderLines.update(backorder.order_line_id, { fulfillment_status: 'ready' });
+```typescript
+// Order status state machine with full audit trail
+type OrderStatus =
+  | 'pending'
+  | 'payment_processing'
+  | 'paid'
+  | 'awaiting_fulfillment'
+  | 'partially_fulfilled'
+  | 'fulfilled'
+  | 'delivered'
+  | 'cancelled'
+  | 'refunded';
 
-       // Re-trigger fulfillment planning for this order
-       await queue.add('plan-fulfillment', { orderId: backorder.order_id });
+const VALID_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  pending:              ['payment_processing', 'cancelled'],
+  payment_processing:   ['paid', 'cancelled'],
+  paid:                 ['awaiting_fulfillment', 'cancelled'],
+  awaiting_fulfillment: ['partially_fulfilled', 'fulfilled', 'cancelled'],
+  partially_fulfilled:  ['fulfilled'],
+  fulfilled:            ['delivered', 'refunded'],
+  delivered:            ['refunded'],
+};
 
-       remaining -= backorder.quantity;
-     }
-   }
-   ```
+async function transitionOrder(params: {
+  orderId: string;
+  newStatus: OrderStatus;
+  actorId: string;
+  note?: string;
+}): Promise<void> {
+  const order = await db.orders.findById(params.orderId);
+  const allowed = VALID_TRANSITIONS[order.status] ?? [];
 
-5. **Track partial fulfillment progress**
+  if (!allowed.includes(params.newStatus)) {
+    throw new Error(`Invalid transition: ${order.status} → ${params.newStatus}`);
+  }
 
-   ```typescript
-   async function updateOrderFulfillmentStatus(orderId: string): Promise<void> {
-     const fulfillments = await db.fulfillments.findByOrderId(orderId);
-     const allShipped = fulfillments.every(f => ['shipped', 'delivered'].includes(f.status));
-     const someShipped = fulfillments.some(f => ['shipped', 'delivered'].includes(f.status));
+  await db.transaction(async tx => {
+    await tx.orders.update(params.orderId, { status: params.newStatus, updated_at: new Date() });
+    // Every transition is recorded — this IS the audit trail
+    await tx.orderEvents.insert({
+      order_id: params.orderId,
+      from_status: order.status,
+      to_status: params.newStatus,
+      actor_id: params.actorId,
+      note: params.note ?? null,
+      occurred_at: new Date(),
+    });
+  });
+}
 
-     let newStatus: OrderStatus;
-     if (allShipped) newStatus = 'fulfilled';
-     else if (someShipped) newStatus = 'partially_fulfilled';
-     else return; // no change
+// Route an order to the right fulfillment source
+async function routeOrder(orderId: string): Promise<void> {
+  const order = await db.orders.findById(orderId);
+  const lines = await db.orderLines.findByOrderId(orderId);
 
-     await transitionOrder(orderId, newStatus, 'system');
-   }
-   ```
+  for (const line of lines) {
+    // Check own warehouse first
+    const warehouseStock = await db.inventory.findAvailable(line.sku, line.quantity);
+    if (warehouseStock) {
+      await db.fulfillmentLines.insert({
+        order_id: orderId,
+        order_line_id: line.id,
+        source: 'warehouse',
+        source_id: warehouseStock.location_id,
+        status: 'pending',
+      });
+      continue;
+    }
 
-## Examples
+    // Fall back to dropship supplier
+    const supplier = await db.supplierProducts.findBestSupplier(line.product_id, line.quantity);
+    if (supplier) {
+      await db.fulfillmentLines.insert({
+        order_id: orderId,
+        order_line_id: line.id,
+        source: 'dropship',
+        source_id: supplier.supplier_id,
+        status: 'pending',
+      });
+      continue;
+    }
 
-### Order event log (full audit trail)
-
-```sql
-SELECT
-  oe.occurred_at,
-  oe.from_status,
-  oe.to_status,
-  COALESCE(u.name, oe.actor_id) AS changed_by,
-  oe.note
-FROM order_events oe
-LEFT JOIN users u ON u.id::text = oe.actor_id
-WHERE oe.order_id = $1
-ORDER BY oe.occurred_at;
-```
-
-### Find orders stuck in `awaiting_fulfillment` for more than 24 hours
-
-```sql
-SELECT
-  o.order_number,
-  o.created_at,
-  o.status,
-  EXTRACT(HOURS FROM (NOW() - o.updated_at)) AS hours_in_status
-FROM orders o
-WHERE o.status = 'awaiting_fulfillment'
-  AND o.updated_at < NOW() - INTERVAL '24 hours'
-ORDER BY o.updated_at;
+    // No source available — create a backorder
+    await db.backorders.insert({
+      order_id: orderId,
+      order_line_id: line.id,
+      product_id: line.product_id,
+      quantity: line.quantity,
+      status: 'pending',
+    });
+    // Notify customer about the backorder
+  }
+}
 ```
 
 ## Best Practices
 
-- **Model orders and fulfillments as separate entities** — an order is a financial record; a fulfillment is a physical shipment; one order can have many fulfillments
-- **Never modify order line prices after placement** — the price on the order line is the price the customer agreed to; apply adjustments as separate credit/debit line items
-- **Use an event sourcing log** — store every status transition in `order_events` with actor, timestamp, and note; this is essential for fraud investigation and customer service
-- **Queue fulfillment planning asynchronously** — don't plan fulfillment synchronously in the checkout request; enqueue it immediately after `paid` and process it in a background worker
-- **Handle backorders explicitly** — never silently drop backordered lines; always notify the customer and give them the option to wait or cancel
-- **Keep the state machine strict** — reject invalid transitions at the model layer; it's better to throw an exception than to allow an order to enter an inconsistent state
-- **Recompute fulfillment status from shipment events** — don't maintain a separate counter; derive `partially_fulfilled` / `fulfilled` from the actual fulfillment records
+- **Use a purpose-built OMS before building custom** — Skubana/Extensiv ($500+/month) or Linnworks handles multi-warehouse routing, backorders, and split shipments with proven reliability; custom development should only start when these tools can't meet your specific needs
+- **Keep orders and fulfillments as separate entities** — an order is a financial contract with the customer; fulfillments are physical shipments; one order can generate multiple fulfillments
+- **Queue fulfillment planning asynchronously** — don't route orders synchronously during checkout; enqueue routing immediately after payment confirmation and process in a background worker
+- **Never silently drop backordered lines** — always notify the customer and give them the option to wait or cancel; silent backorders erode trust when the customer discovers weeks later
+- **Alert on orders stuck in "awaiting fulfillment" for 24+ hours** — set up a daily alert for orders that haven't moved to fulfillment; these usually indicate a routing error or system issue
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Order splits into 3 shipments but customer expects 1 | Pre-warn customers at checkout if an order will ship from multiple locations; show estimated delivery per shipment |
-| Backorder fulfilled twice (race condition) | Use `UPDATE backorders SET status = 'fulfilled' WHERE status = 'pending' AND id = ?` and check `rowCount === 1` |
-| Cancellation fails for an order already partially shipped | Implement partial cancellation — only cancel lines that haven't been picked yet; issue a refund for cancelled lines |
-| State machine allows illegal transition in race condition | Perform the status check and update in a single `UPDATE ... WHERE status = old_status RETURNING id` |
+| Order splits into multiple shipments unexpectedly | Pre-warn customers at checkout if an order will ship from multiple locations; show estimated delivery per shipment separately |
+| Backorder never fulfilled after stock arrives | Set up an automatic trigger: when inventory is replenished above the backorder quantity, trigger fulfillment for the oldest pending backorder (FIFO) |
+| Partial cancellation leaves the order in a broken state | Implement partial cancellation — cancel only lines that haven't been picked; issue a refund for cancelled lines; update the order total |
+| Shopify shows "partially fulfilled" but customer thinks full shipment is coming | Send a clear email explaining each shipment as it ships, with the items in that specific shipment and the remaining items to follow |
 
 ## Related Skills
 

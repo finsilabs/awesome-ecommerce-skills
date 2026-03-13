@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [international-shipping, customs, duties, taxes, restricted-items, cross-border, HS-codes, DDP, DDU]
 triggers: ["international shipping", "customs forms", "duties and taxes", "cross-border shipping", "HS codes", "restricted items", "DDP DDU", "import duties"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,9 @@ difficulty: advanced
 
 ## Overview
 
-Implement cross-border shipping capabilities including HS code assignment for products, duties and taxes estimation at checkout (DDP vs DDU), customs form generation, and restricted/prohibited item screening. Enables customers to see landed cost at checkout and ensures shipments clear customs without delays.
+International shipping requires more than just choosing a carrier — you need to handle customs declarations, duties and taxes (showing customers the landed cost at checkout prevents nasty surprises), HS code classification for each product, and screening for items that are prohibited in certain countries. Getting this wrong leads to packages stuck in customs, unexpected bills delivered to customers, and damaged brand reputation.
+
+This skill walks through setting up international shipping on each major platform, including the right apps for duties/taxes and customs form generation.
 
 ## When to Use This Skill
 
@@ -24,288 +26,181 @@ Implement cross-border shipping capabilities including HS code assignment for pr
 - When offering Delivered Duty Paid (DDP) so customers see the full landed cost at checkout
 - When building a product catalog that needs HS codes for accurate tariff classification
 - When screening orders for restricted items before processing international shipments
-- When integrating with a customs broker or carrier customs API (EasyPost, Shippo, Flexport)
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify Shipping (carrier-calculated rates), Shopify Fulfillment Network, or apps like ShipStation. The Fulfillment API handles custom fulfillment workflows.
-**WooCommerce**: Use WooCommerce Shipping or plugins (ShipStation, WooCommerce Table Rate Shipping). Extend with woocommerce_shipping_methods filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with shipping configured, carrier API accounts if using custom rates
+- When integrating with a customs broker or carrier (EasyPost, Shippo, Easyship, Flexport)
 
 ## Core Instructions
 
-1. **Assign HS codes to products**
+### Step 1: Determine your platform and choose the right international shipping tools
 
-   ```sql
-   ALTER TABLE products ADD COLUMN hs_code VARCHAR(10);         -- e.g. '6109.10' (cotton T-shirts)
-   ALTER TABLE products ADD COLUMN country_of_origin VARCHAR(2); -- ISO 3166-1 alpha-2, e.g. 'CN'
-   ALTER TABLE products ADD COLUMN restricted_countries VARCHAR(2)[]; -- countries where this item cannot ship
-   ALTER TABLE products ADD COLUMN declared_value_override INTEGER; -- cents; NULL = use sale price
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Shopify Markets + Zonos Duty & Tax or Global-e | Shopify Markets handles multi-currency and localized checkout; Zonos/Global-e add accurate DDP landed cost |
+| **WooCommerce** | WooCommerce Shipping + Easyship plugin or Zonos for WooCommerce | Easyship provides multi-carrier rates including international; Zonos handles duties/taxes |
+| **BigCommerce** | BigCommerce Multi-Currency + Easyship or Avalara AvaTax Cross-Border | Built-in multi-currency handles pricing; Easyship/Avalara add duties estimation |
+| **Custom / Headless** | EasyPost or Shippo for labels + Zonos or Avalara for duties estimation | Use carrier aggregators for labels; use a landed-cost API for duties/taxes |
 
-   -- HS code reference table for auto-suggestions
-   CREATE TABLE hs_codes (
-     code        VARCHAR(10) PRIMARY KEY,
-     description TEXT NOT NULL,
-     notes       TEXT
-   );
-   ```
+### Step 2: Assign HS codes to all products
 
-   Common HS codes for e-commerce:
-   ```
-   6109.10 — T-shirts, cotton
-   6109.90 — T-shirts, other (synthetic)
-   6404.11 — Athletic footwear
-   8471.30 — Laptops/portable computers
-   9503.00 — Toys
-   3304.99 — Cosmetics
-   ```
+HS (Harmonized System) codes are required on customs declarations for every international shipment. Missing codes cause customs delays.
 
-2. **Estimate duties and taxes at checkout**
+#### Shopify
 
-   ```typescript
-   import EasyPost from '@easypost/api';
-   const easypost = new EasyPost(process.env.EASYPOST_API_KEY);
+1. Go to **Products → [Product] → Shipping**
+2. Under "Customs information", enter the **HS tariff code** (6–10 digits) and **Country/Region of origin**
+3. For large catalogs: export your product CSV (**Products → Export**), fill in the `Variant HS Code` and `Variant Origin Country` columns in bulk, then re-import
 
-   interface DutyEstimation {
-     duties: number;         // cents
-     taxes: number;          // cents (VAT/GST)
-     total: number;          // duties + taxes
-     currency: string;
-     method: 'DDP' | 'DDU'; // Delivered Duty Paid vs Unpaid
-   }
+Common HS codes for e-commerce:
+- `6109.10` — Cotton T-shirts
+- `6109.90` — Synthetic T-shirts
+- `6404.11` — Athletic footwear
+- `8471.30` — Laptops
+- `9503.00` — Toys
+- `3304.99` — Cosmetics
 
-   async function estimateDutiesAndTaxes(
-     orderLines: { productId: string; quantity: number; unitPriceCents: number }[],
-     destinationCountry: string,
-     destinationZip: string
-   ): Promise<DutyEstimation> {
-     const lineItems = await Promise.all(orderLines.map(async line => {
-       const product = await db.products.findById(line.productId);
-       return {
-         description: product.name,
-         hs_tariff_number: product.hs_code,
-         origin_country: product.country_of_origin ?? 'US',
-         quantity: line.quantity,
-         value: (line.unitPriceCents / 100).toFixed(2),
-         currency: 'USD',
-         weight: product.weight_oz ?? 4,  // ounces
-       };
-     }));
+For HS code classification help, use:
+- **Zonos Hello** (free tool at zonos.com/hs-code) — paste a product description and get a suggested HS code
+- **Avalara TariffFinder** — free online tool for HS code lookup
+- **Schedule B Search Engine** (US Census Bureau) — authoritative for US exports
 
-     try {
-       const response = await easypost.Order.create({
-         to_address: { country: destinationCountry, zip: destinationZip },
-         from_address: { country: 'US' },
-         customs_info: { contents_type: 'merchandise' },
-         // EasyPost Carbon API or Taxes API call
-       });
-       // Note: Use EasyPost's /taxes endpoint for DDP estimation
-       // This is a simplified illustration — refer to EasyPost docs for exact API
-     } catch (err) {
-       console.error('Duty estimation failed, returning DDU:', err);
-     }
+#### WooCommerce
 
-     // Fallback: rough estimation using destination country VAT rates
-     const vatRates: Record<string, number> = {
-       GB: 0.20, DE: 0.19, FR: 0.20, AU: 0.10, CA: 0.05, JP: 0.10
-     };
-     const vatRate = vatRates[destinationCountry] ?? 0;
-     const merchandiseValue = orderLines.reduce((s, l) => s + l.unitPriceCents * l.quantity, 0);
-     const taxes = Math.round(merchandiseValue * vatRate);
+1. Go to **Products → [Product] → Shipping tab**
+2. Most shipping plugins (ShipStation, Easyship) add custom HS code and country of origin fields here
+3. If your plugin doesn't add these fields, install **WooCommerce Extra Product Options** or use the **Custom Fields** metabox to store `_hs_code` and `_country_of_origin` per product
 
-     return { duties: 0, taxes, total: taxes, currency: 'USD', method: 'DDU' };
-   }
-   ```
+#### BigCommerce
 
-3. **Screen for restricted and prohibited items**
+1. Go to **Products → [Product] → Shipping**
+2. Enter the HS code in the "Harmonized System Code" field (visible on all plans)
+3. Enter Country of Origin in the "Country of Manufacture" field
 
-   ```typescript
-   interface RestrictedItemCheck {
-     allowed: boolean;
-     blockedProducts: { productId: string; name: string; reason: string }[];
-   }
+### Step 3: Configure duties and taxes (DDP vs. DDU)
 
-   async function screenForRestrictions(
-     orderLines: { productId: string; quantity: number }[],
-     destinationCountry: string
-   ): Promise<RestrictedItemCheck> {
-     const blockedProducts: RestrictedItemCheck['blockedProducts'] = [];
+**DDP (Delivered Duty Paid):** Customer pays duties at checkout — best for conversion, no surprises.
+**DDU (Delivered Duty Unpaid):** Customer pays duties on delivery — creates friction and returns.
 
-     for (const line of orderLines) {
-       const product = await db.products.findById(line.productId);
+Always aim for DDP on key international markets.
 
-       if (product.restricted_countries?.includes(destinationCountry)) {
-         blockedProducts.push({
-           productId: product.id,
-           name: product.name,
-           reason: `Cannot ship to ${destinationCountry}`,
-         });
-         continue;
-       }
+#### Shopify
 
-       // Check against global restriction database
-       const globalRestriction = await db.countryRestrictions.findOne({
-         country_code: destinationCountry,
-         hs_code: product.hs_code,
-       });
+**Using Shopify Markets (DDP):**
+1. Go to **Settings → Markets → International markets**
+2. Enable each country you ship to and set the currency
+3. For duties: install **Zonos Duty & Tax** or **Global-e** from the App Store
+4. Zonos integrates with Shopify Markets checkout and shows the exact duty amount as a line item
+5. In Zonos settings, configure which markets to show DDP (collect duties at checkout) vs. DDU
 
-       if (globalRestriction?.is_prohibited) {
-         blockedProducts.push({
-           productId: product.id,
-           name: product.name,
-           reason: globalRestriction.reason ?? 'Prohibited in destination country',
-         });
-       }
-     }
+**Note:** Shopify's built-in international shipping does NOT automatically calculate duties — you need Zonos or Global-e for that.
 
-     return { allowed: blockedProducts.length === 0, blockedProducts };
-   }
+#### WooCommerce
 
-   // Common restrictions to seed in your database
-   const KNOWN_RESTRICTIONS = [
-     { country: 'AU', hs_prefix: '9305', reason: 'Firearm parts — prohibited' },
-     { country: 'IN', hs_prefix: '2207', reason: 'Alcohol — requires import licence' },
-     { country: 'CN', hs_prefix: '8517', reason: 'Consumer electronics require CCC certification' },
-   ];
-   ```
+1. Install the **Easyship plugin** from WordPress.org or easyship.com
+2. In Easyship settings, enable "Show duties and taxes at checkout"
+3. Easyship calculates duties based on destination country and your HS codes
+4. Customers see the duties estimate during checkout as a separate line item
 
-4. **Generate a customs declaration form**
+**Alternative for larger operations:** Use the **Zonos Checkout for WooCommerce** plugin which guarantees the landed cost accuracy.
 
-   ```typescript
-   async function generateCustomsInfo(orderId: string): Promise<any> {
-     const order = await db.orders.findById(orderId);
-     const lines = await db.orderLines.findByOrderId(orderId);
+#### BigCommerce
 
-     const customsItems = await Promise.all(lines.map(async line => {
-       const product = await db.products.findById(line.product_id);
-       const declaredValue = product.declared_value_override ?? line.unit_price;
+1. Install **Avalara AvaTax Cross-Border** from the BigCommerce App Marketplace
+2. Configure Avalara with your shipping origin address and enable cross-border tax calculation
+3. Avalara displays duties estimates on checkout; upgrade to their DDP product for guaranteed landed costs
 
-       return {
-         description: product.name.slice(0, 45),     // most carriers cap at 45 chars
-         quantity: line.quantity,
-         net_weight: (product.weight_oz ?? 4) / 16,  // convert to pounds
-         value: (declaredValue / 100).toFixed(2),
-         hs_tariff_number: product.hs_code ?? '',
-         origin_country: product.country_of_origin ?? 'US',
-         currency: 'USD',
-       };
-     }));
+### Step 4: Set up international label creation with customs forms
 
-     return {
-       contents_type: 'merchandise',
-       contents_explanation: null,
-       customs_certify: true,
-       customs_signer: process.env.CUSTOMS_SIGNER_NAME,
-       non_delivery_option: 'return',  // return to sender if undeliverable
-       restriction_type: 'none',
-       items: customsItems,
-       eel_pfc: 'NOEEI 30.37(a)', // Electronic Export Information exemption for low-value exports
-     };
-   }
-   ```
+Carriers require customs declarations (CN22 for items under $400; CN23/commercial invoice for higher values) on every international package.
 
-5. **Integrate customs info into label creation**
+#### Shopify
 
-   ```typescript
-   async function createInternationalLabel(fulfillmentId: string): Promise<string> {
-     const fulfillment = await db.fulfillments.findById(fulfillmentId);
-     const order = await db.orders.findById(fulfillment.order_id);
-     const customsInfo = await generateCustomsInfo(order.id);
+- Shopify Shipping generates customs forms automatically when you buy labels for international orders
+- Go to **Orders → [Order] → Fulfill items** and Shopify shows the customs information form pre-filled from your product HS codes
+- Review and adjust the declared value if needed (use sale price, not a lowered value — declaring a lower value to avoid duties is illegal)
+- For high-volume operations: **ShipStation** (Shopify App Store) or **Easyship** generate customs forms in bulk and integrate with all major carriers (DHL, FedEx, UPS, USPS)
 
-     const shipment = await easypost.Shipment.create({
-       to_address: {
-         name: `${order.shipping_address.first_name} ${order.shipping_address.last_name}`,
-         street1: order.shipping_address.line1,
-         city: order.shipping_address.city,
-         state: order.shipping_address.state,
-         zip: order.shipping_address.zip,
-         country: order.shipping_address.country,
-         email: order.customer_email,
-         phone: order.shipping_address.phone,  // required for international
-       },
-       from_address: {
-         name: process.env.WAREHOUSE_NAME,
-         street1: process.env.WAREHOUSE_ADDRESS,
-         city: process.env.WAREHOUSE_CITY,
-         state: process.env.WAREHOUSE_STATE,
-         zip: process.env.WAREHOUSE_ZIP,
-         country: 'US',
-         phone: process.env.WAREHOUSE_PHONE,
-       },
-       parcels: [{
-         length: fulfillment.package_length_in,
-         width: fulfillment.package_width_in,
-         height: fulfillment.package_height_in,
-         distance_unit: 'in',
-         weight: fulfillment.package_weight_oz,
-         mass_unit: 'oz',
-       }],
-       customs_info: customsInfo,
-     });
+#### WooCommerce
 
-     const rate = shipment.rates.find(r => r.carrier === 'USPS' && r.service === 'FirstClassPackageInternationalService')
-       ?? shipment.rates[0];
-     const transaction = await easypost.Transaction.create({ rate: rate.id, label_file_type: 'PDF' });
+- **WooCommerce Shipping** (powered by WooCommerce Shipping & Tax plugin) generates customs forms for USPS and DHL Express labels
+- Go to **WooCommerce → Shipments → Create Label** for an order — customs fields are auto-populated from product data
+- For full carrier coverage: use **ShipStation** or **Easyship** plugins which handle customs forms for all carriers
 
-     return transaction.label_url;
-   }
-   ```
+#### BigCommerce
 
-## Examples
+- **ShipStation** (BigCommerce App Marketplace) handles customs forms for all carriers and has BigCommerce order sync built in
+- **Easyship** (BigCommerce App Marketplace) also supports multi-carrier international labels with auto-generated customs forms
 
-### HS code lookup helper
+### Step 5: Block restricted and prohibited items
+
+Some products cannot ship to certain countries (firearms parts, alcohol, certain electronics).
+
+#### Shopify
+
+1. Use **Shopify Markets** to set country availability per product:
+   - Go to **Products → [Product] → Sales channels**
+   - Disable specific markets for restricted products
+2. For a comprehensive restriction list: Install **Fraud Filter** or use **Shopify Flow** (Plus) to flag orders where a restricted product is shipping to a restricted country
+3. Apps like **Geoipfy** can redirect or block checkout for restricted country/product combinations
+
+#### WooCommerce
+
+1. Use the **WooCommerce Shipping Restrictions** plugin to block specific products from shipping to specific countries
+2. Go to **Products → [Product] → Shipping tab** and set "Shipping restrictions" by country
+3. For order-level blocking: use WooCommerce's built-in "Restrict to countries" in **WooCommerce → Settings → General → Selling location(s)**
+
+#### BigCommerce
+
+1. Go to **Products → [Product] → Shipping**
+2. Set "Free Shipping" to disabled and use custom shipping rules to block certain destinations
+3. For comprehensive blocking: Use the **ShipperHQ** app which supports zone-based shipping restrictions
+
+#### Custom / Headless
 
 ```typescript
-async function suggestHsCode(productName: string, productDescription: string): Promise<string[]> {
-  // In production, use an HS code classification API (e.g., Avalara, Zonos)
-  // This example uses a simple keyword match against your local hs_codes table
-  const words = `${productName} ${productDescription}`.toLowerCase().split(/\s+/);
-  const results = await db.hsCodes.findAll({
-    description: { containsAny: words }
-  }).limit(5);
-  return results.map(r => r.code);
-}
-```
+// Screen cart for restricted items before allowing checkout to proceed
+async function screenForRestrictions(params: {
+  orderLines: { productId: string; hsCode?: string }[];
+  destinationCountry: string;
+}): Promise<{ allowed: boolean; blockedItems: string[] }> {
+  const blockedItems: string[] = [];
 
-### De minimis value thresholds (no duties below this value)
+  // Common restrictions — seed these from a country-restrictions database
+  const RESTRICTIONS: Record<string, string[]> = {
+    AU: ['9305'],    // Firearm parts
+    IN: ['2207'],    // Alcohol (requires import licence)
+    CN: ['8517'],    // Consumer electronics require CCC certification
+  };
 
-```typescript
-const DE_MINIMIS_CENTS: Record<string, number> = {
-  US:   80000,   // $800 USD
-  CA:   2000,    // CAD 20
-  AU:   100000,  // AUD 1,000
-  GB:   13500,   // £135
-  EU:   15000,   // €150 (combined EU threshold)
-  MX:   5000,    // USD 50
-};
+  const countryRestrictions = RESTRICTIONS[params.destinationCountry] ?? [];
 
-function exceedsDeMinimisCents(totalValueCents: number, destinationCountry: string): boolean {
-  const threshold = DE_MINIMIS_CENTS[destinationCountry] ?? 0;
-  return totalValueCents > threshold;
+  for (const line of params.orderLines) {
+    if (!line.hsCode) continue;
+    const hsPrefixBlocked = countryRestrictions.some(prefix => line.hsCode!.startsWith(prefix));
+    if (hsPrefixBlocked) {
+      blockedItems.push(line.productId);
+    }
+  }
+
+  return { allowed: blockedItems.length === 0, blockedItems };
 }
 ```
 
 ## Best Practices
 
-- **Assign HS codes to every product before enabling international shipping** — missing HS codes lead to customs delays; automate classification with an API (Zonos, Avalara) for large catalogs
-- **Always include a phone number in the ship-to address** — most international carriers and customs agencies require a recipient phone number; missing this causes label creation failures
-- **Offer DDP for key international markets** — customers who see the full landed cost (including duties) at checkout convert significantly better than those who receive a surprise duties bill on delivery
-- **Respect de minimis thresholds** — orders below the de minimis value of the destination country are often duty-free; calculate this and suppress the duty estimate when below threshold
-- **Use 'return to sender' for undeliverable international packages** — 'abandon' destroys the package and prevents recouping any value; 'return' lets you restock or reship
-- **Keep customs descriptions generic but accurate** — avoid trade names or brand names in descriptions; "Cotton T-shirt" is better than "Supreme Box Logo Tee" for faster customs clearance
-- **Store the EEL/PFC number on high-value exports** — shipments over $2,500 USD require Electronic Export Information filing; use exemption NOEEI 30.37(a) for merchandise under this threshold
+- **Assign HS codes to every product before enabling international shipping** — missing HS codes are the single most common cause of customs delays; use the Zonos or Avalara classification tools for bulk assignment
+- **Always include a phone number in the ship-to address** — most international carriers require a recipient phone number; make it required for all non-domestic shipping addresses
+- **Offer DDP for your top 5 international markets** — customers who see the full landed cost at checkout convert at significantly higher rates than those who receive a duty bill on delivery
+- **Respect de minimis thresholds** — orders below the de minimis value (US: $800, UK: £135, EU: €150, AU: AUD $1,000) are often duty-free; most DDP apps handle this automatically
+- **Keep customs descriptions generic but accurate** — "Cotton T-shirt" is better than a brand name for faster clearance; avoid anything that sounds like it requires special permits
+- **Test with real international orders before scaling** — send a test order to each new country and track it through customs before launching a marketing campaign there
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Label creation fails with "customs info required" | Always include `customs_info` for any shipment with a non-US destination country, even for low-value orders |
-| Duties estimated at checkout differ from actual duties assessed | Clearly label estimates as approximate; use a DDP provider (Zonos, Global-e) for guaranteed landed-cost accuracy |
-| Prohibited item detected after label is created | Screen for restrictions before routing to fulfillment; reject the international order during checkout if prohibited items are in the cart |
-| Phone number missing on international address | Make phone number required for all non-domestic shipping addresses; add a validation step in address form |
+| Customs form not generated for international order | Ensure your shipping app has HS codes and country of origin on all product records; missing fields are the most common cause |
+| Duties estimated at checkout differ from actual duties assessed | Use a DDP provider (Zonos, Global-e) for guaranteed accuracy; label estimates as "estimated" when using DDU |
+| Prohibited item detected after label is created and package is in transit | Screen for restrictions at checkout, not at fulfillment; block checkout for restricted country/product combinations |
+| Package returned for "customs information required" | All international shipments need customs forms — even low-value ones; configure your shipping app to always include customs data for non-domestic destinations |
 
 ## Related Skills
 

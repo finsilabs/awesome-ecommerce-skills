@@ -5,10 +5,10 @@ category: marketing-growth
 risk: safe
 source: curated
 date_added: "2026-03-12"
-tags: [email, segmentation, personalization]
-triggers: ["segment email list", "create email segments"]
+tags: [email, segmentation, personalization, rfm, klaviyo, list-hygiene]
+triggers: ["segment email list", "create email segments", "RFM segmentation", "email list hygiene", "targeted email campaigns"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,329 +16,151 @@ difficulty: intermediate
 
 ## Overview
 
-Sending the same email to your entire list is one of the most expensive mistakes in ecommerce marketing. ISPs throttle senders with low engagement, unsubscribe rates spike for irrelevant content, and you leave revenue on the table by treating a VIP customer identically to someone who has never purchased. Proper segmentation — combining RFM (Recency, Frequency, Monetary) analysis with behavioral and engagement scoring — delivers 2–4× higher revenue per email and protects deliverability. This skill covers building a segmentation pipeline, computing RFM scores, defining behavioral segments, syncing to ESP providers, and routing campaigns to the right audience.
+Sending the same email to your entire list is one of the most expensive mistakes in ecommerce marketing. ISPs throttle senders with low engagement, unsubscribe rates spike for irrelevant content, and you leave revenue on the table by treating a VIP customer identically to someone who has never purchased. Klaviyo (for Shopify/BigCommerce) and AutomateWoo or Mailchimp (for WooCommerce) include RFM and behavioral segmentation built-in — no custom code needed for most stores.
 
 ## When to Use This Skill
 
 - When email open rates drop below 20% and you suspect low engagement dragging deliverability
-- When you want to migrate from blast-and-pray sends to targeted campaign logic
+- When migrating from blast-and-pray sends to targeted campaign logic
 - When building a suppression system to protect high-value subscribers from over-messaging
-- When setting up Klaviyo, Brevo, or custom ESP flows that need audience conditions
 - When launching a win-back program and need to identify the "at-risk" vs. "lapsed" cohort
 - When analyzing email revenue and needing to attribute performance to specific segments
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, email service provider with segmentation support (Klaviyo, Mailchimp, or Drip)
-
 ## Core Instructions
 
-### 1. Core data model
+### Step 1: Choose the right segmentation tool
 
-```typescript
-interface SubscriberProfile {
-  email: string;
-  customerId?: string;
+| Platform | Recommended Tool | Built-in Segmentation Capabilities |
+|----------|-----------------|-------------------------------------|
+| **Shopify** | Klaviyo | Predictive CLV, churn risk, RFM scoring, purchase behavior segments — all built-in |
+| **WooCommerce** | Klaviyo (via plugin) or AutomateWoo | Klaviyo plugin syncs order data; AutomateWoo has native WooCommerce RFM reports |
+| **BigCommerce** | Klaviyo | Native BigCommerce integration with full order history sync |
+| **All platforms** | Klaviyo (via API) | Use Klaviyo's Track/Identify API to send behavioral events from any platform |
 
-  // RFM fields
-  lastOrderDate?: Date;
-  orderCount: number;
-  totalRevenue: number;
-  avgOrderValue: number;
+### Step 2: Set up the essential segments — start with five
 
-  // Engagement
-  lastOpenDate?: Date;
-  lastClickDate?: Date;
-  totalSent: number;
-  totalOpened: number;
-  totalClicked: number;
-  openRate: number;    // computed: totalOpened / totalSent
-  clickRate: number;   // computed: totalClicked / totalSent
+Build these five segments first. They cover 80% of the value. Add more only when you have campaigns ready for each.
 
-  // Segments (computed labels)
-  rfmSegment: RfmSegment;
-  engagementTier: 'champion' | 'active' | 'at-risk' | 'dormant' | 'unengaged';
-  tags: string[];
+---
 
-  // Consent / compliance
-  subscribedAt: Date;
-  unsubscribedAt?: Date;
-  marketingConsent: boolean;
-  gdprLawfulBasis?: 'consent' | 'legitimate-interest';
-  source: string;  // 'checkout', 'popup', 'import', etc.
-}
+#### Klaviyo (Shopify, BigCommerce, or API-connected)
 
-type RfmSegment =
-  | 'champions'        // high R, high F, high M
-  | 'loyal'            // high F, high M
-  | 'potential-loyal'  // recent, medium F
-  | 'new-customers'    // very recent, low F
-  | 'at-risk'          // high M but declining R
-  | 'cant-lose'        // previously high value, long since ordered
-  | 'hibernating'      // low R, low F, low M
-  | 'lost';            // very low R, very low F
-```
+**Segment 1: Champions (VIP buyers)**
+1. Go to **Klaviyo → Segments → Create Segment**
+2. Conditions:
+   - `Has placed order` at least 5 times ever
+   - AND `Total Customer Value` greater than $500
+   - AND `Opened email` in the last 60 days
+3. Save as "Champions — VIP Buyers"
 
-### 2. RFM scoring pipeline
+**Segment 2: Active buyers (engaged, not yet VIP)**
+1. Create segment with conditions:
+   - `Has placed order` at least 2 times ever
+   - AND `Has placed order in the last 90 days`
+2. Save as "Active Buyers"
 
-```typescript
-async function computeRfmSegments() {
-  const subscribers = await db.subscribers.findAll({
-    where: { marketingConsent: true, unsubscribedAt: null },
-    include: ['orders'],
-  });
+**Segment 3: At-risk (used to buy, now quiet)**
+1. Create segment using Klaviyo's predictive analytics:
+   - `Predicted Churn Risk` equals `High`
+   - AND `Has placed order` at least 1 time ever
+2. Save as "At-Risk Customers"
 
-  const now = new Date();
+**Segment 4: Email-engaged non-buyers**
+1. Create segment with conditions:
+   - `Has placed 0 orders`
+   - AND `Opened email` in the last 30 days
+2. Save as "Engaged Subscribers — No Purchase"
 
-  const scored = subscribers.map(sub => {
-    const orders = sub.orders.filter((o: any) => o.status === 'completed');
-    const lastOrder = orders.sort((a: any, b: any) => b.createdAt - a.createdAt)[0];
-    const daysSinceOrder = lastOrder
-      ? Math.floor((now.getTime() - new Date(lastOrder.createdAt).getTime()) / 86400000)
-      : 999;
-    const frequency = orders.length;
-    const monetary  = orders.reduce((sum: number, o: any) => sum + o.total, 0);
+**Segment 5: Unengaged (to suppress)**
+1. Create segment with conditions:
+   - `Has NOT opened email` in the last 180 days
+   - AND `Has NOT clicked email` in the last 180 days
+   - AND `Email subscription status` is `Subscribed`
+2. Save as "Unengaged — Suppression List"
 
-    // Score 1–5 for each dimension using quintile breakpoints
-    return { ...sub, daysSinceOrder, frequency, monetary };
-  });
+**Suppress the unengaged segment before every campaign send:**
+- When creating a campaign in Klaviyo, under **Excluded Segments**, add "Unengaged — Suppression List"
+- This protects deliverability by not sending to cold contacts who will mark you as spam
 
-  // Compute quintile breakpoints
-  const rBreakpoints = quintiles(scored.map(s => s.daysSinceOrder).filter(d => d < 999));
-  const fBreakpoints = quintiles(scored.map(s => s.frequency));
-  const mBreakpoints = quintiles(scored.map(s => s.monetary).filter(m => m > 0));
+---
 
-  const rfmScored = scored.map(sub => {
-    const r = scoreQuintile(sub.daysSinceOrder, rBreakpoints, true);  // invert: lower days = higher score
-    const f = scoreQuintile(sub.frequency, fBreakpoints, false);
-    const m = scoreQuintile(sub.monetary, mBreakpoints, false);
-    const rfmCode = `${r}${f}${m}`;
-    const rfmSegment = classifyRfm(r, f, m);
+#### WooCommerce with Mailchimp or Klaviyo
 
-    return { email: sub.email, r, f, m, rfmCode, rfmSegment };
-  });
+**Mailchimp:**
+1. Go to **Mailchimp → Audience → Segments → Create Segment**
+2. Mailchimp's ecommerce segments require the WooCommerce + Mailchimp plugin for purchase data sync
+3. Common conditions: "Purchased" / "Has not purchased" / "Total spent is greater than" / "Last purchase was more than 90 days ago"
 
-  // Bulk upsert
-  await db.subscriberProfiles.bulkCreate(rfmScored, {
-    updateOnDuplicate: ['r', 'f', 'm', 'rfmCode', 'rfmSegment', 'updatedAt'],
-  });
-}
+**AutomateWoo (for WooCommerce automation, not campaigns):**
+1. Go to **AutomateWoo → Reports → RFM Analysis** to view your customers plotted on an RFM grid
+2. Export customer lists from each RFM quadrant and import into your ESP for targeted campaigns
 
-function classifyRfm(r: number, f: number, m: number): RfmSegment {
-  if (r >= 4 && f >= 4 && m >= 4) return 'champions';
-  if (f >= 4 && m >= 4)           return 'loyal';
-  if (r >= 4 && f <= 2)           return 'new-customers';
-  if (r >= 3 && f >= 2)           return 'potential-loyal';
-  if (r <= 2 && m >= 3)           return 'cant-lose';
-  if (r <= 2 && f >= 3)           return 'at-risk';
-  if (r <= 2 && f <= 2 && m <= 2) return 'hibernating';
-  return 'lost';
-}
+---
 
-function quintiles(values: number[]): [number, number, number, number] {
-  const sorted = [...values].sort((a, b) => a - b);
-  const p = (pct: number) => sorted[Math.floor(sorted.length * pct)];
-  return [p(0.2), p(0.4), p(0.6), p(0.8)];
-}
+#### WooCommerce with Klaviyo plugin
 
-function scoreQuintile(value: number, breakpoints: [number, number, number, number], invert: boolean): number {
-  const [q1, q2, q3, q4] = breakpoints;
-  let score = value <= q1 ? 1 : value <= q2 ? 2 : value <= q3 ? 3 : value <= q4 ? 4 : 5;
-  return invert ? 6 - score : score;
-}
-```
+1. Install the Klaviyo plugin from the WordPress plugin directory
+2. In Klaviyo, all WooCommerce orders and customers sync automatically
+3. Follow the same segment setup as the Shopify/Klaviyo instructions above
 
-### 3. Engagement tier classification
+---
 
-```typescript
-function computeEngagementTier(profile: SubscriberProfile): SubscriberProfile['engagementTier'] {
-  const now = new Date();
-  const daysSinceOpen  = profile.lastOpenDate
-    ? Math.floor((now.getTime() - profile.lastOpenDate.getTime()) / 86400000)
-    : 999;
-  const daysSinceClick = profile.lastClickDate
-    ? Math.floor((now.getTime() - profile.lastClickDate.getTime()) / 86400000)
-    : 999;
+### Step 3: Set up behavioral segments for campaign targeting
 
-  if (profile.openRate > 0.3 && daysSinceClick < 60)  return 'champion';
-  if (profile.openRate > 0.15 && daysSinceOpen < 90)  return 'active';
-  if (daysSinceOpen >= 90 && daysSinceOpen < 180)     return 'at-risk';
-  if (daysSinceOpen >= 180 && daysSinceOpen < 365)    return 'dormant';
-  return 'unengaged';
-}
-```
+Beyond RFM, create segments that map to specific campaigns:
 
-### 4. Behavioral tags
+**Sale shoppers** (always use discounts — suppress from full-price launches):
+- Klaviyo condition: `Has used a discount code` more than 2 times ever
 
-```typescript
-const BEHAVIORAL_TAGS = {
-  'category-apparel':      (p: SubscriberProfile) => p.topCategory === 'apparel',
-  'high-aov':              (p: SubscriberProfile) => p.avgOrderValue > 150,
-  'frequent-buyer':        (p: SubscriberProfile) => p.orderCount >= 5,
-  'sale-shopper':          (p: SubscriberProfile) => p.discountUsageRate > 0.5,
-  'abandoned-cart-recent': (p: SubscriberProfile) => p.lastAbandonmentDate && daysSince(p.lastAbandonmentDate) < 30,
-  'review-submitter':      (p: SubscriberProfile) => p.reviewCount > 0,
-  'mobile-opener':         (p: SubscriberProfile) => p.mobileOpenRate > 0.7,
-  'new-subscriber-30d':    (p: SubscriberProfile) => daysSince(p.subscribedAt) < 30,
-};
+**High AOV customers** (show premium products):
+- Klaviyo condition: `Average Order Value` greater than $150
 
-async function applyBehavioralTags(profile: SubscriberProfile): Promise<string[]> {
-  const tags: string[] = [];
-  for (const [tag, condition] of Object.entries(BEHAVIORAL_TAGS)) {
-    if (condition(profile)) tags.push(tag);
-  }
-  return tags;
-}
-```
+**Category-specific buyers** (for product launches):
+- Klaviyo condition: `Ordered product in category` = "Skincare" (use your Shopify product type or Klaviyo collection data)
 
-### 5. Segment query builder for campaigns
+**Recently subscribed non-buyers** (in welcome flow):
+- Klaviyo condition: `Subscribed to email` in the last 30 days AND `Has placed 0 orders`
 
-```typescript
-interface SegmentCriteria {
-  rfmSegments?: RfmSegment[];
-  engagementTiers?: string[];
-  tags?: string[];
-  minRevenue?: number;
-  maxRevenue?: number;
-  subscribedAfter?: Date;
-  subscribedBefore?: Date;
-  hasOrdered?: boolean;
-  lastOrderBefore?: Date;
-  lastOrderAfter?: Date;
-  excludeSegments?: RfmSegment[];
-}
+### Step 4: Apply segments to campaigns
 
-async function querySegment(criteria: SegmentCriteria): Promise<string[]> {
-  const where: any = { marketingConsent: true, unsubscribedAt: null };
+In Klaviyo, when creating a campaign:
+1. Under **Recipient Selection**, choose your target segment (e.g., "Active Buyers")
+2. Under **Excluded Segments**, always add "Unengaged — Suppression List"
+3. Preview the segment size before sending — avoid sending to segments under 200 contacts (can trigger spam filters on some providers)
 
-  if (criteria.rfmSegments?.length)     where.rfmSegment     = { in: criteria.rfmSegments };
-  if (criteria.engagementTiers?.length) where.engagementTier = { in: criteria.engagementTiers };
-  if (criteria.minRevenue !== undefined) where.totalRevenue   = { gte: criteria.minRevenue };
-  if (criteria.maxRevenue !== undefined) where.totalRevenue   = { ...where.totalRevenue, lte: criteria.maxRevenue };
-  if (criteria.hasOrdered !== undefined) where.orderCount     = criteria.hasOrdered ? { gt: 0 } : { eq: 0 };
-  if (criteria.lastOrderBefore)         where.lastOrderDate   = { lt: criteria.lastOrderBefore };
-  if (criteria.lastOrderAfter)          where.lastOrderDate   = { ...where.lastOrderDate, gte: criteria.lastOrderAfter };
-  if (criteria.excludeSegments?.length) where.rfmSegment      = { ...where.rfmSegment, notIn: criteria.excludeSegments };
+**Frequency rules by segment:**
+- Champions: max 2 emails/week (they are engaged; maintain relationship but don't over-message)
+- Active Buyers: 1–2 emails/week
+- At-Risk: 1 email/week (retention focus)
+- Engaged Subscribers (no purchase): 1–2 emails/week (nurture toward first purchase)
 
-  if (criteria.tags?.length) {
-    where[Op.and] = criteria.tags.map(tag => db.literal(`tags @> ARRAY['${tag}']::text[]`));
-  }
+### Step 5: List hygiene — run quarterly
 
-  const rows = await db.subscriberProfiles.findAll({ where, attributes: ['email'] });
-  return rows.map(r => r.email);
-}
-```
-
-### 6. Sync segments to Klaviyo
-
-```typescript
-import Klaviyo from 'klaviyo-api';
-
-async function syncSegmentToKlaviyo(segmentName: string, emails: string[]) {
-  const klaviyo = new Klaviyo({ apiKey: process.env.KLAVIYO_PRIVATE_KEY! });
-
-  // Batch in groups of 1000 (API limit)
-  const batches = chunk(emails, 1000);
-
-  for (const batch of batches) {
-    await klaviyo.profiles.subscribeProfiles({
-      data: {
-        type: 'profile-subscription-bulk-create-job',
-        attributes: {
-          profiles: {
-            data: batch.map(email => ({
-              type: 'profile',
-              attributes: { email, properties: { segment: segmentName } },
-            })),
-          },
-        },
-      },
-    });
-  }
-}
-
-// Sync all segments nightly
-async function syncAllSegments() {
-  const segmentMap: Record<string, SegmentCriteria> = {
-    'Champions':      { rfmSegments: ['champions'], engagementTiers: ['champion', 'active'] },
-    'Win-Back-Targets': { rfmSegments: ['at-risk', 'cant-lose'], lastOrderBefore: daysAgo(90) },
-    'VIP-Subscribers':  { minRevenue: 500, engagementTiers: ['champion', 'active'] },
-    'Sale-Shoppers':    { tags: ['sale-shopper'], engagementTiers: ['active'] },
-    'New-30-Days':      { subscribedAfter: daysAgo(30), hasOrdered: false },
-  };
-
-  for (const [name, criteria] of Object.entries(segmentMap)) {
-    const emails = await querySegment(criteria);
-    await syncSegmentToKlaviyo(name, emails);
-  }
-}
-```
-
-### 7. Suppression lists to protect deliverability
-
-```typescript
-async function buildSuppressionList(): Promise<string[]> {
-  const suppressed = await db.subscriberProfiles.findAll({
-    where: {
-      [Op.or]: [
-        { engagementTier: 'unengaged', totalSent: { gte: 5 } },
-        { bounced: true },
-        { spamComplaint: true },
-        { unsubscribedAt: { ne: null } },
-      ],
-    },
-    attributes: ['email'],
-  });
-
-  return suppressed.map(r => r.email);
-}
-```
+1. In Klaviyo, go to **Segments → [Unengaged list]** and check the size
+2. If unengaged segment exceeds 20% of your total list, run a sunset campaign:
+   - Send one final email: "We've noticed you haven't engaged lately — still want to hear from us?"
+   - Wait 7 days
+   - Suppress anyone who did not open the sunset email
+3. Never delete unsubscribed contacts — suppress them. Klaviyo retains the unsubscribe signal to prevent accidental re-subscription.
 
 ## Best Practices
 
-- **Recompute scores nightly**: RFM and engagement tiers should be refreshed at least daily; stale segments cause mis-targeting
-- **Start with 5 segments, not 50**: champion, active, at-risk, dormant, unengaged is enough to see 80% of the benefit
-- **Suppress before you send**: always build a suppression list and deduplicate against it before any campaign deploy
-- **Protect champions**: never include your champions segment in sales/discount campaigns unless you want to train VIPs to wait for promotions
-- **Engagement tier > RFM for deliverability decisions**: for inbox placement, behavioral engagement signals matter more than purchase history
-- **EU compliance**: for GDPR-covered contacts, track the lawful basis separately and never rely on `legitimate-interest` for marketing emails — use `consent`
-- **Unsubscribe immediately**: process ESP unsubscribe webhooks within seconds; do not wait for nightly sync
-- **Minimum list size for campaigns**: avoid sending to segments under 200 contacts — small, highly targeted sends can trigger spam filters on some ESPs
+- **Start with 5 segments, not 50** — champion, active, at-risk, engaged non-buyer, unengaged is enough to see 80% of the benefit
+- **Suppress before you send** — always build a suppression list (unengaged + unsubscribed) and apply it to every campaign
+- **Protect champions** — never include your champions segment in sales/discount campaigns unless you want to train VIPs to wait for promotions
+- **Engagement tier beats purchase history for deliverability** — for inbox placement, behavioral engagement signals matter more than how much someone has spent
+- **Process unsubscribes immediately** — Klaviyo handles this automatically via webhooks; ensure your ESP is connected to your platform's unsubscribe events
+- **GDPR**: for EU contacts, track consent separately and never rely on legitimate interest for marketing emails — require explicit opt-in
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| RFM skewed by a few whale customers | Use quintile-based scoring, not absolute thresholds |
-| Engagement drops after adding segmentation | Ensure segments are correctly excluding unsubscribed contacts |
-| Klaviyo lists go out of sync | Run sync nightly AND on key events (order placed, opt-out) |
-| Over-segmentation causes analysis paralysis | Start with 5–7 segments; add more only when you have campaigns ready for each |
-| Champions segment shrinks after every send | You are emailing them too frequently — apply frequency caps |
-| GDPR violations from imported list | Validate lawful basis for all contacts before import; reject contacts without consent record |
-| Wrong currency in revenue-based segments | Normalize all monetary values to a single base currency before computing M score |
-
-## Testing and Validation
-
-### Integration checklist
-
-- [ ] RFM job completes in under 5 minutes for 100k subscriber list
-- [ ] Segment sizes are logged and alerted on if they drop more than 20% vs. prior day
-- [ ] Unsubscribe events processed via webhook within 60 seconds
-- [ ] No unsubscribed email appears in any active segment query
-- [ ] Klaviyo sync shows correct profile counts in list management view
-- [ ] Engagement tier distribution is logged (unengaged should be under 30% of total list)
-
-### KPIs
-
-- **Revenue per email (RPE)** by segment — champions should be 5–10× lapsed
-- **Unsubscribe rate** per segment — above 0.5% per send signals over-messaging or irrelevant content
-- **Open rate** by engagement tier — active tier should be 2× the list average
-- **List health score**: percentage of contacts in active/champion tiers (target: 50%+)
+| Open rates drop after adding segmentation | Ensure segments are correctly excluding unsubscribed contacts; check Klaviyo's suppression list under Audience → Suppressions |
+| Klaviyo lists go out of sync with Shopify | Confirm the Klaviyo–Shopify integration is connected under Klaviyo → Integrations → Shopify; enable "Sync historical data" |
+| Champions segment shrinks after every send | You are emailing them too frequently — apply Klaviyo's Smart Sending limit (once every 16 hours per person) |
+| GDPR violations from imported list | Validate lawful basis for all contacts before import; only import contacts who have explicitly opted in |
+| Segments overlap and contacts receive duplicate emails | In Klaviyo, use "Send to unique recipients" option and check for segment overlap before sending |
 
 ## Related Skills
 

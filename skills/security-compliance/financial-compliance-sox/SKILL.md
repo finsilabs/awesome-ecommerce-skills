@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [sox, financial-compliance, audit, controls]
 triggers: ["implement SOX compliance", "financial audit controls"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,436 +16,261 @@ difficulty: advanced
 
 ## Overview
 
-Implement Sarbanes-Oxley (SOX) Section 302 and 404 controls for ecommerce financial systems covering the five COSO control components: control environment, risk assessment, control activities, information and communication, and monitoring. The practical scope for an ecommerce platform includes segregation of duties across the order-to-cash and procure-to-pay cycles, preventive controls (role-based access, approval workflows), detective controls (reconciliation, exception reporting, automated alerts), and evidence collection that satisfies an external auditor reviewing IT General Controls (ITGCs). SOX compliance does not require specific software — it requires documented controls with evidence of operation.
+SOX (Sarbanes-Oxley Act) Section 302 and 404 require publicly traded companies to maintain documented internal controls over financial reporting (ICFR). For e-commerce, this means implementing controls across the order-to-cash and procure-to-pay cycles: segregation of duties (no single person can initiate and approve a financial transaction), approval workflows for high-value transactions, automated reconciliation, and immutable audit evidence. SOX compliance is primarily a process and documentation challenge, not a software challenge — but the systems you build must generate auditable evidence that controls are operating.
 
 ## When to Use This Skill
 
-- When your company is preparing for an IPO and must establish SOX-compliant internal controls over financial reporting (ICFR)
-- When external auditors are requesting evidence of IT General Controls for your ecommerce platform
-- When building approval workflows that demonstrate segregation of duties across financial processes
-- When designing access controls for systems that feed financial statements (order management, payments, ERP)
+- When your company is preparing for an IPO and must establish SOX-compliant ICFR
+- When external auditors are requesting evidence of IT General Controls for your e-commerce platform
+- When building approval workflows that demonstrate segregation of duties
+- When designing access controls for systems that feed financial statements
 - When remediating a material weakness or significant deficiency identified by an auditor
-- When acquiring a company and assessing the target's financial control environment
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles PCI compliance, SSL, and infrastructure security. Focus on app-level security, GDPR consent (via Shopify Privacy API), and access controls.
-**WooCommerce**: You manage your own hosting security. Use security plugins (Wordfence, Sucuri), SSL certificate, and PCI-compliant payment gateways. GDPR handled via cookie consent plugins.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Understanding of your platform's security model, relevant compliance requirements
 
 ## Core Instructions
 
-1. **Map your financial data flows and control points**
+### Step 1: Map your financial data flows and control points
 
-   Before writing code, document which systems contain financial data and what controls apply:
+Before any configuration or code, document which systems contain financial data and what controls apply. SOX auditors want to see this documentation:
 
-   ```
-   Order-to-Cash Control Points:
-   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
-   │  Order Entry    │──▶│ Payment Capture │──▶│ Revenue Posting │
-   │ Control: Order  │   │ Control: PCI    │   │ Control: GL     │
-   │  approval for   │   │  tokenization,  │   │  auto-posting,  │
-   │  high-value     │   │  fraud rules    │   │  reconciliation │
-   └─────────────────┘   └─────────────────┘   └─────────────────┘
+**Order-to-Cash control points:**
+- Order entry → Payment capture → Revenue posting
+- Key controls: approval for high-value orders, fraud rules, GL auto-posting, monthly reconciliation
 
-   Procure-to-Pay Control Points:
-   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
-   │  Purchase Order │──▶│ Invoice Matching│──▶│ Payment Release │
-   │ Control: 3-way  │   │ Control: auto   │   │ Control: dual   │
-   │  match required │   │  match + human  │   │  approval above │
-   │  for POs >$1000 │   │  exception queue│   │  $10,000        │
-   └─────────────────┘   └─────────────────┘   └─────────────────┘
-   ```
+**Procure-to-Pay control points:**
+- Purchase order creation → Invoice matching → Payment release
+- Key controls: 3-way match for POs above threshold, dual approval for large payment runs
 
-2. **Implement segregation of duties (SOD) via role-based access control**
+Document each control with:
+1. Control objective (what risk does this control mitigate?)
+2. Control owner (which role performs this control?)
+3. Frequency (continuous, daily, monthly, per transaction)
+4. Evidence (what record proves the control operated?)
 
-   SOX requires that no single individual can initiate AND approve a financial transaction. Model this explicitly in your roles:
+### Step 2: Platform-specific SOX implementation
 
-   ```typescript
-   // Roles designed to enforce SOD — see SOD matrix below
-   export enum FinancialRole {
-     // Order-to-Cash
-     ORDER_ENTRY      = 'order_entry',       // Create orders
-     ORDER_APPROVER   = 'order_approver',    // Approve high-value orders
-     CASH_RECEIPTS    = 'cash_receipts',     // Record received payments
-     REVENUE_REPORTER = 'revenue_reporter',  // Read-only revenue reports
+---
 
-     // Procure-to-Pay
-     PO_REQUESTER     = 'po_requester',      // Create purchase orders
-     PO_APPROVER      = 'po_approver',       // Approve purchase orders
-     INVOICE_PROCESSOR= 'invoice_processor', // Enter/match invoices
-     PAYMENT_INITIATOR= 'payment_initiator', // Create payment runs
-     PAYMENT_APPROVER = 'payment_approver',  // Approve payment runs
+#### Shopify
 
-     // System Administration
-     USER_ADMIN       = 'user_admin',        // Manage user accounts
-     AUDITOR          = 'auditor',           // Read-only audit access (no transactions)
-   }
+Shopify does not provide SOX-specific tooling, but you can implement key controls using platform features and third-party integrations.
 
-   /*
-    * SOD Matrix — X means the combination is PROHIBITED
-    *
-    *                       | PO_REQUESTER | PO_APPROVER | INVOICE_PROCESSOR | PAYMENT_INITIATOR | PAYMENT_APPROVER |
-    * PO_REQUESTER          |              |             |                   |                   |                  |
-    * PO_APPROVER           |      X       |             |                   |                   |                  |
-    * INVOICE_PROCESSOR     |              |             |                   |                   |                  |
-    * PAYMENT_INITIATOR     |              |             |        X          |                   |                  |
-    * PAYMENT_APPROVER      |      X       |             |                   |        X          |                  |
-    */
+**Access controls (segregation of duties):**
+1. Go to **Settings → Users and permissions**
+2. Configure staff account permissions — Shopify allows granular permission scoping:
+   - Separate "can issue refunds" from "can edit orders" from "can access reports"
+   - Create separate accounts for each staff member (no shared admin credentials)
+3. For stricter SOD, use **Shopify Plus** organizations to manage permissions across stores
 
-   const SOD_CONFLICTS: [FinancialRole, FinancialRole][] = [
-     [FinancialRole.PO_REQUESTER,      FinancialRole.PO_APPROVER],
-     [FinancialRole.INVOICE_PROCESSOR, FinancialRole.PAYMENT_INITIATOR],
-     [FinancialRole.PAYMENT_INITIATOR, FinancialRole.PAYMENT_APPROVER],
-     [FinancialRole.PO_REQUESTER,      FinancialRole.PAYMENT_APPROVER],
-   ];
+**Approval workflows for high-value orders:**
+Shopify does not have native approval workflows. Use **Shopify Flow** (Shopify/Plus) to create a hold-and-notify workflow:
+1. In Shopify Flow, create a trigger: **Order created**
+2. Add a condition: Order total > $10,000
+3. Add an action: Add a tag "pending_approval" and send an internal email/Slack notification
+4. Your team reviews and either manually removes the tag and fulfills, or cancels the order
+5. Log the approval decision as an order note (for audit evidence)
 
-   function hasSodConflict(roles: FinancialRole[]): { conflict: boolean; pairs: [FinancialRole, FinancialRole][] } {
-     const conflicts = SOD_CONFLICTS.filter(
-       ([a, b]) => roles.includes(a) && roles.includes(b)
-     );
-     return { conflict: conflicts.length > 0, pairs: conflicts };
-   }
+**Reconciliation:**
+1. Use Shopify's **Finances → Payments** report to see all payment captures, refunds, and payouts
+2. Download monthly reports and reconcile against your payment processor's (Stripe, PayPal) settlement reports
+3. Document any variances with explanations — this is your reconciliation control evidence
 
-   // Enforce SOD when assigning roles to users
-   async function assignUserRoles(userId: string, newRoles: FinancialRole[], assignedBy: string): Promise<void> {
-     const { conflict, pairs } = hasSodConflict(newRoles);
+**Change management evidence:**
+For Shopify theme and app changes:
+1. Use a version-controlled theme development workflow (GitHub)
+2. Require pull request reviews before deploying theme changes
+3. Document app installations and permission grants in a change log
 
-     if (conflict) {
-       const description = pairs.map(([a, b]) => `"${a}" conflicts with "${b}"`).join('; ');
-       throw new SodViolationError(`Role assignment would create SOD conflict: ${description}`);
-     }
+---
 
-     await db.userRoles.setRoles(userId, newRoles);
+#### WooCommerce
 
-     // Log to immutable audit trail — auditors will review this
-     await financialAuditLog.write({
-       event: 'user_roles_changed',
-       actor: assignedBy,
-       subject: userId,
-       data: { newRoles },
-       controlRef: 'SOX-ITGC-AC-001',
-     });
-   }
-   ```
+WooCommerce gives you more control over role-based access and custom approval workflows.
 
-3. **Build the financial control evidence framework**
+**Role-based access (segregation of duties):**
+1. Install **User Role Editor** or **Members** plugin
+2. Create separate WordPress roles with specific WooCommerce capabilities:
+   - **Order Viewer**: can view orders, cannot edit or refund
+   - **Order Processor**: can update order status, cannot refund
+   - **Finance Manager**: can issue refunds, cannot create orders
+   - **Auditor**: read-only access to all reports, cannot make any changes
+3. Assign staff to roles; no single person should have both "create order" and "issue refund" capabilities
 
-   SOX auditors require evidence that controls operated effectively during the audit period. Structure your audit evidence to answer: who, what, when, and what was the outcome?
+**High-value order approval workflow:**
+Install **WooCommerce Order Approval** (free) or **YITH WooCommerce Order Approval** (~$70/year):
+1. Configure an approval threshold (e.g., orders over $10,000 require manual approval)
+2. The plugin holds the order in "Pending Approval" status
+3. A designated approver receives an email notification and can approve or reject in the WooCommerce admin
+4. Approval decision and approver name are logged in the order notes (audit evidence)
 
-   ```typescript
-   interface FinancialControlEvent {
-     id: string;             // Immutable UUID
-     timestamp: string;      // ISO 8601 with timezone — never mutable
-     controlRef: string;     // e.g., 'SOX-OTC-001', 'SOX-ITGC-AC-001'
-     controlName: string;    // Human-readable control description
-     event: string;          // Specific activity
-     actor: string;          // User ID or system process name
-     actorRole: string;      // Role at time of event
-     subject: string;        // Entity acted on (invoice ID, user ID, etc.)
-     outcome: 'pass' | 'fail' | 'exception'; // Control operated, failed, or exception raised
-     data: Record<string, unknown>; // Supporting detail
-     ipAddress?: string;
-   }
+**Audit logging:**
+Install **Simple History** (free plugin) to capture all WooCommerce admin actions with user attribution, timestamps, and before/after values.
 
-   class FinancialAuditLog {
-     // Events are written to an append-only store.
-     // Use PostgreSQL table with no UPDATE/DELETE grants to the application role,
-     // or write to an immutable log service (AWS CloudWatch Logs, Datadog).
-     async write(entry: Omit<FinancialControlEvent, 'id' | 'timestamp'>): Promise<void> {
-       await db.financialControlEvents.create({
-         data: {
-           id: crypto.randomUUID(),
-           timestamp: new Date().toISOString(),
-           ...entry,
-         },
-       });
-     }
+**Monthly reconciliation:**
+1. Export WooCommerce order totals by month (**WooCommerce → Reports → Orders**)
+2. Download Stripe/PayPal settlement reports for the same period
+3. Reconcile totals; document variances; store evidence in a shared compliance folder
 
-     async getEvidenceForControl(
-       controlRef: string,
-       from: Date,
-       to: Date
-     ): Promise<FinancialControlEvent[]> {
-       return db.financialControlEvents.findAll({
-         where: {
-           control_ref: controlRef,
-           timestamp: { gte: from.toISOString(), lte: to.toISOString() },
-         },
-         orderBy: { timestamp: 'asc' },
-       });
-     }
-   }
+---
 
-   export const financialAuditLog = new FinancialAuditLog();
-   ```
+#### BigCommerce
 
-4. **Implement approval workflow controls with evidence capture**
+**User access controls:**
+1. Go to **Account Settings → Users → Add User**
+2. BigCommerce supports role-based access with granular permissions
+3. Create roles aligned to SOD requirements: separate Order Processing from Refund Authorization from Report Viewer
 
-   ```typescript
-   const SOX_CONTROLS = {
-     HIGH_VALUE_ORDER_APPROVAL: 'SOX-OTC-001',  // Orders > $10,000 require manager approval
-     PO_APPROVAL_REQUIRED:      'SOX-P2P-001',  // All POs require approval before submission
-     PAYMENT_RUN_DUAL_APPROVAL: 'SOX-P2P-002',  // Payment runs > $50,000 require two approvers
-     INVOICE_MATCH_BEFORE_PAY:  'SOX-P2P-003',  // Invoices must pass 3-way match before payment
-   };
+**Approval workflows:**
+BigCommerce does not have native approval workflows. Options:
+- Use **BigCommerce Webhooks** to trigger an approval process in an external workflow tool (Zapier, Monday.com, or a custom app) when a high-value order is created
+- Manually hold high-value orders via a custom order status and a standard operating procedure
 
-   // Control SOX-OTC-001: High-value order approval
-   async function checkHighValueOrderControl(orderId: string, userId: string): Promise<void> {
-     const order = await db.orders.findById(orderId);
-     const HIGH_VALUE_THRESHOLD_CENTS = 1_000_000; // $10,000
+**Reconciliation:**
+Use the **BigCommerce Analytics → Revenue report** and compare against your payment processor settlement. Export both as CSV and document the comparison monthly.
 
-     if (order.total_cents >= HIGH_VALUE_THRESHOLD_CENTS) {
-       const approver = await db.adminUsers.findById(userId);
-       const hasApprovalRole = approver.roles.includes(FinancialRole.ORDER_APPROVER);
+---
 
-       await financialAuditLog.write({
-         controlRef: SOX_CONTROLS.HIGH_VALUE_ORDER_APPROVAL,
-         controlName: 'High-value order requires manager approval',
-         event: 'high_value_order_approval_check',
-         actor: userId,
-         actorRole: approver.roles.join(','),
-         subject: orderId,
-         outcome: hasApprovalRole ? 'pass' : 'fail',
-         data: {
-           orderTotal: order.total_cents,
-           threshold: HIGH_VALUE_THRESHOLD_CENTS,
-           approvalRolePresent: hasApprovalRole,
-         },
-       });
+#### Custom / Headless
 
-       if (!hasApprovalRole) {
-         throw new ControlViolationError(
-           `Order ${orderId} totals ${formatCents(order.total_cents)} and requires ORDER_APPROVER role`
-         );
-       }
-     }
-   }
+For custom storefronts, implement the controls programmatically. The three most critical controls for a SOX audit are: segregation of duties enforcement, approval workflows with evidence capture, and automated reconciliation.
 
-   // Control SOX-P2P-002: Payment run dual approval
-   async function requireDualApprovalForLargePaymentRun(runId: string): Promise<void> {
-     const run = await db.apPaymentRuns.findById(runId);
-     const DUAL_APPROVAL_THRESHOLD = 5_000_000; // $50,000
-
-     if (run.total_cents >= DUAL_APPROVAL_THRESHOLD) {
-       const approvals = await db.apPaymentApprovals.findAll({ where: { run_id: runId } });
-       const uniqueApprovers = new Set(approvals.map(a => a.approved_by));
-
-       await financialAuditLog.write({
-         controlRef: SOX_CONTROLS.PAYMENT_RUN_DUAL_APPROVAL,
-         controlName: 'Large payment run requires two approvers',
-         event: 'dual_approval_check',
-         actor: 'system',
-         actorRole: 'system',
-         subject: runId,
-         outcome: uniqueApprovers.size >= 2 ? 'pass' : 'fail',
-         data: {
-           runTotal: run.total_cents,
-           threshold: DUAL_APPROVAL_THRESHOLD,
-           approvalCount: uniqueApprovers.size,
-           approvers: [...uniqueApprovers],
-         },
-       });
-
-       if (uniqueApprovers.size < 2) {
-         throw new ControlViolationError(
-           `Payment run ${runId} totals ${formatCents(run.total_cents)} and requires two distinct approvers`
-         );
-       }
-     }
-   }
-   ```
-
-5. **Build period-end reconciliation controls**
-
-   ```typescript
-   // Monthly reconciliation: orders revenue vs. payment processor settlements
-   async function runRevenueReconciliation(month: Date): Promise<ReconciliationResult> {
-     const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
-     const endOfMonth   = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59);
-
-     const [ordersRevenue, processorSettlements] = await Promise.all([
-       db.orders.sumRevenue({ from: startOfMonth, to: endOfMonth }),
-       paymentProcessor.getSettlementsForPeriod({ from: startOfMonth, to: endOfMonth }),
-     ]);
-
-     const varianceCents = ordersRevenue.totalCents - processorSettlements.totalCents;
-     const toleranceCents = 100; // $1.00 rounding tolerance
-
-     const outcome = Math.abs(varianceCents) <= toleranceCents ? 'pass' : 'exception';
-
-     await financialAuditLog.write({
-       controlRef: 'SOX-OTC-RECON-001',
-       controlName: 'Monthly revenue reconciliation: orders vs. processor settlements',
-       event: 'period_end_reconciliation',
-       actor: 'system_reconciliation_job',
-       actorRole: 'system',
-       subject: `recon_${month.getFullYear()}_${String(month.getMonth() + 1).padStart(2, '0')}`,
-       outcome,
-       data: {
-         period: startOfMonth.toISOString().slice(0, 7),
-         ordersRevenueCents: ordersRevenue.totalCents,
-         processorSettlementsCents: processorSettlements.totalCents,
-         varianceCents,
-         toleranceCents,
-       },
-     });
-
-     if (outcome === 'exception') {
-       await alertService.send({
-         channel: 'finance-alerts',
-         severity: 'high',
-         message: `Revenue reconciliation exception for ${month.toISOString().slice(0, 7)}: variance ${formatCents(varianceCents)}`,
-       });
-     }
-
-     return { outcome, varianceCents, ordersRevenueCents: ordersRevenue.totalCents, processorSettlementsCents: processorSettlements.totalCents };
-   }
-   ```
-
-6. **Automate user access review (quarterly)**
-
-   ```typescript
-   // SOX requires quarterly review of who has access to financial systems
-   async function generateAccessReviewReport(quarter: { year: number; q: 1 | 2 | 3 | 4 }): Promise<AccessReviewReport> {
-     const financialRoles = Object.values(FinancialRole);
-
-     const usersWithFinancialAccess = await db.adminUsers.findAll({
-       where: { active: true },
-       include: ['roles', 'lastLogin'],
-     });
-
-     const financialUsers = usersWithFinancialAccess.filter(u =>
-       u.roles.some(r => financialRoles.includes(r as FinancialRole))
-     );
-
-     const report: AccessReviewReport = {
-       quarter: `${quarter.year}-Q${quarter.q}`,
-       generatedAt: new Date().toISOString(),
-       totalUsersReviewed: financialUsers.length,
-       users: financialUsers.map(u => ({
-         userId: u.id,
-         email: u.email,
-         name: u.name,
-         roles: u.roles.filter(r => financialRoles.includes(r as FinancialRole)),
-         lastLoginAt: u.lastLogin,
-         dormant: !u.lastLogin || u.lastLogin < new Date(Date.now() - 90 * 86400000),
-         sodConflict: hasSodConflict(u.roles as FinancialRole[]).conflict,
-       })),
-     };
-
-     // Flag dormant and SOD-conflicted accounts for manager action
-     report.exceptions = report.users.filter(u => u.dormant || u.sodConflict);
-
-     await financialAuditLog.write({
-       controlRef: 'SOX-ITGC-AC-002',
-       controlName: 'Quarterly user access review for financial systems',
-       event: 'access_review_generated',
-       actor: 'system',
-       actorRole: 'system',
-       subject: report.quarter,
-       outcome: report.exceptions.length === 0 ? 'pass' : 'exception',
-       data: { userCount: report.totalUsersReviewed, exceptionCount: report.exceptions.length },
-     });
-
-     return report;
-   }
-   ```
-
-## Examples
-
-### SOX control matrix for ecommerce systems
-
-```markdown
-## IT General Controls (ITGC) — Ecommerce Platform
-
-### Access Controls (AC)
-| Control ID      | Description                                     | Frequency  | Evidence                          |
-|----------------|-------------------------------------------------|------------|-----------------------------------|
-| SOX-ITGC-AC-001 | Role assignments logged with approver           | Continuous | financialControlEvents table      |
-| SOX-ITGC-AC-002 | Quarterly access review — financial roles       | Quarterly  | accessReviewReport PDF + log      |
-| SOX-ITGC-AC-003 | Dormant accounts (90 days) disabled             | Monthly    | Automated job run log             |
-| SOX-ITGC-AC-004 | MFA required for all admin and financial access | Continuous | Auth provider MFA enforcement log |
-
-### Change Management (CM)
-| Control ID      | Description                                     | Frequency  | Evidence                          |
-|----------------|-------------------------------------------------|------------|-----------------------------------|
-| SOX-ITGC-CM-001 | Code changes require PR review before deploy    | Per change | GitHub PR merged status           |
-| SOX-ITGC-CM-002 | Production deploys logged with deployer ID      | Per deploy | CI/CD deployment log              |
-| SOX-ITGC-CM-003 | DB schema changes tracked in migration files    | Per change | Migration history table           |
-
-### Financial Application Controls (FC)
-| Control ID      | Description                                     | Frequency  | Evidence                          |
-|----------------|-------------------------------------------------|------------|-----------------------------------|
-| SOX-OTC-001     | Orders >$10,000 require manager approval        | Per order  | financialControlEvents            |
-| SOX-P2P-001     | All POs require approval before submission      | Per PO     | purchase_orders.approved_at       |
-| SOX-P2P-002     | Payment runs >$50,000 require dual approval     | Per run    | ap_payment_approvals              |
-| SOX-P2P-003     | 3-way match required before invoice payment     | Per invoice| ap_invoices.match_status          |
-| SOX-OTC-RECON-001 | Monthly revenue reconciliation orders vs. settlement | Monthly | financialControlEvents          |
-```
-
-### Auditor evidence export
+**Segregation of duties — role model:**
 
 ```typescript
-async function exportControlEvidenceForAudit(
-  controlRef: string,
-  periodStart: Date,
-  periodEnd: Date
-): Promise<Buffer> {
-  const events = await financialAuditLog.getEvidenceForControl(controlRef, periodStart, periodEnd);
+enum FinancialRole {
+  ORDER_ENTRY      = 'order_entry',
+  ORDER_APPROVER   = 'order_approver',
+  CASH_RECEIPTS    = 'cash_receipts',
+  PO_REQUESTER     = 'po_requester',
+  PO_APPROVER      = 'po_approver',
+  PAYMENT_INITIATOR = 'payment_initiator',
+  PAYMENT_APPROVER = 'payment_approver',
+  AUDITOR          = 'auditor',  // Read-only — zero transaction capability
+}
 
-  const passCount = events.filter(e => e.outcome === 'pass').length;
-  const failCount = events.filter(e => e.outcome === 'fail').length;
-  const exceptionCount = events.filter(e => e.outcome === 'exception').length;
+// SOD conflicts — these role combinations are prohibited
+const SOD_CONFLICTS: [FinancialRole, FinancialRole][] = [
+  [FinancialRole.PO_REQUESTER,       FinancialRole.PO_APPROVER],
+  [FinancialRole.PAYMENT_INITIATOR,  FinancialRole.PAYMENT_APPROVER],
+  [FinancialRole.PO_REQUESTER,       FinancialRole.PAYMENT_APPROVER],
+  [FinancialRole.ORDER_ENTRY,        FinancialRole.ORDER_APPROVER],
+];
 
-  const rows = events.map(e => ({
-    Date: e.timestamp,
-    'Control ID': e.controlRef,
-    'Control Name': e.controlName,
-    Event: e.event,
-    Actor: e.actor,
-    'Actor Role': e.actorRole,
-    Subject: e.subject,
-    Outcome: e.outcome,
-    Detail: JSON.stringify(e.data),
-  }));
+function hasSodConflict(roles: FinancialRole[]): { conflict: boolean; pairs: [FinancialRole, FinancialRole][] } {
+  const conflicts = SOD_CONFLICTS.filter(([a, b]) => roles.includes(a) && roles.includes(b));
+  return { conflict: conflicts.length > 0, pairs: conflicts };
+}
 
-  // Export to Excel for auditor delivery
-  return buildExcelWorkbook([
-    { name: 'Summary', data: [{ 'Control Ref': controlRef, 'Period': `${periodStart.toISOString().slice(0,10)} to ${periodEnd.toISOString().slice(0,10)}`, 'Total Events': events.length, Pass: passCount, Fail: failCount, Exception: exceptionCount }] },
-    { name: 'Events', data: rows },
+// Enforce SOD when assigning roles
+async function assignRoles(userId: string, newRoles: FinancialRole[], assignedBy: string) {
+  const { conflict, pairs } = hasSodConflict(newRoles);
+  if (conflict) {
+    throw new Error(`SOD conflict: ${pairs.map(([a, b]) => `${a} + ${b}`).join(', ')}`);
+  }
+  await db.userRoles.setRoles(userId, newRoles);
+  // Log to immutable audit trail
+  await auditLog.record({ eventType: 'user_roles_changed', actorId: assignedBy, aggregateId: userId,
+    afterState: { roles: newRoles }, controlRef: 'SOX-ITGC-AC-001' });
+}
+```
+
+**High-value order approval control:**
+
+```typescript
+const HIGH_VALUE_THRESHOLD_CENTS = 1_000_000; // $10,000
+
+async function processOrderApproval(orderId: string, approverId: string) {
+  const order = await db.orders.findById(orderId);
+  const approver = await db.users.findById(approverId);
+
+  if (order.total_cents >= HIGH_VALUE_THRESHOLD_CENTS) {
+    const hasRole = approver.roles.includes(FinancialRole.ORDER_APPROVER);
+
+    await auditLog.record({
+      eventType: 'high_value_order_approval_check',
+      aggregateId: orderId,
+      actorId: approverId,
+      afterState: { orderTotal: order.total_cents, hasApprovalRole: hasRole, outcome: hasRole ? 'pass' : 'fail' },
+      controlRef: 'SOX-OTC-001',
+    });
+
+    if (!hasRole) throw new Error('ORDER_APPROVER role required for orders above $10,000');
+  }
+}
+```
+
+**Monthly reconciliation automation:**
+
+```typescript
+async function runMonthlyReconciliation(month: Date) {
+  const [ordersRevenue, processorSettlements] = await Promise.all([
+    db.orders.sumRevenue(month),
+    paymentProcessor.getSettlementsForMonth(month),
   ]);
+
+  const varianceCents = ordersRevenue.totalCents - processorSettlements.totalCents;
+  const outcome = Math.abs(varianceCents) <= 100 ? 'pass' : 'exception'; // $1 tolerance
+
+  await auditLog.record({
+    eventType: 'monthly_revenue_reconciliation',
+    aggregateId: month.toISOString().slice(0, 7),
+    actorId: 'system_recon_job',
+    afterState: { ordersRevenue: ordersRevenue.totalCents, processorSettlements: processorSettlements.totalCents, varianceCents, outcome },
+    controlRef: 'SOX-OTC-RECON-001',
+  });
+
+  if (outcome === 'exception') {
+    await alertFinanceTeam(`Reconciliation exception: ${varianceCents / 100} variance for ${month.toISOString().slice(0, 7)}`);
+  }
+}
+```
+
+**Quarterly user access review:**
+
+```typescript
+async function generateQuarterlyAccessReview(quarter: string) {
+  const financialUsers = await db.users.findWithFinancialRoles();
+  const report = {
+    quarter,
+    generatedAt: new Date().toISOString(),
+    users: financialUsers.map(u => ({
+      userId: u.id, email: u.email,
+      roles: u.financialRoles,
+      lastLogin: u.lastLoginAt,
+      dormant: !u.lastLoginAt || u.lastLoginAt < new Date(Date.now() - 90 * 86400000),
+      sodConflict: hasSodConflict(u.financialRoles).conflict,
+    })),
+  };
+  report.exceptions = report.users.filter(u => u.dormant || u.sodConflict);
+  // Route to manager for sign-off with 30-day deadline
+  await routeForManagerApproval(report);
+  await auditLog.record({ eventType: 'quarterly_access_review_generated', aggregateId: quarter,
+    actorId: 'system', afterState: { exceptionCount: report.exceptions.length }, controlRef: 'SOX-ITGC-AC-002' });
+  return report;
 }
 ```
 
 ## Best Practices
 
-- **Document controls before automating them** — write a one-page control description (objective, risk mitigated, who performs it, frequency, evidence) before building the code; auditors read the documentation first
-- **Make control failures throw exceptions, not log warnings** — a SOX control that silently logs a failure and allows the transaction to proceed is worse than no control; preventive controls must block the transaction
-- **Use immutable audit log storage** — grant the application database role only INSERT on the `financial_control_events` table; revoke UPDATE and DELETE; supplement with an append-only log service as a secondary store
-- **Separate the AUDITOR role from all transaction roles** — auditors should have read-only access to all evidence and zero ability to create, modify, or approve transactions; this prevents conflict-of-interest findings
-- **Log the control reference ID on every audit event** — when an auditor asks for evidence of Control SOX-P2P-002, you should be able to run a single query filtered by `control_ref`; this dramatically reduces PBC (Provided by Client) list effort
-- **Automate the quarterly access review** — manual reviews are consistently the most common control deficiency; automate the report generation and route it to managers for sign-off with a deadline
-- **Test controls in staging before auditors test in production** — run a mock walkthrough quarterly; submit a sample transaction through each control and verify the evidence is captured correctly
+- **Document controls before automating them** — write a one-page control description (objective, risk mitigated, owner, frequency, evidence) before building the code; auditors read documentation first
+- **Make control failures throw exceptions, not log warnings** — a SOX control that logs a failure and allows the transaction to proceed is worse than no control; preventive controls must block the transaction
+- **Use immutable audit log storage** — grant the application role only INSERT on the audit table; revoke UPDATE and DELETE; use an append-only log service as a secondary store
+- **Log the control reference ID on every audit event** — when an auditor requests evidence for Control SOX-P2P-002, a single query filtered by `control_ref` should return all evidence
+- **Automate the quarterly access review** — manual reviews are the most common control deficiency; automate report generation and route to managers with a deadline
+- **Test controls in staging quarterly** — run a mock walkthrough; submit a sample transaction through each control and verify the evidence is captured before auditors test in production
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| SOD conflicts exist in production because role enforcement was added after users were onboarded | Run a one-time SOD scan on all existing user-role assignments on day one; generate exception tickets and remediate within 30 days before the audit period begins |
-| Audit log is mutable — DBA can delete rows | Revoke DELETE on the audit table from all database roles including the DBA service account; use a separate log aggregation service (CloudWatch Logs, Datadog) as a tamper-evident secondary copy |
-| Control evidence is missing for weekends and holidays | Controls must operate every day a financial system processes transactions; scheduled reconciliation jobs must run 7 days a week; never skip weekends |
-| Approval controls can be bypassed via a direct API call | Every financial mutation endpoint must check the control, not just the UI; the control function is called in the service layer, never only in the controller |
-| Access review is performed but reviewers rubber-stamp without real scrutiny | Include last-login dates and SOD flags in the review report; require reviewers to explain in writing any dormant account they choose to keep active |
-| Change management evidence is missing for hotfixes | All production changes — including hotfixes — must go through the PR review process; create a `hotfix` branch type with the same review requirements, never commit directly to main |
+| SOD conflicts exist because role enforcement was added after users were onboarded | Run a one-time SOD scan on all existing user-role assignments; generate exception tickets and remediate before the audit period begins |
+| Audit log is mutable — DBA can delete rows | Revoke DELETE from all database roles; use a separate log aggregation service (CloudWatch Logs, Datadog) as a tamper-evident secondary copy |
+| Control evidence is missing for weekends and holidays | Controls must operate every day the financial system processes transactions; reconciliation jobs must run 7 days a week |
+| Approval controls bypassed via a direct API call | Every financial mutation endpoint must check the control in the service layer, not just the UI; the control function is called in service code, never only in the controller |
+| Change management evidence missing for hotfixes | All production changes — including hotfixes — must go through code review; create a `hotfix` branch type with the same review requirements as main |
 
 ## Related Skills
 
 - @financial-audit-trail
-- @accounts-payable-management
 - @pci-dss-compliance
 - @account-security
 - @data-retention-policies

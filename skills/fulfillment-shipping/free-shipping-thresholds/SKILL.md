@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [free-shipping, threshold, upsell, progress-indicator, cart, shipping-rules]
 triggers: ["free shipping", "free shipping threshold", "shipping progress bar", "add more for free shipping", "free shipping upsell"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: beginner
 ---
 
@@ -16,7 +16,7 @@ difficulty: beginner
 
 ## Overview
 
-Implement configurable free shipping thresholds with real-time cart progress indicators and upsell nudges that encourage customers to add more items. Supports multiple rules with customer segment targeting (e.g., loyalty members get a lower threshold) and geographic overrides for international shipping.
+A free shipping threshold motivates customers to add more to their cart to avoid paying for shipping — one of the highest-converting tactics for increasing average order value. The key is showing a dynamic progress bar ("Add $12 more for free shipping") that updates as items are added. Most platforms support this natively or via an app without writing any code.
 
 ## When to Use This Skill
 
@@ -26,240 +26,157 @@ Implement configurable free shipping thresholds with real-time cart progress ind
 - When you want to surface "add $X more to unlock free shipping" messages dynamically
 - When free shipping rules should vary by shipping zone (domestic vs. international)
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify Shipping (carrier-calculated rates), Shopify Fulfillment Network, or apps like ShipStation. The Fulfillment API handles custom fulfillment workflows.
-**WooCommerce**: Use WooCommerce Shipping or plugins (ShipStation, WooCommerce Table Rate Shipping). Extend with woocommerce_shipping_methods filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with shipping configured, carrier API accounts if using custom rates
-
 ## Core Instructions
 
-1. **Define shipping threshold rules**
+### Step 1: Determine your platform and choose the right tool
 
-   ```typescript
-   interface ShippingRule {
-     id: string;
-     name: string;
-     freeShippingThreshold: number | null;   // cents; null = always free
-     applicableZones: string[];               // ['US', 'CA'] or [] for all zones
-     customerSegments: string[];              // [] for all segments
-     priority: number;
-     isActive: boolean;
-     startsAt: Date | null;
-     endsAt: Date | null;
-   }
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Built-in shipping settings + Hextom Free Shipping Bar app | Shopify handles the rule; Hextom or similar apps add the visible progress bar |
+| **WooCommerce** | WooCommerce Shipping (built-in free shipping method) + WooCommerce Free Shipping Bar plugin | WooCommerce has native free shipping rules; plugins handle the bar UI |
+| **BigCommerce** | Built-in free shipping promotion + free shipping bar app | BigCommerce has native promotional rules for free shipping thresholds |
+| **Custom / Headless** | Build a rule resolver + progress bar component | Full control over threshold logic, per-segment rules, and UI |
 
-   // Example rules stored in DB or config
-   const SHIPPING_RULES: ShippingRule[] = [
-     {
-       id: 'rule_gold_member',
-       name: 'Gold members — free shipping $49+',
-       freeShippingThreshold: 4900,
-       applicableZones: ['US'],
-       customerSegments: ['gold', 'platinum'],
-       priority: 10,
-       isActive: true,
-       startsAt: null,
-       endsAt: null,
-     },
-     {
-       id: 'rule_us_standard',
-       name: 'Standard US — free shipping $75+',
-       freeShippingThreshold: 7500,
-       applicableZones: ['US'],
-       customerSegments: [],
-       priority: 5,
-       isActive: true,
-       startsAt: null,
-       endsAt: null,
-     },
-     {
-       id: 'rule_international',
-       name: 'International — no free shipping',
-       freeShippingThreshold: null,   // null means never free via this rule
-       applicableZones: [],            // catch-all
-       customerSegments: [],
-       priority: 1,
-       isActive: true,
-       startsAt: null,
-       endsAt: null,
-     },
-   ];
-   ```
+### Step 2: Set up the free shipping rule
 
-2. **Resolve the applicable rule for a cart**
+#### Shopify
 
-   ```typescript
-   function resolveShippingRule(
-     cartSubtotal: number,
-     shippingZone: string,
-     customerSegments: string[]
-   ): { isFree: boolean; threshold: number | null; amountNeeded: number } {
-     const now = new Date();
-     const applicableRules = SHIPPING_RULES
-       .filter(rule => {
-         if (!rule.isActive) return false;
-         if (rule.startsAt && rule.startsAt > now) return false;
-         if (rule.endsAt && rule.endsAt < now) return false;
-         if (rule.applicableZones.length > 0 && !rule.applicableZones.includes(shippingZone)) return false;
-         if (rule.customerSegments.length > 0 &&
-             !rule.customerSegments.some(s => customerSegments.includes(s))) return false;
-         return true;
-       })
-       .sort((a, b) => b.priority - a.priority); // highest priority first
+**Create the free shipping rate (required first):**
+1. Go to **Settings → Shipping and delivery → Manage rates**
+2. Under your shipping zone, click **Add rate**
+3. Name it "Free Shipping" and set the price to $0.00
+4. Under **Conditions**, check "Only available if order meets conditions" → **Based on order price** → set the minimum order price (e.g., $75)
+5. Save
 
-     const rule = applicableRules[0];
-     if (!rule) return { isFree: false, threshold: null, amountNeeded: 0 };
+**Add the progress bar (Hextom Free Shipping Bar app — free tier available):**
+1. Install **Hextom: Free Shipping Bar** from the Shopify App Store
+2. The app automatically detects your free shipping threshold from Shopify settings
+3. Customize the bar text: "You're {{amount}} away from free shipping!" where `{{amount}}` is replaced dynamically
+4. Place the bar on cart pages and/or the mini-cart via the app's theme editor
+5. For tiered thresholds (e.g., lower threshold for loyalty members): use the paid tier of Hextom which supports customer-tag-based conditions
 
-     if (rule.freeShippingThreshold === null) {
-       return { isFree: false, threshold: null, amountNeeded: 0 };
-     }
+**Alternative — Shopify Plus: use Scripts for per-segment thresholds:**
+- Shopify Scripts (Plus only) let you write Ruby-like code to apply different shipping rates based on customer tags
+- Go to **Online Store → Scripts → Shipping** to set up segment-specific free shipping rules
 
-     const isFree = cartSubtotal >= rule.freeShippingThreshold;
-     const amountNeeded = isFree ? 0 : rule.freeShippingThreshold - cartSubtotal;
+#### WooCommerce
 
-     return { isFree, threshold: rule.freeShippingThreshold, amountNeeded };
-   }
-   ```
+**Create the free shipping method:**
+1. Go to **WooCommerce → Settings → Shipping → [Your shipping zone] → Add shipping method**
+2. Select **Free Shipping** and click **Add shipping method**
+3. Click on Free Shipping to configure it
+4. Set "Free shipping requires..." to **A minimum order amount** and enter the threshold (e.g., $75)
+5. Optionally check **Coupon** to also allow free shipping coupons to trigger this rule
+6. Save changes
 
-3. **Expose shipping status to the cart API**
+**Add the progress bar:**
+- Install **WooCommerce Free Shipping Bar** by WPFactory (free on WordPress.org) or **Iconic WooCommerce Free Gifts** (paid, with bar feature)
+- The WPFactory plugin automatically reads your free shipping threshold and shows the bar in the cart
+- Configure the bar message in the plugin settings: "Add {{amount_remaining}} more to get free shipping!"
 
-   ```typescript
-   // GET /api/cart/shipping-status
-   app.get('/api/cart/shipping-status', async (req, res) => {
-     const cart = await getCart(req.sessionId);
-     const zone = req.user?.shippingZone ?? inferZoneFromIP(req.ip);
-     const segments = req.user ? await getCustomerSegments(req.user.id) : [];
+**For customer-tier-based thresholds:**
+- Install the **WooCommerce Role-Based Pricing** plugin or use conditional logic in the **Advanced Shipping** plugin to apply different thresholds to different user roles
+- A common approach: create a "Wholesale" user role with a custom free shipping method that triggers at a lower minimum order
 
-     const result = resolveShippingRule(cart.subtotal, zone, segments);
+#### BigCommerce
 
-     res.json({
-       isFree: result.isFree,
-       threshold: result.threshold ? result.threshold / 100 : null,
-       amountNeeded: result.amountNeeded / 100,
-       progressPct: result.threshold
-         ? Math.min(100, Math.round((cart.subtotal / result.threshold) * 100))
-         : 100,
-     });
-   });
-   ```
+**Create the free shipping promotion:**
+1. Go to **Marketing → Promotions → Create a promotion**
+2. Choose **Shipping** promotion type
+3. Set condition: "Cart subtotal is greater than or equal to [amount]"
+4. Set action: "Free shipping"
+5. Enable the promotion and set start/end dates if it's temporary
 
-4. **Render a progress bar component**
+**Add the progress bar:**
+- Install a free shipping bar app from the BigCommerce App Marketplace (search "free shipping bar")
+- **Rebolt ‑ Free Shipping Bar** is available for BigCommerce and reads your promotion settings automatically
 
-   ```tsx
-   interface ShippingStatus {
-     isFree: boolean;
-     threshold: number | null;
-     amountNeeded: number;
-     progressPct: number;
-   }
+**For geographic variation (domestic vs. international):**
+- Create separate shipping promotions for different shipping zones in BigCommerce
+- Each promotion can be restricted to specific shipping zones
 
-   function FreeShippingProgress({ status }: { status: ShippingStatus }) {
-     if (status.threshold === null) return null; // no free shipping available
+### Step 3: Configure the progress bar message and upsell behavior
 
-     if (status.isFree) {
-       return (
-         <div className="shipping-progress shipping-progress--unlocked">
-           <span>You unlocked FREE shipping!</span>
-           <div className="progress-bar" style={{ width: '100%' }} />
-         </div>
-       );
-     }
+Regardless of platform, these messaging best practices apply:
 
-     const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
-       .format(status.amountNeeded);
+1. **Before threshold:** "Add **$12.50** more for FREE shipping!" — always show the specific dollar amount, not a percentage
+2. **Just before threshold ($5–$15 away):** Consider showing product suggestions that fill the gap — "These popular items could qualify you:" (many apps support this)
+3. **At threshold:** "You've unlocked FREE shipping!" with a congratulatory style — green color, checkmark icon
+4. **Place the bar on both the cart page and mini-cart drawer** — customers who see it in the mini-cart have higher AOV
 
-     return (
-       <div className="shipping-progress">
-         <span>Add <strong>{formatted}</strong> more for FREE shipping</span>
-         <div className="progress-bar-track">
-           <div className="progress-bar-fill" style={{ width: `${status.progressPct}%` }} />
-         </div>
-       </div>
-     );
-   }
-   ```
-
-5. **Add upsell product suggestions when near the threshold**
-
-   ```typescript
-   async function getFreeShippingUpsells(
-     cartSubtotal: number,
-     amountNeeded: number,
-     cartProductIds: string[]
-   ): Promise<Product[]> {
-     if (amountNeeded <= 0 || amountNeeded > 3000) return []; // only show when $0–$30 away
-
-     // Find products priced within the gap — customer can add just one item to qualify
-     return db.products.findAll({
-       price: { gte: amountNeeded, lte: amountNeeded + 1000 },  // up to $10 above the gap
-       id: { notIn: cartProductIds },
-       inStock: true,
-     }).limit(4).orderBy('popularity_score', 'desc');
-   }
-   ```
-
-## Examples
-
-### Seasonal free shipping promotion (lowered threshold for holidays)
+#### Custom / Headless
 
 ```typescript
-const HOLIDAY_RULE: ShippingRule = {
-  id: 'rule_holiday_2026',
-  name: 'Holiday — free shipping $50+ (Dec 1–31)',
-  freeShippingThreshold: 5000,
-  applicableZones: ['US', 'CA'],
-  customerSegments: [],
-  priority: 15,   // overrides the standard $75 rule
-  isActive: true,
-  startsAt: new Date('2026-12-01'),
-  endsAt:   new Date('2026-12-31T23:59:59Z'),
-};
-```
+// Server-side: resolve free shipping status for a cart
+function resolveShippingThreshold(params: {
+  cartSubtotalCents: number;
+  shippingCountry: string;
+  customerTags: string[];
+  thresholdRules: ShippingThresholdRule[];
+}): { isFree: boolean; thresholdCents: number; amountNeededCents: number; progressPct: number } {
+  // Find the highest-priority matching rule
+  const rule = params.thresholdRules
+    .filter(r => r.isActive)
+    .filter(r => !r.countries?.length || r.countries.includes(params.shippingCountry))
+    .filter(r => !r.customerTags?.length || r.customerTags.some(t => params.customerTags.includes(t)))
+    .sort((a, b) => b.priority - a.priority)[0];
 
-### Animated cart progress bar CSS
+  if (!rule) return { isFree: false, thresholdCents: 0, amountNeededCents: 0, progressPct: 0 };
 
-```css
-.progress-bar-track {
-  background: #e5e7eb;
-  border-radius: 4px;
-  height: 6px;
-  overflow: hidden;
-  margin-top: 8px;
-}
+  const isFree = params.cartSubtotalCents >= rule.thresholdCents;
+  const amountNeededCents = Math.max(0, rule.thresholdCents - params.cartSubtotalCents);
+  const progressPct = Math.min(100, Math.round((params.cartSubtotalCents / rule.thresholdCents) * 100));
 
-.progress-bar-fill {
-  background: #16a34a;
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.4s ease-in-out;
-}
-
-.shipping-progress--unlocked .progress-bar-fill {
-  background: #16a34a;
+  return { isFree, thresholdCents: rule.thresholdCents, amountNeededCents, progressPct };
 }
 ```
+
+```tsx
+// React component for the progress bar
+function FreeShippingBar({ amountNeededCents, progressPct, isFree }: {
+  amountNeededCents: number; progressPct: number; isFree: boolean;
+}) {
+  const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+    .format(amountNeededCents / 100);
+
+  return (
+    <div className="free-shipping-bar">
+      {isFree ? (
+        <p>You've unlocked FREE shipping!</p>
+      ) : (
+        <p>Add <strong>{formatted}</strong> more for FREE shipping</p>
+      )}
+      <div className="progress-track">
+        <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+      </div>
+    </div>
+  );
+}
+```
+
+### Step 4: Set the right threshold amount
+
+The threshold should be above your average order value (AOV) but achievable:
+- **Rule of thumb:** Set the free shipping threshold at 20–30% above your current AOV
+- **Test the economics:** If your average shipping cost is $8 and your gross margin is 40%, you need the incremental revenue from the upsell to cover the $8 shipping cost
+- **A/B test:** Tools like Google Optimize (now GA4 Experiments) or Shopify's built-in theme A/B testing let you test different threshold amounts
 
 ## Best Practices
 
-- **Compute shipping eligibility server-side** — always re-evaluate in the checkout API, not just in the UI, to prevent forged requests from bypassing the threshold
-- **Show the progress bar on both the cart page and the mini-cart drawer** — customers who see the progress bar in the mini-cart convert at a higher AOV than those who only see it at checkout
-- **Update the progress in real time as items are added or removed** — fetch the `/shipping-status` endpoint on every cart mutation; don't let the progress bar show stale values
-- **Use a high-priority rule for promotions** — set `priority` higher than the default rule so temporary threshold reductions automatically take precedence without modifying the base rule
-- **Show upsells only when the customer is close to the threshold** — product suggestions more than $15 away from the threshold feel irrelevant; limit upsells to a $0–$20 gap
-- **Test the threshold with your actual shipping costs** — the threshold should be set so that the average order above the threshold still generates positive gross margin after absorbing the shipping cost
+- **Show the progress bar on both the cart page and the mini-cart** — customers who see the progress bar in the mini-cart add items more frequently than those who only see it at full checkout
+- **Update in real time** — the bar should update immediately when items are added; stale values erode trust
+- **Use free shipping as the default reward, not a coupon code** — requiring a code adds friction; automatic thresholds convert better
+- **Don't apply free shipping to international orders by default** — international shipping costs can exceed your entire margin; set geographic restrictions from day one
+- **Communicate the threshold in the header/sitewide banner** — "Free shipping on orders over $75" in the top bar sets expectations before customers even start shopping
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Threshold UI shows "free shipping" but checkout charges shipping | Always recompute `resolveShippingRule` in the shipping rates API; don't rely on the client-side state |
-| Free shipping applies to orders that include non-qualifying products | Add an `excludedProductIds` or `excludedCategoryIds` filter to the rule and subtract non-qualifying items from the subtotal |
-| Progress bar shows 100% but order subtotal is below threshold | Ensure `progressPct` is calculated server-side and returned from the API, not computed from a cached subtotal |
-| A coupon reduces the cart below the free shipping threshold | Recalculate shipping eligibility after every discount is applied, using the post-discount subtotal |
+| Progress bar shows "free shipping" but checkout still charges | Double-check that the free shipping rate is active in your platform's shipping settings AND that no other rule is overriding it |
+| Free shipping fires when a coupon reduces the cart below threshold | In WooCommerce, set the free shipping method to require "minimum order amount" after discounts; in Shopify, ensure the shipping rate uses post-discount subtotal |
+| International customers see the free shipping bar | Scope your shipping rate to domestic zones only; configure the app to only show the bar for domestic visitors |
+| Progress bar shows 100% but order is below threshold | Ensure progress calculation uses the same subtotal as the shipping rate rule (post-discount, excluding non-qualifying items) |
 
 ## Related Skills
 

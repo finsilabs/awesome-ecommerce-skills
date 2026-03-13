@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [unit-economics, cac, ltv, payback-period]
 triggers: ["track unit economics", "customer acquisition cost", "lifetime value", "LTV CAC ratio", "payback period", "cohort profitability", "contribution margin per customer"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,353 +16,199 @@ difficulty: advanced
 
 ## Overview
 
-Unit economics describes the financial dynamics of a single unit of your business — in ecommerce, that unit is typically a customer. The key metrics are Customer Acquisition Cost (CAC), Customer Lifetime Value (LTV or CLV), the LTV:CAC ratio, and the payback period. Together, these four metrics tell you whether your business model is economically viable: are you acquiring customers profitably, how much value do they generate over time, and how quickly does that value exceed what you spent to acquire them?
+Unit economics describes the financial dynamics of a single customer. The four key metrics — Customer Acquisition Cost (CAC), Customer Lifetime Value (LTV), the LTV:CAC ratio, and payback period — tell you whether your business model is economically viable. These metrics are among the most scrutinized by investors and boards because they reveal the underlying health of the business independent of short-term revenue trends.
 
-These metrics are among the most scrutinized by investors, boards, and operators because they reveal the underlying health of the business independent of short-term revenue trends. A business with excellent unit economics can scale confidently by investing more in customer acquisition. A business with poor unit economics will destroy more value the faster it grows.
+This skill guides you through calculating and tracking these metrics using your platform's analytics tools and dedicated customer analytics apps.
 
-This skill covers the precise definitions and calculation methodologies for each metric, cohort-based analysis that tracks how unit economics evolve over time, channel-level segmentation, benchmark targets, and the data infrastructure to track these metrics continuously.
+## When to Use This Skill
 
----
-
-## When to Use
-
-- You are preparing investor materials and need to present unit economics metrics
-- You want to understand whether it is profitable to increase marketing spend in a given channel
-- You are analyzing why CAC has increased over the past 6 months
-- You need to compare the quality of customers acquired through different channels
-- You are building a financial model and need to validate LTV assumptions
-- You want to set budget guardrails: maximum allowable CAC by channel
-- You are evaluating a new acquisition channel and need to project payback period
-
----
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Export data via the Shopify Admin API or use Shopify's built-in analytics. For advanced analytics, connect to a data warehouse (BigQuery, Snowflake) via tools like Fivetran, Stitch, or Shopify's bulk data export.
-**WooCommerce**: Use WooCommerce Analytics (built-in) or plugins like Metorik. For custom reporting, query the WordPress database directly or export to a warehouse.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: Access to your store's API, a data warehouse (BigQuery, Snowflake, or PostgreSQL) for advanced analytics
+- When preparing investor materials and needing to present unit economics metrics
+- When understanding whether it is profitable to increase marketing spend in a given channel
+- When analyzing why CAC has increased over the past 6 months
+- When comparing the quality of customers acquired through different channels
+- When building a financial model and needing to validate LTV assumptions
+- When setting budget guardrails: maximum allowable CAC by channel
+- When evaluating a new acquisition channel and projecting its payback period
 
 ## Core Instructions
 
-### Step 1 — Define Customer Acquisition Cost (CAC)
+### Step 1: Choose your unit economics tracking tool by platform
 
-CAC is the total sales and marketing spend required to acquire one new customer. There are two common definitions:
+| Platform | Tool | What It Provides |
+|----------|------|-----------------|
+| **Shopify** | **Lifetimely** (App Store) | CAC by channel, cohort LTV curves, payback period, predicted CLV per customer |
+| **Shopify** | **Triple Whale** (App Store) | New customer CAC by channel, blended CAC, LTV vs. CAC ratio |
+| **Shopify** | **Polar Analytics** (App Store) | CAC tracking with channel breakdown, MER, and LTV trending |
+| **WooCommerce** | **Metorik** | Customer cohort analysis, repeat purchase rate, LTV by acquisition channel |
+| **BigCommerce** | **Glew.io** (App Marketplace) | Customer cohort retention, CLV by segment, repeat purchase analysis |
+| **All platforms** | **Google Analytics 4** | Acquisition channel reporting; pair with cost data from ad platforms for CAC calculation |
 
-**Blended CAC:** Total marketing + sales spend / Total new customers acquired
-**Paid CAC:** Total paid marketing spend only / New customers from paid channels only
+### Step 2: Calculate Customer Acquisition Cost (CAC)
 
-```sql
--- Blended CAC by month
-WITH new_customers AS (
-    SELECT
-        DATE_TRUNC('month', first_order_date) AS acquisition_month,
-        acquisition_channel,
-        COUNT(DISTINCT customer_id) AS new_customer_count
-    FROM (
-        SELECT
-            customer_id,
-            MIN(order_date) AS first_order_date,
-            FIRST_VALUE(utm_source) OVER (PARTITION BY customer_id ORDER BY order_date) AS acquisition_channel
-        FROM orders
-        GROUP BY customer_id
-    ) first_orders
-    GROUP BY 1, 2
-),
-marketing_spend AS (
-    SELECT
-        DATE_TRUNC('month', spend_date) AS spend_month,
-        channel,
-        SUM(spend_amount) AS total_spend
-    FROM marketing_spend_daily
-    GROUP BY 1, 2
-)
-SELECT
-    nc.acquisition_month,
-    nc.acquisition_channel,
-    nc.new_customer_count,
-    ms.total_spend,
-    ROUND(ms.total_spend / NULLIF(nc.new_customer_count, 0), 2) AS cac
-FROM new_customers nc
-LEFT JOIN marketing_spend ms
-    ON nc.acquisition_month = ms.spend_month
-    AND nc.acquisition_channel = ms.channel
-ORDER BY nc.acquisition_month DESC, nc.acquisition_channel;
+CAC is the total marketing and sales spend required to acquire one new customer.
+
+**Types of CAC:**
+
+| CAC Type | Formula | When to Use |
+|----------|---------|------------|
+| **Blended CAC** | Total marketing spend / Total new customers acquired | Overall efficiency trend; monthly reporting |
+| **Paid CAC** | Total paid media spend / New customers from paid channels only | Channel budget decisions |
+| **Fully-loaded CAC** | Total marketing spend + agency fees + marketing tech + team salaries / New customers | Investor presentations; true economic cost |
+
+**Getting CAC data by platform:**
+
+**Shopify with Lifetimely:**
+1. Install **Lifetimely** from the Shopify App Store
+2. Connect ad accounts (Meta, Google, TikTok) under **Integrations**
+3. Go to **Lifetimely → Channels** — view CAC by acquisition channel with trend over time
+4. Lifetimely tracks "new customers" based on first Shopify order date and attributes them to their first-touch UTM source
+
+**Shopify with Triple Whale:**
+1. Install **Triple Whale** and connect ad accounts
+2. Go to **Triple Whale → Summary Dashboard** — "New Customer CAC" tile shows blended new customer acquisition cost
+3. Go to **Triple Whale → Attribution → New Customer Revenue** for CAC by channel
+
+**Manual CAC calculation (any platform):**
+1. Export: Monthly marketing spend by channel (from your ad platforms or agency reports)
+2. Export: New customer count by acquisition channel and month (from your platform's analytics: Shopify Analytics → New vs. returning customers; Metorik → Customers → First order date)
+3. Calculate: CAC by channel = Channel spend / New customers attributed to that channel
+
+**Typical CAC benchmarks by channel:**
+- Google Shopping / Search: $15–$50 (lower for branded, higher for competitive non-branded)
+- Meta (Facebook/Instagram): $20–$80 for DTC
+- TikTok: $10–$40 (often lower for discovery-driven products)
+- Influencer marketing: $15–$60 (highly variable)
+- Email/SMS (acquisition via lead gen): $5–$20
+
+### Step 3: Calculate Customer Lifetime Value (LTV)
+
+LTV is the total net revenue (or contribution margin) you expect from a customer over their relationship with your business.
+
+**Historical (observed) LTV:**
+Pull this from your analytics tool directly.
+
+**Shopify + Lifetimely:**
+1. Go to **Lifetimely → Cohorts** — see a cohort table showing cumulative revenue per customer at 1, 3, 6, 12, 18, 24 months after acquisition
+2. The month-12 and month-24 rows represent your observed LTV at those time horizons
+3. Go to **Lifetimely → Predicted CLV** — Lifetimely's model predicts 12-month and 24-month CLV per customer based on their early purchase behavior
+
+**WooCommerce + Metorik:**
+1. Go to **Metorik → Reports → Customer Cohorts** — cohort retention table with cumulative revenue per customer by months since acquisition
+2. Go to **Metorik → Customers → Filter by: First order date range** — view average revenue per customer for any acquisition cohort
+
+**Predicted LTV formula (for planning models):**
+
+When you do not have 12+ months of cohort data, use this simplified formula:
+```
+LTV = (Average Order Value × Purchase Frequency per Year × Gross Margin %) / Annual Churn Rate
+
+Example:
+  AOV: $65
+  Purchase Frequency: 2.5 orders/year
+  Gross Margin: 55%
+  Annual Churn Rate: 40%
+
+LTV = ($65 × 2.5 × 0.55) / 0.40 = $89.375 / 0.40 = $223.44
 ```
 
-**Fully-loaded CAC** includes not just media spend but also agency fees, technology costs, salaries for the marketing and sales team, and the cost of free trials or first-order discounts.
+This formula gives steady-state LTV. It assumes stable purchase behavior, which is a simplification — cohort-based analysis is more accurate when you have the data.
 
-```python
-def compute_fully_loaded_cac(
-    period: str,
-    media_spend: float,
-    agency_fees: float,
-    marketing_tech_costs: float,  # email platform, analytics tools
-    marketing_payroll_allocated: float,
-    first_order_discount_cost: float,
-    new_customers_acquired: int,
-) -> dict:
-    total_cost = (
-        media_spend
-        + agency_fees
-        + marketing_tech_costs
-        + marketing_payroll_allocated
-        + first_order_discount_cost
-    )
-    return {
-        'period': period,
-        'total_acquisition_cost': round(total_cost, 2),
-        'new_customers': new_customers_acquired,
-        'blended_cac': round(total_cost / max(new_customers_acquired, 1), 2),
-        'media_only_cac': round(media_spend / max(new_customers_acquired, 1), 2),
-    }
+### Step 4: Calculate LTV:CAC ratio and payback period
+
+**LTV:CAC ratio:**
+
+```
+LTV:CAC = LTV / CAC
+
+Benchmarks:
+  2:1 = Minimum viable (barely profitable customer acquisition)
+  3:1 = Healthy for DTC ecommerce
+  5:1+ = Excellent; strong case for scaling marketing spend
 ```
 
-### Step 2 — Define and Calculate Customer Lifetime Value (LTV)
+| LTV:CAC | Assessment | Action |
+|---------|-----------|--------|
+| < 2:1 | Unprofitable | Stop scaling paid acquisition; improve retention or reduce costs |
+| 2:1 – 3:1 | Marginal | Monitor closely; improve one driver (AOV, repeat rate, or CAC) before scaling |
+| 3:1 – 5:1 | Healthy | Good baseline; evaluate where to scale |
+| 5:1+ | Excellent | Prioritize scaling this channel or business |
 
-LTV is the total net revenue (or contribution margin) you expect to receive from a customer over their entire relationship with your business.
+**Payback period:**
 
-**Historical LTV (observed):** Actual cumulative net revenue from a defined cohort.
+Payback period = CAC / (Monthly Contribution per Customer)
 
-**Predicted LTV:** Modeled using purchase frequency, average order value, gross margin, and churn rate.
+```
+Example:
+  CAC: $60
+  AOV: $65
+  Purchase Frequency: 2.5 orders/year → 0.21 orders/month
+  Gross Margin: 55%
+  Fulfillment + other variable costs: 15%
+  Contribution margin rate: 40%
 
-```python
-from decimal import Decimal
-
-def predict_ltv(
-    avg_order_value: float,
-    purchase_frequency_per_year: float,
-    gross_margin_rate: float,
-    annual_churn_rate: float,
-    discount_rate: float = 0.10,  # cost of capital
-    forecast_years: int = 5,
-) -> dict:
-    """
-    Predict LTV using a discounted cash flow approach.
-    LTV = Sum(t=1 to T) [Margin_t / (1+d)^t]
-    where Margin_t = AOV * frequency * gross_margin * (1-churn)^t
-    """
-    annual_margin = avg_order_value * purchase_frequency_per_year * gross_margin_rate
-    total_ltv = 0
-    yearly_breakdown = []
-
-    for year in range(1, forecast_years + 1):
-        survival_rate = (1 - annual_churn_rate) ** (year - 1)
-        expected_margin = annual_margin * survival_rate
-        discounted_margin = expected_margin / ((1 + discount_rate) ** year)
-        total_ltv += discounted_margin
-        yearly_breakdown.append({
-            'year': year,
-            'survival_rate': round(survival_rate, 3),
-            'expected_margin': round(expected_margin, 2),
-            'discounted_margin': round(discounted_margin, 2),
-            'cumulative_ltv': round(total_ltv, 2),
-        })
-
-    return {
-        'predicted_ltv': round(total_ltv, 2),
-        'annual_margin_year1': round(annual_margin, 2),
-        'yearly_breakdown': yearly_breakdown,
-    }
-
-# Simple steady-state LTV formula
-def ltv_steady_state(avg_order_value, purchases_per_year, gross_margin, churn_rate):
-    """LTV = (AOV × Purchases/Year × Gross Margin) / Churn Rate"""
-    if churn_rate == 0:
-        return float('inf')
-    return (avg_order_value * purchases_per_year * gross_margin) / churn_rate
+Monthly contribution per customer = $65 × 0.21 × 0.40 = $5.46
+Payback period = $60 / $5.46 = 11 months
 ```
 
-### Step 3 — Cohort-Based LTV Analysis
+**Payback benchmarks:**
+- <6 months: Excellent; very capital-efficient growth
+- 6–12 months: Healthy
+- 12–24 months: Acceptable if retention is strong past month 24
+- 24+ months: Problematic unless you have significant venture/debt capital to bridge
 
-Cohort analysis tracks customers acquired in the same period together, measuring how their cumulative LTV grows over time. This is the gold-standard approach for understanding true LTV.
+### Step 5: Track unit economics by acquisition channel
 
-```sql
--- Cohort LTV analysis (monthly cohorts)
-WITH customer_cohorts AS (
-    SELECT
-        customer_id,
-        DATE_TRUNC('month', MIN(order_date)) AS cohort_month
-    FROM orders
-    GROUP BY customer_id
-),
-cohort_orders AS (
-    SELECT
-        cc.customer_id,
-        cc.cohort_month,
-        DATE_TRUNC('month', o.order_date) AS order_month,
-        EXTRACT(MONTH FROM AGE(DATE_TRUNC('month', o.order_date), cc.cohort_month)) AS months_since_acquisition,
-        o.net_revenue,
-        o.gross_profit
-    FROM customer_cohorts cc
-    JOIN orders o USING (customer_id)
-)
-SELECT
-    cohort_month,
-    months_since_acquisition,
-    COUNT(DISTINCT customer_id) AS active_customers,
-    SUM(net_revenue) AS cohort_revenue,
-    SUM(gross_profit) AS cohort_gross_profit,
-    SUM(SUM(net_revenue)) OVER (
-        PARTITION BY cohort_month
-        ORDER BY months_since_acquisition
-        ROWS UNBOUNDED PRECEDING
-    ) AS cumulative_revenue,
-    SUM(SUM(gross_profit)) OVER (
-        PARTITION BY cohort_month
-        ORDER BY months_since_acquisition
-        ROWS UNBOUNDED PRECEDING
-    ) AS cumulative_gross_profit,
-    -- Normalize by cohort size
-    SUM(SUM(gross_profit)) OVER (
-        PARTITION BY cohort_month
-        ORDER BY months_since_acquisition
-        ROWS UNBOUNDED PRECEDING
-    ) / COUNT(DISTINCT customer_id) AS ltv_per_customer_at_month
-FROM cohort_orders
-GROUP BY cohort_month, months_since_acquisition
-ORDER BY cohort_month, months_since_acquisition;
-```
+The most important dimension for unit economics is acquisition channel — customers from different sources often have dramatically different LTVs, repeat purchase rates, and initial AOVs.
 
-### Step 4 — Payback Period Calculation
+**Using Lifetimely (Shopify) to compare channels:**
+1. Go to **Lifetimely → Channels** — select "LTV comparison by channel"
+2. View 12-month and 24-month LTV by first-touch acquisition source
+3. Pair with CAC by channel (from ad platform spend) to calculate LTV:CAC by channel
 
-The payback period is how many months it takes to recover your CAC from a customer's contribution margin. A 12-month payback or less is typically considered healthy for capital-efficient ecommerce.
+**Channel LTV comparison template:**
 
-```python
-def compute_payback_period(
-    cac: float,
-    monthly_revenue_per_customer: float,  # avg monthly revenue from retained customers
-    contribution_margin_rate: float,       # net of variable costs
-    max_months: int = 60,
-) -> dict:
-    """
-    Compute the number of months until cumulative contribution margin equals CAC.
-    Uses a simple constant-payment model; replace with cohort curve for precision.
-    """
-    monthly_contribution = monthly_revenue_per_customer * contribution_margin_rate
-    if monthly_contribution <= 0:
-        return {'payback_months': None, 'error': 'Non-positive monthly contribution'}
+| Channel | CAC | Month-12 LTV | LTV:CAC | Payback (months) | Assessment |
+|---------|-----|-------------|---------|-----------------|-----------|
+| Google Shopping | $35 | $180 | 5.1:1 | 4 | Excellent; scale |
+| Meta Prospecting | $62 | $145 | 2.3:1 | 13 | Marginal; optimize creatives |
+| TikTok | $28 | $95 | 3.4:1 | 9 | Healthy; test scaling |
+| Influencer | $45 | $210 | 4.7:1 | 6 | Excellent; invest more |
+| Organic/SEO | $0 | $165 | ∞ | 0 | Free acquisition; protect this channel |
 
-    # Simple (non-discounted) payback
-    payback_months = cac / monthly_contribution
+**Key insight from this type of analysis:** Meta Prospecting appears to have a high ROAS in Meta's dashboard but has the worst LTV:CAC because those customers have lower repeat purchase rates. This is the power of LTV-based analysis over single-order ROAS.
 
-    # Build month-by-month recovery schedule
-    schedule = []
-    cumulative = 0
-    for month in range(1, max_months + 1):
-        cumulative += monthly_contribution
-        net_position = cumulative - cac
-        schedule.append({
-            'month': month,
-            'cumulative_margin': round(cumulative, 2),
-            'net_position': round(net_position, 2),
-            'recovered': net_position >= 0,
-        })
-        if net_position >= 0:
-            break
+### Step 6: Monitor CAC trends weekly
 
-    return {
-        'cac': cac,
-        'monthly_contribution': round(monthly_contribution, 2),
-        'payback_months': round(payback_months, 1),
-        'recovery_schedule': schedule,
-    }
-```
+Rising CAC is the first warning sign of channel saturation or increased competition. Monitor it weekly:
 
-### Step 5 — LTV:CAC Ratio and Benchmarks
-
-```python
-def compute_ltv_cac_metrics(cac: float, ltv: float) -> dict:
-    ltv_cac_ratio = ltv / max(cac, 0.01)
-    return {
-        'cac': cac,
-        'ltv': ltv,
-        'ltv_cac_ratio': round(ltv_cac_ratio, 2),
-        'assessment': (
-            'excellent' if ltv_cac_ratio >= 5 else
-            'healthy' if ltv_cac_ratio >= 3 else
-            'marginal' if ltv_cac_ratio >= 2 else
-            'unprofitable'
-        ),
-        'benchmark': {
-            'minimum_viable': 2.0,
-            'healthy_dtc': 3.0,
-            'excellent_dtc': 5.0,
-        }
-    }
-```
-
-**Industry benchmarks:**
-| Metric | Minimum Viable | Healthy | Excellent |
-|---|---|---|---|
-| LTV:CAC | 2:1 | 3:1 | 5:1+ |
-| CAC Payback | <24 months | <12 months | <6 months |
-| Month-12 Retention | >20% | >40% | >60% |
-| Average Order Frequency (annual) | 1.5x | 2.5x | 4x+ |
-
-### Step 6 — Channel-Level Unit Economics
-
-```sql
--- Unit economics by acquisition channel
-SELECT
-    first_channel AS acquisition_channel,
-    COUNT(DISTINCT customer_id) AS cohort_size,
-    AVG(cac_at_acquisition) AS avg_cac,
-    AVG(CASE WHEN months_since_acquisition >= 12 THEN cumulative_contribution_margin END) AS avg_ltv_12m,
-    AVG(CASE WHEN months_since_acquisition >= 12 THEN cumulative_contribution_margin END)
-        / NULLIF(AVG(cac_at_acquisition), 0) AS ltv_cac_12m,
-    AVG(payback_months) AS avg_payback_months,
-    AVG(CASE WHEN months_since_acquisition >= 6 THEN active_flag END) AS retention_rate_6m,
-    AVG(CASE WHEN months_since_acquisition >= 12 THEN active_flag END) AS retention_rate_12m
-FROM customer_unit_economics
-GROUP BY first_channel
-ORDER BY ltv_cac_12m DESC;
-```
-
----
+1. Set up a **CAC alert** in Triple Whale or Polar Analytics: alert when weekly new customer CAC exceeds your maximum allowable CAC by channel
+2. Your **maximum allowable CAC** = LTV / Target LTV:CAC ratio
+   - Example: If LTV = $180 and target LTV:CAC = 3.0, max CAC = $60
+3. Any channel where CAC exceeds the maximum allowable CAC should be reviewed before the next weekly budget cycle
 
 ## Best Practices
 
-1. **Use contribution margin LTV, not gross revenue LTV** — LTV calculated on gross revenue overstates the actual value. Use contribution margin (after COGS, fulfillment, and variable marketing) to get a realistic picture of economic value per customer.
-
-2. **Segment LTV by acquisition channel from day one** — Customers from organic search, paid social, and influencer partnerships often have dramatically different LTVs. Pooling them into a blended LTV obscures the channel economics that drive budget decisions.
-
-3. **Always pair LTV with a confidence interval** — LTV is a prediction. Show the range of outcomes (e.g., "LTV at month 24 is $85 ± $25 with 80% confidence") to communicate the uncertainty inherent in the forecast.
-
-4. **Track LTV curves, not just point estimates** — Plot cumulative gross profit per customer over 24 months for each cohort. Comparing LTV curves across cohorts reveals whether recent cohorts are better or worse than historical averages.
-
-5. **Set maximum CAC guardrails for each channel** — Derive a maximum allowable CAC: Max CAC = LTV / Target LTV:CAC ratio. Hard-code this as a budget guardrail so marketing teams cannot overpay for customers without executive approval.
-
-6. **Track month-over-month CAC trend** — Rising CAC is often the first warning sign of channel saturation or increased competition. Monitor it weekly and investigate any 15%+ increase immediately.
-
-7. **Distinguish new customer LTV from total customer LTV** — Customers reacquired after a lapse period should be treated differently. A customer who churned and returned with a discount has a different economic profile than a consistently retained customer.
-
-8. **Model LTV separately for subscription vs. transactional customers** — Subscription customers have predictable, contracted revenue. Transactional customers have highly variable purchase frequency. These require different LTV models.
-
-9. **Validate LTV predictions against cohort actuals** — Every 6 months, compare your LTV predictions against the actual cumulative gross profit of cohorts that are now old enough to be measured. Recalibrate your model based on prediction errors.
-
-10. **Present unit economics in the context of growth stage** — A high-growth company may have a 24-month payback period but be perfectly healthy because of strong retention at month 24+. Context matters: present LTV curves alongside payback calculations.
-
----
+- **Use contribution margin LTV, not gross revenue LTV** — LTV calculated on revenue overstates actual customer value; use contribution margin (after COGS, fulfillment, and variable costs) for a realistic economic picture
+- **Segment LTV by acquisition channel from day one** — customers from organic search, paid social, and influencer partnerships often have dramatically different LTVs; pooling them into a blended LTV obscures channel economics
+- **Track LTV curves, not just point estimates** — plot cumulative gross profit per customer over 24 months for each cohort; comparing curves across cohorts reveals whether recent cohorts are better or worse than historical averages
+- **Set maximum CAC guardrails for each channel** — derive Max CAC = LTV / Target LTV:CAC ratio; use this as a hard budget guardrail so marketing teams cannot overpay for customers without executive approval
+- **Validate LTV predictions against cohort actuals** — every 6 months, compare LTV predictions against the actual cumulative gross profit of cohorts that are now old enough to measure; recalibrate if predictions are consistently off
+- **Account for reactivation costs in long-tail LTV** — customers who lapse and return via win-back campaigns have reactivation costs (discounts, extra email volume) that should reduce the apparent value of long-tail behavior
 
 ## Common Pitfalls
 
-### Pitfall 1: Calculating CAC Using Only Media Spend
-True CAC includes agency fees, marketing technology, marketing team salaries, and the cost of promotional discounts on first orders. Using only media spend understates CAC by 20-50% depending on your team size.
+| Problem | Solution |
+|---------|----------|
+| Using only media spend to calculate CAC | True CAC includes agency fees, marketing technology (email platforms, analytics apps), marketing team salaries, and first-order discounts; using media-only CAC understates true CAC by 20–50% |
+| Using ARPU (average revenue per user) instead of contribution margin for LTV | LTV in revenue terms overstates economic value; always use average contribution margin per customer per period |
+| Ignoring cohort degradation | Newer cohorts often have worse retention than earlier cohorts as you move from early adopters to broader audiences; always compare cohort curves against each other rather than assuming all cohorts are equal |
+| Confusing blended CAC with channel-level CAC | Blended CAC mixes organic (free) and paid customers; since organic customers cost nothing to acquire, blending them flatters paid CAC; use paid CAC by channel for budget decisions |
+| Presenting LTV with too-long forecasts when business is young | If your business has 18 months of data, a 36-month LTV is highly speculative; be transparent about what portion of LTV is observed vs. modeled extrapolation |
 
-### Pitfall 2: Using ARPU Instead of Contribution Margin for LTV
-Average Revenue Per User divided by churn rate gives an LTV in revenue terms. You need an LTV in profit terms. Replace ARPU with average contribution margin per user per period.
+## Related Skills
 
-### Pitfall 3: Ignoring Cohort Degradation
-Newer cohorts often have worse retention and lower LTV than older cohorts, especially as you move from early adopters to broader audiences. Always compare cohort LTV curves against each other; do not assume all cohorts are equal.
-
-### Pitfall 4: Confusing Blended CAC with Channel-Level CAC
-Blended CAC includes both organic and paid customers. Since organic customers cost nothing to acquire, blending them in flatters the CAC. For budget decisions, use paid CAC by channel.
-
-### Pitfall 5: Using a 36+ Month LTV for a Business with 12 Months of Data
-If your business has only 18 months of operating history, a 36-month LTV is a projection with very high uncertainty. Be transparent about how much of your LTV is observed vs. extrapolated.
-
-### Pitfall 6: Not Accounting for Reactivation Costs
-Lapsed customers who return are often won back through discounts or win-back campaigns. These reactivation costs should be included in the extended LTV calculation, reducing the apparent value of long-tail customer behavior.
+- @customer-analytics
+- @attribution-modeling
+- @marketing-spend-analysis
+- @financial-analytics-dashboard
+- @ecommerce-budgeting-forecasting

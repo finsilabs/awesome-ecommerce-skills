@@ -1,6 +1,6 @@
 ---
 name: product-data-modeling
-description: "Design a flexible product database schema that supports variants, custom attributes, product relationships, and category hierarchies"
+description: "Structure your product catalog using your platform's native data model for variants, attributes, metafields, and product relationships"
 category: catalog-inventory
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [product, catalog, schema, variants, attributes, database, modeling]
 triggers: ["design product schema", "model product variants", "product database design", "catalog data model"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,377 +16,258 @@ difficulty: intermediate
 
 ## Overview
 
-Design robust database schemas for e-commerce product catalogs that handle variants (size, color), configurable options, custom attributes, product relationships (bundles, cross-sells), and multi-channel publishing. This skill covers relational (PostgreSQL) and document (MongoDB) approaches, the EAV pattern for dynamic attributes, and practical indexing strategies for catalog search and filtering.
+Every platform has its own product data model — Shopify uses products with variants and metafields, WooCommerce uses products with attributes and custom fields, and BigCommerce uses products with options and custom fields. Understanding your platform's model and fitting your catalog into it correctly prevents data quality problems and import failures. Only build a custom data model if you're building a headless storefront from scratch.
 
 ## When to Use This Skill
 
-- When designing a product catalog schema for a new e-commerce application
-- When adding variant support (size, color, material) to an existing product table
-- When implementing faceted search and need to model filterable attributes
-- When building a multi-tenant catalog that supports different product types with different attributes
-- When modeling product bundles, kits, or configurable products
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
-**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with product catalog access, API credentials
+- When designing a product catalog structure for a new store on an existing platform
+- When adding variant support (size, color, material) to existing products
+- When implementing custom attributes for faceted filtering
+- When modeling product relationships (bundles, cross-sells, accessories)
+- When importing products from a PIM or ERP into the platform's model
 
 ## Core Instructions
 
-1. **Design the core product and variant tables (PostgreSQL)**
+### Step 1: Understand your platform's core data model
 
-   The fundamental pattern separates the product (what the customer sees) from variants (what gets added to cart and tracked in inventory):
+| Platform | Product | Variants | Custom Attributes | Relationships |
+|----------|---------|----------|-------------------|---------------|
+| **Shopify** | Product + up to 3 Options, up to 100 Variants | Per-variant: price, SKU, inventory, weight, image | Metafields (standard or custom namespaces) | Collections, cross-sell via apps |
+| **WooCommerce** | Product (Simple, Variable, Grouped, External) | Per-variation: price, SKU, stock, attributes | Custom product attributes + WooCommerce custom fields | Upsells, cross-sells (built-in), grouped products |
+| **BigCommerce** | Product with Options and Option Sets | Per-variant (modifier/option combination): price, SKU, stock | Custom fields per product | Related products, bundled products |
+| **Custom / Headless** | Design from scratch with PostgreSQL/MongoDB | Full control over schema | EAV or JSONB for flexible attributes | Junction tables for relationships |
 
-   ```sql
-   CREATE TABLE products (
-     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     slug          VARCHAR(255) UNIQUE NOT NULL,
-     title         VARCHAR(500) NOT NULL,
-     description   TEXT,
-     body_html     TEXT,
-     vendor        VARCHAR(255),
-     product_type  VARCHAR(255),
-     status        VARCHAR(20) DEFAULT 'draft'
-                   CHECK (status IN ('active', 'draft', 'archived')),
-     tags          TEXT[] DEFAULT '{}',
-     created_at    TIMESTAMPTZ DEFAULT now(),
-     updated_at    TIMESTAMPTZ DEFAULT now()
-   );
+---
 
-   CREATE TABLE product_variants (
-     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     product_id    UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-     sku           VARCHAR(255) UNIQUE,
-     barcode       VARCHAR(255),
-     title         VARCHAR(500) NOT NULL,  -- e.g., "Red / Large"
-     price         NUMERIC(10,2) NOT NULL,
-     compare_at_price NUMERIC(10,2),
-     cost_price    NUMERIC(10,2),
-     weight        NUMERIC(8,2),
-     weight_unit   VARCHAR(10) DEFAULT 'kg',
-     inventory_quantity INTEGER DEFAULT 0,
-     track_inventory BOOLEAN DEFAULT true,
-     position      INTEGER DEFAULT 0,
-     created_at    TIMESTAMPTZ DEFAULT now(),
-     updated_at    TIMESTAMPTZ DEFAULT now()
-   );
+### Step 2: Platform-specific modeling
 
-   CREATE INDEX idx_variants_product ON product_variants(product_id);
-   CREATE INDEX idx_variants_sku ON product_variants(sku);
-   CREATE INDEX idx_products_status ON products(status) WHERE status = 'active';
-   ```
+---
 
-2. **Model product options and option values**
+#### Shopify
 
-   Options define the axes of variation (Color, Size), while variants are specific combinations:
+**Core structure:**
+- **Product**: title, description, vendor, product_type, tags, images
+- **Options**: up to 3 (e.g., Size, Color, Material) — defines the axes of variation
+- **Variants**: one per combination of option values — each has its own price, SKU, inventory, weight
+- **Metafields**: custom data per product or variant (e.g., care instructions, sizing guide URL, technical specs)
 
-   ```sql
-   CREATE TABLE product_options (
-     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-     name        VARCHAR(255) NOT NULL,  -- "Color", "Size"
-     position    INTEGER DEFAULT 0,
-     UNIQUE(product_id, name)
-   );
+**Modeling decisions:**
 
-   CREATE TABLE product_option_values (
-     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     option_id   UUID NOT NULL REFERENCES product_options(id) ON DELETE CASCADE,
-     value       VARCHAR(255) NOT NULL,  -- "Red", "Large"
-     position    INTEGER DEFAULT 0,
-     UNIQUE(option_id, value)
-   );
+1. **Product vs. Variant**: Put a product into a single product record if customers compare the options side-by-side on one page. Create separate product records for fundamentally different products that happen to share a name.
 
-   -- Junction table: which option values make up each variant
-   CREATE TABLE variant_option_values (
-     variant_id      UUID NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
-     option_value_id UUID NOT NULL REFERENCES product_option_values(id) ON DELETE CASCADE,
-     PRIMARY KEY (variant_id, option_value_id)
-   );
-   ```
+2. **Option naming**: Shopify limits you to 3 options per product. If you need more (e.g., Size + Color + Material + Length), consider combining two options (e.g., "Size/Width") or using metafields for the 4th dimension.
 
-3. **Implement the EAV pattern for dynamic attributes**
+3. **Metafields for custom attributes**: Go to **Settings → Custom data → Products** to create metafield definitions. Use metafields for attributes that:
+   - Don't affect price or inventory (those belong on variants)
+   - Are product-specific custom data (care instructions, certifications, dimensions)
+   - Need to be displayable in your theme or filterable via a search app
 
-   For attributes that vary by product type (e.g., "Screen Size" for electronics, "Thread Count" for bedding):
+4. **Product types and tags**: Use `product_type` for the primary merchandise category (e.g., "Dress", "Running Shoe") and `tags` for cross-cutting attributes (e.g., `color-navy`, `occasion-formal`, `material-cotton`).
 
-   ```sql
-   CREATE TABLE attribute_definitions (
-     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name        VARCHAR(255) NOT NULL,
-     slug        VARCHAR(255) UNIQUE NOT NULL,
-     data_type   VARCHAR(20) NOT NULL
-                 CHECK (data_type IN ('string', 'number', 'boolean', 'date', 'enum')),
-     unit        VARCHAR(50),               -- "inches", "ml", etc.
-     filterable  BOOLEAN DEFAULT false,
-     searchable  BOOLEAN DEFAULT false,
-     created_at  TIMESTAMPTZ DEFAULT now()
-   );
+**Example product structure for a shirt:**
+- Product: "Organic Cotton T-Shirt"
+- Options: Size (XS, S, M, L, XL), Color (White, Black, Navy)
+- Variants: 15 combinations (5 sizes × 3 colors), each with SKU and inventory
+- Metafields: `care_instructions`, `material_weight_gsm`, `sustainability_cert`
 
-   CREATE TABLE product_attributes (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     product_id      UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-     attribute_id    UUID NOT NULL REFERENCES attribute_definitions(id) ON DELETE CASCADE,
-     value_string    VARCHAR(1000),
-     value_number    NUMERIC(15,4),
-     value_boolean   BOOLEAN,
-     value_date      DATE,
-     UNIQUE(product_id, attribute_id)
-   );
+**Bulk field updates via Matrixify:**
+- Export products to see all supported columns
+- Edit in spreadsheet, re-import to update any field in bulk including metafields
 
-   -- Index for faceted filtering
-   CREATE INDEX idx_attr_filterable ON product_attributes(attribute_id, value_string)
-     WHERE value_string IS NOT NULL;
-   CREATE INDEX idx_attr_numeric ON product_attributes(attribute_id, value_number)
-     WHERE value_number IS NOT NULL;
-   ```
+---
 
-4. **Model product relationships (cross-sells, bundles, collections)**
+#### WooCommerce
 
-   ```sql
-   CREATE TABLE product_relationships (
-     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     source_product  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-     target_product  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-     relationship    VARCHAR(50) NOT NULL
-                     CHECK (relationship IN ('cross_sell', 'upsell', 'related', 'bundle_item', 'accessory')),
-     position        INTEGER DEFAULT 0,
-     UNIQUE(source_product, target_product, relationship)
-   );
+**Product types:**
+- **Simple**: one SKU, one price — use for products with no variants
+- **Variable**: multiple variations based on attributes — use for products with size, color, etc.
+- **Grouped**: a collection of simple products shown together — use for product families
+- **External/Affiliate**: linked to an external URL — for affiliate products
+- **Virtual**: no shipping — for services, subscriptions
+- **Downloadable**: digital products
 
-   CREATE TABLE collections (
-     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     title       VARCHAR(500) NOT NULL,
-     slug        VARCHAR(255) UNIQUE NOT NULL,
-     description TEXT,
-     sort_order  VARCHAR(50) DEFAULT 'manual'
-                 CHECK (sort_order IN ('manual', 'best_selling', 'price_asc', 'price_desc', 'newest', 'title_asc')),
-     is_auto     BOOLEAN DEFAULT false,   -- automated rules vs. manual curation
-     rules       JSONB,                    -- for automated collections
-     published   BOOLEAN DEFAULT false,
-     created_at  TIMESTAMPTZ DEFAULT now()
-   );
+**Attributes and variations:**
 
-   CREATE TABLE collection_products (
-     collection_id UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
-     product_id    UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-     position      INTEGER DEFAULT 0,
-     PRIMARY KEY (collection_id, product_id)
-   );
-   ```
+1. Go to **Products → Attributes** to define global attributes (shared across all products):
+   - Add attribute: **Color** with values: Red, Blue, Black, White
+   - Add attribute: **Size** with values: XS, S, M, L, XL
+   - Check **Enable archives** to make the attribute browseable
 
-5. **Handle product images with ordering and variant association**
+2. On a Variable product, go to **Attributes tab**:
+   - Select your global attributes and check which values apply to this product
+   - Go to **Variations tab** → Generate variations from all combinations
 
-   ```sql
-   CREATE TABLE product_images (
-     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-     variant_id  UUID REFERENCES product_variants(id) ON DELETE SET NULL,
-     src          VARCHAR(2048) NOT NULL,
-     alt_text     VARCHAR(500),
-     width        INTEGER,
-     height       INTEGER,
-     position     INTEGER DEFAULT 0,
-     created_at   TIMESTAMPTZ DEFAULT now()
-   );
+3. Per-variation settings: set a unique price, SKU, stock, image, and weight for each variation
 
-   CREATE INDEX idx_images_product ON product_images(product_id, position);
-   ```
+**Custom fields (product metadata):**
 
-6. **Build queries for catalog pages with filtering**
+For attributes that aren't variants (e.g., technical specs, certifications):
+- Use WooCommerce's built-in **Custom Attributes** on the Attributes tab (non-variation attributes)
+- Install **Advanced Custom Fields (ACF)** for more structured custom field management
+- Install **Product Add-Ons** for customer-input fields (engraving, personalization)
 
-   ```sql
-   -- Fetch products with price range and inventory from variants
-   SELECT
-     p.id, p.title, p.slug, p.product_type,
-     MIN(v.price) AS min_price,
-     MAX(v.price) AS max_price,
-     SUM(v.inventory_quantity) AS total_inventory,
-     (SELECT pi.src FROM product_images pi
-      WHERE pi.product_id = p.id ORDER BY pi.position LIMIT 1) AS featured_image
-   FROM products p
-   JOIN product_variants v ON v.product_id = p.id
-   WHERE p.status = 'active'
-   GROUP BY p.id;
+**Product relationships (built-in):**
+- **Upsells**: Go to **Linked Products tab** → Upsells — shown on the product page
+- **Cross-sells**: listed in the cart — add under **Linked Products tab** → Cross-sells
+- **Grouped products**: use the Grouped product type to link related simple products
 
-   -- Faceted filter query: find products with Color = 'Red' AND Size = 'Large'
-   SELECT DISTINCT p.id, p.title
-   FROM products p
-   JOIN product_variants v ON v.product_id = p.id
-   JOIN variant_option_values vov ON vov.variant_id = v.id
-   JOIN product_option_values pov ON pov.id = vov.option_value_id
-   JOIN product_options po ON po.id = pov.option_id
-   WHERE p.status = 'active'
-     AND v.inventory_quantity > 0
-     AND (po.name = 'Color' AND pov.value = 'Red')
-     OR  (po.name = 'Size'  AND pov.value = 'Large')
-   GROUP BY p.id, p.title
-   HAVING COUNT(DISTINCT po.name) = 2;  -- Must match ALL filters
-   ```
+---
 
-## Examples
+#### BigCommerce
 
-### MongoDB document model (alternative approach)
+**Core structure:**
+- **Product**: title, description, brand, categories, weight, images
+- **Options**: define the axes of variation (Size, Color, Material)
+- **Option Sets**: reusable groups of options assigned to multiple products
+- **Variants (SKUs)**: combinations of options — each has a unique SKU, price adjustment, weight, and stock
+- **Custom fields**: free-form name/value pairs for additional product data
 
-For catalogs with highly variable attributes, a document model can be more natural:
+**Modeling decisions:**
 
-```javascript
-// Product document in MongoDB
-const productSchema = {
-  _id: ObjectId,
-  slug: 'organic-cotton-tshirt',
-  title: 'Organic Cotton T-Shirt',
-  description: 'Sustainably made from 100% organic cotton.',
-  vendor: 'EcoWear',
-  status: 'active',
-  tags: ['organic', 'cotton', 'sustainable'],
-  productType: 'Apparel',
+1. Go to **Products → Option Sets** to create reusable option sets (e.g., "Clothing Sizes" with XS–3XL) — assign the same set to multiple products instead of recreating options per product.
 
-  options: [
-    { name: 'Color', values: ['White', 'Black', 'Navy'] },
-    { name: 'Size', values: ['S', 'M', 'L', 'XL'] },
-  ],
+2. For products with large variant counts: BigCommerce supports up to 600 SKUs per product. Use **Bulk Pricing** to set price rules that apply to variant groups rather than pricing each variant individually.
 
-  variants: [
-    {
-      sku: 'OCT-WHT-S',
-      title: 'White / S',
-      options: { Color: 'White', Size: 'S' },
-      price: 3500,            // Store as cents to avoid floating-point issues
-      compareAtPrice: 4500,
-      inventory: 23,
-      weight: { value: 200, unit: 'g' },
-    },
-    // ... more variants
-  ],
+3. **Custom fields**: Go to **Products → [Product] → Custom Fields tab** to add structured attributes like `Material`, `Care Instructions`, `Warranty Period`. These display in the product detail page and can be used for search.
 
-  attributes: {
-    material: 'Organic Cotton',
-    careInstructions: 'Machine wash cold',
-    fit: 'Regular',
-    sustainabilityCert: 'GOTS Certified',
-  },
+4. **Modifier options** (customer-configurable at purchase): Use for personalization (engraving text, color choice that doesn't affect stock). Different from variants — modifiers don't generate separate SKUs.
 
-  images: [
-    { src: '/images/oct-white-front.webp', alt: 'White T-Shirt front view', position: 0 },
-    { src: '/images/oct-white-back.webp', alt: 'White T-Shirt back view', position: 1 },
-  ],
+---
 
-  seo: {
-    title: 'Organic Cotton T-Shirt | EcoWear',
-    description: 'Sustainably made organic cotton tee.',
-    canonicalUrl: '/products/organic-cotton-tshirt',
-  },
+#### Custom / Headless
 
-  relationships: {
-    crossSells: [ObjectId('...'), ObjectId('...')],
-    collections: [ObjectId('...')],
-  },
+For headless storefronts, design the core schema around the product-options-variants pattern:
 
-  createdAt: ISODate(),
-  updatedAt: ISODate(),
-};
+```sql
+-- Core product tables (PostgreSQL)
+CREATE TABLE products (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug          VARCHAR(255) UNIQUE NOT NULL,   -- URL-safe handle
+  title         VARCHAR(500) NOT NULL,
+  description   TEXT,
+  vendor        VARCHAR(255),
+  product_type  VARCHAR(255),
+  status        VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('active', 'draft', 'archived')),
+  tags          TEXT[] DEFAULT '{}',
+  created_at    TIMESTAMPTZ DEFAULT now(),
+  updated_at    TIMESTAMPTZ DEFAULT now()
+);
 
-// MongoDB indexes for catalog
-db.products.createIndex({ slug: 1 }, { unique: true });
-db.products.createIndex({ status: 1, 'variants.price': 1 });
-db.products.createIndex({ tags: 1 });
-db.products.createIndex({ 'attributes.material': 1 });
-db.products.createIndex(
-  { title: 'text', description: 'text', tags: 'text' },
-  { weights: { title: 10, tags: 5, description: 1 } }
+-- Variants — one per purchasable combination
+CREATE TABLE product_variants (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id    UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  sku           VARCHAR(255) UNIQUE,
+  title         VARCHAR(500) NOT NULL,  -- e.g., "Red / Large"
+  price         NUMERIC(10,2) NOT NULL,  -- Use NUMERIC, not FLOAT, to avoid rounding errors
+  compare_at_price NUMERIC(10,2),
+  cost_price    NUMERIC(10,2),
+  weight        NUMERIC(8,2),
+  inventory_quantity INTEGER DEFAULT 0,
+  track_inventory BOOLEAN DEFAULT true,
+  option1_value VARCHAR(255),  -- Denormalized for query performance
+  option2_value VARCHAR(255),
+  option3_value VARCHAR(255),
+  position      INTEGER DEFAULT 0
+);
+
+-- Options and values — define the variation axes
+CREATE TABLE product_options (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  name        VARCHAR(255) NOT NULL,  -- "Color", "Size"
+  position    INTEGER DEFAULT 0,
+  UNIQUE(product_id, name)
+);
+
+-- Flexible attributes via JSONB (alternative to EAV for custom attributes)
+ALTER TABLE products ADD COLUMN attributes JSONB DEFAULT '{}';
+-- Query example: SELECT * FROM products WHERE attributes->>'material' = 'cotton';
+-- Index for common attribute lookups:
+CREATE INDEX idx_products_attributes ON products USING GIN(attributes);
+
+-- Product relationships
+CREATE TABLE product_relationships (
+  source_product UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  target_product UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  relationship   VARCHAR(50) NOT NULL CHECK (relationship IN ('cross_sell', 'upsell', 'related', 'accessory')),
+  position       INTEGER DEFAULT 0,
+  UNIQUE(source_product, target_product, relationship)
 );
 ```
 
-### TypeScript types for the product model
+**TypeScript types matching this schema:**
 
 ```typescript
 interface Product {
   id: string;
-  slug: string;
+  slug: string;          // URL handle — stable identifier
   title: string;
   description: string;
-  bodyHtml?: string;
   vendor: string;
   productType: string;
   status: 'active' | 'draft' | 'archived';
   tags: string[];
-  options: ProductOption[];
+  attributes: Record<string, string | number | boolean>;  // Flexible custom attributes
   variants: ProductVariant[];
   images: ProductImage[];
-  attributes: Record<string, string | number | boolean>;
-  seo: SeoMetadata;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface ProductOption {
-  id: string;
-  name: string;
-  values: string[];
-  position: number;
 }
 
 interface ProductVariant {
   id: string;
   sku: string;
-  barcode?: string;
-  title: string;
-  options: Record<string, string>;
-  price: number;        // In cents
+  title: string;         // Auto-generated: "Red / Large"
+  price: number;         // In cents to avoid floating-point errors
   compareAtPrice?: number;
   costPrice?: number;
-  weight?: { value: number; unit: 'g' | 'kg' | 'lb' | 'oz' };
   inventoryQuantity: number;
   trackInventory: boolean;
-  image?: ProductImage;
-}
-
-interface ProductImage {
-  id: string;
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-  position: number;
-}
-
-interface SeoMetadata {
-  title: string;
-  description: string;
-  canonicalUrl?: string;
+  option1Value?: string;
+  option2Value?: string;
+  option3Value?: string;
 }
 ```
 
+---
+
+### Step 3: Plan for product relationships
+
+Every platform supports product relationships for cross-selling and upselling. Configure them to increase AOV:
+
+**Upsells**: Higher-value alternatives to the product the customer is viewing — shown on the PDP
+- "You're looking at the standard version — upgrade to Pro for $20 more"
+
+**Cross-sells**: Complementary products — shown in the cart
+- "Customers also bought these accessories with this product"
+
+**Related products**: Similar products at similar price points — shown at the bottom of the PDP
+- "You might also like these"
+
+For Shopify: configure under **Products → [Product] → More details** section; or use a cross-sell app for automated suggestions.
+
+For WooCommerce: configure under the **Linked Products** tab on each product.
+
 ## Best Practices
 
-- **Store prices as integers (cents/pence)** — avoid floating-point math errors by storing `$29.99` as `2999`
-- **Always separate products from variants** — even single-variant products should have one variant row for consistent cart/order logic
-- **Use slugs for URLs, UUIDs for internal IDs** — slugs are human-readable for SEO; UUIDs avoid enumeration attacks
-- **Index based on actual query patterns** — index `status = 'active'` as a partial index since archived products are rarely queried
-- **Generate variant titles automatically** — concatenate option values (e.g., "Red / Large") rather than requiring manual entry
-- **Version your schema for audit trails** — use an `updated_at` trigger or a separate `product_versions` table for price change history
-- **Avoid over-normalizing** — the EAV pattern is flexible but slow for reads; denormalize commonly filtered attributes into JSONB columns
-- **Set up cascading deletes carefully** — deleting a product should cascade to variants, images, and attributes but NOT to order line items (use soft delete)
+- **Store prices as integers (cents)** in custom builds — `$29.99` stored as `2999` eliminates floating-point rounding errors
+- **Always separate products from variants** — even single-variant products should have one variant row for consistent cart and order logic
+- **Use slugs for URLs, IDs for internal references** — slugs are human-readable for SEO; UUIDs prevent enumeration attacks
+- **Use product type and tags for filtering, not separate products** — "Blue Dress" and "Red Dress" should be variants, not separate products
+- **Metafields/custom fields for non-variant data** — attributes that don't affect price or stock belong in metafields, not as variants
+- **Test variant combinations before going live** — verify that all purchasable combinations appear correctly in the storefront variant selector
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Variant explosion (e.g., 5 colors x 8 sizes x 3 materials = 120 variants) | Cap variant count per product (Shopify limits to 100); consider configurable products for high-cardinality options |
-| Price stored as FLOAT causes rounding errors | Use `NUMERIC(10,2)` in PostgreSQL or store as integer cents in application code |
-| Orphaned variants after option value deletion | Use foreign keys with `ON DELETE CASCADE` and validate variant-option consistency in application logic |
-| Slow collection page queries with many filters | Pre-compute filter counts with materialized views or a search index (Elasticsearch, Meilisearch) |
-| SKU uniqueness conflicts in multi-tenant systems | Scope SKU uniqueness to the tenant: `UNIQUE(tenant_id, sku)` instead of global uniqueness |
-| No history of price changes | Add a `price_history` table or use PostgreSQL temporal tables to track when prices changed |
+| Variant explosion (5 colors × 8 sizes × 3 materials = 120 variants) | Shopify caps at 100 variants per product; consider using metafields for the third option axis if most combinations aren't stocked separately |
+| Custom attributes not appearing in product search | In Shopify: make metafields searchable in your theme or search app settings; in WooCommerce: enable "Used for variations" on attributes you want indexed |
+| Product type and tags inconsistent across the catalog | Establish a controlled vocabulary for product types and tags before importing; use Matrixify or WP All Import to standardize in bulk |
+| Variant images not switching when size/color is selected | Assign variant-specific images in the platform admin; variants need their own image, not just the product-level image, to trigger the swap |
 
 ## Related Skills
 
-- @product-page-design
-- @ecommerce-data-warehouse
-- @discount-engine
-- @inventory-management
-- @ecommerce-seo
+- @variant-matrix
+- @catalog-import-export
+- @product-categorization
+- @product-content-enrichment

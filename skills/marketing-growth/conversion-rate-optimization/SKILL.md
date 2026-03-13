@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [cro, conversion-rate, heatmap, funnel, checkout-optimization, a-b-testing, ux, analytics]
 triggers: ["conversion rate optimization", "CRO audit", "improve checkout conversion", "heatmap analysis", "funnel optimization", "reduce checkout abandonment"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,304 +16,168 @@ difficulty: intermediate
 
 ## Overview
 
-Conversion rate optimization (CRO) is the systematic process of increasing the percentage of visitors who complete a desired action — add to cart, begin checkout, or purchase. This skill covers instrumenting a checkout funnel with step-by-step analytics, implementing heatmap and session recording hooks, running structured CRO audits, and applying the highest-impact checkout improvements backed by large-scale research.
+Conversion rate optimization (CRO) is the systematic process of increasing the percentage of visitors who complete a purchase. Before spending on tools or tests, run a structured audit using free platform analytics and a heatmap tool to identify where users actually drop off. Most stores have 3–5 high-impact fixes that require no A/B testing — just implementation.
 
 ## When to Use This Skill
 
 - When overall store conversion rate is below 2% and you need a structured diagnostic approach
-- When implementing analytics to identify where users drop off in the checkout funnel
 - When preparing an A/B test backlog based on data rather than guesses
 - When optimizing a newly launched checkout flow before scaling ad spend
 - When post-redesign metrics show a conversion regression and root cause analysis is needed
-- When stakeholders need a prioritized roadmap of CRO experiments with expected impact
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, analytics platform (GA4, Heap, or Mixpanel), A/B testing tool (Optimizely, VWO, or Shopify Experiments)
+- When stakeholders need a prioritized roadmap of CRO experiments
 
 ## Core Instructions
 
-1. **Instrument the checkout funnel with step-level tracking**
+### Step 1: Install analytics and heatmap tools
 
-   Track every micro-conversion step to identify the highest drop-off point:
+| Tool | Cost | What It Shows |
+|------|------|---------------|
+| **Google Analytics 4** | Free | Funnel drop-off by step, conversion rate by source |
+| **Microsoft Clarity** | Free | Session recordings, heatmaps, rage-click detection |
+| **Hotjar** | Free tier available | Heatmaps, session recordings, on-site surveys |
+| **Lucky Orange** | $18/mo | Heatmaps + funnel analytics, good Shopify integration |
 
-   ```typescript
-   // Funnel steps: view_product → add_to_cart → begin_checkout →
-   //               enter_email → enter_shipping → enter_payment → purchase
+Install at least GA4 (required) and one heatmap tool before doing any CRO work. Data collection takes 2–4 weeks before you have enough to act on.
 
-   type FunnelStep =
-     | 'view_product'
-     | 'add_to_cart'
-     | 'begin_checkout'
-     | 'enter_email'
-     | 'enter_shipping'
-     | 'enter_payment'
-     | 'purchase';
+---
 
-   function trackFunnelStep(step: FunnelStep, properties: Record<string, unknown> = {}) {
-     // Push to dataLayer for GA4
-     window.dataLayer?.push({
-       event: 'funnel_step',
-       funnel_step: step,
-       ...properties,
-     });
+#### Shopify
 
-     // Also send to your analytics warehouse
-     fetch('/api/analytics/funnel', {
-       method: 'POST',
-       body: JSON.stringify({ step, sessionId: getSessionId(), userId: getCurrentUserId(), ts: Date.now(), ...properties }),
-     });
-   }
+1. Go to **Shopify Admin → Online Store → Preferences**
+2. Under **Google Analytics**, enter your GA4 Measurement ID (starts with G-)
+3. For Microsoft Clarity: install the **Microsoft Clarity** app from the Shopify App Store — it auto-injects the tracking code on all pages including checkout
+4. For Hotjar: add the Hotjar tracking code to your theme under **Online Store → Themes → Edit Code → theme.liquid**
 
-   // Usage at each step transition:
-   // On checkout page load:
-   trackFunnelStep('begin_checkout', { cartValue: cart.total, itemCount: cart.items.length });
+---
 
-   // On payment form render:
-   trackFunnelStep('enter_payment', { shippingMethod: selectedShipping });
-   ```
+#### WooCommerce
 
-2. **Build a funnel drop-off report**
+1. Install the **MonsterInsights** plugin (free tier) — it connects WordPress to GA4 with ecommerce tracking built in
+2. For heatmaps: install the **Microsoft Clarity** WordPress plugin (free, official) or **Hotjar** plugin
+3. For funnel tracking: MonsterInsights shows checkout funnel steps in WordPress admin under **Insights → Reports → eCommerce**
 
-   Query step counts and calculate step-to-step conversion rates:
+---
 
-   ```sql
-   -- PostgreSQL: daily funnel report
-   WITH step_counts AS (
-     SELECT
-       DATE_TRUNC('day', created_at) AS day,
-       funnel_step,
-       COUNT(DISTINCT session_id) AS sessions
-     FROM funnel_events
-     WHERE created_at >= NOW() - INTERVAL '30 days'
-     GROUP BY 1, 2
-   ),
-   pivoted AS (
-     SELECT
-       day,
-       MAX(CASE WHEN funnel_step = 'view_product'   THEN sessions END) AS view_product,
-       MAX(CASE WHEN funnel_step = 'add_to_cart'    THEN sessions END) AS add_to_cart,
-       MAX(CASE WHEN funnel_step = 'begin_checkout' THEN sessions END) AS begin_checkout,
-       MAX(CASE WHEN funnel_step = 'enter_payment'  THEN sessions END) AS enter_payment,
-       MAX(CASE WHEN funnel_step = 'purchase'       THEN sessions END) AS purchase
-     FROM step_counts
-     GROUP BY 1
-   )
-   SELECT
-     day,
-     ROUND(100.0 * add_to_cart    / NULLIF(view_product,   0), 1) AS pdp_to_atc_pct,
-     ROUND(100.0 * begin_checkout / NULLIF(add_to_cart,    0), 1) AS atc_to_checkout_pct,
-     ROUND(100.0 * enter_payment  / NULLIF(begin_checkout, 0), 1) AS checkout_to_payment_pct,
-     ROUND(100.0 * purchase       / NULLIF(enter_payment,  0), 1) AS payment_to_purchase_pct,
-     ROUND(100.0 * purchase       / NULLIF(view_product,   0), 2) AS overall_cvr_pct
-   FROM pivoted
-   ORDER BY day DESC;
-   ```
+#### BigCommerce
 
-3. **Implement a CRO audit checklist programmatically**
+1. Go to **BigCommerce Admin → Advanced Settings → Analytics**
+2. Add your GA4 Measurement ID under "Google Analytics"
+3. For heatmaps: go to **Apps → Marketplace** and install Microsoft Clarity or Hotjar
 
-   Run automated checks against your checkout pages to flag common issues:
+---
 
-   ```typescript
-   interface AuditCheck {
-     id: string;
-     description: string;
-     impact: 'high' | 'medium' | 'low';
-     check: (page: Page) => Promise<boolean>;
-   }
+### Step 2: Run a CRO audit — check these high-impact items first
 
-   const CRO_AUDIT_CHECKS: AuditCheck[] = [
-     {
-       id: 'guest-checkout',
-       description: 'Guest checkout available without forced account creation',
-       impact: 'high',
-       check: async (page) => page.hasElement('[data-testid="guest-checkout-btn"]'),
-     },
-     {
-       id: 'trust-badges',
-       description: 'Security trust badges visible on payment step',
-       impact: 'medium',
-       check: async (page) => page.hasElement('[data-testid="trust-badges"]'),
-     },
-     {
-       id: 'error-messages-inline',
-       description: 'Form validation errors are inline (not toast/alert)',
-       impact: 'high',
-       check: async (page) => !page.hasElement('[role="alertdialog"]') && page.hasElement('.field-error'),
-     },
-     {
-       id: 'autofill-support',
-       description: 'Address fields have correct autocomplete attributes',
-       impact: 'medium',
-       check: async (page) => page.hasAttribute('input[name="address1"]', 'autocomplete', 'address-line1'),
-     },
-     {
-       id: 'progress-indicator',
-       description: 'Multi-step checkout shows progress indicator',
-       impact: 'medium',
-       check: async (page) => page.hasElement('[data-testid="checkout-progress"]'),
-     },
-     {
-       id: 'cta-above-fold',
-       description: 'Primary CTA button visible without scrolling on mobile',
-       impact: 'high',
-       check: async (page) => page.isAboveFold('[data-testid="place-order-btn"]', { viewport: 'mobile' }),
-     },
-   ];
+Review your store against this checklist before running any A/B tests. These are the highest-ROI fixes:
 
-   async function runCROAudit(checkoutUrl: string) {
-     const page = await loadPage(checkoutUrl);
-     const results = await Promise.all(
-       CRO_AUDIT_CHECKS.map(async (check) => ({
-         ...check,
-         passed: await check.check(page),
-       }))
-     );
+**Checkout friction (fix these first):**
+- [ ] Guest checkout available without forced account creation — forcing registration is the #1 abandonment cause (35% of users leave)
+- [ ] Email field is the first field on the checkout form — captures abandoners for email recovery even if they don't complete
+- [ ] Express payment methods (Shop Pay, Apple Pay, Google Pay) appear above the fold on mobile
+- [ ] Shipping cost is shown before the customer reaches the payment step — surprise shipping costs cause 25% of abandonment
+- [ ] Return policy is visible on the checkout page or product page
 
-     const failed = results.filter((r) => !r.passed);
-     console.table(failed.map((r) => ({ id: r.id, impact: r.impact, description: r.description })));
-     return results;
-   }
-   ```
+**Product page friction:**
+- [ ] Primary "Add to Cart" button is visible without scrolling on mobile
+- [ ] Product images include multiple angles, lifestyle shots, and zoom capability
+- [ ] Reviews/ratings are displayed on the product page
+- [ ] Low stock / urgency messaging is shown when inventory < 10 units
 
-4. **Integrate heatmap tracking with Hotjar or Microsoft Clarity**
+**Trust signals:**
+- [ ] SSL padlock visible in browser
+- [ ] Payment method icons (Visa, PayPal, etc.) visible near checkout button
+- [ ] Money-back guarantee or return policy linked from product pages
 
-   Add event hooks to surface high-friction areas:
+### Step 3: Identify your highest drop-off step using platform analytics
 
-   ```typescript
-   // Identify rage clicks on disabled or non-interactive elements
-   function initCROEventTracking() {
-     // Track form field abandonment
-     document.querySelectorAll<HTMLInputElement>('form input, form select').forEach((field) => {
-       field.addEventListener('blur', () => {
-         if (!field.value && field.required) {
-           window.hj?.('event', 'required_field_abandoned');
-           trackFunnelStep('field_abandoned', { fieldName: field.name, step: getCurrentCheckoutStep() });
-         }
-       });
-     });
+---
 
-     // Track scroll depth on product pages
-     const milestones = [25, 50, 75, 100];
-     const triggered = new Set<number>();
-     window.addEventListener('scroll', () => {
-       const pct = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
-       for (const m of milestones) {
-         if (pct >= m && !triggered.has(m)) {
-           triggered.add(m);
-           window.hj?.('event', `scroll_depth_${m}`);
-         }
-       }
-     });
-   }
-   ```
+#### Shopify
 
-5. **Prioritize experiments with ICE scoring**
+1. Go to **Shopify Admin → Analytics → Reports → Checkout funnel**
+2. This shows conversion rate at each checkout step: Information → Shipping → Payment → Order confirmation
+3. The step with the highest drop-off is your primary target
 
-   Use the ICE framework (Impact, Confidence, Ease) to rank your experiment backlog:
+Also check:
+- **Analytics → Reports → Sessions by landing page** — find which pages drive traffic but have low conversion
+- **Analytics → Live View** — watch real-time sessions to understand user behavior
 
-   ```typescript
-   interface CROExperiment {
-     id: string;
-     hypothesis: string;
-     impact: 1 | 2 | 3 | 4 | 5;      // Expected lift to primary metric
-     confidence: 1 | 2 | 3 | 4 | 5;  // Evidence strength (data, heuristics, research)
-     ease: 1 | 2 | 3 | 4 | 5;        // Dev effort (5 = easiest)
-   }
+---
 
-   function rankByICE(experiments: CROExperiment[]) {
-     return experiments
-       .map((e) => ({ ...e, iceScore: e.impact * e.confidence * e.ease }))
-       .sort((a, b) => b.iceScore - a.iceScore);
-   }
+#### WooCommerce with MonsterInsights
 
-   // Example backlog:
-   const backlog: CROExperiment[] = [
-     { id: 'guest-checkout', hypothesis: 'Removing forced registration increases checkout starts by 15%', impact: 5, confidence: 5, ease: 3 },
-     { id: 'express-pay', hypothesis: 'Adding Apple/Google Pay above fold increases mobile CVR by 10%', impact: 4, confidence: 4, ease: 4 },
-     { id: 'urgency-copy', hypothesis: 'Adding "X left in stock" copy increases PDP-to-ATC rate', impact: 3, confidence: 3, ease: 5 },
-   ];
-   ```
+1. Go to **WordPress Admin → Insights → Reports → eCommerce**
+2. Review the checkout funnel: Product page → Cart → Checkout → Order Complete
+3. High drop-off at "Cart → Checkout" suggests cart page issues; high drop-off at "Checkout → Order Complete" suggests checkout friction
 
-## Examples
+---
 
-### Measure the revenue impact of a CRO fix
+#### GA4 (all platforms)
 
-Before implementing any change, calculate the expected revenue lift to justify prioritization:
+1. Go to **GA4 → Reports → Monetization → Checkout journey**
+2. This shows the standard Google ecommerce funnel: View Item → Add to Cart → Begin Checkout → Purchase
+3. Click on any step to see the session recordings in Clarity/Hotjar that match users who dropped off there
 
-```typescript
-function estimateRevenueImpact(params: {
-  monthlyVisitors: number;
-  currentCVR: number;         // e.g., 0.025 for 2.5%
-  expectedCVRLift: number;    // e.g., 0.003 for +0.3pp
-  avgOrderValue: number;
-}) {
-  const { monthlyVisitors, currentCVR, expectedCVRLift, avgOrderValue } = params;
-  const currentRevenue = monthlyVisitors * currentCVR * avgOrderValue;
-  const newRevenue = monthlyVisitors * (currentCVR + expectedCVRLift) * avgOrderValue;
-  const monthlyLift = newRevenue - currentRevenue;
+### Step 4: Review heatmaps and session recordings
 
-  return {
-    currentRevenue: currentRevenue.toFixed(2),
-    newRevenue: newRevenue.toFixed(2),
-    monthlyLift: monthlyLift.toFixed(2),
-    annualLift: (monthlyLift * 12).toFixed(2),
-  };
-}
+After 2 weeks of data collection:
 
-// Example: 100k visitors/month, 2.5% CVR, +0.3pp lift, $65 AOV
-// → $23,400 additional monthly revenue
-```
+1. Open Microsoft Clarity or Hotjar
+2. **Heatmaps**: look for rage clicks (red areas users click repeatedly) on product pages and checkout — these indicate user frustration
+3. **Session recordings**: watch 10–20 sessions of users who reached checkout but did not purchase — identify specific friction points
+4. **Click maps on product pages**: are users clicking on non-clickable product images? Are they missing the "Add to Cart" button?
 
-### Checkout field error instrumentation
+### Step 5: Prioritize experiments using ICE scoring
 
-Track which form fields cause the most validation errors to prioritize UX fixes:
+Before building an A/B test backlog, score each hypothesis:
 
-```typescript
-const fieldErrorCounts: Record<string, number> = {};
+| Hypothesis | Impact (1–5) | Confidence (1–5) | Ease (1–5) | ICE Score |
+|-----------|-------------|-----------------|-----------|-----------|
+| Enable guest checkout | 5 | 5 | 3 | 75 |
+| Add Apple/Google Pay above fold on mobile | 4 | 4 | 4 | 64 |
+| Show shipping cost on product page | 4 | 4 | 3 | 48 |
+| Add "Only X left" urgency copy | 3 | 3 | 5 | 45 |
 
-document.querySelectorAll<HTMLFormElement>('form').forEach((form) => {
-  form.addEventListener('invalid', (e) => {
-    const field = e.target as HTMLInputElement;
-    fieldErrorCounts[field.name] = (fieldErrorCounts[field.name] ?? 0) + 1;
-    fetch('/api/analytics/field-error', {
-      method: 'POST',
-      body: JSON.stringify({ fieldName: field.name, errorType: field.validity }),
-    });
-  }, true);
-});
-```
+Run experiments in ICE score order. Never run more than 3 A/B tests simultaneously.
+
+**A/B testing tools by platform:**
+
+- **Shopify**: Shopify Experiments (built-in, Shopify Plus only) or **Intelligems** app for all plans
+- **WooCommerce**: **Nelio A/B Testing** plugin or **Google Optimize** (discontinued — use VWO or Intelligems)
+- **All platforms**: **VWO** ($200/mo) or **Convert** ($199/mo) for serious testing programs
+
+### Step 6: Implement the highest-impact fixes
+
+For Shopify stores, many of these are theme settings, not code changes:
+
+- **Enable guest checkout**: Shopify Admin → Settings → Checkout → check "Allow customers to check out as guests"
+- **Enable Shop Pay**: Shopify Admin → Settings → Payments → Enable Shop Pay
+- **Add urgency copy**: use a free app like **Urgency Bear** or **Sales Countdown Timer** from the Shopify App Store
+- **Add trust badges**: most themes have a "trust badges" section — add it to product pages and the cart page
 
 ## Best Practices
 
-- **Fix drop-off at the worst-performing step first** — always optimize the highest-volume drop-off before moving to smaller steps
-- **Enable guest checkout** — forcing account creation before purchase remains the #1 checkout abandonment cause; 35% of users abandon rather than register
+- **Fix drop-off at the worst-performing step first** — optimize the highest-volume drop-off before moving to smaller steps
+- **Enable guest checkout** before any other test — it is consistently the #1 highest-impact change
 - **Surface trust signals near the payment form** — SSL badge, return policy, and accepted card logos at the point of highest anxiety
-- **Use real-time inline validation** — tell users about errors as they fill each field, not after form submission
-- **Minimize form fields** — each additional required field reduces conversion; use address autocomplete (Google Places) to fill multiple fields from one input
-- **Add express payment methods above the fold** — Apple Pay, Google Pay, and PayPal reduce checkout time from 2 minutes to 15 seconds on mobile
-- **Never run more than 3 experiments simultaneously** — overlapping tests contaminate results unless using a proper orthogonal experimental design
-- **Set a minimum detectable effect before running a test** — running tests without a pre-calculated sample size leads to early stopping and false positives
+- **Add express payment methods above the fold on mobile** — Shop Pay, Apple Pay, and Google Pay reduce checkout time from 2 minutes to 15 seconds on mobile
+- **Set a minimum detectable effect before running a test** — run tests without a pre-calculated sample size leads to false positives
+- **Use revenue per visitor, not just conversion rate** — sometimes a change increases CVR but reduces AOV
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
 | A/B test shows conflicting results week over week | Use a fixed experiment duration based on statistical power calculation, not "when it looks significant" |
-| High cart-to-checkout rate but low checkout completion | The drop-off is inside checkout — instrument each checkout step individually to pinpoint the failing step |
-| CRO changes improve CVR but reduce AOV | Track revenue per visitor, not just CVR; sometimes a higher-pressure checkout reduces basket size |
-| Heatmaps show rage clicks on non-clickable elements | Make these elements interactive or remove the visual affordance suggesting they are clickable |
-| Funnel metrics inconsistent between GA4 and internal DB | Use server-side order count as ground truth; GA4 can miss orders due to ad blockers and script errors |
+| High cart-to-checkout rate but low checkout completion | The drop-off is inside checkout — review Shopify's Checkout Funnel report to pinpoint the specific step |
+| CRO changes improve CVR but reduce AOV | Track revenue per visitor, not just CVR |
+| Heatmaps show rage clicks on non-clickable elements | Make these elements interactive (link product images to the product page) or remove the visual affordance |
+| Funnel metrics inconsistent between GA4 and Shopify Analytics | Use Shopify's order count as ground truth; GA4 can miss orders due to ad blockers |
 
 ## Related Skills
 
-- @ab-testing-ecommerce
 - @cart-abandonment-recovery
 - @exit-intent-popups
-- @product-analytics
-- @attribution-modeling
+- @cross-sell-upsell-engine
+- @social-proof-widgets
+- @marketing-attribution-dashboard

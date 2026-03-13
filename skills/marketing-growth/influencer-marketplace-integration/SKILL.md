@@ -5,10 +5,10 @@ category: marketing-growth
 risk: safe
 source: curated
 date_added: "2026-03-12"
-tags: [influencer, creator-economy, partnerships]
-triggers: ["find influencers", "manage influencer campaigns"]
+tags: [influencer, creator-economy, partnerships, grin, aspire, ltk]
+triggers: ["find influencers", "manage influencer campaigns", "influencer platform", "creator partnerships", "influencer program"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Influencer marketing drives discovery and purchase intent at scale, especially for lifestyle products. Rather than managing influencer relationships in spreadsheets, integrating with an influencer marketplace API (Aspire, Creator.co, Grin, or custom-built) enables automated discovery, brief distribution, deliverable tracking, affiliate link generation, and ROI measurement in one system. This skill covers marketplace API integration, campaign lifecycle management, performance tracking, and building your own lightweight influencer CRM.
+Influencer marketing drives discovery and purchase intent for lifestyle products. Rather than managing partnerships in spreadsheets, dedicated influencer platforms handle discovery, brief distribution, deliverable tracking, affiliate link generation, and ROI measurement in one system. Most merchants can set this up without writing any code — the main effort is choosing the right platform and structuring your campaign workflow.
 
 ## When to Use This Skill
 
@@ -26,285 +26,157 @@ Influencer marketing drives discovery and purchase intent at scale, especially f
 - When needing to issue unique tracking links and discount codes at scale
 - When transitioning from agency-managed influencer campaigns to in-house management
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, influencer platform account (AspireIQ, GRIN, or LTK), social platform API credentials
-
 ## Core Instructions
 
-### 1. Influencer data model
+### Step 1: Choose the right influencer platform
 
-```typescript
-interface InfluencerProfile {
-  id:           string;
-  handle:       Record<'instagram' | 'tiktok' | 'youtube', string | undefined>;
-  email:        string;
-  niche:        string[];    // e.g., ['fashion', 'beauty', 'lifestyle']
-  tier:         'nano' | 'micro' | 'macro' | 'mega';  // based on follower count
-  metrics: {
-    instagram?: { followers: number; engagementRate: number; avgViews: number };
-    tiktok?:    { followers: number; engagementRate: number; avgViews: number };
-    youtube?:   { subscribers: number; avgViews: number };
-  };
-  demographics: { topCountry: string; ageRange: string; genderSplit: Record<string, number> };
-  status:       'prospect' | 'contacted' | 'active' | 'paused' | 'blacklisted';
-  tags:         string[];
-  notes:        string;
-}
+| Platform | Best For | Shopify Integration | Price |
+|----------|---------|--------------------|----|
+| **GRIN** | Mid-market DTC brands, deep ecommerce integration | Native Shopify + WooCommerce | $999+/mo |
+| **Aspire** | Brands wanting a managed marketplace to discover creators | Shopify App | $500+/mo |
+| **LTK (rewardStyle)** | Fashion, beauty, lifestyle brands selling through LTK's creator network | Shopify integration | Commission-based |
+| **Creator.co** | Small brands, self-service | Shopify plugin | $199+/mo |
+| **Impact** | Performance-focused, affiliate + influencer combined | All platforms via tracking pixel | $500+/mo |
+| **Shopify Collabs** (free) | Shopify merchants starting with gifting/affiliate | Native Shopify | Free |
 
-// Tier classification
-function classifyInfluencerTier(totalFollowers: number): InfluencerProfile['tier'] {
-  if (totalFollowers < 10_000)  return 'nano';
-  if (totalFollowers < 100_000) return 'micro';
-  if (totalFollowers < 1_000_000) return 'macro';
-  return 'mega';
-}
+**Start with Shopify Collabs if you are on Shopify** — it is free, handles gifting and commission tracking natively, and scales to 50–100 creator partnerships before you need a paid platform.
+
+### Step 2: Set up your influencer program
+
+---
+
+#### Shopify with Shopify Collabs (free)
+
+1. Go to **Shopify Admin → Apps → Shopify Collabs**
+2. Install and open the Collabs app
+3. Go to **Settings → Program Details** and configure:
+   - Commission rate (default 10%)
+   - Discount code for creators (unique code per creator for their followers)
+   - Brand description and application questions for your creator portal
+4. Go to **Collabs → Creators → Discover** to browse and invite creators
+5. When a creator accepts, Shopify Collabs automatically:
+   - Generates a unique affiliate link for the creator
+   - Creates a unique discount code (e.g., `JANEDOE15`)
+   - Tracks orders attributed to the creator via the discount code
+6. Creators manage their links and see their commission stats in a self-service portal
+7. Payouts are processed manually or via PayPal/Stripe via Shopify Collabs
+
+**For more power:** upgrade to **GRIN** or **Aspire** when you need campaign briefs, content approval workflows, and advanced analytics.
+
+---
+
+#### Shopify with GRIN
+
+1. Install GRIN from the Shopify App Store
+2. Connect GRIN to your Shopify store — GRIN imports your product catalog and order history
+3. Go to **GRIN → Campaigns → Create Campaign** and configure:
+   - Campaign brief (product, key messages, required hashtags, forbidden content)
+   - Compensation type (gifting / flat fee / commission / hybrid)
+   - Deliverable requirements (1 reel + 2 stories, for example)
+4. Go to **GRIN → Creators → Discover** to search by niche, follower count, engagement rate, and audience demographics
+5. Send collaboration invites directly from GRIN
+6. When a creator accepts, GRIN automatically:
+   - Generates unique UTM tracking links
+   - Creates a unique Shopify discount code
+   - Tracks clicks, orders, and revenue from each creator
+7. Review and approve content submissions in **GRIN → Content**
+8. Process payments in **GRIN → Payments** (integrates with PayPal and wire transfer)
+
+---
+
+#### WooCommerce
+
+1. Install **AffiliateWP** for commission tracking ($149/yr) — it handles the affiliate link and discount code generation
+2. For influencer discovery: use **Modash**, **HypeAuditor**, or **Upfluence** as standalone discovery tools that work independently of WooCommerce
+3. Configure each influencer in AffiliateWP as an affiliate:
+   - Go to **AffiliateWP → Affiliates → Add Affiliate**
+   - Set a custom commission rate per influencer
+   - Generate a unique affiliate link for each creator
+4. For discount code tracking: use WooCommerce's built-in coupon system with unique codes per influencer
+5. Track ROI manually by comparing coupon code revenue in **WooCommerce → Analytics → Coupons**
+
+---
+
+#### BigCommerce
+
+1. Install **Refersion** from the BigCommerce App Marketplace — it handles affiliate + influencer tracking natively
+2. Go to **Refersion → Affiliates → Invite** to onboard influencers
+3. Refersion generates unique tracking links and discount codes automatically
+4. Go to **Refersion → Reports → Performance** to view revenue attributed to each influencer
+
+---
+
+### Step 3: Set up unique tracking per creator
+
+Every influencer needs two attribution tools:
+
+**1. Unique UTM link** — tracks web traffic from the influencer's post:
+```
+yourstore.com/?utm_source=instagram&utm_medium=influencer&utm_campaign=spring2026&utm_content=janedoe
 ```
 
-### 2. Aspire (formerly AspireIQ) API integration
+All platforms above generate these automatically. For manual setup, use Google's Campaign URL Builder at `ga-dev-tools.google.com/campaign-url-builder`.
 
-```typescript
-const ASPIRE_API_BASE = 'https://api.aspire.io/v1';
+**2. Unique discount code** — tracks purchases (including those who visit via direct/organic after seeing the post):
+- Format: `JANEDOE15` (creator name + discount percentage)
+- Unlimited uses (you want their followers to use it freely)
+- Per-customer limit: 1 use per customer (prevents abuse)
+- Set an expiry matching your campaign end date
 
-async function aspireRequest(method: string, path: string, body?: object) {
-  const response = await fetch(`${ASPIRE_API_BASE}${path}`, {
-    method,
-    headers: {
-      'Authorization': `Bearer ${process.env.ASPIRE_API_KEY}`,
-      'Content-Type':  'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!response.ok) throw new Error(`Aspire API error: ${response.status}`);
-  return response.json();
-}
+The discount code is more reliable than the UTM link for attribution because customers often see a post, leave the platform, and purchase days later.
 
-// Search for influencers matching criteria
-async function searchInfluencers(params: {
-  niche:        string[];
-  minFollowers: number;
-  maxFollowers: number;
-  minEngagement: number;  // e.g., 0.03 = 3%
-  platform:     'instagram' | 'tiktok' | 'youtube';
-  country?:     string;
-}) {
-  return aspireRequest('GET', '/influencers/search', {
-    filters: {
-      categories:         params.niche,
-      platforms:          [params.platform],
-      follower_count:     { min: params.minFollowers, max: params.maxFollowers },
-      engagement_rate:    { min: params.minEngagement },
-      audience_countries: params.country ? [params.country] : undefined,
-    },
-    limit: 50,
-  });
-}
-```
+### Step 4: Campaign brief and deliverable workflow
 
-### 3. Campaign and brief management
+Structure every campaign with a written brief:
 
-```typescript
-interface InfluencerCampaign {
-  id:           string;
-  name:         string;
-  objective:    'awareness' | 'conversion' | 'ugc';
-  brief:        CampaignBrief;
-  budget:       number;
-  startDate:    Date;
-  endDate:      Date;
-  participants: CampaignParticipant[];
-  status:       'draft' | 'active' | 'completed';
-}
+**Brief components:**
+1. Product to feature + shipping address for gifted product
+2. Key messages and brand voice guidelines
+3. Required tags (#ad, #sponsored, brand hashtag)
+4. Forbidden content (competitors, claims you cannot make)
+5. Post format and timeline (e.g., "1 Reel + 2 Stories, post by March 15")
+6. Compensation terms (flat fee, gifting, commission rate)
+7. Content approval: do you require pre-approval or just review after posting?
 
-interface CampaignBrief {
-  productIds:     string[];
-  keyMessages:    string[];
-  mandatoryTags:  string[];
-  forbiddenContent: string[];
-  postRequirements: {
-    platform:    string;
-    format:      'feed-post' | 'story' | 'reel' | 'video' | 'youtube-integration';
-    minDuration?: number;  // seconds, for video
-    caption:     string;   // template with [brand name] placeholders
-  }[];
-  compensationType: 'gifting' | 'flat-fee' | 'commission' | 'hybrid';
-  compensation:     number;
-  commissionRate?:  number;
-}
+Most influencer platforms (GRIN, Aspire) have a built-in brief template and content submission workflow.
 
-async function createCampaign(campaign: Omit<InfluencerCampaign, 'id'>) {
-  const dbCampaign = await db.influencerCampaigns.create(campaign);
+### Step 5: Measure ROI
 
-  // Create the campaign in Aspire for managed outreach
-  const aspireCampaign = await aspireRequest('POST', '/campaigns', {
-    name:       campaign.name,
-    start_date: campaign.startDate.toISOString(),
-    end_date:   campaign.endDate.toISOString(),
-    brief:      campaign.brief,
-  });
+Track these metrics in your platform's dashboard:
 
-  await db.influencerCampaigns.update(dbCampaign.id, { aspireId: aspireCampaign.id });
-  return dbCampaign;
-}
-```
+| Metric | Target | Where to Find |
+|--------|--------|---------------|
+| Revenue per creator | Vary by tier | Platform dashboard → Creator performance |
+| ROAS (revenue / campaign cost) | > 2x for macro, > 4x for micro | Platform analytics or calculate manually |
+| Discount code usage | Track by creator | Shopify Analytics → Discounts, or platform dashboard |
+| Content engagement | 3%+ engagement rate | Platform dashboard (if connected to social APIs) |
 
-### 4. Unique tracking links and discount codes
-
-Issue each influencer a unique UTM link and discount code for attribution:
-
-```typescript
-async function onboardInfluencerToCampaign(influencerId: string, campaignId: string) {
-  const [influencer, campaign] = await Promise.all([
-    db.influencers.findById(influencerId),
-    db.influencerCampaigns.findById(campaignId),
-  ]);
-
-  // Generate unique tracking link
-  const utmParams = new URLSearchParams({
-    utm_source:   'influencer',
-    utm_medium:   'social',
-    utm_campaign: campaign.name.toLowerCase().replace(/\s/g, '-'),
-    utm_content:  influencer.handle.instagram ?? influencer.id,
-  });
-  const trackingLink = `${process.env.STORE_URL}?${utmParams}`;
-
-  // Optionally use a link shortener for cleaner URLs
-  const shortLink = await createShortLink(trackingLink, `${campaign.id}-${influencer.id}`);
-
-  // Generate a unique discount code
-  const discountCode = `${influencer.handle.instagram?.toUpperCase() ?? influencer.id.slice(0, 6)}15`;
-  await createUniqueDiscount({
-    code:           discountCode,
-    type:           'percent_off',
-    value:          15,
-    influencerId:   influencer.id,
-    campaignId:     campaign.id,
-    expiresAt:      campaign.endDate,
-    usageLimit:     null,  // unlimited uses (trackable via code)
-  });
-
-  // Create participant record
-  await db.campaignParticipants.create({
-    influencerId,
-    campaignId,
-    trackingLink: shortLink,
-    discountCode,
-    status: 'briefed',
-    compensationDue: campaign.brief.compensation,
-  });
-
-  // Send brief email
-  await sendInfluencerBriefEmail(influencer.email, { campaign, trackingLink: shortLink, discountCode });
-}
-```
-
-### 5. Deliverable tracking and approval
-
-```typescript
-interface CampaignDeliverable {
-  id:           string;
-  participantId: string;
-  platform:     string;
-  postUrl:      string;
-  postedAt:     Date;
-  status:       'submitted' | 'approved' | 'revision-requested' | 'rejected';
-  metrics?: {
-    views:    number;
-    likes:    number;
-    comments: number;
-    shares:   number;
-    clicks:   number;   // tracked via UTM link clicks
-    orders:   number;   // from discount code usage
-    revenue:  number;
-  };
-}
-
-async function submitDeliverable(participantId: string, postUrl: string) {
-  const deliverable = await db.campaignDeliverables.create({
-    participantId,
-    postUrl,
-    postedAt: new Date(),
-    status: 'submitted',
-  });
-
-  // Auto-fetch initial metrics from social API
-  await refreshDeliverableMetrics(deliverable.id);
-
-  // Notify campaign manager for review
-  await notifyCampaignManager(deliverable);
-  return deliverable;
-}
-
-async function refreshDeliverableMetrics(deliverableId: string) {
-  const deliverable = await db.campaignDeliverables.findById(deliverableId);
-  const participant  = await db.campaignParticipants.findById(deliverable.participantId);
-
-  const socialMetrics = await fetchPostMetrics(deliverable.platform, deliverable.postUrl);
-  const commerceMetrics = {
-    clicks: await db.utmClicks.countByDiscountCode(participant.discountCode, { since: deliverable.postedAt }),
-    orders: await db.orders.countByDiscountCode(participant.discountCode, { since: deliverable.postedAt }),
-    revenue: await db.orders.sumByDiscountCode(participant.discountCode, { since: deliverable.postedAt }),
-  };
-
-  await db.campaignDeliverables.update(deliverableId, {
-    metrics: { ...socialMetrics, ...commerceMetrics },
-  });
-}
-```
-
-### 6. ROI measurement
-
-```typescript
-async function getCampaignROI(campaignId: string) {
-  const participants = await db.campaignParticipants.findByCampaign(campaignId);
-  const deliverables = await db.campaignDeliverables.findByCampaign(campaignId);
-
-  const totalSpend = participants.reduce((sum, p) => sum + p.compensationPaid, 0);
-  const totalRevenue = deliverables.reduce((sum, d) => sum + (d.metrics?.revenue ?? 0), 0);
-  const totalOrders  = deliverables.reduce((sum, d) => sum + (d.metrics?.orders ?? 0), 0);
-
-  return {
-    totalSpend,
-    totalRevenue,
-    roas:         totalRevenue / totalSpend,
-    cpo:          totalSpend / totalOrders,
-    topPerformers: participants
-      .map(p => ({ handle: p.influencer.handle, revenue: p.revenue }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5),
-  };
-}
-```
+**Calculating ROAS:**
+- Campaign cost = flat fee + COGS of gifted product + commission paid
+- Revenue = orders attributed via UTM + orders using the discount code
 
 ## Best Practices
 
-- **Prioritize micro-influencers (10k–100k) for ecommerce** — they typically achieve 3–5x higher engagement rates and conversion rates than mega-influencers
-- **Always use unique discount codes per creator** — UTM links can be lost in link-in-bio click chains; discount codes provide the most reliable attribution
-- **Build an evergreen affiliate program alongside campaign work** — always-on commission-based partnerships scale without per-campaign budgeting
-- **Review content before it goes live when possible** — for sponsored posts, require draft approval; for organic Spark Ads, this is less critical
-- **Establish FTC compliance in the brief** — require #ad or #sponsored disclosure in all posts; non-disclosure is a legal risk
-- **Refresh top-performing influencer content as paid ads** — repurpose organic posts that hit benchmarks as Spark Ads or Facebook/Instagram paid content
-- **Set benchmark KPIs before campaigns start** — define minimum acceptable CPV, engagement rate, and ROAS; use these to gate payment
+- **Prioritize micro-influencers (10k–100k followers) for ecommerce** — they typically achieve 3–5x higher engagement and conversion rates than mega-influencers at a fraction of the cost
+- **Always use unique discount codes, not just UTM links** — UTM links get lost when creators use link-in-bio tools; discount codes provide device-agnostic attribution
+- **Build an evergreen affiliate program alongside campaign work** — always-on commission-based partnerships (via Shopify Collabs or AffiliateWP) scale without per-campaign budgeting
+- **Require FTC disclosure in the brief** — mandate #ad or #sponsored in all posts; non-disclosure is a legal risk in the US and EU
+- **Repurpose top-performing organic content as paid ads** — content that hits your benchmark metrics organically often performs even better as Spark Ads (TikTok) or Boosted Posts (Instagram)
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Influencer posts but never submits the link | Build a submission portal; make payment contingent on verified deliverable submission |
-| Attribution lost because influencer changed the UTM link | Use short links that redirect to UTM URLs; the redirect is under your control |
-| Paying for reach but getting no conversions | Audit fake follower rates before contracting; use tools like HypeAuditor or Modash to check audience quality |
-| Influencer posts branded content that violates FTC rules | Include explicit disclosure requirements in the contract; non-compliance voids the payment term |
-| Campaign budget overspent on low performers | Set a conversion performance clause — partial payment on delivery, full payment after hitting minimum orders |
+| Attribution lost because influencer changed the UTM link | Use short redirect links under your domain; the redirect is under your control even if the influencer modifies the destination |
+| Paying for reach but getting no conversions | Audit audience quality before contracting — use HypeAuditor or Modash to check fake follower rates; require 3% minimum engagement rate |
+| Influencer posts branded content without FTC disclosure | Include explicit disclosure requirements in the contract; non-compliance voids the payment term |
+| Discount codes shared on coupon sites | Set a per-customer usage limit of 1 to prevent bulk abuse; monitor daily usage velocity for spikes |
+| Campaign budget overspent on low performers | Use GRIN's or Aspire's performance clauses — partial payment on delivery, full payment after hitting minimum attributed orders |
 
 ## Related Skills
 
-- @ugc-campaign-management
+- @influencer-tracking
 - @affiliate-program
 - @tiktok-ads-integration
-- @referral-viral-loops
+- @ugc-campaign-management
 - @marketing-attribution-dashboard

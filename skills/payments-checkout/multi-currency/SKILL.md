@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [multi-currency, forex, localization, exchange-rates, formatting, i18n, checkout]
 triggers: ["multi currency", "currency conversion", "international pricing", "exchange rate", "currency selector", "localize prices"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Implement multi-currency support that detects a visitor's preferred currency from their locale or IP geolocation, converts product prices using live or daily exchange rates, applies currency-specific rounding rules, and formats amounts with correct symbols, decimal separators, and digit groupings. Payments can be settled in the presentment currency (via Stripe multi-currency) or converted back to the store's base currency at settlement.
+Multi-currency support lets international shoppers browse and pay in their local currency instead of your store's base currency. On Shopify, WooCommerce, and BigCommerce, this is a configuration task — each platform has built-in or app-based solutions that handle exchange rates, price display, and payment settlement automatically. Custom code is only required for headless storefronts.
 
 ## When to Use This Skill
 
@@ -25,272 +25,162 @@ Implement multi-currency support that detects a visitor's preferred currency fro
 - When implementing a currency selector in the site header
 - When integrating Stripe or PayPal multi-currency settlement
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
-
 ## Core Instructions
 
-1. **Define supported currencies and exchange rate strategy**
+### Step 1: Determine your platform and multi-currency approach
 
-   ```javascript
-   // config/currencies.js
-   export const SUPPORTED_CURRENCIES = {
-     USD: { symbol: '$',  code: 'USD', decimalDigits: 2, thousandsSep: ',', decimalSep: '.', symbolFirst: true },
-     EUR: { symbol: '€',  code: 'EUR', decimalDigits: 2, thousandsSep: '.', decimalSep: ',', symbolFirst: false },
-     GBP: { symbol: '£',  code: 'GBP', decimalDigits: 2, thousandsSep: ',', decimalSep: '.', symbolFirst: true },
-     CAD: { symbol: '$',  code: 'CAD', decimalDigits: 2, thousandsSep: ',', decimalSep: '.', symbolFirst: true,  label: 'CA$' },
-     AUD: { symbol: '$',  code: 'AUD', decimalDigits: 2, thousandsSep: ',', decimalSep: '.', symbolFirst: true,  label: 'AU$' },
-     JPY: { symbol: '¥',  code: 'JPY', decimalDigits: 0, thousandsSep: ',', decimalSep: '.', symbolFirst: true },
-     BRL: { symbol: 'R$', code: 'BRL', decimalDigits: 2, thousandsSep: '.', decimalSep: ',', symbolFirst: true },
-   };
+| Platform | Recommended Approach | Settlement Currency |
+|----------|---------------------|---------------------|
+| **Shopify (Shopify Payments)** | Enable **Markets** and multi-currency in Shopify Admin | Stripe/Shopify settles in your payout currency; conversion is automatic |
+| **Shopify + non-Shopify gateway** | Install **BEST Currency Converter** or **MLV Auto Currency Switcher** app | Display-only conversion; payment taken in base currency |
+| **WooCommerce** | Install **WooCommerce Payments** (for native multi-currency) or **WPML + WooCommerce Multilingual** | WooCommerce Payments settles in local currency; other gateways may convert |
+| **BigCommerce** | Enable **Multi-Currency** in Store Settings; use Stripe for multi-currency settlement | BigCommerce handles display; Stripe settles in customer's currency |
+| **Custom / Headless** | Use Stripe's multi-currency payment intents; fetch exchange rates from OpenExchangeRates | Stripe accepts charges in any currency and settles in your configured currency |
 
-   export const BASE_CURRENCY = 'USD';
-   ```
+### Step 2: Set up multi-currency on your platform
 
-2. **Fetch and cache exchange rates**
+---
 
-   Use a daily exchange rate snapshot for display prices; use real-time rates for payment processing.
+#### Shopify
 
-   ```javascript
-   // lib/exchangeRates.js
-   import { redis } from './redis';
+Shopify's **Markets** feature is the recommended way to implement multi-currency:
 
-   const RATES_CACHE_KEY = 'exchange_rates';
-   const RATES_TTL_SECONDS = 60 * 60 * 24; // 24 hours for display prices
+1. Go to **Settings → Markets**
+2. Click **Add market** for each region (e.g., Europe, UK, Australia)
+3. Under each market, go to **Currencies** and enable the local currency (EUR, GBP, AUD)
+4. Shopify automatically converts prices using daily exchange rates
+5. To set manual price overrides for specific currencies (e.g., set EUR price to a fixed €99 instead of converting $99.00), go to the market and click **Manage** to set currency-specific prices per product
 
-   export async function getExchangeRates() {
-     const cached = await redis.get(RATES_CACHE_KEY);
-     if (cached) return JSON.parse(cached);
+**Exchange rate handling:**
+- By default, Shopify uses automatic exchange rates that update daily
+- To add a margin to the exchange rate (to cover your FX costs), go to **Settings → Markets → [Market] → Currencies** and set a currency conversion rate adjustment (e.g., +2%)
 
-     // Fetch from Open Exchange Rates, Fixer.io, or a similar API
-     const res = await fetch(
-       `https://openexchangerates.org/api/latest.json?app_id=${process.env.OPENEXCHANGERATES_API_KEY}&base=USD&symbols=EUR,GBP,CAD,AUD,JPY,BRL`
-     );
-     const data = await res.json();
+**Currency selector in storefront:**
+Shopify themes from OS 2.0 (Dawn, Crave, etc.) include a built-in currency/country selector. In **Online Store → Themes → Customize**, add the **Header → Country/Region selector** section.
 
-     const rates = data.rates; // { EUR: 0.93, GBP: 0.79, ... }
-     await redis.setex(RATES_CACHE_KEY, RATES_TTL_SECONDS, JSON.stringify(rates));
-     return rates;
-   }
+**Payment settlement:**
+When using Shopify Payments, charges are made in the customer's currency. The payout to your bank account is in your default payout currency with Shopify handling the conversion. For Shopify Plus, you can configure multi-currency payouts with separate bank accounts per currency.
 
-   export async function convertPrice(amountUSD, targetCurrency) {
-     if (targetCurrency === BASE_CURRENCY) return amountUSD;
-     const rates = await getExchangeRates();
-     const rate = rates[targetCurrency];
-     if (!rate) throw new Error(`Unsupported currency: ${targetCurrency}`);
-     return amountUSD * rate;
-   }
-   ```
+#### WooCommerce
 
-3. **Apply currency-specific rounding rules**
+**Option A: WooCommerce Payments (native multi-currency)**
 
-   Converted prices look odd without rounding (e.g., €23.847). Apply "charming price" rounding.
+1. Install and activate **WooCommerce Payments** (Stripe-powered)
+2. Go to **WooCommerce → Settings → WooCommerce Payments → Multi-currency**
+3. Click **Add currencies** and select the currencies you want to offer
+4. For each currency, configure: exchange rate source (automatic from WooCommerce's daily feed or manual), rounding (e.g., round to .99), and whether to charge a conversion rate markup
+5. Enable **Currency switcher widget**: go to **Appearance → Widgets** and add the **Currency Switcher** widget to your header or sidebar
 
-   ```javascript
-   // lib/currencyRounding.js
+**Option B: WooCommerce Multilingual + WPML**
 
-   /**
-    * Applies psychological ("charm") pricing rounding for DISPLAY purposes only.
-    * This function must NOT be used to determine the amount charged to the customer.
-    * Always charge the exact converted amount (stored in the base currency); use this
-    * function only when rendering prices in the UI.
-    */
-   export function roundPriceForDisplay(amount, currency) {
-     const config = SUPPORTED_CURRENCIES[currency];
-     if (!config) return amount;
+1. Install **WPML** and **WooCommerce Multilingual & Multicurrency**
+2. Go to **WPML → WooCommerce Multilingual → Currencies** and add currencies
+3. For each currency, set the exchange rate (manual or via automatic update) and rounding rules
+4. The product price for each currency can be set manually per product or auto-converted
 
-     if (config.decimalDigits === 0) {
-       // JPY, KRW — round to nearest integer
-       return Math.round(amount);
-     }
+**Option C: Currency Switcher for WooCommerce (free plugin)**
 
-     // Apply psychological pricing rounding
-     // Prices < $10: round to .99
-     // Prices >= $10: round to nearest .00 or .95
+For display-only currency switching (payment taken in base currency), install **Currency Switcher for WooCommerce** by Aelia. This converts displayed prices but settles in your base currency — simpler but requires customers to understand they will be charged in USD (or your base currency).
 
-     if (amount < 10) {
-       return Math.floor(amount) + 0.99;
-     }
+#### BigCommerce
 
-     if (amount < 100) {
-       // Round to nearest 5-cent increment ending in .95 or .99
-       const rounded = Math.round(amount * 20) / 20; // Round to nearest $0.05
-       return rounded % 1 === 0 ? rounded - 0.05 : rounded;
-     }
+1. Go to **Settings → Store Setup → Currencies**
+2. Click **Add a currency** and select from the dropdown
+3. For each currency, configure:
+   - **Exchange rate**: manual or auto-updated via BigCommerce's rate feed
+   - **Rounding**: round to nearest 0.99, 0.95, or whole number
+   - **Display settings**: where to show the currency selector
+4. Set one currency as **Default** — this is used in reporting and as the fallback
+5. Enable the currency selector: go to **Storefront → My Themes → Customize** and add the currency selector component to your header
 
-     // For amounts >= 100, round to nearest whole number
-     return Math.round(amount);
-   }
-   ```
+**Payment settlement with BigCommerce:**
+Configure your payment gateway to accept charges in multiple currencies. Stripe (configured under **Settings → Payments → Stripe**) supports accepting payments in the customer's currency and settling in yours automatically.
 
-4. **Format prices for display using the Intl API**
+---
 
-   The browser's `Intl.NumberFormat` handles all locale-specific formatting concerns correctly.
+#### Custom / Headless
 
-   ```javascript
-   // lib/formatCurrency.js
+**Exchange rate fetching:**
 
-   /**
-    * Format a price amount for display.
-    * Uses Intl.NumberFormat for locale-aware formatting.
-    *
-    * @param {number} amount - The price amount
-    * @param {string} currency - ISO 4217 currency code
-    * @param {string} locale - BCP 47 locale tag (e.g., 'en-US', 'de-DE')
-    * @returns {string} Formatted price string
-    */
-   export function formatPrice(amount, currency, locale = 'en-US') {
-     const config = SUPPORTED_CURRENCIES[currency];
-     if (!config) return `${currency} ${amount}`;
+```javascript
+// Fetch and cache daily exchange rates from OpenExchangeRates (free tier available)
+async function getExchangeRates() {
+  const cached = await redis.get('exchange_rates');
+  if (cached) return JSON.parse(cached);
 
-     try {
-       return new Intl.NumberFormat(locale, {
-         style: 'currency',
-         currency,
-         minimumFractionDigits: config.decimalDigits,
-         maximumFractionDigits: config.decimalDigits,
-       }).format(amount);
-     } catch {
-       // Fallback for unsupported environments
-       return `${config.label ?? config.symbol}${amount.toFixed(config.decimalDigits)}`;
-     }
-   }
-
-   // Examples:
-   // formatPrice(29.99, 'USD', 'en-US') → '$29.99'
-   // formatPrice(29.99, 'EUR', 'de-DE') → '29,99 €'
-   // formatPrice(3500, 'JPY', 'ja-JP')  → '¥3,500'
-   // formatPrice(29.99, 'BRL', 'pt-BR') → 'R$ 29,99'
-   ```
-
-5. **Detect and persist currency from browser/IP geolocation**
-
-   ```javascript
-   // middleware/currencyDetection.js
-
-   const COUNTRY_TO_CURRENCY = {
-     US: 'USD', CA: 'CAD', GB: 'GBP', AU: 'AUD', JP: 'JPY', BR: 'BRL',
-     DE: 'EUR', FR: 'EUR', IT: 'EUR', ES: 'EUR', NL: 'EUR', BE: 'EUR',
-     // Add more as needed
-   };
-
-   export async function detectCurrency(req, res, next) {
-     // 1. Explicit user selection (highest priority)
-     if (req.cookies.preferred_currency && SUPPORTED_CURRENCIES[req.cookies.preferred_currency]) {
-       req.currency = req.cookies.preferred_currency;
-       return next();
-     }
-
-     // 2. Accept-Language header hint
-     const acceptLanguage = req.headers['accept-language'] ?? '';
-     const localeMatch = acceptLanguage.match(/([a-z]{2})-([A-Z]{2})/);
-     if (localeMatch) {
-       const country = localeMatch[2];
-       const currency = COUNTRY_TO_CURRENCY[country];
-       if (currency && SUPPORTED_CURRENCIES[currency]) {
-         req.currency = currency;
-         return next();
-       }
-     }
-
-     // 3. IP geolocation (if Cloudflare or similar CDN provides cf-ipcountry header)
-     const countryCode = req.headers['cf-ipcountry'] ?? req.headers['x-country'];
-     if (countryCode) {
-       const currency = COUNTRY_TO_CURRENCY[countryCode];
-       if (currency && SUPPORTED_CURRENCIES[currency]) {
-         req.currency = currency;
-         return next();
-       }
-     }
-
-     // 4. Default to base currency
-     req.currency = BASE_CURRENCY;
-     next();
-   }
-
-   // Currency selector — user explicitly chooses
-   // POST /api/preferences/currency
-   export async function setCurrencyPreference(req, res) {
-     const { currency } = req.body;
-     if (!SUPPORTED_CURRENCIES[currency]) {
-       return res.status(400).json({ error: 'Unsupported currency' });
-     }
-     res.cookie('preferred_currency', currency, {
-       maxAge: 365 * 24 * 60 * 60 * 1000,
-       httpOnly: true,
-       sameSite: 'lax',
-     });
-     res.json({ currency });
-   }
-   ```
-
-## Examples
-
-### Currency selector component
-
-```jsx
-function CurrencySelector({ currentCurrency, supportedCurrencies }) {
-  async function handleChange(e) {
-    await fetch('/api/preferences/currency', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ currency: e.target.value }),
-    });
-    window.location.reload(); // Reload to re-render prices in new currency
-  }
-
-  return (
-    <label className="currency-selector">
-      <span className="sr-only">Select currency</span>
-      <select value={currentCurrency} onChange={handleChange}>
-        {Object.entries(supportedCurrencies).map(([code, config]) => (
-          <option key={code} value={code}>
-            {config.label ?? config.symbol} {code}
-          </option>
-        ))}
-      </select>
-    </label>
+  const res = await fetch(
+    `https://openexchangerates.org/api/latest.json?app_id=${process.env.OER_API_KEY}&base=USD&symbols=EUR,GBP,CAD,AUD,JPY`
   );
+  const { rates } = await res.json();
+
+  // Cache for 24 hours — daily rates are sufficient for display prices
+  await redis.setex('exchange_rates', 86400, JSON.stringify(rates));
+  return rates;
+}
+
+async function convertPrice(amountUSD, targetCurrency) {
+  if (targetCurrency === 'USD') return amountUSD;
+  const rates = await getExchangeRates();
+  return amountUSD * rates[targetCurrency];
 }
 ```
 
-### Stripe multi-currency charge
+**Stripe multi-currency charge:**
 
 ```javascript
-// Charge in the customer's currency — Stripe handles conversion and settlement
+// Charge in customer's currency — Stripe handles conversion and settles in your payout currency
 const paymentIntent = await stripe.paymentIntents.create({
-  amount: Math.round(displayPrice * 100),  // Amount in smallest currency unit
-  currency: customerCurrency.toLowerCase(), // 'eur', 'gbp', etc.
+  amount: Math.round(displayPrice * 100), // Amount in smallest unit (EUR cents, JPY yen)
+  currency: customerCurrency.toLowerCase(), // 'eur', 'gbp', 'jpy'
   automatic_payment_methods: { enabled: true },
   metadata: { order_id: orderId, base_currency_amount: String(basePriceUSD) },
 });
-// Stripe converts to your settlement currency automatically
+// Note: for JPY and other zero-decimal currencies, multiply by 1 (not 100)
+const jpy_amount = Math.round(jpyPrice); // ¥3,000 → 3000, not 300000
 ```
+
+**Currency detection from browser:**
+
+```javascript
+// Detect preferred currency from browser language or IP country header
+function detectCurrency(req) {
+  // Check explicit user preference first
+  if (req.cookies.preferred_currency) return req.cookies.preferred_currency;
+
+  // Cloudflare and similar CDNs provide the visitor's country
+  const country = req.headers['cf-ipcountry'];
+  const countryToCurrency = { US:'USD', GB:'GBP', DE:'EUR', FR:'EUR', AU:'AUD', JP:'JPY', CA:'CAD' };
+  return countryToCurrency[country] ?? 'USD';
+}
+```
+
+### Step 3: Verify correct behavior
+
+Test these scenarios before going live:
+
+1. **Correct price display**: visit from a VPN with a UK IP — prices should show in GBP
+2. **JPY zero-decimal**: Japanese prices should show as whole numbers (¥3,000 not ¥30.00)
+3. **Payment amount matches displayed price**: the Stripe charge amount must match what was shown
+4. **Currency selector persists**: switching currency should persist across page navigation
+5. **Cart totals in correct currency**: cart and checkout should use the selected currency
 
 ## Best Practices
 
-- **Use the Intl.NumberFormat API** — never manually build currency strings; the Intl API handles 100+ locale/currency combinations correctly
-- **Refresh exchange rates daily** — for display prices, daily rates are sufficient and reduce API costs; do not fetch rates on every page load
-- **Store amounts in the base currency in the database** — always persist prices in your base currency (USD); store the display currency and rate used at checkout for reconciliation
-- **Use Stripe's presentment currency feature** — Stripe can accept payments in the customer's currency and settle in yours; this is far simpler than building your own conversion
-- **Apply rounding rules specific to each market** — €9.99 looks natural; €9.847 does not; apply charm pricing rules per currency
-- **Test with JPY** — JPY has zero decimal places; a common bug is displaying ¥29.99 instead of ¥3,000
+- **Use platform-native multi-currency** — Shopify Markets, WooCommerce Payments, and BigCommerce's built-in feature handle exchange rates, rounding, and display correctly
+- **Refresh exchange rates daily** — for display prices, daily rates are sufficient; do not fetch rates on every page load
+- **Store order amounts in your base currency** — always record prices in your base currency in the database for consistent reporting; store the display currency and rate used for reference
+- **Apply rounding rules specific to each market** — €9.99 looks natural; €9.847 does not; configure rounding in your platform's currency settings
+- **Test JPY specifically** — JPY has zero decimal places; a common bug is displaying ¥29.99 instead of ¥3,000; verify by setting your test currency to JPY
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Prices look odd after conversion (€23.847) | Apply the `roundPriceForDisplay` function to converted prices before display (not before charging) |
-| Currency flashes to base currency on page load (hydration mismatch) | Read the user's currency preference from a cookie server-side and render with the correct currency from the first render |
-| Payment amount does not match displayed price | Always recalculate the payment amount server-side using the same exchange rate that was shown to the customer; store the rate at checkout time |
-| JPY amount passed to Stripe as cents (¥300000 instead of ¥3000) | For zero-decimal currencies (JPY, KRW), pass the whole amount to Stripe — do not multiply by 100 |
+| Prices flash to base currency on page load | Read the user's currency preference server-side (from a cookie) and render with the correct currency on first load; avoid client-side-only currency switching |
+| JPY amount passed to Stripe as cents | For zero-decimal currencies (JPY, KRW), pass the whole amount — ¥3,000 → `amount: 3000`, not `amount: 300000` |
+| Payment amount does not match displayed price | Recalculate the payment amount server-side using the stored exchange rate at checkout time; never trust client-submitted amounts |
 | Exchange rate missing for a currency | Default to base currency or show an error; do not silently use a zero rate which would make products free |
+| Shopify currency showing but not accepted at checkout | Currency must be enabled under **Settings → Payments → Supported currencies** in addition to **Settings → Markets**; both settings must be configured |
 
 ## Related Skills
 

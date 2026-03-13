@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [fulfillment, pick-pack-ship, warehouse, barcode-scanning, packing-slip, wms]
 triggers: ["order fulfillment", "pick pack ship", "warehouse workflow", "packing slip", "barcode scanning fulfillment", "warehouse management"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Implement a pick-pack-ship fulfillment pipeline that takes a paid order from "awaiting fulfillment" through picking, packing, and shipping stages. Includes barcode-scan verification to prevent pick errors, PDF packing slip generation, and carrier label creation. Designed to integrate with a warehouse management system (WMS) or run as the WMS itself for smaller operations.
+A fulfillment workflow takes a paid order from "awaiting fulfillment" through picking, packing, and shipping — with barcode verification to prevent mis-ships and packing slip generation for each shipment. For most merchants, purpose-built apps handle this more reliably and cheaply than custom software. Custom development only makes sense for high-volume operations with unique warehouse workflows.
 
 ## When to Use This Skill
 
@@ -26,308 +26,179 @@ Implement a pick-pack-ship fulfillment pipeline that takes a paid order from "aw
 - When adding pick verification to reduce mis-ships and customer complaints
 - When you need to support both single-order picking and batch picking for efficiency
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Use Shopify Shipping (carrier-calculated rates), Shopify Fulfillment Network, or apps like ShipStation. The Fulfillment API handles custom fulfillment workflows.
-**WooCommerce**: Use WooCommerce Shipping or plugins (ShipStation, WooCommerce Table Rate Shipping). Extend with woocommerce_shipping_methods filter.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with shipping configured, carrier API accounts if using custom rates
-
 ## Core Instructions
 
-1. **Design the fulfillment state machine**
+### Step 1: Determine your platform and choose the right fulfillment tool
 
-   ```typescript
-   type FulfillmentStatus =
-     | 'awaiting_fulfillment'
-     | 'pick_pending'
-     | 'picking'
-     | 'picked'
-     | 'packing'
-     | 'packed'
-     | 'label_created'
-     | 'shipped'
-     | 'delivered';
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | ShipStation, Shopify Fulfillment Network (SFN), or Pirate Ship | ShipStation handles pick lists, packing slips, and multi-carrier label printing in one tool; SFN fully outsources fulfillment |
+| **WooCommerce** | ShipStation (WooCommerce plugin), WooCommerce Shipping + Packing Slips by WooCommerce | ShipStation's WooCommerce plugin syncs orders automatically; the built-in packing slip extension handles document generation |
+| **BigCommerce** | ShipStation, ShipBob, or Easyship | ShipStation and ShipBob both have native BigCommerce integrations; Easyship offers rate shopping across carriers |
+| **Custom / Headless** | Build a fulfillment state machine + integrate Shippo or EasyPost for labels | Use Shippo/EasyPost for carrier-agnostic label creation; build the pick-pack-ship workflow around them |
 
-   const VALID_TRANSITIONS: Record<FulfillmentStatus, FulfillmentStatus[]> = {
-     awaiting_fulfillment: ['pick_pending'],
-     pick_pending:         ['picking'],
-     picking:              ['picked', 'pick_pending'],  // can return to pending on error
-     picked:               ['packing'],
-     packing:              ['packed'],
-     packed:               ['label_created'],
-     label_created:        ['shipped'],
-     shipped:              ['delivered'],
-     delivered:            [],
-   };
+### Step 2: Set up your fulfillment tool
 
-   async function transitionFulfillment(
-     fulfillmentId: string,
-     newStatus: FulfillmentStatus,
-     actorId: string
-   ): Promise<void> {
-     const fulfillment = await db.fulfillments.findById(fulfillmentId);
-     const allowed = VALID_TRANSITIONS[fulfillment.status];
+#### Shopify
 
-     if (!allowed.includes(newStatus)) {
-       throw new Error(`Invalid transition: ${fulfillment.status} → ${newStatus}`);
-     }
+**Option A: ShipStation (recommended for 50+ orders/day)**
 
-     await db.transaction(async tx => {
-       await tx.fulfillments.update(fulfillmentId, {
-         status: newStatus,
-         updated_at: new Date(),
-       });
-       await tx.fulfillmentEvents.insert({
-         fulfillment_id: fulfillmentId,
-         from_status: fulfillment.status,
-         to_status: newStatus,
-         actor_id: actorId,
-         timestamp: new Date(),
-       });
-     });
-   }
-   ```
+1. Install ShipStation from the Shopify App Store
+2. ShipStation automatically pulls all "unfulfilled" Shopify orders
+3. Set up **Automation Rules** in ShipStation (Automation → Automation Rules) to assign carriers, services, and presets based on order weight, destination, or product type
+4. **Pick list:** In ShipStation, go to Orders → select multiple orders → Print → Pick List. ShipStation generates a consolidated pick list sorted by your warehouse layout
+5. **Packing slips:** Select orders → Print → Packing Slip. Customize the packing slip template in Account Settings → Printing → Document Templates
+6. **Label printing:** ShipStation prints labels to a thermal label printer (Zebra, DYMO) via their desktop app — one scan per order creates and prints the label
+7. After printing labels, ShipStation automatically marks orders as fulfilled in Shopify and sends tracking emails to customers
 
-2. **Generate a pick list for warehouse staff**
+**Option B: Shopify Fulfillment Network (SFN) — fully outsourced**
 
-   ```typescript
-   interface PickListItem {
-     orderLineId: string;
-     orderId: string;
-     sku: string;
-     productName: string;
-     quantity: number;
-     binLocation: string;   // warehouse shelf location, e.g. "A3-04-2"
-     barcode: string;
-   }
+1. Go to **Settings → Shipping and delivery → Shopify Fulfillment Network**
+2. SFN handles all pick, pack, and ship operations — you ship your inventory to their warehouse and they fulfill orders automatically
+3. No warehouse management needed on your end; SFN tracks inventory and fulfills orders same-day or next-day
 
-   async function generatePickList(orderIds: string[]): Promise<PickListItem[]> {
-     const lines = await db.raw(`
-       SELECT
-         ol.id AS order_line_id,
-         ol.order_id,
-         p.sku,
-         p.name AS product_name,
-         ol.quantity,
-         w.bin_location,
-         p.barcode
-       FROM order_lines ol
-       JOIN products p ON p.id = ol.product_id
-       LEFT JOIN warehouse_locations w ON w.product_id = p.id
-       WHERE ol.order_id = ANY(?)
-       ORDER BY w.bin_location  -- sort by warehouse location for efficient picking path
-     `, [orderIds]);
+**Option C: Shopify's built-in fulfillment (for low volume)**
 
-     return lines.rows;
-   }
-   ```
+1. Go to **Orders → [Order] → Fulfill items**
+2. Enter the tracking number manually or purchase a label via Shopify Shipping
+3. Shopify generates basic packing slips: **Orders → Print → Packing slip**
 
-3. **Barcode scan verification during picking**
+#### WooCommerce
 
-   ```typescript
-   async function verifyPickScan(
-     fulfillmentId: string,
-     orderLineId: string,
-     scannedBarcode: string,
-     pickedQuantity: number
-   ): Promise<{ verified: boolean; errorMessage?: string }> {
-     const line = await db.orderLines.findById(orderLineId);
-     const product = await db.products.findById(line.product_id);
+**Using ShipStation:**
+1. Install the **ShipStation for WooCommerce** plugin (free on WordPress.org)
+2. In ShipStation, go to Account Settings → Stores and connect your WooCommerce store
+3. Unfulfilled WooCommerce orders sync to ShipStation automatically
+4. Use ShipStation for pick lists, packing slips, and label printing (same workflow as Shopify above)
+5. When a label is printed, ShipStation pushes the tracking number back to WooCommerce and marks the order as "Completed"
 
-     if (product.barcode !== scannedBarcode && product.sku !== scannedBarcode) {
-       return {
-         verified: false,
-         errorMessage: `Wrong item scanned. Expected: ${product.sku}, got: ${scannedBarcode}`,
-       };
-     }
+**WooCommerce-only (lower volume):**
+1. Install **WooCommerce PDF Invoices & Packing Slips** (free, WordPress.org) for PDF packing slips
+2. Go to WooCommerce → Orders, select pending orders, and from the Bulk Actions dropdown choose "Generate packing slips"
+3. For pick lists: the **Smart Manager for WooCommerce** plugin or **ATUM Inventory Management** generate pick lists directly from WooCommerce
 
-     if (pickedQuantity !== line.quantity) {
-       return {
-         verified: false,
-         errorMessage: `Quantity mismatch. Expected: ${line.quantity}, picked: ${pickedQuantity}`,
-       };
-     }
+#### BigCommerce
 
-     // Record the pick verification
-     await db.pickVerifications.insert({
-       fulfillment_id: fulfillmentId,
-       order_line_id: orderLineId,
-       scanned_barcode: scannedBarcode,
-       picked_quantity: pickedQuantity,
-       verified_at: new Date(),
-     });
+**Using ShipStation:**
+1. Connect ShipStation via the BigCommerce App Marketplace
+2. ShipStation syncs all open BigCommerce orders automatically
+3. Use the same ShipStation workflow for pick lists, packing slips, and label printing
 
-     return { verified: true };
-   }
+**Using ShipBob (outsourced fulfillment):**
+1. Connect ShipBob from the BigCommerce App Marketplace
+2. Ship your inventory to ShipBob warehouses; they fulfill all orders automatically
+3. ShipBob updates BigCommerce order status and tracking in real time
 
-   async function markOrderFullyPicked(fulfillmentId: string, actorId: string): Promise<void> {
-     const fulfillment = await db.fulfillments.findById(fulfillmentId);
-     const allLines = await db.orderLines.findByOrderId(fulfillment.order_id);
-     const verifiedLines = await db.pickVerifications.findByFulfillmentId(fulfillmentId);
+### Step 3: Configure pick list generation and warehouse workflow
 
-     if (verifiedLines.length < allLines.length) {
-       throw new Error(`Not all lines verified: ${verifiedLines.length}/${allLines.length}`);
-     }
+A good pick list groups items by warehouse location (bin/shelf) to minimize picker travel time. Most shipping apps support this.
 
-     await transitionFulfillment(fulfillmentId, 'picked', actorId);
-   }
-   ```
+**ShipStation pick list settings:**
+1. Go to Account Settings → Printing → Pick List
+2. Configure grouping: by SKU (for batch picking) or by order (for single-order picking)
+3. Enable "Show bin location" if you've entered bin locations on products (ShipStation → Products → edit product)
+4. For barcode scanning: ShipStation has a **Scan to Verify** feature — enable it in Account Settings → Features. Scanners verify item barcodes before printing the label, preventing wrong-item fulfillment
 
-4. **Generate a PDF packing slip**
+**For 3PL integration:**
+- Most 3PLs (ShipBob, Whiplash, Flexport) accept orders via EDI, SFTP CSV, or REST API
+- In Shopify: install the 3PL's app or use a webhook to push orders to their system
+- In WooCommerce: use a WooCommerce webhook (WooCommerce → Settings → Advanced → Webhooks) to push order data to the 3PL
 
-   ```typescript
-   import PDFDocument from 'pdfkit';
-   import { Writable } from 'stream';
+### Step 4: Set up carrier label creation
 
-   async function generatePackingSlip(orderId: string): Promise<Buffer> {
-     const order = await db.orders.findById(orderId);
-     const lines = await db.orderLines.findByOrderId(orderId);
-     const customer = await db.customers.findById(order.customer_id);
+#### Shopify
 
-     return new Promise((resolve, reject) => {
-       const doc = new PDFDocument({ size: 'LETTER', margins: { top: 50, left: 50, right: 50, bottom: 50 } });
-       const chunks: Buffer[] = [];
+- **Shopify Shipping** (built-in): purchase labels directly in Shopify admin from USPS, UPS, DHL, and Canada Post at discounted rates
+- **ShipStation**: connects to all major carriers; negotiates rates based on your volume — often cheaper than Shopify Shipping for high-volume operations
+- **EasyShip**: available on Shopify App Store; rate shops across 250+ carriers including international options
 
-       doc.on('data', chunk => chunks.push(chunk));
-       doc.on('end', () => resolve(Buffer.concat(chunks)));
-       doc.on('error', reject);
+#### WooCommerce
 
-       // Header
-       doc.fontSize(20).text('PACKING SLIP', { align: 'center' });
-       doc.moveDown();
-       doc.fontSize(12).text(`Order #${order.order_number}`, { align: 'right' });
-       doc.text(`Date: ${order.created_at.toLocaleDateString()}`, { align: 'right' });
+- **WooCommerce Shipping** (built-in, powered by WooCommerce.com): USPS and DHL Express labels directly in the WooCommerce admin
+- **ShipStation plugin**: connects to all major carriers from within ShipStation
+- **Easyship plugin**: multi-carrier rate shopping directly in WooCommerce checkout and admin
 
-       // Ship-to address
-       doc.moveDown().fontSize(14).text('Ship To:');
-       doc.fontSize(12)
-         .text(`${customer.name}`)
-         .text(order.shipping_address.line1)
-         .text(`${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.zip}`)
-         .text(order.shipping_address.country);
+#### BigCommerce
 
-       // Line items table
-       doc.moveDown().fontSize(14).text('Items:');
-       for (const line of lines) {
-         doc.fontSize(12).text(`${line.product_name}  ×${line.quantity}`, { continued: true });
-         doc.text(`  SKU: ${line.sku}`, { align: 'right' });
-       }
+- **ShipStation**: rate shops all major carriers
+- **Easyship**: native BigCommerce integration with 250+ carriers
 
-       doc.end();
-     });
-   }
-   ```
-
-5. **Create a shipping label via carrier API and mark as shipped**
-
-   ```typescript
-   import Shippo from 'shippo';
-   const shippo = Shippo(process.env.SHIPPO_API_KEY);
-
-   async function createShippingLabel(fulfillmentId: string): Promise<string> {
-     const fulfillment = await db.fulfillments.findById(fulfillmentId);
-     const order = await db.orders.findById(fulfillment.order_id);
-
-     const shipment = await shippo.shipment.create({
-       address_from: {
-         name: process.env.WAREHOUSE_NAME,
-         street1: process.env.WAREHOUSE_ADDRESS,
-         city: process.env.WAREHOUSE_CITY,
-         state: process.env.WAREHOUSE_STATE,
-         zip: process.env.WAREHOUSE_ZIP,
-         country: 'US',
-       },
-       address_to: {
-         name: `${order.shipping_address.first_name} ${order.shipping_address.last_name}`,
-         street1: order.shipping_address.line1,
-         city: order.shipping_address.city,
-         state: order.shipping_address.state,
-         zip: order.shipping_address.zip,
-         country: order.shipping_address.country,
-         email: order.customer_email,
-       },
-       parcels: [{
-         length: fulfillment.package_length_in,
-         width: fulfillment.package_width_in,
-         height: fulfillment.package_height_in,
-         distance_unit: 'in',
-         weight: fulfillment.package_weight_oz,
-         mass_unit: 'oz',
-       }],
-       async: false,
-     });
-
-     const rate = shipment.rates.find(r => r.servicelevel.token === order.shipping_service) ?? shipment.rates[0];
-     const transaction = await shippo.transaction.create({ rate: rate.object_id, label_file_type: 'PDF' });
-
-     await db.fulfillments.update(fulfillmentId, {
-       tracking_number: transaction.tracking_number,
-       carrier: rate.provider,
-       label_url: transaction.label_url,
-     });
-
-     await transitionFulfillment(fulfillmentId, 'label_created', 'system');
-     return transaction.label_url;
-   }
-   ```
-
-## Examples
-
-### Batch pick list for 20 orders — consolidated by SKU
-
-```sql
-SELECT
-  p.sku,
-  p.name,
-  SUM(ol.quantity) AS total_to_pick,
-  w.bin_location,
-  STRING_AGG(o.order_number, ', ' ORDER BY o.order_number) AS order_numbers
-FROM order_lines ol
-JOIN orders o ON o.id = ol.order_id
-JOIN products p ON p.id = ol.product_id
-LEFT JOIN warehouse_locations w ON w.product_id = p.id
-WHERE o.id = ANY($1)
-GROUP BY p.sku, p.name, w.bin_location
-ORDER BY w.bin_location;
-```
-
-### Mobile scanner API endpoint
+#### Custom / Headless
 
 ```typescript
-// POST /api/fulfillment/:fulfillmentId/scan
-app.post('/api/fulfillment/:fulfillmentId/scan', requireWarehouseRole, async (req, res) => {
-  const { orderLineId, barcode, quantity } = req.body;
-  const result = await verifyPickScan(req.params.fulfillmentId, orderLineId, barcode, quantity);
+import Shippo from 'shippo';
+const shippo = Shippo(process.env.SHIPPO_API_KEY);
 
-  if (!result.verified) {
-    return res.status(422).json({ error: result.errorMessage });
-  }
+// Create a shipping label for a fulfilled order
+async function createShippingLabel(params: {
+  warehouseName: string;
+  warehouseAddress: Address;
+  customerAddress: Address;
+  packageWeightOz: number;
+  packageDimensions: { lengthIn: number; widthIn: number; heightIn: number };
+  preferredService?: string;
+}): Promise<{ trackingNumber: string; labelUrl: string }> {
+  const shipment = await shippo.shipment.create({
+    address_from: {
+      name: params.warehouseName,
+      street1: params.warehouseAddress.street1,
+      city: params.warehouseAddress.city,
+      state: params.warehouseAddress.state,
+      zip: params.warehouseAddress.zip,
+      country: 'US',
+    },
+    address_to: {
+      name: params.customerAddress.name,
+      street1: params.customerAddress.street1,
+      city: params.customerAddress.city,
+      state: params.customerAddress.state,
+      zip: params.customerAddress.zip,
+      country: params.customerAddress.country,
+      email: params.customerAddress.email,
+    },
+    parcels: [{
+      length: params.packageDimensions.lengthIn.toString(),
+      width: params.packageDimensions.widthIn.toString(),
+      height: params.packageDimensions.heightIn.toString(),
+      distance_unit: 'in',
+      weight: params.packageWeightOz.toString(),
+      mass_unit: 'oz',
+    }],
+    async: false,
+  });
 
-  res.json({ success: true, message: 'Item verified' });
-});
+  const rate = params.preferredService
+    ? shipment.rates.find(r => r.servicelevel.token === params.preferredService)
+    : shipment.rates.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount))[0];
+
+  const transaction = await shippo.transaction.create({
+    rate: rate.object_id,
+    label_file_type: 'PDF',
+  });
+
+  return {
+    trackingNumber: transaction.tracking_number,
+    labelUrl: transaction.label_url,
+  };
+}
 ```
 
 ## Best Practices
 
-- **Enforce barcode verification at pick time** — scanning prevents the most common fulfillment error (wrong item or quantity); never allow workers to manually override scan verification
-- **Sort pick lists by bin location** — route pickers through the warehouse in an optimal path (by aisle, then shelf) to minimize travel time; a 20% reduction in walk time is common
-- **Generate packing slips server-side** — avoid client-side PDF generation for documents that go into boxes; server-generated PDFs are reproducible and archivable
-- **Store label URLs rather than the label binary** — carrier API labels are available via URL for up to 90 days; storing the URL keeps your database lean
-- **Send tracking numbers to customers immediately** — trigger a tracking email as soon as `label_created` status is reached, not when the carrier scans the package
-- **Record every scan in a verification log** — the pick verification table serves as an audit trail if a customer claims they received the wrong item
-- **Support batch picking for small items** — for orders containing many small items, let a single picker collect all SKUs for multiple orders in one pass, then sort at the packing station
+- **Use a shipping app (ShipStation or equivalent) before building custom warehouse tooling** — ShipStation costs $9–$159/month depending on volume and handles pick lists, packing slips, label printing, and carrier rate shopping; this is almost always cheaper and faster than custom development
+- **Sort pick lists by bin location** — routing pickers through the warehouse in aisle/shelf order reduces picking time by 15–25%
+- **Send tracking numbers immediately after label creation** — not when the carrier scans the package; customers who get tracking numbers sooner submit fewer "where is my order" tickets
+- **Verify scans at pick time** — ShipStation's Scan to Verify and similar features prevent wrong-item shipments; enable this as a required step, not optional
+- **Print labels in batches at end of day** — for sub-100 orders/day, batching label printing improves printer efficiency; for 100+ orders/day, print labels as orders are packed
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Order ships with missing items | Enforce `markOrderFullyPicked` check that verifies every order line has a pick verification before advancing to `picked` |
-| Carrier label created but not printed | Store `label_url` immediately; implement a print queue that retries printing until confirmed |
-| Fulfillment status drifts out of sync with carrier tracking | Use carrier webhooks (via @shipment-tracking) to update `shipped` and `delivered` statuses automatically |
-| Multiple warehouse staff pick the same order concurrently | Assign fulfillments to specific pickers and lock the record (`SELECT FOR UPDATE`) when transitioning to `picking` |
+| Order ships with wrong item | Enable barcode scan verification in ShipStation or your WMS before allowing label printing; do not allow manual override without manager approval |
+| Tracking number not sent to customer | Ensure your shipping app is configured to automatically mark orders as fulfilled in your platform and trigger the platform's shipping confirmation email |
+| 3PL receives wrong quantities in the order feed | Validate the webhook payload format against the 3PL's spec; test with a handful of orders before enabling for all |
+| Fulfillment status drifts out of sync with carrier tracking | Use ShipStation's or EasyPost's tracking webhooks to update order status automatically when packages are scanned by the carrier |
 
 ## Related Skills
 

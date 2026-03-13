@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [subscriptions, recurring-billing, dunning, prorations, churn, cancellation, stripe-subscriptions]
 triggers: ["subscription billing", "recurring payments", "subscription management", "dunning", "plan upgrade", "subscription cancellation", "proration"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,348 +16,208 @@ difficulty: advanced
 
 ## Overview
 
-Implement recurring subscription billing using Stripe Subscriptions — covering the complete subscription lifecycle: sign-up with trial, plan upgrades and downgrades with prorations, dunning (smart retry on failed payments), pause and resume, and cancellation with optional winback offers. Uses Stripe webhooks to keep subscription state synchronized with your database.
+Subscription billing lets customers pay automatically on a recurring schedule — weekly, monthly, or annually. Shopify, WooCommerce, and BigCommerce each have dedicated subscription apps and plugins that handle the full lifecycle: initial checkout, recurring billing, failed payment recovery (dunning), plan changes, pausing, and cancellation. For headless storefronts, Stripe Subscriptions provides the same functionality via API with no need to build billing logic from scratch.
 
 ## When to Use This Skill
 
-- When building a subscription box, SaaS, or membership commerce product
-- When implementing a "Subscribe & Save" feature on a standard product store
+- When building a subscription box, membership, or "Subscribe & Save" program
 - When the current subscription logic is manual and not scaling with customer count
-- When dunning (failed payment recovery) is not automated and churning customers unnecessarily
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify handles checkout natively. Use Shopify Payments (powered by Stripe), checkout extensions, and Shopify Functions for custom discount/payment logic. You cannot modify the core checkout without Checkout Extensions.
-**WooCommerce**: WooCommerce supports payment gateways via plugins (WooCommerce Stripe, WooCommerce PayPal). Extend checkout with woocommerce_checkout_process and woocommerce_payment_complete hooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, Stripe or PayPal account, relevant payment plugin/app
+- When dunning (failed payment recovery) is not automated and causing unnecessary churn
+- When customers need self-serve plan upgrades, downgrades, pausing, and cancellation
 
 ## Core Instructions
 
-1. **Create a Stripe subscription at signup**
+### Step 1: Determine your platform and choose the right subscription tool
 
-   ```javascript
-   // api/subscriptions/create.js
-   export async function createSubscription(req, res) {
-     const { planId, paymentMethodId, email, trialDays = 0 } = req.body;
+| Platform | Recommended Tool | Notes |
+|----------|-----------------|-------|
+| **Shopify** | **Recharge** or **Seal Subscriptions** or **Bold Subscriptions** (Shopify App Store) | Shopify has a native Subscriptions API; Recharge is the most widely used third-party app; Seal is a newer lower-cost option |
+| **Shopify (simple)** | **Shopify Subscriptions** (built-in, free) | For basic subscription needs — launched 2024; handles simple recurring orders |
+| **WooCommerce** | **WooCommerce Subscriptions** ($199/year, official WooCommerce extension) | The official and most complete WooCommerce subscription solution; handles all billing, dunning, and management |
+| **BigCommerce** | **Recurly** (via BigCommerce App Marketplace) or **Rebilly** | BigCommerce does not have native subscriptions; third-party apps handle it |
+| **Custom / Headless** | **Stripe Subscriptions** | Stripe Subscriptions handles the complete recurring billing lifecycle with webhooks |
 
-     // 1. Get or create Stripe customer
-     let customer = await db.customers.findUnique({ where: { email } });
-     let stripeCustomerId = customer?.stripeCustomerId;
+### Step 2: Set up subscriptions on your platform
 
-     if (!stripeCustomerId) {
-       const stripeCustomer = await stripe.customers.create({
-         email,
-         payment_method: paymentMethodId,
-         invoice_settings: { default_payment_method: paymentMethodId },
-       });
-       stripeCustomerId = stripeCustomer.id;
-       if (customer) {
-         await db.customers.update({
-           where: { email },
-           data: { stripeCustomerId },
-         });
-       }
-     } else {
-       // Attach the payment method to the existing customer
-       await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
-       await stripe.customers.update(stripeCustomerId, {
-         invoice_settings: { default_payment_method: paymentMethodId },
-       });
-     }
+---
 
-     // 2. Create the subscription
-     const subscriptionParams = {
-       customer: stripeCustomerId,
-       items: [{ price: planId }],
-       payment_behavior: 'default_incomplete', // Create subscription, then confirm payment
-       payment_settings: { save_default_payment_method: 'on_subscription' },
-       expand: ['latest_invoice.payment_intent'],
-       metadata: { customer_id: customer?.id ?? email },
-     };
+#### Shopify (Shopify Subscriptions — built-in, free)
 
-     if (trialDays > 0) {
-       subscriptionParams.trial_period_days = trialDays;
-     }
+For basic subscription products:
 
-     const subscription = await stripe.subscriptions.create(subscriptionParams);
+1. Go to **Settings → Apps and sales channels → Shopify Subscriptions** (may need to install from App Store)
+2. Go to **Products** and open any product you want to make subscribable
+3. Under **Purchase options**, click **Add subscription plan**
+4. Configure:
+   - Billing frequency: weekly, monthly, every X months
+   - Discount for subscribers (e.g., 10% off vs. one-time purchase)
+   - Free trial period (optional)
+5. The product page will show both "One-time purchase" and "Subscribe & Save" options
 
-     // 3. Store subscription record
-     await db.subscriptions.upsert({
-       where: { stripeSubscriptionId: subscription.id },
-       create: {
-         customerId: customer?.id,
-         stripeSubscriptionId: subscription.id,
-         stripeCustomerId,
-         planId,
-         status: subscription.status,
-         currentPeriodStart: new Date(subscription.current_period_start * 1000),
-         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-         trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
-       },
-       update: {},
-     });
+Shopify Subscriptions handles: recurring billing, payment failure emails, and a customer portal for managing subscriptions. For advanced dunning, analytics, and subscriber portals, use Recharge or Seal Subscriptions.
 
-     // 4. Return client secret for payment confirmation if needed
-     const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
-     res.json({ subscriptionId: subscription.id, clientSecret, status: subscription.status });
-   }
-   ```
+#### Shopify (Recharge — recommended for scale)
 
-2. **Handle subscription webhooks to keep state synchronized**
+1. Install **Recharge** from the Shopify App Store
+2. Connect your Shopify store and Stripe account in **Recharge → Settings → Payment Processors**
+3. Configure subscription products in **Recharge → Products → Add product**:
+   - Select which Shopify products can be purchased as subscriptions
+   - Set billing intervals (weekly, monthly, every 2 months, etc.)
+   - Configure subscriber discounts
+4. Set up the customer portal: go to **Recharge → Customer Portal** to configure what subscribers can manage themselves (pause, skip, change date, cancel, swap product)
+5. Configure dunning: go to **Recharge → Settings → Dunning** and set up the retry schedule and email sequence for failed payments
 
-   ```javascript
-   // api/webhooks/stripe.js (subscription-relevant events)
-   export async function handleSubscriptionWebhooks(event) {
-     switch (event.type) {
-       case 'customer.subscription.created':
-       case 'customer.subscription.updated':
-         await syncSubscription(event.data.object);
-         break;
+**Recharge dunning defaults:**
+- Day 0: First payment failure → email customer
+- Day 3: Retry payment → email customer
+- Day 7: Retry payment → final warning email
+- Day 14: Retry payment → subscription cancelled if still failed
 
-       case 'customer.subscription.deleted':
-         await db.subscriptions.update({
-           where: { stripeSubscriptionId: event.data.object.id },
-           data: { status: 'canceled', canceledAt: new Date() },
-         });
-         await revokeSubscriptionAccess(event.data.object);
-         break;
+#### WooCommerce (WooCommerce Subscriptions)
 
-       case 'invoice.payment_succeeded':
-         await handleSuccessfulPayment(event.data.object);
-         break;
+1. Purchase and install **WooCommerce Subscriptions** from woocommerce.com/products/woocommerce-subscriptions
+2. Create a subscription product: go to **Products → Add New** and set product type to **Simple subscription** or **Variable subscription**
+3. Configure under **Subscription data**:
+   - Billing period: daily, weekly, monthly, annually
+   - Billing interval: every 1, 2, 3... periods
+   - Subscription length: ongoing or limited (e.g., 12 months)
+   - Sign-up fee (optional)
+   - Free trial period (optional)
+   - Subscriber discount (set via regular/sale price comparison)
+4. Configure payment methods: go to **WooCommerce → Settings → Payments** and ensure your gateway supports recurring payments (Stripe via WooCommerce Stripe plugin, PayPal via WooCommerce PayPal Payments)
+5. Configure dunning: go to **WooCommerce → Settings → Subscriptions → Failing payments** and set retry rules and email templates
 
-       case 'invoice.payment_failed':
-         await handleFailedPayment(event.data.object);
-         break;
+**Customer portal for WooCommerce:**
+Customers manage subscriptions from their **My Account → Subscriptions** page. WooCommerce Subscriptions provides pause, cancel, and payment method update functionality there by default.
 
-       case 'customer.subscription.trial_will_end':
-         await sendTrialEndingEmail(event.data.object); // 3 days before trial end
-         break;
-     }
-   }
+#### BigCommerce (Recurly)
 
-   async function syncSubscription(stripeSubscription) {
-     await db.subscriptions.upsert({
-       where: { stripeSubscriptionId: stripeSubscription.id },
-       create: {
-         stripeSubscriptionId: stripeSubscription.id,
-         stripeCustomerId: stripeSubscription.customer,
-         planId: stripeSubscription.items.data[0]?.price.id,
-         status: stripeSubscription.status,
-         currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-         currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-       },
-       update: {
-         status: stripeSubscription.status,
-         planId: stripeSubscription.items.data[0]?.price.id,
-         currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-         currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-         cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-       },
-     });
-   }
-   ```
+1. Sign up at **recurly.com** and create a plan (monthly, annual, etc.) with your pricing
+2. Install the Recurly app from the BigCommerce App Marketplace and connect your store
+3. Create subscription products that link to your Recurly plans
+4. Recurly handles: checkout, recurring billing, dunning, invoicing, and the subscriber portal
+5. Configure dunning in **Recurly → Configuration → Dunning Campaigns**: set retry schedule and email content
 
-3. **Implement plan changes with prorations**
+---
 
-   Stripe handles prorations automatically — upgrading mid-cycle charges the difference for the remainder of the billing period.
+#### Custom / Headless
 
-   ```javascript
-   // api/subscriptions/change-plan.js
-   export async function changePlan(req, res) {
-     const { subscriptionId, newPlanId, prorationBehavior = 'create_prorations' } = req.body;
+Use **Stripe Subscriptions** for the full recurring billing lifecycle:
 
-     const sub = await db.subscriptions.findUnique({ where: { id: subscriptionId } });
-     if (!sub) return res.status(404).json({ error: 'Subscription not found' });
+**Create a subscription plan:**
+In the **Stripe Dashboard → Products**, create a product with a recurring price (e.g., "Monthly Plan — $29/month"). Copy the Price ID (starts with `price_`).
 
-     // Preview the proration before applying (optional — show cost to customer)
-     if (req.query.preview === 'true') {
-       const upcoming = await stripe.invoices.retrieveUpcoming({
-         customer: sub.stripeCustomerId,
-         subscription: sub.stripeSubscriptionId,
-         subscription_items: [
-           { id: sub.stripeItemId, price: newPlanId },
-         ],
-         subscription_proration_behavior: prorationBehavior,
-         subscription_proration_date: Math.floor(Date.now() / 1000),
-       });
-       return res.json({
-         prorationAmount: upcoming.amount_due / 100,
-         nextInvoiceAmount: upcoming.lines.data
-           .filter(l => !l.proration)
-           .reduce((sum, l) => sum + l.amount, 0) / 100,
-       });
-     }
-
-     // Apply the plan change
-     const stripeSubscription = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
-     await stripe.subscriptions.update(sub.stripeSubscriptionId, {
-       items: [
-         { id: stripeSubscription.items.data[0].id, price: newPlanId },
-       ],
-       proration_behavior: prorationBehavior,
-     });
-
-     res.json({ success: true });
-   }
-   ```
-
-4. **Implement dunning — smart payment retry logic**
-
-   Configure Stripe's built-in retry schedule and handle the `invoice.payment_failed` webhook for custom logic.
-
-   ```javascript
-   // Stripe Dashboard: Configure Smart Retries under Billing > Settings
-   // Stripe Smart Retries uses ML to choose retry timing
-   // Manual retry schedule: Day 1, Day 3, Day 7, Day 14
-
-   async function handleFailedPayment(invoice) {
-     const subscription = await db.subscriptions.findFirst({
-       where: { stripeSubscriptionId: invoice.subscription },
-       include: { customer: true },
-     });
-
-     if (!subscription) return;
-
-     const attemptCount = invoice.attempt_count;
-
-     // Send dunning emails with escalating urgency
-     const emailTemplates = {
-       1: 'dunning-first-attempt',
-       2: 'dunning-second-attempt',
-       3: 'dunning-final-warning',
-     };
-
-     const template = emailTemplates[attemptCount] ?? 'dunning-final-warning';
-
-     await emailService.send({
-       to: subscription.customer.email,
-       template,
-       data: {
-         customerName: subscription.customer.name,
-         planName: subscription.planName,
-         amount: (invoice.amount_due / 100).toFixed(2),
-         updatePaymentUrl: `${process.env.STORE_URL}/account/billing?update=1`,
-         invoiceUrl: invoice.hosted_invoice_url,
-       },
-     });
-
-     // After all retries exhausted, Stripe cancels the subscription
-     // → triggers customer.subscription.deleted webhook
-   }
-   ```
-
-5. **Implement pause, resume, and cancellation**
-
-   ```javascript
-   // api/subscriptions/pause.js
-   export async function pauseSubscription(req, res) {
-     const { subscriptionId, resumeDate } = req.body;
-     const sub = await db.subscriptions.findUnique({ where: { id: subscriptionId } });
-
-     await stripe.subscriptions.update(sub.stripeSubscriptionId, {
-       pause_collection: {
-         behavior: 'void',         // Void invoices while paused
-         resumes_at: resumeDate
-           ? Math.floor(new Date(resumeDate).getTime() / 1000)
-           : undefined,
-       },
-     });
-
-     await db.subscriptions.update({
-       where: { id: subscriptionId },
-       data: { status: 'paused', pausedAt: new Date(), scheduledResumeAt: resumeDate ? new Date(resumeDate) : null },
-     });
-
-     res.json({ status: 'paused' });
-   }
-
-   // api/subscriptions/cancel.js
-   export async function cancelSubscription(req, res) {
-     const { subscriptionId, immediately = false, reason } = req.body;
-     const sub = await db.subscriptions.findUnique({ where: { id: subscriptionId } });
-
-     if (immediately) {
-       await stripe.subscriptions.cancel(sub.stripeSubscriptionId);
-     } else {
-       // Cancel at end of current billing period (customer retains access until then)
-       await stripe.subscriptions.update(sub.stripeSubscriptionId, {
-         cancel_at_period_end: true,
-       });
-     }
-
-     await db.subscriptions.update({
-       where: { id: subscriptionId },
-       data: {
-         cancelAtPeriodEnd: !immediately,
-         canceledAt: immediately ? new Date() : null,
-         cancellationReason: reason,
-       },
-     });
-
-     // Offer a winback incentive before final cancellation
-     if (!immediately) {
-       await sendCancellationOfferEmail(sub, reason);
-     }
-
-     res.json({ status: immediately ? 'canceled' : 'canceling_at_period_end' });
-   }
-   ```
-
-## Examples
-
-### Subscription status dashboard query
-
-```sql
-SELECT
-  s.status,
-  COUNT(*) AS count,
-  SUM(p.amount / 100.0) AS mrr
-FROM subscriptions s
-JOIN prices p ON p.stripe_price_id = s.plan_id
-WHERE s.status = 'active'
-GROUP BY s.status;
-```
-
-### Reactivate a canceled subscription
+**Subscribe a customer:**
 
 ```javascript
-// If subscription is canceled_at_period_end but still active, undo cancellation
-await stripe.subscriptions.update(stripeSubscriptionId, {
-  cancel_at_period_end: false,
+// Create or retrieve the Stripe customer
+const customer = await stripe.customers.create({
+  email: customerEmail,
+  payment_method: paymentMethodId,
+  invoice_settings: { default_payment_method: paymentMethodId },
 });
 
-await db.subscriptions.update({
-  where: { stripeSubscriptionId },
-  data: { cancelAtPeriodEnd: false, canceledAt: null },
+// Create the subscription
+const subscription = await stripe.subscriptions.create({
+  customer: customer.id,
+  items: [{ price: 'price_monthly_pro_29' }], // Price ID from Stripe Dashboard
+  payment_behavior: 'default_incomplete', // Create subscription, then confirm payment
+  payment_settings: { save_default_payment_method: 'on_subscription' },
+  expand: ['latest_invoice.payment_intent'],
+  trial_period_days: 14, // Optional trial
+  metadata: { customer_id: customerId },
 });
+
+// Return client_secret for 3DS confirmation if needed
+const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
+res.json({ subscriptionId: subscription.id, clientSecret });
+```
+
+**Sync subscription status via webhooks:**
+
+```javascript
+// Webhook handler for subscription events
+async function handleSubscriptionWebhook(event) {
+  switch (event.type) {
+    case 'customer.subscription.updated':
+      await syncSubscriptionStatus(event.data.object);
+      break;
+
+    case 'customer.subscription.deleted':
+      // Subscription cancelled — revoke access
+      await db.subscriptions.update({
+        where: { stripeSubscriptionId: event.data.object.id },
+        data: { status: 'cancelled', cancelledAt: new Date() },
+      });
+      break;
+
+    case 'invoice.payment_succeeded':
+      await recordSuccessfulBillingCycle(event.data.object);
+      break;
+
+    case 'invoice.payment_failed':
+      // Send dunning email — Stripe retries automatically per your settings
+      await sendDunningEmail(event.data.object);
+      break;
+
+    case 'customer.subscription.trial_will_end':
+      // Send trial ending email 3 days before trial ends
+      await sendTrialEndingEmail(event.data.object);
+      break;
+  }
+}
+```
+
+**Configure dunning in Stripe Dashboard:**
+Go to **Stripe Dashboard → Billing → Settings → Smart Retries**. Enable Smart Retries — Stripe's ML-based retry timing outperforms fixed schedules. Also configure automatic subscription cancellation after all retries fail under **Stripe Dashboard → Billing → Settings → Automatic collection**.
+
+**Plan changes with prorations:**
+
+```javascript
+// Upgrade or downgrade a subscription
+const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+
+await stripe.subscriptions.update(stripeSubscriptionId, {
+  items: [{ id: subscription.items.data[0].id, price: newPriceId }],
+  proration_behavior: 'create_prorations', // Charge/credit the difference immediately
+});
+// Stripe creates a prorated invoice automatically
+```
+
+**Cancellation with end-of-period access:**
+
+```javascript
+// Cancel at period end — customer retains access until the next billing date
+await stripe.subscriptions.update(stripeSubscriptionId, {
+  cancel_at_period_end: true,
+});
+
+// Immediate cancellation
+await stripe.subscriptions.cancel(stripeSubscriptionId);
 ```
 
 ## Best Practices
 
-- **Never store subscription state only in Stripe** — sync all subscription status changes to your own database via webhooks; do not call Stripe on every page load to check subscription status
-- **Use `payment_behavior: 'default_incomplete'`** — this creates the subscription and then confirms the payment separately, giving you a client secret for 3DS authentication
-- **Configure Stripe Smart Retries** — Stripe's ML-based retry timing outperforms fixed schedules; enable it in the Billing Dashboard
+- **Use platform-native subscription tools** — WooCommerce Subscriptions, Recharge on Shopify, and Stripe Subscriptions are all production-hardened and handle edge cases (failed payments, prorations, tax changes) correctly
+- **Never store subscription state only in Stripe** — always sync subscription status to your database via webhooks; do not call Stripe on every page load to check status
+- **Configure Smart Retries in Stripe** — enable under **Stripe Dashboard → Billing → Settings**; ML-based retry timing recovers significantly more failed payments than fixed schedules
 - **Send dunning emails at each retry** — escalate urgency: "payment failed" → "account at risk" → "access will be suspended"; include a direct link to update payment method
-- **Prorate upgrades, not downgrades** — upgrades should be prorated immediately; downgrades typically apply at the end of the current period to avoid complex partial refunds
-- **Test the full webhook lifecycle** — use `stripe listen` locally and trigger events with `stripe trigger customer.subscription.updated`
+- **Let customers self-serve** — build a customer portal (or use Stripe's hosted Customer Portal at **Stripe Dashboard → Billing → Customer portal**) for plan changes, pausing, and cancellation; reduces support load
+- **Prorate upgrades immediately; apply downgrades at period end** — upgrades should charge the difference now; downgrades should apply at the next renewal to avoid complex partial refunds
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Subscription shows as active in your DB after it is canceled in Stripe | Sync via webhooks — do not rely on periodic polling; `customer.subscription.deleted` must trigger a database update |
-| Proration charges customer unexpectedly on upgrade | Always preview the upcoming invoice before applying plan changes; show the proration amount to the customer first |
-| Trial converts to paid without user knowing | Send `trial_will_end` email 3 days before (Stripe fires the webhook); remind users what they will be charged |
-| Duplicate dunning emails from retried webhooks | Check `invoice.status !== 'paid'` and `email_sent_for_attempt != invoice.attempt_count` before sending; use the invoice ID as idempotency key |
-| Canceled subscription still grants access | Check subscription status in your database (synced via webhook) before granting feature access; do not trust client-submitted subscription status |
+| Subscription shows as active after cancellation | Sync status via webhooks — `customer.subscription.deleted` must trigger a database update; never poll Stripe for status on page load |
+| WooCommerce Subscriptions not retrying failed payments | Verify the payment gateway supports tokenized recurring payments; Stripe via the WooCommerce Stripe plugin supports this; basic PayPal Standard does not |
+| Trial converts to paid without customer knowing | Send the `trial_will_end` email 3 days before (Stripe fires the webhook automatically; Recharge and WooCommerce Subscriptions do this by default) |
+| Duplicate dunning emails on retried webhooks | Check that the invoice attempt count matches the last dunning email you sent before sending another; use the invoice ID + attempt count as the idempotency key |
+| Proration charges customer unexpectedly on upgrade | Show the upcoming invoice preview before applying plan changes (Stripe: use `stripe.invoices.retrieveUpcoming()`); show the proration amount to the customer first |
 
 ## Related Skills
 
 - @stripe-integration
 - @order-processing-pipeline
-- @digital-products
 - @tax-calculation
+- @invoice-generation-automation

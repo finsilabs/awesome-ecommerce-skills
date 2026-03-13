@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [demand-forecasting, inventory-planning, seasonality, sales-history, reorder-points, stockout-prevention]
 triggers: ["demand forecasting", "inventory forecasting", "predict demand", "reorder points", "stockout prevention", "inventory planning", "sales prediction"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,277 +16,203 @@ difficulty: advanced
 
 ## Overview
 
-Build an inventory demand forecasting system that uses historical sales data, seasonal patterns, and trend decomposition to predict future demand and automatically compute reorder points and order quantities. Generates replenishment recommendations that purchasing teams can approve, reducing stockouts and excess inventory simultaneously.
+Demand forecasting uses historical sales data, seasonal patterns, and lead times to predict how much inventory you'll need and when to reorder. Chronic stockouts or overstock situations are usually a sign that reorder points are based on intuition rather than data. Purpose-built inventory planning tools handle this for most merchants — custom forecasting code is only necessary for unique operational requirements.
 
 ## When to Use This Skill
 
-- When chronic stockouts or overstock situations indicate that current reorder points are wrong or based on gut feeling
-- When building automated replenishment recommendations to reduce the time buyers spend manually reviewing inventory
+- When chronic stockouts or overstock situations indicate that current reorder points are set incorrectly
+- When building automated replenishment recommendations to reduce manual inventory review
 - When planning inventory for seasonal peaks (Black Friday, back-to-school, holiday season)
 - When you have 12+ months of sales history and want to extract meaningful demand patterns
-- When integrating with supplier lead times and purchase order workflows for end-to-end replenishment automation
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
-**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
+- When integrating with supplier lead times and purchase order workflows for end-to-end replenishment
 
 ## Core Instructions
 
-1. **Aggregate sales history into a daily demand time series**
+### Step 1: Determine your platform and choose the right forecasting tool
 
-   ```sql
-   -- Materialized view: daily units sold per product
-   CREATE MATERIALIZED VIEW daily_sales AS
-   SELECT
-     ol.product_id,
-     DATE(o.created_at) AS sale_date,
-     SUM(ol.quantity) AS units_sold
-   FROM order_lines ol
-   JOIN orders o ON o.id = ol.order_id
-   WHERE o.status NOT IN ('cancelled', 'refunded')
-   GROUP BY ol.product_id, DATE(o.created_at);
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Inventory Planner (Shopify App Store) or Cogsy | Inventory Planner connects directly to Shopify, analyzes 12+ months of sales history, calculates reorder points, and generates purchase orders |
+| **WooCommerce** | ATUM Inventory Management (free/premium) or Inventory Planner | ATUM provides reorder point management natively in WooCommerce; Inventory Planner has a WooCommerce connector for advanced forecasting |
+| **BigCommerce** | Inventory Planner or Linnworks | Both have BigCommerce native integrations and handle multi-location inventory forecasting |
+| **Multi-channel** | Skubana (now Extensiv) or Linnworks | Handles inventory forecasting across Shopify, WooCommerce, Amazon, and eBay from a single dashboard |
+| **Custom / Headless** | Build a time-series analysis layer on top of your order database | Use moving averages, seasonal decomposition, and safety stock formulas against your historical sales data |
 
-   CREATE INDEX idx_daily_sales_product_date ON daily_sales(product_id, sale_date);
+### Step 2: Set up sales history data collection
 
-   -- Refresh nightly
-   -- REFRESH MATERIALIZED VIEW CONCURRENTLY daily_sales;
-   ```
+Accurate forecasting requires clean historical data. Before running any forecast:
 
-2. **Calculate a 7-day moving average to smooth demand**
+1. **Ensure cancelled and refunded orders are excluded** from your sales totals — most forecasting tools handle this automatically when connected to your platform
+2. **Tag promotional periods** — flash sales, holiday spikes, and influencer-driven demand should be flagged as abnormal; they inflate baseline demand estimates if included uncritically
+3. **You need at least 6 months of history** for basic seasonal pattern detection; 12+ months is required to see year-over-year trends
 
-   ```typescript
-   interface DailySaleRow {
-     sale_date: string;
-     units_sold: number;
-   }
+#### Shopify
 
-   function computeMovingAverage(sales: DailySaleRow[], windowDays = 7): Map<string, number> {
-     const ma = new Map<string, number>();
-     for (let i = 0; i < sales.length; i++) {
-       const window = sales.slice(Math.max(0, i - windowDays + 1), i + 1);
-       const avg = window.reduce((s, r) => s + r.units_sold, 0) / window.length;
-       ma.set(sales[i].sale_date, avg);
-     }
-     return ma;
-   }
-   ```
+**Using Inventory Planner:**
+1. Install **Inventory Planner** from the Shopify App Store (14-day free trial, then $99+/month)
+2. Inventory Planner pulls your full Shopify sales history automatically on connection
+3. Connect your suppliers in Inventory Planner → Suppliers with their lead times (e.g., Supplier A = 14 days, Supplier B = 7 days)
+4. Set your desired service level (e.g., 95% — meaning you want to have stock for 95% of demand scenarios) in Settings → Forecasting
+5. Inventory Planner calculates reorder points and recommended order quantities per SKU, updated daily
 
-3. **Decompose demand into trend + seasonality + residual**
+**Shopify Analytics (built-in, no app needed for basic trends):**
+1. Go to **Analytics → Reports → Inventory**
+2. The "Days of inventory remaining" report shows how many days of stock you have at current sell-through rate
+3. Go to **Analytics → Reports → Sales over time** → group by product to see monthly sales trends
+4. Use these as inputs for manual reorder decisions if you don't want to pay for a forecasting app
 
-   ```typescript
-   interface ForecastComponents {
-     trend: number;        // units/day long-term trend
-     seasonality: number[]; // 7-element array of day-of-week seasonal indices (1.0 = average day)
-     residualStdDev: number; // noise standard deviation for safety stock calculation
-   }
+#### WooCommerce
 
-   async function decomposeProductDemand(productId: string): Promise<ForecastComponents> {
-     // Fetch last 52 weeks of daily sales
-     const sales = await db.raw(`
-       SELECT sale_date, COALESCE(units_sold, 0) AS units_sold
-       FROM generate_series(NOW()::date - 364, NOW()::date, '1 day'::interval) AS gs(sale_date)
-       LEFT JOIN daily_sales ds ON ds.sale_date = gs.sale_date AND ds.product_id = ?
-       ORDER BY gs.sale_date
-     `, [productId]).then(r => r.rows);
+**Using ATUM Inventory Management (free tier available):**
+1. Install **ATUM Inventory Management for WooCommerce** from WordPress.org (free) or purchase the premium version
+2. ATUM adds a master inventory list view with real-time stock levels, daily sales rates, and low-stock alerts
+3. In ATUM → Settings → Reorder Points, configure your reorder levels and safety stock per SKU
+4. ATUM's premium **Purchase Orders** module generates POs automatically when stock hits the reorder point
 
-     // Long-term trend: simple linear regression on 7-day moving averages
-     const ma = Array.from(computeMovingAverage(sales).values());
-     const n = ma.length;
-     const x = Array.from({ length: n }, (_, i) => i);
-     const xMean = x.reduce((s, v) => s + v, 0) / n;
-     const yMean = ma.reduce((s, v) => s + v, 0) / n;
-     const slope = x.reduce((s, xi, i) => s + (xi - xMean) * (ma[i] - yMean), 0)
-       / x.reduce((s, xi) => s + (xi - xMean) ** 2, 0);
+**Using Inventory Planner for WooCommerce:**
+1. Connect Inventory Planner to WooCommerce via their native API connector
+2. Same workflow as Shopify — Inventory Planner analyzes your WooCommerce sales history and generates forecasts
 
-     // Seasonal indices: average units per day-of-week normalized to overall mean
-     const byDow: number[][] = Array.from({ length: 7 }, () => []);
-     sales.forEach((row, i) => byDow[i % 7].push(row.units_sold));
-     const dowAverages = byDow.map(vals => vals.reduce((s, v) => s + v, 0) / vals.length);
-     const overallMean = dowAverages.reduce((s, v) => s + v, 0) / 7;
-     const weeklySeasonality = dowAverages.map(avg => overallMean > 0 ? avg / overallMean : 1);
+#### BigCommerce
 
-     // Residual standard deviation
-     const residuals = sales.map((row, i) => {
-       const trendVal = yMean + slope * (i - n / 2);
-       const seasIdx = weeklySeasonality[i % 7];
-       const fitted = trendVal * seasIdx;
-       return row.units_sold - fitted;
-     });
-     const residualStdDev = Math.sqrt(
-       residuals.reduce((s, r) => s + r ** 2, 0) / residuals.length
-     );
+**Using Inventory Planner:**
+1. Connect Inventory Planner via the BigCommerce API (Inventory Planner → Settings → Connect Store)
+2. Inventory Planner pulls sales history from BigCommerce and generates replenishment recommendations
 
-     return { trend: slope, seasonality: weeklySeasonality, residualStdDev };
-   }
-   ```
+**BigCommerce built-in low-stock alerts:**
+1. Go to **Products → [Product] → Inventory**
+2. Set "Low stock level" for each product — BigCommerce emails you when stock drops below this threshold
+3. This is a simple alert, not a forecast — use it as a backstop while you set up a proper forecasting tool
 
-4. **Generate a demand forecast for the next N days**
+### Step 3: Configure reorder points and safety stock
 
-   ```typescript
-   async function forecastDemand(productId: string, forecastDays = 30): Promise<number[]> {
-     const components = await decomposeProductDemand(productId);
-     const baselineSales = await db.raw(`
-       SELECT AVG(units_sold) AS avg
-       FROM daily_sales
-       WHERE product_id = ? AND sale_date >= NOW()::date - 30
-     `, [productId]).then(r => parseFloat(r.rows[0].avg) || 0);
+Reorder point = demand during lead time + safety stock buffer.
 
-     const forecast: number[] = [];
-     const today = new Date();
+**In Inventory Planner:**
+1. Inventory Planner calculates this automatically based on your sales history and supplier lead times
+2. Review the recommendations in Inventory Planner → Replenishment — items are sorted by urgency (days of stock remaining vs. lead time)
+3. Adjust recommendations manually before creating purchase orders (e.g., if you know a supplier has extra lead time for a specific product)
+4. Export purchase orders directly from Inventory Planner to email to your suppliers
 
-     for (let d = 1; d <= forecastDays; d++) {
-       const futureDate = new Date(today);
-       futureDate.setDate(today.getDate() + d);
-       const dow = futureDate.getDay();
+**Manual calculation (if not using a forecasting tool):**
+- **Average daily demand** = total units sold in last 30 days / 30
+- **Safety stock** = (maximum daily demand – average daily demand) × lead time in days
+- **Reorder point** = (average daily demand × lead time in days) + safety stock
+- **Example:** Average daily demand = 5 units, lead time = 14 days, max daily demand = 8 units
+  - Safety stock = (8–5) × 14 = 42 units
+  - Reorder point = (5 × 14) + 42 = 112 units
 
-       const trendAdjustment = components.trend * d;
-       const seasonalIndex = components.seasonality[dow];
-       const predicted = Math.max(0, (baselineSales + trendAdjustment) * seasonalIndex);
-       forecast.push(Math.round(predicted * 10) / 10);
-     }
+### Step 4: Plan for seasonal demand
 
-     return forecast;
-   }
-   ```
+Seasonality is the biggest cause of forecast errors. Plan for it explicitly.
 
-5. **Calculate reorder point and recommended order quantity**
+**In Inventory Planner:**
+1. Go to Inventory Planner → Settings → Seasonality
+2. Inventory Planner detects seasonal patterns automatically from your sales history
+3. For first-year merchants (no prior year data): manually set seasonal multipliers — e.g., December = 3x normal demand for holiday products
 
-   ```typescript
-   interface ReplenishmentRecommendation {
-     productId: string;
-     currentStock: number;
-     reorderPoint: number;
-     recommendedOrderQty: number;
-     daysOfSupply: number;
-     urgency: 'critical' | 'warning' | 'ok';
-   }
+**Building a seasonal calendar manually:**
+1. Export your sales by month for the past 2+ years from Shopify Reports / WooCommerce / BigCommerce
+2. Calculate the ratio of each month's sales to the annual average (December / average month = seasonal index)
+3. Apply the seasonal index to your daily demand forecast when placing orders for the upcoming peak season
 
-   const Z_95 = 1.645; // z-score for 95% service level
+**Promotional calendar:**
+- Flag planned promotions (flash sales, influencer campaigns) in your forecasting tool
+- Most forecasting tools allow manual demand overrides for specific date ranges
+- For Black Friday/Cyber Monday: increase your forecast by your historical BFCM lift percentage (typically 3–8x for e-commerce)
 
-   async function computeReplenishment(
-     productId: string
-   ): Promise<ReplenishmentRecommendation> {
-     const product = await db.products.findById(productId);
-     const inventory = await db.inventory.findByProductId(productId);
-     const components = await decomposeProductDemand(productId);
-     const leadTimeDays = product.supplier_lead_time_days ?? 7;
+### Step 5: Generate and approve replenishment recommendations
 
-     // Average daily demand over the next 30 days
-     const forecast30 = await forecastDemand(productId, 30);
-     const avgDailyDemand = forecast30.reduce((s, v) => s + v, 0) / 30;
+**In Inventory Planner:**
+1. Go to Inventory Planner → Replenishment → Review recommendations
+2. Filter by "Critical" (stock-out in fewer days than lead time) and "Warning" (stock-out within 2x lead time)
+3. Adjust quantities if you have market intelligence the model doesn't know (planned sales, anticipated supply issues)
+4. Click "Create Purchase Order" — Inventory Planner generates a PO to send to your supplier
+5. Track the PO status in Inventory Planner → Purchase Orders; when received, update actual receipt dates to improve future lead time estimates
 
-     // Safety stock = Z * σ * √(lead time)
-     const safetyStock = Math.ceil(Z_95 * components.residualStdDev * Math.sqrt(leadTimeDays));
-
-     // Reorder point = demand during lead time + safety stock
-     const reorderPoint = Math.ceil(avgDailyDemand * leadTimeDays + safetyStock);
-
-     // Economic order quantity: order enough for 30 days + safety stock
-     const recommendedOrderQty = Math.max(
-       Math.ceil(avgDailyDemand * 30),
-       product.min_order_quantity ?? 1
-     );
-
-     const daysOfSupply = avgDailyDemand > 0
-       ? Math.floor(inventory.quantity_on_hand / avgDailyDemand)
-       : 999;
-
-     const urgency = daysOfSupply < leadTimeDays
-       ? 'critical'
-       : daysOfSupply < leadTimeDays * 2
-         ? 'warning'
-         : 'ok';
-
-     return {
-       productId,
-       currentStock: inventory.quantity_on_hand,
-       reorderPoint,
-       recommendedOrderQty,
-       daysOfSupply,
-       urgency,
-     };
-   }
-   ```
-
-## Examples
-
-### Daily replenishment recommendations report
+### Step 6: Custom / Headless — demand forecasting from sales data
 
 ```typescript
-async function generateReplenishmentReport(): Promise<ReplenishmentRecommendation[]> {
-  const products = await db.products.findAll({ is_active: true, track_inventory: true });
+// Compute average daily demand from your order database
+async function computeAverageDailyDemand(
+  productId: string,
+  lookbackDays: number = 30
+): Promise<number> {
+  const since = new Date();
+  since.setDate(since.getDate() - lookbackDays);
 
-  const recommendations = await Promise.all(
-    products.map(p => computeReplenishment(p.id).catch(err => {
-      console.error(`Forecast failed for ${p.id}:`, err);
-      return null;
-    }))
-  );
+  const result = await db.raw(`
+    SELECT COALESCE(SUM(ol.quantity), 0) AS total_units
+    FROM order_lines ol
+    JOIN orders o ON o.id = ol.order_id
+    WHERE ol.product_id = ?
+      AND o.status NOT IN ('cancelled', 'refunded')
+      AND o.created_at >= ?
+  `, [productId, since]);
 
-  return recommendations
-    .filter((r): r is ReplenishmentRecommendation => r !== null)
-    .filter(r => r.urgency !== 'ok')
-    .sort((a, b) => {
-      const order = { critical: 0, warning: 1, ok: 2 };
-      return order[a.urgency] - order[b.urgency];
-    });
+  return result.rows[0].total_units / lookbackDays;
 }
-```
 
-### Seasonal demand query: compare this week vs the same week last year
+// Calculate reorder point with safety stock
+function calculateReorderPoint(params: {
+  avgDailyDemand: number;
+  maxDailyDemand: number;   // observed peak daily demand
+  leadTimeDays: number;
+}): number {
+  const safetyStock = (params.maxDailyDemand - params.avgDailyDemand) * params.leadTimeDays;
+  return Math.ceil(params.avgDailyDemand * params.leadTimeDays + safetyStock);
+}
 
-```sql
-WITH this_year AS (
-  SELECT product_id, SUM(units_sold) AS units
-  FROM daily_sales
-  WHERE sale_date BETWEEN DATE_TRUNC('week', NOW()) AND DATE_TRUNC('week', NOW()) + 6
-  GROUP BY product_id
-),
-last_year AS (
-  SELECT product_id, SUM(units_sold) AS units
-  FROM daily_sales
-  WHERE sale_date BETWEEN DATE_TRUNC('week', NOW()) - 364 AND DATE_TRUNC('week', NOW()) - 358
-  GROUP BY product_id
-)
-SELECT
-  p.name,
-  COALESCE(ty.units, 0) AS this_week,
-  COALESCE(ly.units, 0) AS last_year_same_week,
-  ROUND((COALESCE(ty.units, 0) - COALESCE(ly.units, 0))::numeric / NULLIF(ly.units, 0) * 100, 1) AS yoy_pct
-FROM products p
-LEFT JOIN this_year ty ON ty.product_id = p.id
-LEFT JOIN last_year ly ON ly.product_id = p.id
-ORDER BY yoy_pct DESC NULLS LAST;
+// Generate replenishment recommendations for all active products
+async function generateReplenishmentReport(): Promise<{
+  productId: string;
+  sku: string;
+  currentStock: number;
+  reorderPoint: number;
+  daysOfSupply: number;
+  urgency: 'critical' | 'warning' | 'ok';
+}[]> {
+  const products = await db.products.findAll({ is_active: true, track_inventory: true });
+  const recommendations = [];
+
+  for (const product of products) {
+    const inventory = await db.inventory.findByProductId(product.id);
+    const avgDemand = await computeAverageDailyDemand(product.id, 30);
+    const maxDemand = await computeAverageDailyDemand(product.id, 7); // shorter window = more volatile
+    const leadTimeDays = product.supplier_lead_time_days ?? 14;
+
+    const reorderPoint = calculateReorderPoint({ avgDailyDemand: avgDemand, maxDailyDemand: maxDemand, leadTimeDays });
+    const daysOfSupply = avgDemand > 0 ? Math.floor(inventory.quantity_on_hand / avgDemand) : 999;
+    const urgency = daysOfSupply < leadTimeDays ? 'critical' : daysOfSupply < leadTimeDays * 2 ? 'warning' : 'ok';
+
+    if (urgency !== 'ok') {
+      recommendations.push({ productId: product.id, sku: product.sku, currentStock: inventory.quantity_on_hand, reorderPoint, daysOfSupply, urgency });
+    }
+  }
+
+  return recommendations.sort((a, b) => a.daysOfSupply - b.daysOfSupply);
+}
 ```
 
 ## Best Practices
 
-- **Exclude cancelled and refunded orders** from the sales history time series; including them inflates demand and causes over-ordering
-- **Refresh the materialized view nightly** — run `REFRESH MATERIALIZED VIEW CONCURRENTLY daily_sales` after order midnight cutoff so recommendations are based on yesterday's data
-- **Use a higher service level (Z=2.05 for 98%) for high-velocity, high-margin SKUs** and a lower level (Z=1.28 for 90%) for slow movers to balance service and holding costs
-- **Incorporate promotional calendar** — planned flash sales, seasonal peaks, and marketing campaigns will spike demand beyond the statistical model; allow buyers to manually adjust forecasts
-- **Set a minimum of 26 weeks of history** before running the decomposition model; fewer weeks mean unreliable seasonal indices
-- **Alert on abnormal demand spikes immediately** — if actual daily sales exceed the 95th percentile of the forecast, send an alert so buyers can expedite replenishment
-- **Track forecast accuracy (MAPE)** — compute Mean Absolute Percentage Error monthly; a MAPE above 30% signals the model needs recalibration or that demand patterns have structurally changed
+- **Start with a tool like Inventory Planner before building custom forecasting** — $100–$300/month is far cheaper than engineering time, and the models are more accurate than a hand-rolled moving average
+- **Set a minimum of 6 months of sales history** before trusting any forecast; for new products, use a category-average demand rate as a proxy
+- **Adjust forecasts for known events** — planned promotions, seasonal campaigns, and supply chain disruptions should be entered as manual overrides in your forecasting tool
+- **Track forecast accuracy monthly** — compare forecast units to actual units sold; if you're off by more than 25% consistently, recalibrate your assumptions or look for a structural change in demand patterns
+- **Account for pending purchase orders** — subtract quantity on order from your recommended replenishment qty before placing a new PO; double-ordering is a common and expensive mistake
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| New products have no history for forecasting | For products under 90 days old, use a category-average demand rate as a proxy until enough data accumulates |
-| Seasonal index is wrong for a product that didn't exist last year | Detect insufficient history and fall back to a category-level seasonal index |
-| Safety stock computed too low causes stockouts | Increase the service level Z-score or capture outlier demand events (flash sales) in the residual calculation |
-| Replenishment recommendation doesn't account for pending POs | Subtract `quantity_on_order` (from open POs) from the recommended order quantity before presenting to the buyer |
+| New products have no history to forecast from | Use category average demand rate for the first 90 days; Inventory Planner has a "new product" mode that adjusts for this |
+| Forecast doesn't account for supplier stockouts | Track supplier fill rates in your vendor management system; if a supplier consistently ships 80% of ordered qty, order 25% more to compensate |
+| Safety stock too low, stockouts still happen | Increase your service level setting in Inventory Planner from 90% to 95–98% for high-velocity SKUs |
+| Replenishment recommendation ignores open POs | Always check "quantity on order" before creating a new PO; Inventory Planner shows this automatically, but manual calculations often miss it |
 
 ## Related Skills
 
 - @order-management-system
 - @vendor-management
 - @multi-channel-selling
-- @ab-testing-pricing
-- @dynamic-pricing

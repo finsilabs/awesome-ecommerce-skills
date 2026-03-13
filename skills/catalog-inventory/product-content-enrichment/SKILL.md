@@ -1,6 +1,6 @@
 ---
 name: product-content-enrichment
-description: "Use AI to auto-generate product descriptions, extract attributes from raw specs, and tag images to enrich your catalog at scale"
+description: "Use AI to auto-generate product descriptions, extract attributes, and tag images to enrich your catalog at scale using platform tools and AI writing apps"
 category: catalog-inventory
 risk: safe
 source: curated
@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [ai, product-descriptions, content, attributes, image-tagging, llm, enrichment, pim]
 triggers: ["AI product descriptions", "generate product content", "attribute extraction", "image tagging", "product enrichment", "bulk product descriptions"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,7 +16,7 @@ difficulty: intermediate
 
 ## Overview
 
-Use AI to enrich sparse product catalog data: generate SEO-optimized product descriptions from structured attributes, extract missing attributes from existing descriptions, and auto-tag product images with categories, colors, and materials. Designed as a batch pipeline that can process thousands of products with human review gates for quality control before publishing.
+Rich product content — compelling descriptions, complete attributes, and well-tagged images — drives both conversion and SEO. When a catalog is imported from a supplier with sparse content, enrichment is the next step. AI tools can generate descriptions, extract attributes, and suggest tags at scale. Platform-native AI features and dedicated apps handle the common cases without custom development.
 
 ## When to Use This Skill
 
@@ -25,332 +25,260 @@ Use AI to enrich sparse product catalog data: generate SEO-optimized product des
 - When image metadata (alt text, tags) is missing and needs to be generated at scale
 - When a catalog refresh requires rewriting hundreds of product descriptions in a new brand voice
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Shopify has built-in inventory management, product variants, and metafields. Use the Shopify Admin API for bulk operations. For advanced needs, apps like Stocky or custom Shopify Functions.
-**WooCommerce**: WooCommerce has built-in stock management. Extend with plugins (ATUM, WP All Import for bulk catalog). Use WooCommerce REST API for integrations.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A store with product catalog access, API credentials
-
 ## Core Instructions
 
-1. **Define the enrichment prompt templates**
+### Step 1: Determine platform and choose the right tool
 
-   System prompts are stored as versioned templates so they can be A/B tested and updated without code changes.
+| Platform | Built-in AI | Recommended App/Tool |
+|----------|------------|---------------------|
+| **Shopify** | Shopify Magic (AI description generation, built-in) | Jasper for Shopify, or ChatGPT for bulk generation via CSV |
+| **WooCommerce** | None native | ChatGPT + WP All Import for bulk import; Hypotenuse AI WooCommerce plugin |
+| **BigCommerce** | None native | Feedonomics for feed enrichment; Jasper or ChatGPT for descriptions |
+| **Any platform (bulk)** | Claude / ChatGPT / Gemini | Generate descriptions in bulk via CSV, then import using platform tools |
 
-   ```javascript
-   // lib/enrichmentPrompts.js
+---
 
-   export const DESCRIPTION_PROMPT = `You are a product copywriter for an e-commerce store with the following brand voice:
-   {brandVoice}
+### Step 2: Platform-specific setup
 
-   Generate a product description with the following sections:
-   1. A compelling opening sentence (max 20 words) — highlight the main benefit
-   2. A 2-3 sentence paragraph describing the product features
-   3. A bulleted list of 4-6 key features
+---
 
-   Constraints:
-   - Use the provided attributes only — do not invent specifications
-   - Target length: 80-120 words for the paragraph, plus the bullet list
-   - Naturally include the product name and 1-2 SEO keywords
-   - Do not use superlatives like "best" or "amazing"
+#### Shopify
 
-   Product data:
-   Name: {name}
-   Category: {category}
-   Attributes: {attributes}
-   Keywords to include: {seoKeywords}`;
+**Option A: Shopify Magic (built-in, free)**
 
-   export const ATTRIBUTE_EXTRACTION_PROMPT = `Extract structured product attributes from the description below.
-   Return ONLY a valid JSON object with these keys if they can be determined from the text:
-   material, color, dimensions, weight, care_instructions, country_of_origin, warranty
+Shopify Magic is available to all merchants on any plan.
 
-   Use null for any attribute not mentioned. Do not guess or infer values not explicitly stated.
+1. Go to **Admin → Products → [Product]**
+2. In the product description editor, click the **sparkle icon** (✨) at the top right
+3. Enter a prompt or let Shopify Magic generate from the product title and existing details
+4. Review the generated text — edit to match your brand voice
+5. Click **Save** when satisfied
 
-   Description: {description}`;
+Limitations: Shopify Magic works one product at a time; not suitable for bulk enrichment.
 
-   export const IMAGE_TAGGING_PROMPT = `Analyze this product image and return a JSON object with:
-   {
-     "alt_text": "A descriptive alt text (max 125 chars) for screen readers",
-     "colors": ["primary color", "secondary color"],
-     "tags": ["category", "material", "style", "use case"],
-     "background": "white|lifestyle|studio|transparent"
-   }
+**Option B: Bulk generation with CSV + AI**
 
-   Be specific about colors (e.g., "navy blue" not just "blue").`;
-   ```
+For enriching hundreds of products at once:
 
-2. **Generate product descriptions in batch**
+1. **Export current catalog**: Admin → Products → Export (download as CSV)
+2. **Generate descriptions in bulk**: Paste your product data into ChatGPT, Claude, or another AI tool with a prompt like:
 
-   ```javascript
-   // lib/descriptionEnrichment.js
-   import OpenAI from 'openai';
+```
+For each of the following products, write a product description in this format:
+- Opening sentence: 1 compelling benefit sentence (max 20 words)
+- 2-3 sentence paragraph: features and use cases
+- 4-6 bullet points: key specifications
 
-   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+Brand voice: [describe your brand voice]
+Do not invent specifications not present in the product data.
 
-   export async function generateProductDescription(product, brandConfig) {
-     const attributeText = Object.entries(product.attributes ?? {})
-       .filter(([, v]) => v !== null)
-       .map(([k, v]) => `${k}: ${v}`)
-       .join('\n');
-
-     const prompt = DESCRIPTION_PROMPT
-       .replace('{brandVoice}', brandConfig.voice)
-       .replace('{name}', product.name)
-       .replace('{category}', product.category)
-       .replace('{attributes}', attributeText || 'Not provided')
-       .replace('{seoKeywords}', (product.seoKeywords ?? []).join(', ') || 'None specified');
-
-     const response = await openai.chat.completions.create({
-       model: 'gpt-4o',
-       messages: [{ role: 'user', content: prompt }],
-       temperature: 0.4,
-       max_tokens: 400,
-     });
-
-     return response.choices[0].message.content;
-   }
-
-   // Batch with concurrency control and rate limiting
-   export async function enrichProductsBatch(productIds, brandConfig) {
-     const CONCURRENCY = 5; // Max 5 concurrent API calls
-     const results = [];
-     const chunks = chunkArray(productIds, CONCURRENCY);
-
-     for (const chunk of chunks) {
-       const batchResults = await Promise.all(
-         chunk.map(async (productId) => {
-           const product = await db.products.findUnique({
-             where: { id: productId },
-             include: { attributes: true, category: true },
-           });
-
-           try {
-             const description = await generateProductDescription(product, brandConfig);
-             return { productId, description, status: 'success' };
-           } catch (err) {
-             return { productId, error: err.message, status: 'error' };
-           }
-         })
-       );
-       results.push(...batchResults);
-
-       // Save successful results as drafts (not yet published)
-       for (const result of batchResults.filter(r => r.status === 'success')) {
-         await db.productEnrichmentDrafts.upsert({
-           where: { productId: result.productId },
-           create: { productId: result.productId, description: result.description, status: 'pending_review' },
-           update: { description: result.description, status: 'pending_review', updatedAt: new Date() },
-         });
-       }
-     }
-
-     return results;
-   }
-
-   function chunkArray(arr, size) {
-     return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
-   }
-   ```
-
-3. **Extract attributes from existing descriptions**
-
-   ```javascript
-   // lib/attributeExtraction.js
-   export async function extractAttributes(productDescription) {
-     const prompt = ATTRIBUTE_EXTRACTION_PROMPT.replace('{description}', productDescription);
-
-     const response = await openai.chat.completions.create({
-       model: 'gpt-4o-mini',
-       messages: [{ role: 'user', content: prompt }],
-       response_format: { type: 'json_object' },
-       temperature: 0,
-     });
-
-     try {
-       const attributes = JSON.parse(response.choices[0].message.content);
-       // Strip null values and validate types
-       return Object.fromEntries(
-         Object.entries(attributes).filter(([, v]) => v !== null && v !== undefined)
-       );
-     } catch {
-       throw new Error('Failed to parse attribute extraction response as JSON');
-     }
-   }
-   ```
-
-4. **Auto-tag product images using vision models**
-
-   ```javascript
-   // lib/imageTagging.js
-   import { toBase64 } from './utils';
-   import { downloadImage } from './storage';
-
-   export async function tagProductImage(imageUrl) {
-     // For URLs accessible to OpenAI, pass the URL directly
-     // For private S3 URLs, generate a short-lived presigned URL first
-     const response = await openai.chat.completions.create({
-       model: 'gpt-4o',
-       messages: [
-         {
-           role: 'user',
-           content: [
-             { type: 'text', text: IMAGE_TAGGING_PROMPT },
-             { type: 'image_url', image_url: { url: imageUrl, detail: 'low' } },
-           ],
-         },
-       ],
-       response_format: { type: 'json_object' },
-       temperature: 0,
-       max_tokens: 200,
-     });
-
-     return JSON.parse(response.choices[0].message.content);
-   }
-
-   // Batch tag images for a product
-   export async function tagProductImages(product) {
-     const results = [];
-     for (const image of product.images) {
-       const tags = await tagProductImage(image.url);
-       results.push({ imageId: image.id, ...tags });
-
-       // Update image record with AI-generated metadata
-       await db.productImages.update({
-         where: { id: image.id },
-         data: {
-           altText: image.altText || tags.alt_text, // Don't overwrite manual alt text
-           aiTags: tags.tags,
-           aiColors: tags.colors,
-           aiBackground: tags.background,
-         },
-       });
-     }
-     return results;
-   }
-   ```
-
-5. **Human review workflow before publishing**
-
-   ```javascript
-   // api/admin/enrichment/review.js
-
-   // GET /api/admin/enrichment/pending
-   export async function getPendingDrafts(req, res) {
-     const drafts = await db.productEnrichmentDrafts.findMany({
-       where: { status: 'pending_review' },
-       include: { product: { include: { images: true } } },
-       orderBy: { updatedAt: 'desc' },
-       take: 50,
-     });
-     res.json({ drafts });
-   }
-
-   // POST /api/admin/enrichment/:productId/approve
-   export async function approveDraft(req, res) {
-     const draft = await db.productEnrichmentDrafts.findUnique({
-       where: { productId: req.params.productId },
-     });
-     if (!draft) return res.status(404).json({ error: 'Draft not found' });
-
-     await db.$transaction([
-       db.products.update({
-         where: { id: req.params.productId },
-         data: { description: draft.description },
-       }),
-       db.productEnrichmentDrafts.update({
-         where: { productId: req.params.productId },
-         data: { status: 'approved', approvedBy: req.session.userId, approvedAt: new Date() },
-       }),
-     ]);
-     res.json({ approved: true });
-   }
-
-   // POST /api/admin/enrichment/:productId/reject
-   export async function rejectDraft(req, res) {
-     await db.productEnrichmentDrafts.update({
-       where: { productId: req.params.productId },
-       data: {
-         status: 'rejected',
-         rejectionNote: req.body.note,
-         rejectedBy: req.session.userId,
-       },
-     });
-     res.json({ rejected: true });
-   }
-   ```
-
-## Examples
-
-### Running enrichment for a full catalog import
-
-```javascript
-// After importing 500 products from a supplier CSV
-const productIds = importedProducts.map(p => p.id);
-
-const brandConfig = {
-  voice: 'Professional yet approachable. Focus on quality and craftsmanship. Avoid jargon.',
-};
-
-const job = await createEnrichmentJob({
-  productIds,
-  tasks: ['description', 'attributes', 'image_tags'],
-  brandConfig,
-});
-
-console.log(`Enrichment job ${job.id} queued for ${productIds.length} products`);
+Products:
+[paste your CSV rows]
 ```
 
-### Diff view for reviewing AI-generated descriptions
+3. **Import back into Shopify**: Use **Matrixify** (App Store) to import the enriched CSV with updated descriptions; map the description column to the Shopify body HTML field
 
-```jsx
-function EnrichmentReviewItem({ product, draft }) {
-  return (
-    <div className="review-item">
-      <div className="review-columns">
-        <div>
-          <h3>Original</h3>
-          <p>{product.description || <em>No description</em>}</p>
-        </div>
-        <div>
-          <h3>AI Generated</h3>
-          <p>{draft.description}</p>
-        </div>
-      </div>
-      <div className="review-actions">
-        <button onClick={() => approveDraft(product.id)}>Approve</button>
-        <button onClick={() => editDraft(product.id, draft.description)}>Edit</button>
-        <button onClick={() => rejectDraft(product.id)}>Reject</button>
-      </div>
-    </div>
-  );
+**Option C: Hypotenuse AI or Jasper (App Store)**
+
+These apps integrate directly with Shopify:
+
+1. Install from the Shopify App Store
+2. Connect to your product catalog
+3. Select products to enrich and click generate
+4. Review drafts in the app's editor before publishing
+5. Publish approved descriptions directly to Shopify
+
+---
+
+#### WooCommerce
+
+**Bulk generation workflow:**
+
+1. **Export products**: WooCommerce → Products → Export (CSV)
+2. **Generate descriptions** using an AI tool of your choice (ChatGPT, Claude, Jasper)
+3. **Import enriched data**: Use **WP All Import Pro** to import the updated CSV back into WooCommerce, mapping the description column to the product description field
+
+**Hypotenuse AI for WooCommerce:**
+- Install the Hypotenuse AI plugin from WooCommerce.com
+- Select multiple products from your product list
+- Click **Generate Content** to create descriptions in bulk
+- Review and approve before publishing
+
+**For attribute extraction:**
+- Use AI to extract structured attributes (material, dimensions, weight, care instructions) from existing descriptions
+- Add extracted attributes to WooCommerce product attributes under the **Attributes** tab
+- These become filterable facets in your navigation
+
+---
+
+#### BigCommerce
+
+**Bulk description generation:**
+
+1. Go to **Products → Export** and download the product catalog CSV
+2. Generate enriched descriptions using an AI tool
+3. Re-import using **Products → Import**
+
+**Feedonomics for feed enrichment:**
+- Install Feedonomics from the BigCommerce App Marketplace
+- Feedonomics can use AI to optimize product titles and descriptions specifically for Google Shopping, Amazon, and other channels
+- Particularly useful for enriching attributes required by feed destinations (GTIN, brand, MPN)
+
+---
+
+#### Custom / Headless
+
+For headless platforms with a custom database, build an enrichment pipeline with a human review gate:
+
+```typescript
+// lib/productEnrichment.ts
+import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic();
+
+const DESCRIPTION_PROMPT = `You are a product copywriter. Generate a product description with:
+1. A compelling opening sentence (max 20 words) highlighting the main benefit
+2. A 2-3 sentence paragraph describing features
+3. 4-6 key feature bullet points
+
+Brand voice: {brandVoice}
+Constraints:
+- Use only the provided attributes — do not invent specifications
+- Target: 80-120 words for the paragraph, plus bullets
+- Include the product name and 1-2 SEO keywords naturally
+- Do not use superlatives like "best" or "amazing"
+
+Product: {name}
+Category: {category}
+Attributes: {attributes}`;
+
+// Generate description for a single product
+export async function generateProductDescription(product: Product, brandVoice: string): Promise<string> {
+  const attributeText = Object.entries(product.attributes ?? {})
+    .filter(([, v]) => v !== null)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('\n');
+
+  const prompt = DESCRIPTION_PROMPT
+    .replace('{brandVoice}', brandVoice)
+    .replace('{name}', product.name)
+    .replace('{category}', product.category)
+    .replace('{attributes}', attributeText || 'Not provided');
+
+  const message = await client.messages.create({
+    model: 'claude-opus-4-5',
+    max_tokens: 400,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  return message.content[0].type === 'text' ? message.content[0].text : '';
+}
+
+// Batch enrichment with human review gate — saves drafts, never auto-publishes
+export async function enrichProductsBatch(productIds: string[], brandVoice: string) {
+  const CONCURRENCY = 5;
+  const results = [];
+
+  for (let i = 0; i < productIds.length; i += CONCURRENCY) {
+    const chunk = productIds.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.all(chunk.map(async productId => {
+      const product = await db.products.findUnique({ where: { id: productId }, include: { attributes: true } });
+      try {
+        const description = await generateProductDescription(product, brandVoice);
+        // Save as draft — requires human approval before going live
+        await db.productEnrichmentDrafts.upsert({
+          where: { productId },
+          create: { productId, description, status: 'pending_review' },
+          update: { description, status: 'pending_review', updatedAt: new Date() },
+        });
+        return { productId, status: 'success' };
+      } catch (err) {
+        return { productId, status: 'error', error: err.message };
+      }
+    }));
+    results.push(...batchResults);
+  }
+
+  return results;
+}
+
+// Approve a draft and publish to the product
+export async function approveDraft(productId: string, approvedBy: string) {
+  const draft = await db.productEnrichmentDrafts.findUnique({ where: { productId } });
+  if (!draft) throw new Error('Draft not found');
+
+  await db.$transaction([
+    db.products.update({ where: { id: productId }, data: { description: draft.description } }),
+    db.productEnrichmentDrafts.update({
+      where: { productId },
+      data: { status: 'approved', approvedBy, approvedAt: new Date() },
+    }),
+  ]);
 }
 ```
 
+---
+
+### Step 3: Review and approve AI-generated content
+
+**Never auto-publish AI-generated content without human review.** AI can:
+- Invent specifications not in the source data (hallucination)
+- Use a tone inconsistent with your brand
+- Include legally problematic claims
+
+**Review workflow:**
+1. Generate descriptions as drafts
+2. Use a simple spreadsheet or your platform's product edit screen to review each one
+3. Edit tone, accuracy, and brand voice before approving
+4. Track approval rate — if you're rejecting more than 30% of drafts, refine your prompt
+
+**Prioritize which products to enrich first:**
+- High-traffic, low-conversion products (check Analytics)
+- Products with zero or very short descriptions
+- New arrivals that need SEO content to start ranking
+
+---
+
+### Step 4: Enrich product images with alt text
+
+Alt text serves both accessibility and image SEO.
+
+**Shopify:**
+- Go to **Products → [Product] → Images**
+- Click the **...** menu on any image → **Edit alt text**
+- Enter a descriptive alt text (e.g., "Blue cotton t-shirt with round neck, men's size M")
+- For bulk alt text: use Matrixify with a column for `Image Alt Text`
+
+**WooCommerce:**
+- Upload an image and click **Edit** in the media library
+- Fill in the **Alt Text** field
+- For existing images: go to **Media Library → [Image] → Edit**
+
+**For bulk alt text generation:**
+1. Export a list of product images with their product titles
+2. Use an AI tool to generate descriptive alt text for each image
+3. Import back using your platform's bulk tools
+
 ## Best Practices
 
-- **Never auto-publish AI-generated content** — always route through a human review queue; AI can hallucinate specifications and make claims that create liability
-- **Store drafts separately from published content** — use a `product_enrichment_drafts` table; never overwrite the published description in-place until approved
-- **Use `temperature: 0.3-0.5` for descriptions** — lower temperature produces more consistent, on-brand output; very high temperature creates creative but unpredictable results
-- **Set `response_format: json_object`** for extraction tasks — structured output prevents parsing failures
-- **Implement concurrency limits** — OpenAI has rate limits; use a queue with configurable concurrency (5-10 parallel calls) and exponential backoff on 429 errors
-- **Track enrichment quality metrics** — measure approval rate, rejection rate, and time-to-approve; use rejection notes to iterate on prompts
+- **Always use human review before publishing AI descriptions** — never auto-publish; track approval rate and use it to iterate on your prompts
+- **Store AI-generated content as drafts separate from live content** — never overwrite the published description in-place until reviewed and approved
+- **Use lower temperature settings for product descriptions** (0.3–0.5 in ChatGPT/Claude) — consistent, on-brand output is more valuable than creative variation
+- **Include your brand voice guidelines in every prompt** — "Professional yet approachable, focus on quality, no superlatives" produces far better output than prompting without brand context
+- **Enrich highest-priority products first** — start with your top 20% revenue products before tackling the long tail
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| AI invents specifications not in the source data | Add explicit constraints in the system prompt: "Use only the provided attributes — do not invent values"; verify with attribute extraction on the output |
-| Image tagging fails for very small or blurry images | Add a pre-check for minimum image dimensions (at least 400x400 px); skip or flag images below this threshold |
-| JSON parsing fails for attribute extraction | Use `response_format: { type: 'json_object' }` and wrap parsing in try/catch with a fallback to returning empty attributes |
-| Enrichment job silently drops products on API errors | Log errors per product, continue the batch, and expose the error count in the job status; do not let one failed product abort the entire run |
-| Descriptions all sound the same | Add product-type-specific instructions to the prompt (e.g., different instructions for footwear vs. electronics) |
+| AI invents specifications not in the source data | Add explicit constraints to the prompt: "Use only the provided attributes — do not invent or assume values"; verify output against the product spec |
+| All AI descriptions sound identical | Add product-type-specific instructions (e.g., different prompts for footwear vs. electronics vs. apparel) |
+| Descriptions miss SEO keywords | Include "naturally incorporate these SEO keywords: [list]" in the prompt; check with a keyword tool after generation |
+| Bulk import overwrites good existing descriptions | Filter your import to only products with empty or very short descriptions; don't overwrite manually written descriptions |
+| AI image tagging quality is poor | Use AI image analysis (GPT-4 Vision, Claude) for alt text generation rather than keyword-based tools; provide the product name as context |
 
 ## Related Skills
 
 - @catalog-import-export
 - @product-data-modeling
 - @product-categorization
-- @digital-products

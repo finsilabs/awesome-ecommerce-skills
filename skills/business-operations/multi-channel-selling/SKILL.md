@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [multi-channel, omnichannel, catalog-sync, inventory-sync, marketplace, wholesale, DTC]
 triggers: ["multi-channel selling", "omnichannel inventory", "channel sync", "marketplace integration", "unified catalog", "cross-channel inventory"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,7 +16,7 @@ difficulty: advanced
 
 ## Overview
 
-Build a unified catalog and inventory layer that serves as the single source of truth across your DTC website, wholesale portal, and third-party marketplaces (Amazon, Walmart, eBay). The architecture separates the master catalog and inventory from channel-specific listings, enabling per-channel pricing, content, and availability rules while keeping stock levels synchronized in real time.
+Multi-channel selling lets you list products on your own website, Amazon, eBay, Walmart, and wholesale portals simultaneously — with inventory synchronized in real time so you never oversell. The critical rule: one inventory pool, updated immediately when any channel sells or restocks. Purpose-built channel management tools (Linnworks, Sellbrite, Skubana/Extensiv) make this manageable without custom integration work.
 
 ## When to Use This Skill
 
@@ -26,273 +26,198 @@ Build a unified catalog and inventory layer that serves as the single source of 
 - When overselling on one channel because inventory is not shared in real time
 - When building a channel management platform that lets brands manage all their sales channels in one place
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
-**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
-
 ## Core Instructions
 
-1. **Design the channel-agnostic catalog architecture**
+### Step 1: Determine your platform and choose the right channel management tool
 
-   ```sql
-   -- Master product catalog (channel-agnostic)
-   CREATE TABLE products (
-     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     master_sku    VARCHAR(64) NOT NULL UNIQUE,
-     title         VARCHAR(255) NOT NULL,
-     brand         VARCHAR(128),
-     weight_oz     NUMERIC(8,2),
-     dimensions    JSONB,            -- {length, width, height, unit}
-     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Shopify's native Sales Channels + Sellbrite or Linnworks for external marketplaces | Shopify has built-in Facebook, Instagram, Google, and TikTok channels; Sellbrite adds Amazon/eBay/Walmart with inventory sync |
+| **WooCommerce** | WP-Lister Pro (Amazon + eBay) or Linnworks | WP-Lister Pro lists products from WooCommerce directly to Amazon/eBay and syncs orders back |
+| **BigCommerce** | BigCommerce Channels + Codisto (for Amazon/eBay) | BigCommerce has a native Channel Manager; Codisto extends it to Amazon, eBay, and Walmart with real-time sync |
+| **Any Platform** | Linnworks or Skubana (Extensiv) as a central OMS | These tools sit above all channels and act as the single source of inventory truth for high-volume multi-channel operations |
 
-   -- Channels (DTC, wholesale, amazon, walmart, ebay, etc.)
-   CREATE TABLE channels (
-     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name          VARCHAR(64) NOT NULL UNIQUE,  -- 'dtc', 'wholesale', 'amazon_us', 'walmart'
-     type          VARCHAR(16) NOT NULL
-                     CHECK (type IN ('dtc', 'wholesale', 'marketplace', 'pos')),
-     is_active     BOOLEAN NOT NULL DEFAULT true
-   );
+### Step 2: Set up your primary store as the inventory master
 
-   -- Per-channel product listings (channel-specific content and pricing)
-   CREATE TABLE channel_listings (
-     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     product_id    UUID NOT NULL REFERENCES products(id),
-     channel_id    UUID NOT NULL REFERENCES channels(id),
-     channel_sku   VARCHAR(64) NOT NULL,  -- e.g. Amazon ASIN, Walmart item ID
-     title         VARCHAR(255),           -- channel-specific title override
-     price         INTEGER NOT NULL,       -- cents
-     is_active     BOOLEAN NOT NULL DEFAULT true,
-     last_synced_at TIMESTAMPTZ,
-     UNIQUE(channel_id, channel_sku)
-   );
+Before connecting any channels, ensure your primary store has:
+- Accurate stock levels for all SKUs
+- Product dimensions and weights entered (required for marketplace listings)
+- HS codes if selling internationally
+- UPC/GTIN barcodes on all products (required for Amazon and Walmart listings)
 
-   -- Shared inventory pool
-   CREATE TABLE inventory (
-     product_id    UUID NOT NULL REFERENCES products(id) PRIMARY KEY,
-     quantity_on_hand INTEGER NOT NULL DEFAULT 0,
-     reserved      INTEGER NOT NULL DEFAULT 0,   -- held by pending orders across ALL channels
-     CONSTRAINT qty_non_negative CHECK (quantity_on_hand >= 0)
-   );
+#### Shopify
 
-   -- Per-channel inventory allocation (optional — for prioritizing channels)
-   CREATE TABLE channel_inventory_allocations (
-     product_id    UUID NOT NULL REFERENCES products(id),
-     channel_id    UUID NOT NULL REFERENCES channels(id),
-     allocated_qty INTEGER NOT NULL DEFAULT 0,  -- 0 = draws from shared pool
-     PRIMARY KEY (product_id, channel_id)
-   );
-   ```
+1. Go to **Settings → Sales channels** — Shopify lists all available channels
+2. Add **Facebook & Instagram** (free, by Meta) to sync products to your Facebook Shop and Instagram Shopping
+3. Add **Google & YouTube** (free, by Google) to sync products to Google Shopping
+4. For Amazon: install **Codisto** or **Sellbrite** from the Shopify App Store — these handle the Amazon SP-API integration
 
-2. **Reserve inventory on order across any channel**
+#### WooCommerce
 
-   ```typescript
-   async function reserveInventory(
-     productId: string,
-     channelId: string,
-     quantity: number,
-     orderId: string
-   ): Promise<void> {
-     await db.transaction(async tx => {
-       // Check available quantity
-       const result = await tx.raw(`
-         UPDATE inventory
-         SET reserved = reserved + ?
-         WHERE product_id = ?
-           AND (quantity_on_hand - reserved) >= ?
-         RETURNING product_id
-       `, [quantity, productId, quantity]);
+1. Your WooCommerce store is the inventory master
+2. Install **WP-Lister Pro for Amazon** and/or **WP-Lister Pro for eBay** from wpla.net
+3. WP-Lister reads your WooCommerce products and creates Amazon/eBay listings from them
+4. Orders from Amazon/eBay are imported back to WooCommerce automatically
 
-       if (result.rowCount === 0) {
-         throw new Error(`Insufficient inventory for product ${productId}`);
-       }
+#### BigCommerce
 
-       await tx.inventoryReservations.insert({
-         product_id: productId,
-         channel_id: channelId,
-         order_id: orderId,
-         quantity,
-         reserved_at: new Date(),
-       });
-     });
-   }
-   ```
+1. Go to **Channel Manager** in BigCommerce admin (available on all plans)
+2. Connect Google Shopping, Facebook, Instagram via the native channel connectors
+3. For Amazon and eBay: install **Codisto** from the BigCommerce App Marketplace — it's the recommended Amazon/eBay integration for BigCommerce
 
-3. **Sync inventory to marketplace channels**
+### Step 3: Connect marketplace channels
 
-   ```typescript
-   async function pushInventoryToChannels(productId: string): Promise<void> {
-     const inventory = await db.inventory.findByProductId(productId);
-     const available = inventory.quantity_on_hand - inventory.reserved;
+#### Amazon
 
-     const listings = await db.channelListings.findByProductId(productId, { is_active: true });
-     const channels = await db.channels.findByIds(listings.map(l => l.channel_id));
+Amazon requires a Professional Seller account ($39.99/month) and approved product categories. You'll also need GTINs (UPCs or ASINs) for every listing.
 
-     await Promise.allSettled(
-       listings.map(async listing => {
-         const channel = channels.find(c => c.id === listing.channel_id)!;
+**Via Shopify + Sellbrite:**
+1. Install **Sellbrite** from the Shopify App Store
+2. Connect your Amazon Seller Central account in Sellbrite → Channels → Add Channel → Amazon
+3. Sellbrite imports your existing Amazon ASINs if you already have listings, or you can create new listings from your Shopify products
+4. Enable inventory sync: Sellbrite pushes your Shopify inventory quantity to Amazon in real time (within minutes of a sale on either channel)
+5. Amazon orders import into Sellbrite and sync to Shopify as new orders automatically
 
-         // Per-channel inventory allocation: if allocated, cap at allocation
-         const allocation = await db.channelInventoryAllocations.findOne({
-           product_id: productId, channel_id: channel.id
-         });
-         const channelQty = allocation?.allocated_qty > 0
-           ? Math.min(available, allocation.allocated_qty)
-           : available;
+**Via WooCommerce + WP-Lister:**
+1. Connect your Amazon Seller Central account in WP-Lister Pro → Amazon → Settings
+2. Map your WooCommerce products to ASINs (match by UPC/GTIN or search Amazon's catalog)
+3. WP-Lister syncs inventory from WooCommerce to Amazon and imports Amazon orders to WooCommerce
 
-         await syncToChannel(channel, listing, channelQty);
-       })
-     );
-   }
+#### eBay
 
-   async function syncToChannel(
-     channel: Channel,
-     listing: ChannelListing,
-     quantity: number
-   ): Promise<void> {
-     if (channel.name === 'amazon_us') {
-       await syncAmazonInventory(listing.channel_sku, quantity);
-     } else if (channel.name === 'walmart') {
-       await syncWalmartInventory(listing.channel_sku, quantity);
-     } else if (channel.name === 'dtc') {
-       // DTC reads directly from inventory table — no push needed
-     }
+**Via Shopify + Sellbrite:**
+1. In Sellbrite, go to Channels → Add Channel → eBay
+2. Connect your eBay Seller account via OAuth
+3. Map Shopify products to eBay listing templates; Sellbrite handles category requirements and eBay-specific fields
+4. Inventory syncs both ways in near real time
 
-     await db.channelListings.update(listing.id, { last_synced_at: new Date() });
-   }
-   ```
+**Via WooCommerce + WP-Lister:**
+1. Same setup as Amazon — connect your eBay account in WP-Lister Pro → eBay → Settings
+2. Create listing templates in WP-Lister to map WooCommerce product data to eBay category requirements
 
-4. **Handle incoming orders from marketplace webhooks**
+#### Walmart Marketplace
 
-   ```typescript
-   // Marketplace adapters normalize to a common format
-   interface NormalizedOrder {
-     channelOrderId: string;
-     channelId: string;
-     lines: { channelSku: string; quantity: number; pricePerUnit: number }[];
-     shippingAddress: Address;
-     customerEmail: string;
-   }
+**Via Shopify + Sellbrite:**
+1. Walmart Marketplace requires an application and approval (apply at marketplace.walmart.com)
+2. Once approved: connect Walmart in Sellbrite → Channels → Add Channel → Walmart
+3. Sellbrite handles Walmart's specific listing requirements (requires GTIN, specific image dimensions)
 
-   async function ingestMarketplaceOrder(normalizedOrder: NormalizedOrder): Promise<string> {
-     // Idempotency: skip if already imported
-     const existing = await db.orders.findByChannelOrderId(normalizedOrder.channelId, normalizedOrder.channelOrderId);
-     if (existing) return existing.id;
+**Via BigCommerce + Codisto:**
+1. Apply for Walmart Marketplace approval separately
+2. Once approved: connect Walmart in Codisto → Channels → Walmart
+3. Codisto syncs products and inventory automatically
 
-     return db.transaction(async tx => {
-       // Resolve channel SKUs to master product IDs
-       const lines = await Promise.all(normalizedOrder.lines.map(async l => {
-         const listing = await tx.channelListings.findByChannelSku(normalizedOrder.channelId, l.channelSku);
-         if (!listing) throw new Error(`Unknown channel SKU: ${l.channelSku}`);
-         return { product_id: listing.product_id, quantity: l.quantity, unit_price: l.pricePerUnit };
-       }));
+### Step 4: Configure inventory allocation per channel
 
-       const order = await tx.orders.insert({
-         channel_id: normalizedOrder.channelId,
-         channel_order_id: normalizedOrder.channelOrderId,
-         status: 'paid',
-         shipping_address: normalizedOrder.shippingAddress,
-         customer_email: normalizedOrder.customerEmail,
-       });
+When one channel sells out, you want to prevent other channels from showing stock you don't have. Most channel management tools handle this — configure buffer quantities per channel.
 
-       await tx.orderLines.insertMany(lines.map(l => ({ ...l, order_id: order.id })));
+**In Sellbrite:**
+1. Go to Sellbrite → Channels → [Channel] → Inventory Settings
+2. Set "Channel Buffer": e.g., keep 5 units in reserve so Shopify always has stock even if Amazon buys the rest
+3. Enable "Stop selling when inventory = 0" to prevent oversells
 
-       // Reserve inventory
-       for (const line of lines) {
-         await reserveInventory(line.product_id, normalizedOrder.channelId, line.quantity, order.id);
-       }
+**In Linnworks:**
+1. Linnworks → Settings → Stock Management → Configure per-channel stock allocation
+2. Set safety stock levels per channel to prevent one channel from consuming all inventory
 
-       return order.id;
-     });
-   }
-   ```
+**In Codisto (BigCommerce):**
+1. Codisto → Inventory → Configure "Available stock formula": e.g., `BigCommerce stock - 3` for Amazon (holds 3 units back for other channels)
 
-5. **Catalog sync: push product updates to channels**
+### Step 5: Handle orders from all channels
 
-   ```typescript
-   async function publishProductToChannel(
-     productId: string,
-     channelId: string
-   ): Promise<void> {
-     const product = await db.products.findById(productId);
-     const listing = await db.channelListings.findOne({ product_id: productId, channel_id: channelId });
-     if (!listing) throw new Error(`No listing for this product/channel combination`);
+Every channel order should flow into your central system and trigger fulfillment from the same process.
 
-     const channel = await db.channels.findById(channelId);
-     const content = await db.productContent.findOne({ product_id: productId, channel_id: channelId })
-       ?? await db.productContent.findDefault(productId);
+**Shopify with Sellbrite:**
+- Amazon and eBay orders import to Sellbrite and sync to Shopify as regular orders
+- Fulfill in Shopify normally — ShipStation or Shopify Shipping handles label creation
+- Sellbrite pushes tracking numbers back to Amazon/eBay automatically (required within 2 business days for Amazon)
 
-     if (channel.name === 'amazon_us') {
-       await amazonSPAPI.updateListing({
-         sku: listing.channel_sku,
-         title: listing.title ?? content.title,
-         price: listing.price / 100,
-         bulletPoints: content.bullet_points,
-         description: content.description,
-         images: content.image_urls,
-       });
-     }
-     // Add handlers for other channels...
-   }
-   ```
+**WooCommerce with WP-Lister:**
+- Amazon and eBay orders import to WooCommerce as regular orders
+- Fulfill in WooCommerce (or ShipStation); tracking numbers sync back to the marketplace automatically
 
-## Examples
+**Linnworks (any platform):**
+- All orders from all channels appear in Linnworks → Orders in one view
+- Create pick lists and shipping labels in Linnworks
+- Linnworks pushes fulfillment confirmation and tracking to each channel automatically
 
-### Detect channels with stale inventory (not synced in 30+ minutes)
+#### Custom / Headless — cross-channel order ingestion
 
-```sql
-SELECT
-  c.name AS channel,
-  COUNT(*) AS stale_listings,
-  MAX(cl.last_synced_at) AS last_sync
-FROM channel_listings cl
-JOIN channels c ON c.id = cl.channel_id
-WHERE cl.is_active = true
-  AND c.type = 'marketplace'
-  AND (cl.last_synced_at IS NULL OR cl.last_synced_at < NOW() - INTERVAL '30 minutes')
-GROUP BY c.id, c.name
-ORDER BY stale_listings DESC;
+```typescript
+// Normalize an order from any marketplace into a common format
+interface NormalizedMarketplaceOrder {
+  channelName: string;       // 'amazon', 'ebay', 'walmart', 'shopify'
+  channelOrderId: string;    // the marketplace's order ID
+  lines: {
+    channelSku: string;
+    masterSku: string;       // your internal SKU
+    quantity: number;
+    unitPriceCents: number;
+  }[];
+  shippingAddress: Address;
+  customerEmail: string;
+}
+
+async function ingestMarketplaceOrder(order: NormalizedMarketplaceOrder): Promise<void> {
+  // Idempotency: skip if already imported
+  const existing = await db.orders.findByChannelOrderId(order.channelName, order.channelOrderId);
+  if (existing) return;
+
+  await db.transaction(async tx => {
+    // Create the order in your system
+    const createdOrder = await tx.orders.insert({
+      channel: order.channelName,
+      channel_order_id: order.channelOrderId,
+      status: 'awaiting_fulfillment',
+      shipping_address: order.shippingAddress,
+      customer_email: order.customerEmail,
+    });
+
+    // Reserve inventory for each line
+    for (const line of order.lines) {
+      await tx.orderLines.insert({
+        order_id: createdOrder.id,
+        sku: line.masterSku,
+        quantity: line.quantity,
+        unit_price_cents: line.unitPriceCents,
+      });
+      // Decrement inventory immediately
+      await tx.raw(
+        'UPDATE inventory SET reserved = reserved + ? WHERE sku = ? AND (quantity_on_hand - reserved) >= ?',
+        [line.quantity, line.masterSku, line.quantity]
+      );
+    }
+  });
+}
 ```
 
-### Cross-channel revenue report
+### Step 6: Monitor cross-channel performance
 
-```sql
-SELECT
-  c.name AS channel,
-  COUNT(DISTINCT o.id) AS orders,
-  SUM(ol.quantity * ol.unit_price) / 100.0 AS revenue
-FROM orders o
-JOIN channels c ON c.id = o.channel_id
-JOIN order_lines ol ON ol.order_id = o.id
-WHERE o.created_at >= NOW() - INTERVAL '30 days'
-GROUP BY c.id, c.name
-ORDER BY revenue DESC;
-```
+Track per-channel metrics monthly to understand your channel economics:
+
+| Metric | Where to find it |
+|--------|-----------------|
+| Revenue per channel | Sellbrite/Linnworks Reports → Sales by Channel |
+| Sell-through rate per channel | Compare starting inventory to units sold per period |
+| Inventory sync lag (stale listings) | Check your channel tool's "last synced" timestamp — anything over 30 minutes needs investigation |
+| Return rate per channel | Amazon has its own return dashboard; WooCommerce/Shopify show returns by source channel tag |
 
 ## Best Practices
 
-- **Maintain a single inventory truth** — never maintain separate stock counts per channel; always deduct from a single pool and push the available quantity to each channel after every change
-- **Use channel-specific SKU mappings** — don't expose your master SKUs to marketplaces; maintain a `channel_listings` table that maps their external IDs to your internal product IDs
-- **Push inventory updates immediately after any stock change** — trigger an inventory sync job on every order reservation, fulfillment, and return; stale inventory leads to oversells
-- **Allocate safety stock per channel** — for high-velocity channels, set `allocated_qty` buffers so one channel can't drain all stock before the sync fires
-- **Normalize incoming marketplace orders** — build a per-channel adapter that maps marketplace order formats to your internal order model; don't scatter marketplace-specific logic throughout the codebase
-- **Log all sync failures with retry** — marketplace API calls will fail intermittently; use a queue with exponential backoff so failures are retried without losing updates
-- **Test with sandbox credentials before going live** — Amazon, Walmart, and eBay all provide sandbox environments; always validate the integration before enabling live syncs
+- **Never maintain separate stock counts per channel** — one pool, updated immediately after every sale on any channel; stale inventory leads to oversells
+- **Use channel-specific SKU mappings** — Amazon uses ASINs, eBay uses item IDs, your store uses your internal SKU; maintain a mapping table rather than exposing your internal SKUs to marketplaces
+- **Set safety stock buffers per channel** — allocate a reserve so one channel can't sell out your entire inventory before the sync propagates to other channels
+- **Test with a single product before scaling** — connect one product to Amazon, verify the listing, place a test order, and confirm inventory syncs before connecting your entire catalog
+- **Log all channel sync failures with retry** — marketplace API calls fail intermittently; use your channel management tool's retry logic and review the failure log weekly
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Overselling when two channels receive orders simultaneously | Use `UPDATE inventory SET reserved = reserved + n WHERE (on_hand - reserved) >= n` atomically |
-| Product content gets out of sync across channels after a catalog update | Trigger a `publishProductToChannel` job on every product update event, for all active channel listings |
-| Marketplace order imports duplicate when webhook fires twice | Add `UNIQUE(channel_id, channel_order_id)` on the orders table and use `INSERT ... ON CONFLICT DO NOTHING` |
-| Channel price changes take hours to reflect | Use a real-time event (inventory write triggers a price+stock push); don't rely solely on scheduled jobs |
+| Oversell when two channels receive orders simultaneously | Use atomic inventory reservation with a WHERE clause checking available qty; Sellbrite/Linnworks handle this; for custom builds use database-level atomic updates |
+| Amazon listing goes inactive after a price change | Amazon may require a price change notification or your listing could violate their pricing policies; check the Amazon Seller Central notification inbox immediately when listings go inactive |
+| Duplicate order imports when webhook fires twice | Add a unique constraint on (channel_name, channel_order_id) in your orders table and use INSERT ... ON CONFLICT DO NOTHING |
+| Tracking number not pushed back to marketplace | Amazon requires tracking within 2 business days or seller performance metrics drop; verify your channel tool's automatic fulfillment confirmation is enabled |
 
 ## Related Skills
 

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [tiktok-shop, social-commerce, live-shopping]
 triggers: ["set up TikTok Shop", "enable live shopping"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: advanced
 ---
 
@@ -16,258 +16,190 @@ difficulty: advanced
 
 ## Overview
 
-TikTok Shop transforms TikTok from a discovery channel into a direct commerce platform where users can purchase without leaving the app. It combines shoppable video posts, LIVE shopping events, product showcase tabs, and an affiliate creator marketplace. For ecommerce brands, integrating TikTok Shop means syncing your product catalog, handling orders through the TikTok Shop API, managing inventory across channels, and enabling creators to tag and sell your products.
+TikTok Shop transforms TikTok from a discovery channel into a direct commerce platform where users purchase without leaving the app — via shoppable video posts, LIVE shopping events, product showcase tabs, and creator affiliate programs. For Shopify and WooCommerce, official TikTok integrations handle catalog sync, order management, and inventory updates automatically. The strategic work is applying to TikTok Seller Center, structuring your affiliate program, and running LIVE shopping events.
 
 ## When to Use This Skill
 
 - When launching TikTok as a native commerce channel (not just a traffic referral)
-- When your products are well-suited to impulse purchase via short-form video
+- When your products are suited to impulse purchase via short-form video
 - When enabling creators to tag and earn commissions on your products
 - When running LIVE shopping events for product launches or flash sales
 - When needing to sync inventory and orders between TikTok Shop and your primary platform
 
-## Prerequisites & Platform Notes
-
-**Shopify**: Most marketing features are handled by apps from the Shopify App Store (Klaviyo for email, Postscript for SMS, Stamped for reviews, etc.). Use the Shopify Admin API and webhooks to build custom integrations. Shopify's marketing_event API tracks campaign attribution.
-**WooCommerce**: Install dedicated plugins (AutomateWoo, WooCommerce Points and Rewards, YITH plugins). Use WooCommerce hooks (woocommerce_order_status_completed, etc.) for custom automation.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A Shopify/WooCommerce store, TikTok Seller Central account, TikTok Shop API credentials
-
 ## Core Instructions
 
-### 1. Register on TikTok Shop Seller Center
+### Step 1: Register on TikTok Shop Seller Center
 
-1. Go to `seller.tiktokshop.com` and register a seller account
+Before any integration:
+
+1. Go to `seller.tiktokshop.com` and create a seller account
 2. Complete identity verification (government ID + business registration)
 3. Connect your TikTok Business Account to the Seller Center
-4. Generate API credentials: App ID, App Secret, and Shop ID from Developer Portal
+4. Wait for seller approval — typically 1–3 business days; some categories require additional documentation (food, supplements, electronics)
 
-### 2. Product catalog sync via TikTok Shop API
+**Note:** TikTok Shop is currently available in the US, UK, Southeast Asia, and select other markets. Availability changes — check TikTok's current supported markets before starting.
+
+### Step 2: Connect your platform to TikTok Shop
+
+---
+
+#### Shopify
+
+1. Go to **Shopify Admin → Sales Channels → + → TikTok**
+2. Install TikTok for Shopify and connect your TikTok Seller Center account
+3. Under **Catalog Sync**, Shopify syncs your product catalog to TikTok Shop automatically
+4. Shopify also syncs TikTok Shop orders back to Shopify Admin so you manage fulfillment in one place
+5. Go to **TikTok → Products** to review which products were approved and which have issues
+6. Products that fail TikTok's content review (image quality, prohibited categories) appear in **TikTok → Products → Rejected** with the reason
+
+---
+
+#### WooCommerce
+
+1. Install **TikTok for WooCommerce** from the WordPress plugin directory
+2. Go to **WooCommerce → TikTok → Seller Center** and connect your TikTok Seller Center account
+3. The plugin syncs your WooCommerce products to TikTok Shop and pulls TikTok orders back into WooCommerce
+4. Go to **WooCommerce → TikTok → Products** to monitor sync status and resolve any rejected products
+
+---
+
+#### BigCommerce
+
+1. Go to **BigCommerce Admin → Channel Manager → Add a Channel → TikTok**
+2. Connect your TikTok Seller Center account
+3. BigCommerce automatically syncs products and inventory to TikTok Shop
+4. TikTok orders appear in **BigCommerce → Orders** for unified fulfillment management
+
+---
+
+#### Custom / Headless
+
+Use the TikTok Shop API directly for custom catalog management and order handling:
 
 ```typescript
 const TIKTOK_SHOP_BASE = 'https://open-api.tiktokglobalshop.com';
 
-async function tiktokShopRequest(path: string, body: object) {
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  const appKey    = process.env.TIKTOK_SHOP_APP_KEY!;
-  const appSecret = process.env.TIKTOK_SHOP_APP_SECRET!;
-  const shopId    = process.env.TIKTOK_SHOP_SHOP_ID!;
-
-  // Build signature
-  const { createHmac } = await import('crypto');
-  const paramString = `${appKey}${timestamp}${JSON.stringify(body)}`;
-  const sign = createHmac('sha256', appSecret).update(paramString).digest('hex');
-
-  const url = `${TIKTOK_SHOP_BASE}${path}?app_key=${appKey}&timestamp=${timestamp}&sign=${sign}&shop_id=${shopId}`;
-
-  const response = await fetch(url, {
-    method:  'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-tts-access-token': await getAccessToken(),
-    },
-    body: JSON.stringify(body),
-  });
-
-  const result = await response.json();
-  if (result.code !== 0) throw new Error(`TikTok Shop API error ${result.code}: ${result.message}`);
-  return result.data;
-}
-
 async function syncProductToTikTokShop(product: Product) {
-  return tiktokShopRequest('/api/products', {
-    description:    product.description,
-    category_id:    product.tikTokCategoryId,
-    brand_id:       product.tikTokBrandId ?? undefined,
-    images:         product.images.map(img => ({ url: img.url })),
-    package_weight: { unit: 'KILOGRAM', value: product.weightKg },
-    package_dimension: {
-      height: product.heightCm, length: product.lengthCm, width: product.widthCm, unit: 'CENTIMETER',
-    },
+  // TikTok Shop API requires HMAC-SHA256 request signing
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const body = {
+    title: product.name.substring(0, 255),
+    description: product.description.replace(/<[^>]*>/g, '').substring(0, 5000),
+    category_id: product.tikTokCategoryId, // find IDs in TikTok Seller Center → Products → Categories
+    images: product.images.map(img => ({ url: img.url })),
     skus: product.variants.map(v => ({
-      sales_attributes: v.options.map(opt => ({ attribute_name: opt.name, sku_img: { url: v.images?.[0]?.url }, value_name: opt.value })),
+      sales_attributes: v.options.map(opt => ({ attribute_name: opt.name, value_name: opt.value })),
       stock_infos: [{ available_stock: v.stockQuantity, warehouse_id: process.env.TIKTOK_WAREHOUSE_ID }],
-      seller_sku:  v.sku,
+      seller_sku: v.sku,
       original_price: v.price.toFixed(2),
     })),
-    title: product.name.substring(0, 255),
-    is_cod_open: false,
-    delivery_service_ids: [process.env.TIKTOK_DELIVERY_SERVICE_ID],
-  });
-}
-```
+  };
 
-### 3. Inventory sync (real-time updates)
-
-Update TikTok Shop inventory after every order across all channels:
-
-```typescript
-async function updateTikTokInventory(tikTokSkuId: string, newQuantity: number) {
-  return tiktokShopRequest('/api/products/stocks', {
-    skus: [{
-      id:          tikTokSkuId,
-      stock_infos: [{ available_stock: newQuantity, warehouse_id: process.env.TIKTOK_WAREHOUSE_ID }],
-    }],
-  });
+  return tiktokShopRequest('/api/products', body);
 }
 
-// Hook this into your inventory management system
-async function onInventoryUpdated(variantId: string) {
-  const variant = await db.productVariants.findById(variantId);
-  const tikTokSkuId = variant.tikTokSkuId;
-  if (!tikTokSkuId) return;
-
-  await updateTikTokInventory(tikTokSkuId, variant.stockQuantity);
-}
-```
-
-### 4. Order management — webhook handler
-
-TikTok Shop pushes order events to your webhook endpoint:
-
-```typescript
+// Handle TikTok Shop order webhooks
 // POST /webhooks/tiktok-shop
 export async function handleTikTokShopWebhook(req: Request, res: Response) {
-  // Verify signature
-  const signature = req.headers['x-tts-signature'] as string;
-  const isValid   = verifyTikTokSignature(req.rawBody, signature);
-  if (!isValid) return res.status(401).send('Invalid signature');
-
   const { type, data } = req.body;
 
-  switch (type) {
-    case 'ORDER_STATUS_CHANGE': {
-      const { order_id, order_status } = data;
-      await syncTikTokOrder(order_id, order_status);
-      break;
-    }
-    case 'PRODUCT_STATUS_CHANGE': {
-      // Product approved/rejected by TikTok
-      await handleProductStatusUpdate(data);
-      break;
-    }
-    case 'SETTLEMENT': {
-      await recordSettlement(data);
-      break;
-    }
+  if (type === 'ORDER_STATUS_CHANGE') {
+    // Sync TikTok order to your OMS
+    await syncTikTokOrder(data.order_id, data.order_status);
   }
 
-  res.json({ code: 0 });
-}
-
-async function syncTikTokOrder(tikTokOrderId: string, status: string) {
-  const orderData = await tiktokShopRequest('/api/orders/detail/query', {
-    order_id_list: [tikTokOrderId],
-  });
-
-  const ttOrder = orderData.order_list[0];
-
-  // Create or update in your OMS
-  await db.orders.upsert(
-    { externalId: tikTokOrderId, externalSource: 'tiktok-shop' },
-    {
-      status:         mapTikTokStatus(status),
-      customerEmail:  ttOrder.buyer_email,
-      lineItems:      ttOrder.item_list.map(i => ({ sku: i.seller_sku, quantity: i.quantity, price: parseFloat(i.sale_price) })),
-      shippingAddress: {
-        name:     ttOrder.recipient_address.name,
-        line1:    ttOrder.recipient_address.address_line1,
-        city:     ttOrder.recipient_address.district_info[0]?.address_name,
-        zip:      ttOrder.recipient_address.zipcode,
-        country:  ttOrder.recipient_address.region_code,
-        phone:    ttOrder.recipient_address.phone_number,
-      },
-    }
-  );
+  res.json({ code: 0 }); // TikTok requires this exact response format
 }
 ```
 
-### 5. Affiliate creator program setup
+### Step 3: Set up product listings for TikTok Shop
 
-TikTok Shop's Open Collaboration model lets creators discover and tag your products without a prior relationship:
+After catalog sync, optimize each product for TikTok Shop:
 
-```typescript
-// Set commission rates via API
-async function setAffiliateCommission(params: {
-  productId: string;
-  commissionRate: number;  // e.g., 0.15 for 15%
-  collaborationType: 'OPEN' | 'TARGETED';
-}) {
-  return tiktokShopRequest('/api/affiliate/product/commission/set', {
-    product_id:       params.productId,
-    commission_rate:  params.commissionRate,
-    collaboration_type: params.collaborationType,
-  });
-}
-```
+**Product images:**
+- Use square (1:1) or vertical (9:16) product images — landscape images underperform
+- White or clean background for the main product image
+- No text overlays, watermarks, or price callouts on images (TikTok rejects these)
+- Minimum 500×500px; 1000×1000px recommended
 
-For targeted campaigns, invite specific creators:
+**Product titles:**
+- Include the primary keyword in the first 20 characters
+- TikTok Shop displays titles in search and shopping feeds
+- 255 character maximum
 
-```typescript
-async function inviteCreatorToAffiliate(creatorUniqueId: string, productIds: string[]) {
-  return tiktokShopRequest('/api/affiliate/program/invitation', {
-    creator_unique_id: creatorUniqueId,
-    product_ids:       productIds,
-    commission_rate:   0.20,  // 20% for targeted invitations
-    invitation_message: `Hi! We'd love for you to feature our products. You'll earn 20% commission on every sale through your content.`,
-  });
-}
-```
+**Shipping:**
+- Set up a warehouse in **TikTok Seller Center → Settings → Logistics**
+- Link a TikTok-approved shipping carrier (UPS, USPS, FedEx for US sellers)
+- TikTok buyers expect free shipping — set a free shipping threshold that makes economic sense (e.g., orders over $25)
 
-### 6. LIVE Shopping event setup
+### Step 4: Enable the creator affiliate program
 
-Before going live, tag products in TikTok Studio:
+TikTok Shop's Open Collaboration model lets any creator discover your products and tag them in content for a commission — no prior relationship needed.
 
-1. Open TikTok LIVE Studio (desktop app or mobile)
-2. In Shopping tab, select products from your TikTok Shop catalog
-3. Pin featured products to the LIVE screen during broadcast
-4. Viewers tap the pinned product card to add directly to cart
+1. Go to **TikTok Seller Center → Affiliate → Open Plan**
+2. Set a commission rate per product category (typically 10–20% for ecommerce)
+3. Products with enabled affiliate commissions automatically appear in the **TikTok Affiliate Marketplace** where creators browse for products to promote
+4. Review affiliate creator applications under **Seller Center → Affiliate → Creators**
 
-Automate post-LIVE analysis:
+**For targeted partnerships:**
+1. Go to **Seller Center → Affiliate → Targeted Collaboration**
+2. Browse creator profiles and send collaboration invites with a custom commission rate
+3. You can provide product samples and set specific posting requirements in the invitation
 
-```typescript
-async function analyzeLiveShoppingEvent(liveId: string) {
-  const metrics = await tiktokShopRequest('/api/live/analytics', {
-    live_id: liveId,
-  });
+### Step 5: Run a LIVE Shopping event
 
-  return {
-    peakViewers:       metrics.peak_viewer_count,
-    totalRevenue:      metrics.total_revenue,
-    ordersPlaced:      metrics.order_count,
-    conversionRate:    metrics.order_count / metrics.total_viewers,
-    topProducts:       metrics.product_performance.sort((a, b) => b.revenue - a.revenue).slice(0, 5),
-  };
-}
-```
+LIVE Shopping events drive high-urgency sales with real-time product featuring:
+
+**Before going live:**
+1. In TikTok Seller Center, go to **Products** and ensure all products you plan to feature are "Active" status (product review takes 24–48 hours)
+2. Go to **TikTok LIVE Studio** (download the app) or use the TikTok mobile app
+3. Under **Shopping**, select the products to feature during the LIVE
+4. Promote the LIVE 24–48 hours in advance via regular posts and Stories
+
+**During the LIVE:**
+1. Start the LIVE from TikTok app or LIVE Studio
+2. Pin featured products using the shopping cart icon — viewers tap the pinned card to add to cart
+3. Change the featured product in real time as you demo different items
+4. Respond to comments about pricing, sizing, and availability to drive urgency
+
+**Best times for LIVE Shopping events:** Tuesday, Wednesday, or Thursday evenings (7–9pm EST for US audience). Consistent scheduling builds a returning audience.
+
+### Step 6: Manage TikTok Shop orders
+
+TikTok requires fulfillment within 2 business days of order confirmation. Late shipments damage your seller rating.
+
+**Fulfillment process:**
+1. TikTok Shop orders appear in your platform admin (Shopify/WooCommerce) automatically if using the native integration
+2. Print shipping labels from your platform admin — TikTok accepts tracking numbers from all major carriers
+3. Enter the tracking number in TikTok Seller Center → Orders within 2 days
+4. TikTok automatically updates the buyer on shipping status
+
+**Returns:**
+- Accept returns within 30 days of delivery (TikTok's default return window)
+- Configure return logistics in **Seller Center → Settings → Returns**
 
 ## Best Practices
 
-- **Keep TikTok Shop inventory in sync within 5 minutes** — overselling on TikTok damages your seller rating and can result in account suspension
-- **Use Open Collaboration for discovery** — set a 10-15% commission rate on all products to attract micro-creators who discover your brand organically
-- **Fulfill TikTok Shop orders within 48 hours** — late shipment rate above 2% triggers seller account warnings
-- **Include dedicated TikTok Shop images** — square or 9:16 product images outperform landscape images on the platform's product pages
-- **Run LIVE events for new product launches** — LIVE Shopping has significantly lower CPM for new buyer acquisition vs. standard video ads
-- **Monitor affiliate content for brand safety** — creators in Open Collaboration post without approval; review UGC regularly and have a content reporting process
-- **Set a minimum cart value for free shipping** — TikTok Shop displays shipping costs prominently; high fees are a top abandonment driver
+- **Keep inventory in sync within 5 minutes** — overselling on TikTok damages your seller rating and can result in account suspension; use your platform's native TikTok integration for real-time sync
+- **Use Open Collaboration for discovery** — set a 10–15% commission rate on all products to attract micro-creators who discover your brand organically without outreach
+- **Include dedicated TikTok Shop images** — square or 9:16 product images outperform landscape images; prepare TikTok-specific creative assets separate from your Shopify product images
+- **Run LIVE events consistently** — 2× per week builds a returning audience; ad-hoc live events get low attendance
+- **Monitor affiliate content for brand safety** — creators in Open Collaboration post without prior approval; review tagged content regularly
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Products stuck in "Under Review" | Ensure all images are on white or clean backgrounds; avoid text overlays banned by TikTok's catalog guidelines |
-| Orders not appearing in webhook | Register the webhook in Seller Center; verify the endpoint is publicly accessible and returns `{"code":0}` |
-| Affiliate creators posting incorrect prices | Lock product prices; any sale price changes require creator content to be re-tagged automatically |
-| LIVE Shopping products not showing on stream | Ensure products are "Active" status in TikTok Shop before going live; product review takes 24-48 hours |
-| Inventory sync delay causing oversells | Build an immediate inventory lock on TikTok Shop order creation, before fulfillment confirmation |
-| High return rate on TikTok Shop orders | TikTok buyers expect products to match the video exactly; ensure LIVE demos are accurate and avoid over-editing product images |
+| Products stuck "Under Review" | Ensure product images are on white/clean backgrounds with no text overlays; prohibited categories (alcohol, certain supplements) require special approval |
+| TikTok orders not appearing in Shopify | Disconnect and reconnect the TikTok for Shopify channel; check that Seller Center is linked to the correct TikTok Business account |
+| Affiliate creators posting incorrect prices | Any price changes require creator content to be re-tagged; notify active affiliates before changing prices |
+| LIVE Shopping products not showing on stream | Products must be "Active" status before going LIVE; review takes 24–48 hours, so activate products in advance |
+| High return rate | TikTok buyers expect products to match the video exactly; avoid over-editing product images and ensure LIVE demos are accurate |
 
 ## Related Skills
 
 - @tiktok-ads-integration
 - @ugc-campaign-management
 - @influencer-marketplace-integration
-- @video-commerce-integration
 - @social-commerce
+- @video-commerce-integration

@@ -8,7 +8,7 @@ date_added: "2026-03-12"
 tags: [returns-policy, refund-policy, restocking-fee, return-window, automated-approval, policy-engine]
 triggers: ["return policy", "refund policy", "restocking fee", "return window", "automated returns", "return approval rules"]
 tools: [claude-code, cursor, gemini-cli, copilot, codex-cli, kiro, opencode]
-platforms: [platform-agnostic]
+platforms: [shopify, woocommerce, bigcommerce, custom]
 difficulty: intermediate
 ---
 
@@ -16,272 +16,202 @@ difficulty: intermediate
 
 ## Overview
 
-Build a configurable policy engine that evaluates return eligibility based on product category, time since purchase, order history, and reason codes. Automates approval for low-risk returns and routes exception cases to manual review. Supports configurable restocking fees, return window overrides, and final-sale exclusions, enabling non-technical staff to adjust return rules without code changes.
+A returns and refund policy engine enforces your rules automatically: different return windows per product category, restocking fees for specific item types, final-sale exclusions, and extended windows for loyalty members. This prevents your customer service team from manually evaluating every return request and ensures consistent policy enforcement. Most platforms can implement these rules through their returns apps combined with product tags and customer segments.
 
 ## When to Use This Skill
 
-- When your return logic is scattered across multiple code paths and needs to be centralized into a policy engine
-- When you need different return windows for different product categories (electronics vs apparel vs consumables)
+- When your return logic is inconsistent because it's handled case-by-case by customer service
+- When you need different return windows for different product categories (electronics vs. apparel vs. consumables)
 - When implementing tiered return policies where loyalty members get extended windows or waived restocking fees
-- When building an automated approval workflow that handles 80% of returns without human intervention
+- When building an automated approval workflow that handles most returns without human intervention
 - When compliance or legal requirements mandate that return policies be auditable and version-controlled
-
-## Prerequisites & Platform Notes
-
-**Shopify**: Integrate with Shopify via Admin API for orders, customers, and inventory. Use Shopify Flow for automation. Connect ERP/OMS via apps or custom webhooks.
-**WooCommerce**: Use WooCommerce REST API for order/inventory data. Automate with AutomateWoo or custom WordPress cron jobs. Connect external systems via webhooks.
-**BigCommerce / Other platforms**: Most capabilities described here have equivalent apps or APIs; check your platform's app marketplace first.
-**Custom / Headless**: The code examples below target custom storefronts using Node.js and PostgreSQL. Adapt the patterns to your stack.
-
-**You'll need**: A running store, API access, relevant third-party accounts (ERP, OMS, etc.)
 
 ## Core Instructions
 
-1. **Define the policy rules schema**
+### Step 1: Determine your platform and choose the right returns tool
 
-   ```sql
-   CREATE TABLE return_policies (
-     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name                VARCHAR(128) NOT NULL,
-     priority            INTEGER NOT NULL DEFAULT 0,
-     -- Matching conditions
-     product_category_ids UUID[],         -- NULL = all categories
-     customer_segments   VARCHAR(64)[],   -- NULL = all customers
-     order_tags          VARCHAR(64)[],   -- e.g. ['final_sale']
-     -- Policy settings
-     return_window_days  INTEGER NOT NULL, -- 0 = no returns
-     restocking_fee_pct  NUMERIC(5,2) NOT NULL DEFAULT 0,
-     restocking_fee_max  INTEGER,         -- cents cap; NULL = no cap
-     allowed_reasons     VARCHAR(64)[],   -- NULL = all reasons allowed
-     auto_approve        BOOLEAN NOT NULL DEFAULT true,
-     requires_receipt    BOOLEAN NOT NULL DEFAULT false,
-     is_active           BOOLEAN NOT NULL DEFAULT true,
-     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
+| Platform | Recommended Tool | Why |
+|----------|-----------------|-----|
+| **Shopify** | Loop Returns or AfterShip Returns | Loop is the most feature-complete: supports per-product-type policies, restocking fees, final-sale blocking, and loyalty tier overrides |
+| **WooCommerce** | ReturnGo or WooCommerce Returns and Warranty Requests | ReturnGo supports custom policy rules per product category and automated approval logic |
+| **BigCommerce** | AfterShip Returns Center or Loop Returns | Both support per-category policy rules and restocking fees |
+| **Custom / Headless** | Build a policy evaluation engine + Shippo for return labels | Store policies in a database; evaluate them programmatically when return requests come in |
 
-   -- Version history for audit trail
-   CREATE TABLE return_policy_versions (
-     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     policy_id   UUID NOT NULL REFERENCES return_policies(id),
-     snapshot    JSONB NOT NULL,  -- full policy JSON at time of change
-     changed_by  UUID NOT NULL,
-     changed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
-   ```
+### Step 2: Define your return policy rules
 
-   Seed default policies:
-   ```sql
-   INSERT INTO return_policies (name, priority, return_window_days, restocking_fee_pct, auto_approve) VALUES
-     ('Final Sale — No Returns',    100, 0,  0,  false),
-     ('Electronics — 15 days, 15% restocking', 50, 15, 15, false),
-     ('Apparel — 30 days, no fee', 20,  30, 0,  true),
-     ('Standard — 30 days',         0,   30, 0,  true);
-   ```
+Before configuring any tool, define your policy matrix clearly:
 
-2. **Evaluate the applicable policy for a return request**
+| Product Category | Return Window | Restocking Fee | Auto-Approve | Notes |
+|-----------------|---------------|----------------|--------------|-------|
+| Default (apparel, accessories) | 30 days from delivery | 0% | Yes | Most items |
+| Electronics | 15 days from delivery | 15% | No — manual review | Opened electronics |
+| Final Sale | 0 days | — | No | No returns |
+| VIP / Gold members | 60 days from delivery | 0% | Yes | Override for loyalty tier |
+| Defective / Wrong item | 90 days from delivery | 0% | Yes | Customer not at fault |
 
-   ```typescript
-   interface ReturnEligibilityResult {
-     eligible: boolean;
-     policy: ReturnPolicy | null;
-     reason?: 'WINDOW_EXPIRED' | 'FINAL_SALE' | 'REASON_NOT_ALLOWED' | 'NOT_DELIVERED';
-     restockingFeeCents: number;
-     requiresManualReview: boolean;
-     daysRemaining: number;
-   }
+### Step 3: Configure policy rules in your returns app
 
-   async function evaluateReturnEligibility(params: {
-     orderId: string;
-     productIds: string[];
-     returnReason: string;
-     customerId: string;
-   }): Promise<ReturnEligibilityResult> {
-     const order = await db.orders.findById(params.orderId);
-     if (order.status !== 'delivered') {
-       return { eligible: false, policy: null, reason: 'NOT_DELIVERED', restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0 };
-     }
+#### Shopify — Loop Returns
 
-     const customerSegments = await db.customers.getSegments(params.customerId);
-     const productCategories = await db.products.getCategoryIds(params.productIds);
-     const orderTags = order.tags ?? [];
+1. Install **Loop Returns** from the Shopify App Store
+2. Go to Loop → Policy → Return Windows:
+   - Default: 30 days
+   - Click "Add Rule" → set "Product tag is 'electronics'" → return window: 15 days
+   - Click "Add Rule" → set "Product tag is 'final-sale'" → return window: 0 days (no returns)
+3. Tag your products accordingly in Shopify admin (Products → Tags)
+4. Go to Loop → Policy → Restocking Fees:
+   - Add a rule: "Product tag is 'electronics'" → restocking fee: 15%
+5. Go to Loop → Policy → Customer Segments:
+   - Add a rule: "Customer tag is 'gold-member' or 'vip'" → return window override: 60 days, restocking fee: 0%
+6. Enable auto-approval for eligible returns in Loop → Settings → Automation: "Auto-approve returns that meet policy conditions"
+7. Loop generates the return label automatically when a return is approved
 
-     const policy = await resolvePolicy(productCategories, customerSegments, orderTags);
-     if (!policy) {
-       return { eligible: false, policy: null, reason: 'FINAL_SALE', restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0 };
-     }
+**Testing your policy:**
+- Use Loop's Policy Simulator (Loop → Policy → Test Policy) to verify that a hypothetical return request (product type, customer tag, days since delivery) applies the correct rule
 
-     if (policy.return_window_days === 0) {
-       return { eligible: false, policy, reason: 'FINAL_SALE', restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0 };
-     }
+#### WooCommerce — ReturnGo
 
-     if (!order.delivered_at) {
-       return { eligible: false, policy: null, reason: 'NOT_DELIVERED', restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0 };
-     }
-     const daysSinceDelivery = Math.floor((Date.now() - order.delivered_at.getTime()) / 86400000);
-     const daysRemaining = policy.return_window_days - daysSinceDelivery;
-     if (daysRemaining < 0) {
-       return { eligible: false, policy, reason: 'WINDOW_EXPIRED', restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0 };
-     }
+1. Install **ReturnGo** from retgo.com (or WordPress.org)
+2. Go to ReturnGo → Return Policy:
+   - Set default return window: 30 days
+   - Under "Custom Rules", add product-category-based rules:
+     - Category "Electronics" → 15 days, 15% restocking fee, requires manual review
+     - Category "Final Sale" → 0 days (no returns allowed)
+3. Under "Customer Rules": add tag-based overrides:
+   - Customer tag "wholesale" → 14 days, 10% restocking fee
+4. Configure auto-approval: ReturnGo → Automation → enable "Auto-approve returns that match policy"
+5. Test by creating a return request as a customer to verify rules apply correctly
 
-     if (policy.allowed_reasons && !policy.allowed_reasons.includes(params.returnReason)) {
-       return { eligible: false, policy, reason: 'REASON_NOT_ALLOWED', restockingFeeCents: 0, requiresManualReview: false, daysRemaining };
-     }
+**Configuring final-sale in WooCommerce:**
+- Create a product category or tag called "final-sale"
+- In ReturnGo, add a rule blocking returns for this category/tag
+- On the product page, display the "Final Sale — No Returns" message using a product badge plugin
 
-     const itemsValue = await calculateReturnValue(params.orderId, params.productIds);
-     const restockingFeeCents = calculateRestockingFee(policy, itemsValue);
+#### BigCommerce — AfterShip Returns Center
 
-     return {
-       eligible: true,
-       policy,
-       restockingFeeCents,
-       requiresManualReview: !policy.auto_approve,
-       daysRemaining,
-     };
-   }
-   ```
+1. Install AfterShip Returns Center from the BigCommerce App Marketplace
+2. Go to AfterShip → Policy:
+   - Set the default return window and configure exceptions by product type
+3. AfterShip's policy engine supports return windows and auto-approval rules based on product tags
+4. For restocking fees: AfterShip includes restocking fee configuration in their paid plans
 
-3. **Resolve the highest-priority matching policy**
+### Step 4: Handle return window calculation correctly
 
-   ```typescript
-   async function resolvePolicy(
-     productCategoryIds: string[],
-     customerSegments: string[],
-     orderTags: string[]
-   ): Promise<ReturnPolicy | null> {
-     const allPolicies = await db.returnPolicies.findAll({ is_active: true }).orderBy('priority', 'desc');
+The single most important setting: the return window should start from the **delivery date**, not the order date or ship date.
 
-     for (const policy of allPolicies) {
-       const categoryMatch = !policy.product_category_ids?.length ||
-         policy.product_category_ids.some(c => productCategoryIds.includes(c));
+**Why this matters:**
+- Shipping a package takes 2–10 days depending on the service
+- A 30-day return window starting from order date may leave the customer with only 20 days to actually return the item
+- Most consumer protection laws (EU 14-day right of withdrawal, UK 14 days) count from delivery
 
-       const segmentMatch = !policy.customer_segments?.length ||
-         policy.customer_segments.some(s => customerSegments.includes(s));
+**Verify this in your returns app:**
+- Loop Returns: go to Loop → Settings → Return Window → "Starts from: Delivery Date" ✓
+- ReturnGo: go to Settings → Policy → "Return window starts from: Delivered date" ✓
+- AfterShip: go to Settings → Return Policy → "Start date: Order delivered date" ✓
 
-       const tagMatch = !policy.order_tags?.length ||
-         policy.order_tags.some(t => orderTags.includes(t));
+If your returns app doesn't have tracking integration to detect delivery, use "Order Date + carrier average transit time" as an approximation.
 
-       if (categoryMatch && segmentMatch && tagMatch) {
-         return policy;
-       }
-     }
+### Step 5: Communicate policies clearly
 
-     return null;
-   }
-   ```
+1. **Returns page:** Create a dedicated `/returns` or `/return-policy` page with your policy matrix in a table format — customers reference this before purchasing
+2. **Product pages:** Show a brief returns statement near the "Add to Cart" button: "30-day free returns" or "Final Sale — No Returns" for final sale items
+3. **Order confirmation email:** Include a link to your returns page and a brief "30-day returns" statement
+4. **Return window expiry reminder:** Set up an automated email 7 days before a customer's return window closes — Loop and AfterShip both support this
 
-4. **Calculate restocking fees**
-
-   ```typescript
-   function calculateRestockingFee(policy: ReturnPolicy, itemValueCents: number): number {
-     if (policy.restocking_fee_pct === 0) return 0;
-
-     const fee = Math.round(itemValueCents * (policy.restocking_fee_pct / 100));
-     if (policy.restocking_fee_max !== null) {
-       return Math.min(fee, policy.restocking_fee_max);
-     }
-     return fee;
-   }
-
-   async function calculateReturnValue(orderId: string, productIds: string[]): Promise<number> {
-     const lines = await db.orderLines.findAll({
-       order_id: orderId,
-       product_id: { in: productIds },
-     });
-     return lines.reduce((sum, l) => sum + l.unit_price * l.quantity, 0);
-   }
-   ```
-
-5. **Auto-approve or route to manual review**
-
-   ```typescript
-   async function processReturnRequest(returnRequestId: string): Promise<void> {
-     const rma = await db.returnRequests.findById(returnRequestId);
-     const lines = await db.returnLines.findByReturnRequestId(returnRequestId);
-     const productIds = lines.map(l => l.product_id);
-
-     const eligibility = await evaluateReturnEligibility({
-       orderId: rma.order_id,
-       productIds,
-       returnReason: rma.return_reason,
-       customerId: rma.customer_id,
-     });
-
-     if (!eligibility.eligible) {
-       await db.returnRequests.update(returnRequestId, { status: 'rejected' });
-       await sendRejectionEmail(rma, eligibility.reason!);
-       return;
-     }
-
-     await db.returnRequests.update(returnRequestId, { restocking_fee: eligibility.restockingFeeCents });
-
-     if (eligibility.requiresManualReview) {
-       await db.returnRequests.update(returnRequestId, { status: 'requested' });
-       await alertCustomerServiceTeam(rma, eligibility);
-     } else {
-       // Auto-approve and issue label
-       await db.returnRequests.update(returnRequestId, { status: 'approved' });
-       await approveReturnAndIssueLabel(returnRequestId, 'system');
-     }
-   }
-   ```
-
-## Examples
-
-### Gold loyalty members get a 60-day return window with no restocking fee
+### Step 6: Custom / Headless — policy evaluation logic
 
 ```typescript
-await db.returnPolicies.insert({
-  name: 'Gold Member Extended Return',
-  priority: 60,
-  product_category_ids: null,     // all categories
-  customer_segments: ['gold', 'platinum'],
-  order_tags: null,
-  return_window_days: 60,
-  restocking_fee_pct: 0,
-  auto_approve: true,
-  is_active: true,
-});
-```
+// Return policy rules stored in database and evaluated programmatically
+interface ReturnPolicy {
+  id: string;
+  name: string;
+  priority: number;           // higher = evaluated first
+  conditions: {
+    productTags?: string[];   // match any of these tags
+    customerTags?: string[];  // match any of these customer tags
+    orderTags?: string[];     // e.g., ['final-sale']
+  };
+  windowDays: number;         // 0 = no returns allowed
+  restockingFeePct: number;   // 0–100
+  autoApprove: boolean;
+}
 
-### Audit log: policy changes over time
+async function evaluateReturnEligibility(params: {
+  orderId: string;
+  productId: string;
+  customerId: string;
+  returnReason: string;
+  deliveredAt: Date;
+}): Promise<{
+  eligible: boolean;
+  policy: ReturnPolicy | null;
+  restockingFeeCents: number;
+  requiresManualReview: boolean;
+  daysRemaining: number;
+  reason?: string;
+}> {
+  const order = await db.orders.findById(params.orderId);
+  const product = await db.products.findById(params.productId, { include: ['tags'] });
+  const customer = await db.customers.findById(params.customerId, { include: ['tags'] });
 
-```sql
-SELECT
-  rp.name,
-  rpv.changed_at,
-  u.name AS changed_by,
-  rpv.snapshot->>'return_window_days' AS window_days,
-  rpv.snapshot->>'restocking_fee_pct' AS fee_pct
-FROM return_policy_versions rpv
-JOIN return_policies rp ON rp.id = rpv.policy_id
-LEFT JOIN users u ON u.id = rpv.changed_by
-WHERE rp.id = $1
-ORDER BY rpv.changed_at DESC;
+  // Find highest-priority matching policy
+  const policies = await db.returnPolicies.findAll({ is_active: true }, { orderBy: ['priority', 'desc'] });
+  const policy = policies.find(p => {
+    const productMatch = !p.conditions.productTags?.length ||
+      p.conditions.productTags.some(tag => product.tags.includes(tag));
+    const customerMatch = !p.conditions.customerTags?.length ||
+      p.conditions.customerTags.some(tag => customer.tags.includes(tag));
+    const orderMatch = !p.conditions.orderTags?.length ||
+      p.conditions.orderTags.some(tag => order.tags?.includes(tag));
+    return productMatch && customerMatch && orderMatch;
+  }) ?? null;
+
+  if (!policy || policy.windowDays === 0) {
+    return { eligible: false, policy, restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0, reason: 'FINAL_SALE_OR_NO_POLICY' };
+  }
+
+  // Calculate days since delivery
+  const daysSinceDelivery = Math.floor((Date.now() - params.deliveredAt.getTime()) / 86400000);
+  const daysRemaining = policy.windowDays - daysSinceDelivery;
+
+  if (daysRemaining < 0) {
+    return { eligible: false, policy, restockingFeeCents: 0, requiresManualReview: false, daysRemaining: 0, reason: 'WINDOW_EXPIRED' };
+  }
+
+  // Calculate restocking fee on the item's original price
+  const orderLine = await db.orderLines.findOne({ order_id: params.orderId, product_id: params.productId });
+  const itemValueCents = orderLine.unit_price_cents * orderLine.quantity;
+  const restockingFeeCents = Math.round(itemValueCents * (policy.restockingFeePct / 100));
+
+  return {
+    eligible: true,
+    policy,
+    restockingFeeCents,
+    requiresManualReview: !policy.autoApprove,
+    daysRemaining,
+  };
+}
 ```
 
 ## Best Practices
 
-- **Version every policy change** — any modification to a return policy should create a new row in `return_policy_versions` with a JSONB snapshot; this creates an immutable audit trail for disputes
-- **Evaluate the policy that was active at purchase time** — for regulatory compliance, use the policy in effect on `order.created_at`, not the current policy, when a customer files a return
-- **Build a test console for policy evaluation** — let non-engineers test hypothetical scenarios ("what if a Gold member returns electronics after 20 days?") without deploying code
-- **Clearly communicate restocking fees at return initiation** — display the calculated fee before the customer confirms the return so there are no billing surprises
-- **Cap auto-approval by value** — even with `auto_approve = true`, route high-value returns (e.g., over $500) to manual review to catch fraud
-- **Log every `evaluateReturnEligibility` call** — store the input parameters and the policy result so customer service can reconstruct exactly why a return was approved or rejected
-- **Notify customers proactively about return window expiry** — a "Your return window closes in 7 days" email for recent orders reduces customer frustration and increases trust
+- **Start the return window from delivery date, not order date** — this is more fair to customers, reduces disputes, and aligns with consumer protection laws in most jurisdictions
+- **Version every policy change** — when you update a return policy, log the old policy with a timestamp; apply the policy that was in effect at the time of purchase when a customer files a return
+- **Display restocking fees before the customer confirms the return** — show "A 15% restocking fee ($12.75) will be deducted from your refund" during the return initiation flow, not after
+- **Cap auto-approval by refund value** — even with auto-approval enabled, route returns over $500 to manual review to catch potential fraud
+- **Notify customers proactively about expiring windows** — a "Your 30-day return window closes in 7 days" email for recent purchases reduces frustrated customers who missed the window
 
 ## Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
-| Return window calculated from ship date instead of delivery date | Use `order.delivered_at` as the start of the return clock, not `order.created_at` or `shipped_at` |
-| Multiple policies match the same order and the wrong one applies | Sort by `priority DESC` and take the first match; document the priority scheme clearly in the admin UI |
-| Customer disputes the restocking fee after the fact | Show the restocking fee amount and the policy it came from in the return confirmation email |
-| Policy engine ignores order tags (e.g., final_sale) | Test with orders that have final_sale tags; ensure `tagMatch` logic evaluates order-level tags correctly |
+| Return window calculated from order date instead of delivery date | Check your returns app settings explicitly for "return window starts from" — default in some tools is order date; change to delivery date |
+| Multiple policies match and the wrong one applies | Sort by `priority DESC` and take the first match; document the priority hierarchy in your admin; test edge cases (VIP member buying electronics) |
+| Customer disputes restocking fee | Show the fee amount and the policy name ("Electronics Policy — 15% restocking fee") in the return confirmation email so customers have documentation |
+| Final sale tag not applied consistently | Create a process: every product added to a sale must have the "final-sale" tag applied; audit monthly using a product tag report |
 
 ## Related Skills
 
 - @returns-management
 - @order-management-system
-- @loyalty-points-system
-- @coupon-management
 - @b2b-commerce
