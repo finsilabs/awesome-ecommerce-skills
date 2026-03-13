@@ -67,10 +67,10 @@ That's it. Your AI assistant will automatically use the skill the next time you 
 You: "Set up abandoned cart recovery for my Shopify store"
 
 AI without skill:                    AI with skill:
-  Generic code example                 "Install Klaviyo from the App Store"
-  Assumes custom Node.js backend       Platform-specific setup steps
-  No mention of existing tools         Recommends the right app for your plan
-  Misses SMS opt-in compliance         Walks through the full flow configuration
+  Writes a custom Node.js cron job     Knows Shopify has built-in recovery emails
+  Builds an email queue from scratch   Recommends Klaviyo for multi-step flows
+  Ignores your existing platform       Configures the right triggers and timing
+  Misses SMS opt-in compliance         Includes SMS consent and TCPA compliance
 ```
 
 Each skill contains:
@@ -85,32 +85,32 @@ Every skill includes setup instructions for the platforms merchants actually use
 
 ### Shopify
 
-Skills guide your AI to recommend the right Shopify apps and built-in features:
+Skills teach your AI which Shopify apps and built-in features to use — and how to configure them:
 
 ```
 You: "Add a loyalty points system to my Shopify store"
 
 AI + loyalty-points-system skill:
-  → Recommends Smile.io or Yotpo Loyalty from the Shopify App Store
-  → Walks through point-earning rules configuration
-  → Sets up a rewards widget via the theme editor
-  → Configures VIP tiers for your best customers
+  → Compares Smile.io vs Yotpo Loyalty for your use case
+  → Explains how to set up point-earning rules and redemption tiers
+  → Shows where to add the rewards widget in your theme
+  → Covers VIP tier configuration and points expiration
 ```
 
 We also have 7 **Shopify-specific skills** covering the Admin API, Storefront API, theme development, checkout extensions, webhooks, metafields, and app development.
 
 ### WooCommerce
 
-Skills recommend the right WordPress plugins and walk through configuration:
+Skills know which WordPress plugins solve each problem and how to configure them:
 
 ```
 You: "Set up subscription billing for my WooCommerce store"
 
 AI + subscription-billing skill:
-  → Recommends WooCommerce Subscriptions plugin ($199/yr) or SUMO Subscriptions
-  → Walks through subscription product setup and billing intervals
-  → Configures failed payment retry rules
-  → Sets up subscriber management in My Account
+  → Compares WooCommerce Subscriptions ($199/yr) vs SUMO Subscriptions
+  → Explains subscription product setup and billing intervals
+  → Covers failed payment retry rules and dunning
+  → Shows how to add subscriber management to My Account
 ```
 
 We have 5 **WooCommerce-specific skills** for plugin development, Blocks, REST API, subscriptions, and performance.
@@ -123,24 +123,24 @@ Skills cover BigCommerce's built-in features and app marketplace:
 You: "Add product reviews to my BigCommerce store"
 
 AI + product-reviews-ratings skill:
-  → Enables BigCommerce's built-in review system or recommends Yotpo/Stamped
-  → Configures review request emails after purchase
-  → Sets up Google Rich Snippets for review stars in search results
-  → Walks through moderation settings
+  → Explains when built-in reviews are enough vs when to use Yotpo/Stamped
+  → Covers review request email setup after purchase
+  → Shows how to enable Google Rich Snippets for review stars in search
+  → Explains moderation settings and review approval workflows
 ```
 
 ### Headless / Custom Platforms
 
-For headless setups (Next.js, Remix, etc.), skills provide code — but still recommend SaaS tools (Klaviyo API, Stripe Checkout) over building from scratch:
+For headless setups (Next.js, Remix, etc.), skills provide actual code — but still recommend SaaS tools (Klaviyo API, Stripe Checkout) over building everything from scratch:
 
 ```
 You: "Add Stripe payments to my headless store"
 
 AI + stripe-integration skill:
-  → Recommends Stripe Checkout (hosted) to minimize PCI scope
-  → Provides Payment Intents API code with SCA/3D Secure
-  → Sets up webhook handling for order fulfillment
-  → Configures Stripe Tax for automatic tax calculation
+  → Explains why Stripe Checkout (hosted) is better than custom forms for PCI
+  → Provides Payment Intents API code with SCA/3D Secure compliance
+  → Includes webhook handler code for order fulfillment
+  → Covers Stripe Tax setup for automatic tax calculation
 ```
 
 We have 8 **headless-specific skills** covering Shopify Hydrogen, Medusa, Saleor, Commerce.js, JAMstack, and PWA storefronts.
