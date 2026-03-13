@@ -20,6 +20,7 @@ We tested every skill with [Tessl](https://tessl.io) automated evaluations. On a
 
 - [Getting Started](#getting-started)
 - [How It Works](#how-it-works)
+- [Works With Your Platform](#works-with-your-platform)
 - [Eval Results](#eval-results)
 - [Top 10 Starter Skills](#top-10-starter-skills)
 - [All Categories](#all-categories)
@@ -73,6 +74,62 @@ Each skill contains:
 - **Step-by-step instructions** — that guide the AI through the implementation
 - **Best practices** — drawn from real-world e-commerce experience
 - **Common pitfalls** — things the AI would otherwise get wrong
+
+## Works With Your Platform
+
+Skills work with **any** e-commerce platform. They teach your AI assistant how to write code that connects to your specific stack — whether that's Shopify, WooCommerce, Magento, or a custom headless setup.
+
+### Shopify
+
+Skills guide your AI to use Shopify's actual APIs — Admin API, Storefront API, and Checkout Extensions:
+
+```
+You: "Add a loyalty points system to my Shopify store"
+
+AI + loyalty-points-system skill:
+  → Uses Shopify Admin API to store points via metafields
+  → Creates a Shopify Function for automatic discount application
+  → Adds a points display widget via App Blocks
+  → Listens to orders/create webhook to award points
+```
+
+We also have 7 **Shopify-specific skills** covering the Admin API, Storefront API, theme development, checkout extensions, webhooks, metafields, and app development.
+
+### WooCommerce
+
+Skills produce code that hooks into WooCommerce's plugin architecture:
+
+```
+You: "Build a subscription box product for my WooCommerce store"
+
+AI + woocommerce-subscriptions skill:
+  → Creates a WooCommerce plugin with proper hooks (woocommerce_subscription_status_updated)
+  → Integrates with WooCommerce Subscriptions API for recurring billing
+  → Adds subscription management to My Account page
+  → Handles renewal orders and failed payment retry
+```
+
+We have 5 **WooCommerce-specific skills** for plugin development, Blocks, REST API, subscriptions, and performance.
+
+### Headless / Custom Platforms
+
+For headless setups (Next.js, Remix, etc.), skills provide complete backend + frontend code:
+
+```
+You: "Add real-time inventory tracking to my headless store"
+
+AI + inventory-tracking skill:
+  → Creates PostgreSQL schema with version-based optimistic locking
+  → Builds REST/GraphQL API for stock checks and reservations
+  → Adds cart reservation with automatic TTL expiry
+  → Implements multi-warehouse availability aggregation
+```
+
+We have 8 **headless-specific skills** covering Shopify Hydrogen, Medusa, Saleor, Commerce.js, JAMstack, and PWA storefronts.
+
+### Also Supported: Magento (4 skills) and Salesforce Commerce Cloud (3 skills)
+
+> **How does this actually work?** You copy a skill file into your project (or install via `tessl install`). Your AI assistant reads it automatically — no configuration needed. The next time you ask it to build something related, it follows the skill's instructions instead of guessing. The skill tells it which APIs to call, what patterns to use, and what mistakes to avoid for your specific platform.
 
 ## Eval Results
 
