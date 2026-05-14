@@ -1,0 +1,10 @@
+{
+  "name": "finsi/package-fit-optimization",
+  "version": "0.1.0",
+  "summary": "Right-sized carton and mailer recommendations for ecommerce fulfillment",
+  "skills": {
+    "package-fit-optimization": {
+      "path": "SKILL.md"
+    }
+  }
+}

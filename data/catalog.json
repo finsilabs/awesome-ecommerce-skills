@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-13T10:29:32.644Z",
-  "total": 178,
+  "generatedAt": "2026-05-14T15:18:58.780Z",
+  "total": 179,
   "skills": [
     {
       "id": "accounts-payable-management",
@@ -2064,6 +2064,47 @@
         "opencode"
       ],
       "path": "skills/fulfillment-shipping/order-fulfillment-workflow",
+      "platforms": [
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "package-fit-optimization",
+      "name": "Package Fit Optimization",
+      "description": "Select right-sized cartons or mailers for ecommerce orders using package dimensions, constraints, and packing heuristics",
+      "category": "fulfillment-shipping",
+      "risk": "safe",
+      "source": "community",
+      "date_added": "2026-05-14",
+      "tags": [
+        "package-fit",
+        "carton-selection",
+        "dimensional-weight",
+        "fulfillment",
+        "shipping",
+        "packaging"
+      ],
+      "triggers": [
+        "choose box size",
+        "package fit",
+        "carton selection",
+        "reduce dimensional weight",
+        "packing optimization"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/package-fit-optimization",
       "platforms": [
         "shopify",
         "woocommerce",

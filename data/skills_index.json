@@ -833,6 +833,23 @@
     "difficulty": "intermediate"
   },
   {
+    "id": "package-fit-optimization",
+    "path": "skills/fulfillment-shipping/package-fit-optimization",
+    "category": "fulfillment-shipping",
+    "name": "Package Fit Optimization",
+    "description": "Select right-sized cartons or mailers for ecommerce orders using package dimensions, constraints, and packing heuristics",
+    "risk": "safe",
+    "source": "community",
+    "date_added": "2026-05-14",
+    "platforms": [
+      "shopify",
+      "woocommerce",
+      "bigcommerce",
+      "custom"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "returns-management",
     "path": "skills/fulfillment-shipping/returns-management",
     "category": "fulfillment-shipping",
