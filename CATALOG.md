@@ -1,8 +1,8 @@
 # Skill Catalog
 
-> 178 skills across 17 categories
+> 179 skills across 17 categories
 
-*Generated at 2026-03-13T10:29:32.644Z*
+*Generated at 2026-05-14T15:18:58.780Z*
 
 ## Business Operations `business-operations`
 
@@ -77,6 +77,7 @@
 | `free-shipping-thresholds` | Motivate larger orders by showing a progress bar toward free shipping and nudging customers to add more items to qualify | beginner | shopify, woocommerce, bigcommerce, custom |
 | `international-shipping` | Handle cross-border orders with customs form generation, duties and taxes estimation, HS code assignment, and restricted items blocking | advanced | shopify, woocommerce, bigcommerce, custom |
 | `order-fulfillment-workflow` | Streamline your warehouse with digital pick-pack-ship workflows, barcode scanning for accuracy, and automatic packing slip generation | intermediate | shopify, woocommerce, bigcommerce, custom |
+| `package-fit-optimization` | Select right-sized cartons or mailers for ecommerce orders using package dimensions, constraints, and packing heuristics | intermediate | shopify, woocommerce, bigcommerce, custom |
 | `returns-management` | Process returns end to end — generate prepaid labels, apply refund or exchange logic, update inventory, and notify customers automatically | intermediate | shopify, woocommerce, bigcommerce, custom |
 | `same-day-delivery` | Offer same-day local delivery with geographic zone management, customer-facing time-slot booking, and driver dispatch coordination | advanced | shopify, woocommerce, bigcommerce, custom |
 | `shipment-tracking` | Give customers live package tracking by aggregating carrier status updates via webhooks and sending proactive delivery notifications | intermediate | shopify, woocommerce, bigcommerce, custom |

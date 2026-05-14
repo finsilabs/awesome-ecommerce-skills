@@ -1,12 +1,12 @@
 # Awesome E-Commerce Skills
 
 <p align="center">
-  <img src="docs/assets/hero.svg" alt="Awesome E-Commerce Skills — 178 practical workflow guides for Shopify, WooCommerce, and BigCommerce" width="100%"/>
+  <img src="docs/assets/hero.svg" alt="Awesome E-Commerce Skills — 179 practical workflow guides for Shopify, WooCommerce, and BigCommerce" width="100%"/>
 </p>
 
-> A curated collection of 178 ready-to-use e-commerce skills that make AI assistants dramatically better at helping you run and grow your online store.
+> A curated collection of 179 ready-to-use e-commerce skills that make AI assistants dramatically better at helping you run and grow your online store.
 
-![Skills](https://img.shields.io/badge/skills-178-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg) ![Tessl Evaluated](https://img.shields.io/badge/Tessl-evaluated-purple)
+![Skills](https://img.shields.io/badge/skills-179-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg) ![Tessl Evaluated](https://img.shields.io/badge/Tessl-evaluated-purple)
 
 ## What Are Skills?
 
@@ -195,7 +195,7 @@ New to this? Start here. These are the most commonly needed skills for any e-com
 
 ## All Categories
 
-178 skills organized into 17 categories. Click any category to browse its skills.
+179 skills organized into 17 categories. Click any category to browse its skills.
 
 | Category | Skills | Examples |
 |----------|--------|----------|
@@ -203,7 +203,7 @@ New to this? Start here. These are the most commonly needed skills for any e-com
 | [**Catalog & Inventory**](skills/catalog-inventory/) | 11 | Catalog Import/Export, COGS Tracking, Digital Products, +8 more |
 | [**Customer & CRM**](skills/customer-crm/) | 9 | Customer Accounts, Lifetime Value, Segmentation, +6 more |
 | [**Data & Analytics**](skills/data-analytics/) | 16 | A/B Testing, Attribution Modeling, Cash Flow Forecasting, +13 more |
-| [**Fulfillment & Shipping**](skills/fulfillment-shipping/) | 8 | Dropshipping, Free Shipping Thresholds, International Shipping, +5 more |
+| [**Fulfillment & Shipping**](skills/fulfillment-shipping/) | 9 | Dropshipping, Free Shipping Thresholds, International Shipping, +6 more |
 | [**Headless & Modern**](skills/headless-modern/) | 8 | Commerce API Gateway, Commerce.js, Composable Commerce, +5 more |
 | [**Infrastructure & Performance**](skills/infrastructure-performance/) | 7 | Database Optimization, Caching, Edge Commerce, +4 more |
 | [**Integrations & APIs**](skills/integrations-apis/) | 7 | Analytics, Email Service, ERP Integration, +4 more |
@@ -236,7 +236,7 @@ See [bundles.json](data/bundles.json) for the full skill lists in each bundle.
 
 ## Browse All Skills
 
-See [CATALOG.md](CATALOG.md) for the complete list of all 178 skills with descriptions, tags, and evaluation scores.
+See [CATALOG.md](CATALOG.md) for the complete list of all 179 skills with descriptions, tags, and evaluation scores.
 
 ## Contributing
 
