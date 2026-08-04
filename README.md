@@ -1,12 +1,12 @@
 # Awesome E-Commerce Skills
 
 <p align="center">
-  <img src="docs/assets/hero.svg" alt="Awesome E-Commerce Skills — 178 practical workflow guides for Shopify, WooCommerce, and BigCommerce" width="100%"/>
+  <img src="docs/assets/hero.svg" alt="Awesome E-Commerce Skills — 179 practical workflow guides for Shopify, WooCommerce, and BigCommerce" width="100%"/>
 </p>
 
-> A curated collection of 178 ready-to-use e-commerce skills that make AI assistants dramatically better at helping you run and grow your online store.
+> A curated collection of 179 ready-to-use e-commerce skills that make AI assistants dramatically better at helping you run and grow your online store.
 
-![Skills](https://img.shields.io/badge/skills-178-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg) ![Tessl Evaluated](https://img.shields.io/badge/Tessl-evaluated-purple)
+![Skills](https://img.shields.io/badge/skills-179-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg) ![Tessl Evaluated](https://img.shields.io/badge/Tessl-evaluated-purple)
 
 ## What Are Skills?
 
@@ -97,7 +97,7 @@ AI + loyalty-points-system skill:
   → Covers VIP tier configuration and points expiration
 ```
 
-We also have 7 **Shopify-specific skills** covering the Admin API, Storefront API, theme development, checkout extensions, webhooks, metafields, and app development.
+We also have 8 **Shopify-specific skills** covering the Admin API, Storefront API, theme development, checkout extensions, webhooks, metafields, app development, and app review triage.
 
 ### WooCommerce
 
@@ -195,7 +195,7 @@ New to this? Start here. These are the most commonly needed skills for any e-com
 
 ## All Categories
 
-178 skills organized into 17 categories. Click any category to browse its skills.
+179 skills organized into 17 categories. Click any category to browse its skills.
 
 | Category | Skills | Examples |
 |----------|--------|----------|
@@ -211,7 +211,7 @@ New to this? Start here. These are the most commonly needed skills for any e-com
 | [**Payments & Checkout**](skills/payments-checkout/) | 18 | Stripe, PayPal, Buy Now Pay Later, Subscriptions, +14 more |
 | [**Magento**](skills/platform-magento/) | 4 | GraphQL, Indexing & Caching, Module Development, +1 more |
 | [**Salesforce Commerce Cloud**](skills/platform-salesforce-cc/) | 3 | Business Manager, Cartridge Development, OCAPI/SCAPI |
-| [**Shopify**](skills/platform-shopify/) | 7 | Admin API, App Development, Checkout Extensions, +4 more |
+| [**Shopify**](skills/platform-shopify/) | 8 | Admin API, App Development, App Review Triage, +5 more |
 | [**WooCommerce**](skills/platform-woocommerce/) | 5 | Blocks, Performance, Plugin Development, +2 more |
 | [**Pricing & Promotions**](skills/pricing-promotions/) | 9 | A/B Testing Pricing, Coupons, Discount Engine, +6 more |
 | [**Security & Compliance**](skills/security-compliance/) | 9 | Account Security, Bot Protection, Fraud Detection, +6 more |
@@ -236,7 +236,7 @@ See [bundles.json](data/bundles.json) for the full skill lists in each bundle.
 
 ## Browse All Skills
 
-See [CATALOG.md](CATALOG.md) for the complete list of all 178 skills with descriptions, tags, and evaluation scores.
+See [CATALOG.md](CATALOG.md) for the complete list of all 179 skills with descriptions, tags, and evaluation scores.
 
 ## Contributing
 
