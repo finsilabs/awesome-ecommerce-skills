@@ -1,0 +1,10 @@
+{
+  "name": "finsi/shopify-app-review-triage",
+  "version": "0.1.0",
+  "summary": "Triage public Shopify App Store reviews into a P0-P3 brief with source links and human-check labels",
+  "skills": {
+    "shopify-app-review-triage": {
+      "path": "SKILL.md"
+    }
+  }
+}

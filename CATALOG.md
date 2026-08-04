@@ -1,8 +1,8 @@
 # Skill Catalog
 
-> 178 skills across 17 categories
+> 179 skills across 17 categories
 
-*Generated at 2026-03-13T10:29:32.644Z*
+*Generated at 2026-08-04T19:48:36.940Z*
 
 ## Business Operations `business-operations`
 
@@ -206,6 +206,7 @@
 |-------|-------------|------------|-----------|
 | `shopify-admin-api` | Automate Shopify store operations — products, orders, inventory, and customers — using the GraphQL Admin API with bulk operation support | intermediate | shopify |
 | `shopify-app-development` | Build embedded Shopify apps using the Remix framework, App Bridge for UI integration, Polaris components, and OAuth authentication flow | advanced | shopify |
+| `shopify-app-review-triage` | Turn public Shopify App Store reviews of the apps you publish into a P0-P3 brief with a needs-human-read bucket, a source link on every item, and first-pass vs human-checked labels | intermediate | shopify |
 | `shopify-checkout-extensions` | Customize Shopify's checkout with UI extensions for upsells and custom fields, plus Shopify Functions for serverless discount and shipping logic | advanced | shopify |
 | `shopify-metafields` | Store custom data on any Shopify resource — products, orders, customers — using typed metafield definitions accessible from Liquid and the Storefront API | beginner | shopify |
 | `shopify-storefront-api` | Build a headless Shopify frontend using the GraphQL Storefront API for product queries, cart management, and checkout with the Buy SDK | intermediate | shopify |

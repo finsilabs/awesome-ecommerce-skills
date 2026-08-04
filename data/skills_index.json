@@ -2295,6 +2295,20 @@
     "difficulty": "advanced"
   },
   {
+    "id": "shopify-app-review-triage",
+    "path": "skills/platform-shopify/shopify-app-review-triage",
+    "category": "platform-shopify",
+    "name": "Shopify App Review Triage",
+    "description": "Turn public Shopify App Store reviews of the apps you publish into a P0-P3 brief with a needs-human-read bucket, a source link on every item, and first-pass vs human-checked labels",
+    "risk": "safe",
+    "source": "community",
+    "date_added": "2026-08-05",
+    "platforms": [
+      "shopify"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
     "id": "shopify-checkout-extensions",
     "path": "skills/platform-shopify/shopify-checkout-extensions",
     "category": "platform-shopify",
