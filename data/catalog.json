@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-13T10:29:32.644Z",
-  "total": 178,
+  "generatedAt": "2026-08-04T19:48:36.940Z",
+  "total": 179,
   "skills": [
     {
       "id": "accounts-payable-management",
@@ -5683,6 +5683,47 @@
         "shopify"
       ],
       "difficulty": "advanced"
+    },
+    {
+      "id": "shopify-app-review-triage",
+      "name": "Shopify App Review Triage",
+      "description": "Turn public Shopify App Store reviews of the apps you publish into a P0-P3 brief with a needs-human-read bucket, a source link on every item, and first-pass vs human-checked labels",
+      "category": "platform-shopify",
+      "risk": "safe",
+      "source": "community",
+      "date_added": "2026-08-05",
+      "tags": [
+        "shopify",
+        "app-store",
+        "reviews",
+        "triage",
+        "prioritization",
+        "product-feedback",
+        "support",
+        "voice-of-customer"
+      ],
+      "triggers": [
+        "triage app store reviews",
+        "shopify app reviews",
+        "low star reviews",
+        "prioritize merchant feedback",
+        "weekly review brief",
+        "app review triage"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/platform-shopify/shopify-app-review-triage",
+      "platforms": [
+        "shopify"
+      ],
+      "difficulty": "intermediate"
     },
     {
       "id": "shopify-checkout-extensions",
