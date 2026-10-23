@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-04T19:48:36.940Z",
-  "total": 179,
+  "generatedAt": "2026-10-23T04:20:23.558Z",
+  "total": 181,
   "skills": [
     {
       "id": "accounts-payable-management",
@@ -2064,6 +2064,47 @@
         "opencode"
       ],
       "path": "skills/fulfillment-shipping/order-fulfillment-workflow",
+      "platforms": [
+        "shopify",
+        "woocommerce",
+        "bigcommerce",
+        "custom"
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "package-fit-optimization",
+      "name": "Package Fit Optimization",
+      "description": "Select right-sized cartons or mailers for ecommerce orders using package dimensions, constraints, and packing heuristics",
+      "category": "fulfillment-shipping",
+      "risk": "safe",
+      "source": "community",
+      "date_added": "2026-05-14",
+      "tags": [
+        "package-fit",
+        "carton-selection",
+        "dimensional-weight",
+        "fulfillment",
+        "shipping",
+        "packaging"
+      ],
+      "triggers": [
+        "choose box size",
+        "package fit",
+        "carton selection",
+        "reduce dimensional weight",
+        "packing optimization"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/fulfillment-shipping/package-fit-optimization",
       "platforms": [
         "shopify",
         "woocommerce",
@@ -6836,6 +6877,49 @@
         "custom"
       ],
       "difficulty": "advanced"
+    },
+    {
+      "id": "return-fraud-prevention",
+      "name": "Return Fraud Prevention",
+      "description": "Prevent and evidence return fraud — empty boxes, swapped items and AI-generated damage photos — with arrival recording, claim verification and proportional escalation.",
+      "category": "security-compliance",
+      "risk": "safe",
+      "source": "community",
+      "date_added": "2026-10-08",
+      "tags": [
+        "returns",
+        "refund-fraud",
+        "return-fraud",
+        "damage-photos",
+        "ai-generated-images",
+        "evidence",
+        "disputes",
+        "claims"
+      ],
+      "triggers": [
+        "return fraud",
+        "refund fraud",
+        "empty box return",
+        "damage photo claim",
+        "fake damage photo",
+        "return abuse",
+        "wardrobing",
+        "refund claim evidence"
+      ],
+      "tools": [
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "copilot",
+        "codex-cli",
+        "kiro",
+        "opencode"
+      ],
+      "path": "skills/security-compliance/return-fraud-prevention",
+      "platforms": [
+        "platform-agnostic"
+      ],
+      "difficulty": "intermediate"
     },
     {
       "id": "secure-checkout",

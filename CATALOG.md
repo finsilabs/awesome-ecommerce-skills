@@ -1,8 +1,8 @@
 # Skill Catalog
 
-> 179 skills across 17 categories
+> 181 skills across 17 categories
 
-*Generated at 2026-08-04T19:48:36.940Z*
+*Generated at 2026-10-23T04:20:23.558Z*
 
 ## Business Operations `business-operations`
 
@@ -77,6 +77,7 @@
 | `free-shipping-thresholds` | Motivate larger orders by showing a progress bar toward free shipping and nudging customers to add more items to qualify | beginner | shopify, woocommerce, bigcommerce, custom |
 | `international-shipping` | Handle cross-border orders with customs form generation, duties and taxes estimation, HS code assignment, and restricted items blocking | advanced | shopify, woocommerce, bigcommerce, custom |
 | `order-fulfillment-workflow` | Streamline your warehouse with digital pick-pack-ship workflows, barcode scanning for accuracy, and automatic packing slip generation | intermediate | shopify, woocommerce, bigcommerce, custom |
+| `package-fit-optimization` | Select right-sized cartons or mailers for ecommerce orders using package dimensions, constraints, and packing heuristics | intermediate | shopify, woocommerce, bigcommerce, custom |
 | `returns-management` | Process returns end to end — generate prepaid labels, apply refund or exchange logic, update inventory, and notify customers automatically | intermediate | shopify, woocommerce, bigcommerce, custom |
 | `same-day-delivery` | Offer same-day local delivery with geographic zone management, customer-facing time-slot booking, and driver dispatch coordination | advanced | shopify, woocommerce, bigcommerce, custom |
 | `shipment-tracking` | Give customers live package tracking by aggregating carrier status updates via webhooks and sending proactive delivery notifications | intermediate | shopify, woocommerce, bigcommerce, custom |
@@ -249,6 +250,7 @@
 | `fraud-detection` | Protect your store from fraudulent orders using risk scoring, 3D Secure challenges, velocity checks, and manual review queues for suspicious orders | advanced | shopify, woocommerce, bigcommerce, custom |
 | `gdpr-ecommerce` | Make your store GDPR-compliant with cookie consent, customer data export on request, right-to-deletion workflows, and data processing agreements | intermediate | shopify, woocommerce, bigcommerce, custom |
 | `pci-dss-compliance` | Meet PCI-DSS payment security requirements by scoping your environment correctly, selecting the right SAQ, and implementing required controls | advanced | shopify, woocommerce, bigcommerce, custom |
+| `return-fraud-prevention` | Prevent and evidence return fraud — empty boxes, swapped items and AI-generated damage photos — with arrival recording, claim verification and proportional escalation. | intermediate | platform-agnostic |
 | `secure-checkout` | Harden your checkout against attacks with HTTPS enforcement, Content Security Policy headers, input sanitization, and card data tokenization | intermediate | shopify, woocommerce, bigcommerce, custom |
 
 ## Storefront Ui `storefront-ui`
