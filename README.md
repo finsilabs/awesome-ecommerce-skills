@@ -130,6 +130,7 @@ We have 8 **headless-specific skills** covering Shopify Hydrogen, Medusa, Saleor
 ### Also Supported: Magento (4 skills) and Salesforce Commerce Cloud (3 skills)
 
 > **How does this actually work?** You copy a skill file into your project (or install via `tessl install`). Your AI assistant reads it automatically — no configuration needed. The next time you ask it to build something related, it follows the skill's instructions instead of guessing. The skill tells it which APIs to call, what patterns to use, and what mistakes to avoid for your specific platform.
+- **[Level Open Finance Skills](https://github.com/levelcfo/open-finance-skills)** - 20 open-source accounting and ecommerce verification skills covering Shopify payout reconciliation, Finaloop close audits, Settle PO loan tracking, and ASC 330 FIFO landed cost ([Benchmarks](https://levelcfo.com/benchmarks/ecommerce/)).
 
 ## Eval Results
 
