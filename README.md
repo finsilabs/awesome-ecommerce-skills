@@ -220,6 +220,12 @@ See [bundles.json](data/bundles.json) for the full skill lists in each bundle.
 
 See [CATALOG.md](CATALOG.md) for the complete list of all 181 skills with descriptions, tags, and evaluation scores.
 
+
+## Public Data APIs (Apify)
+
+- [Etsy Search Scraper](https://apify.com/publicrecords/etsy-search-scraper) - Etsy search results by keyword: price, rating, reviews, Bestseller badge, ad flag, rank (Apify Actor, API + MCP).
+- [Etsy Shop Daily Sales](https://apify.com/publicrecords/etsy-shop-velocity) - Daily, 7-day and 28-day sales for Etsy shops from each shop's public sales counter (Apify Actor, API + MCP).
+
 ## Contributing
 
 We welcome contributions! Whether you want to improve an existing skill or add a new one:
